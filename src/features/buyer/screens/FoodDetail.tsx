@@ -7,10 +7,10 @@ import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 
 // Mock data - in real app, this would come from API
-const getMockFoodDetail = (name: string, imageUrl: string) => ({
+const getMockFoodDetail = (name: string, cookName: string, imageUrl: string) => ({
   id: '1',
   name: name || 'Ev Yapımı Mantı',
-  cookName: 'Ayşe Hanım',
+  cookName: cookName || 'Ayşe Hanım',
   rating: 4.8,
   reviewCount: 24,
   price: 25,
@@ -29,9 +29,10 @@ export const FoodDetail: React.FC = () => {
 
   // Get food details from URL parameters
   const foodName = params.name as string;
+  const cookName = params.cookName as string;
   const foodImageUrl = params.imageUrl as string;
-  console.log('FoodDetail params:', { foodName, foodImageUrl, allParams: params });
-  const food = getMockFoodDetail(foodName, foodImageUrl);
+  console.log('FoodDetail params:', { foodName, cookName, foodImageUrl, allParams: params });
+  const food = getMockFoodDetail(foodName, cookName, foodImageUrl);
 
   const handleMessageSeller = () => {
     console.log(`Opening chat with ${food.cookName}`);
@@ -40,7 +41,7 @@ export const FoodDetail: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title={food.name} />
+      <TopBar title={`${food.name} - ${food.cookName}`} />
       
       <ScrollView 
         style={styles.content} 

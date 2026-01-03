@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Input, FoodCard } from '../../../components/ui';
@@ -8,6 +8,11 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 
 // Mock data
+const USER_DATA = {
+  name: 'Ahmet Yılmaz',
+  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+};
+
 const CATEGORIES = [
   'Tümü',
   'Ana Yemek',
@@ -186,7 +191,11 @@ export const Home: React.FC = () => {
   const renderTopBarRight = () => (
     <View style={styles.topBarRight}>
       <TouchableOpacity onPress={handleProfilePress} style={styles.profileIconContainer}>
-        <Text style={styles.profileIcon}>👤</Text>
+        <Image 
+          source={{ uri: USER_DATA.avatar }}
+          style={styles.profileAvatar}
+          defaultSource={{ uri: 'https://via.placeholder.com/40x40/7FAF9A/FFFFFF?text=A' }}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -335,13 +344,13 @@ const styles = StyleSheet.create({
   leftIconWrapper: {
     position: 'absolute',
     left: Spacing.sm, // Closer to the very left edge
-    bottom: Spacing.sm, // Closer to the very bottom edge
+    bottom: Spacing.xs, // Moved further down (from sm to xs)
   },
   centerLogoWrapper: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: Spacing.lg, // Position higher than icons for better balance
+    bottom: Spacing.md, // Moved down (from lg to md)
     alignItems: 'center',
     justifyContent: 'center',
     pointerEvents: 'none', // Allow touches to pass through to icons
@@ -349,7 +358,7 @@ const styles = StyleSheet.create({
   rightIconWrapper: {
     position: 'absolute',
     right: Spacing.sm, // Closer to the very right edge
-    bottom: Spacing.sm, // Closer to the very bottom edge
+    bottom: Spacing.xs, // Moved further down (from sm to xs)
   },
   homeIconContainer: {
     width: 40,
@@ -364,9 +373,10 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   logoText: {
-    fontSize: 24,
+    fontSize: 28, // Increased from 24 to 28
     color: 'white',
     letterSpacing: 1,
+    fontWeight: 'bold', // Added bold for better visibility
   },
   profileIconContainer: {
     width: 40,
@@ -375,10 +385,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   profileIcon: {
     fontSize: 20,
     color: 'white',
+  },
+  profileAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   content: {
     flex: 1,

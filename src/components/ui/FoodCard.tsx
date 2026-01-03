@@ -48,9 +48,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   const [quantity, setQuantity] = useState(0);
 
   const handlePress = () => {
-    console.log('FoodCard pressed:', name, id);
+    console.log('FoodCard pressed:', name, id, 'by', cookName);
     const foodImageUrl = imageUrl || getDefaultImage(name).uri;
-    const route = `/(tabs)/food-detail?id=${id}&name=${encodeURIComponent(name)}&imageUrl=${encodeURIComponent(foodImageUrl)}`;
+    const route = `/(tabs)/food-detail?id=${id}&name=${encodeURIComponent(name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}`;
     console.log('Navigating to:', route);
     router.push(route);
   };
