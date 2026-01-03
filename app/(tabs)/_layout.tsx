@@ -41,6 +41,17 @@ export default function TabLayout() {
           fontWeight: '500',
           marginTop: 4,
         },
+        tabBarBadgeStyle: {
+          backgroundColor: colors.error, // Red badge
+          color: 'white',
+          fontSize: 10,
+          minWidth: 18,
+          minHeight: 18,
+          lineHeight: 18,
+          paddingHorizontal: 0,
+          paddingVertical: 0,
+          borderRadius: 9,
+        },
         headerShown: false,
       }}>
       <Tabs.Screen
@@ -83,6 +94,20 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Bildirimler',
+          tabBarBadge: 2, // Mock notification count
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon 
+              name={focused ? "bell" : "bell-o"} 
+              color={color}
+              style={{ fontSize: focused ? 22 : 20 }}
+            />
+          ),
+        }}
+      />
       {/* Hidden screens - accessible via navigation but not in tabs */}
       <Tabs.Screen
         name="orders"
@@ -92,12 +117,6 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="profile"
-        options={{
-          href: null, // Hide from tab bar
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
         options={{
           href: null, // Hide from tab bar
         }}
