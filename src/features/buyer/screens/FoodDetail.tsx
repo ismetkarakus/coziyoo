@@ -59,7 +59,7 @@ export const FoodDetail: React.FC = () => {
             <Image 
               source={{ uri: food.imageUrl }} 
               style={styles.image}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           ) : (
             <Text variant="title" color="textSecondary">
@@ -193,12 +193,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   imageContainer: {
-    height: 250,
-    ...commonStyles.flex.center,
+    height: 300, // Increased height for better display
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md, // Add padding to prevent edge touching
   },
   image: {
     width: '100%',
     height: '100%',
+    borderRadius: 12, // Add rounded corners like in cards
   },
   detailsContainer: {
     padding: Spacing.md,
