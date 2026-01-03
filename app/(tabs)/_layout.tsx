@@ -129,6 +129,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="category-foods"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <Tabs.Screen
         name="order-confirmation"
         options={{
           href: null, // Hide from tab bar

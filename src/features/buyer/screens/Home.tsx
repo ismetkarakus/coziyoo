@@ -72,6 +72,16 @@ export const Home: React.FC = () => {
     console.log(`Added ${quantity} of food ${foodId} to cart`);
   };
 
+  const handleCategoryPress = (category: string) => {
+    if (category === 'Tümü') {
+      // For "Tümü" just change the selected category (show all foods)
+      setSelectedCategory(category);
+    } else {
+      // For specific categories, navigate to category foods page
+      router.push(`/(tabs)/category-foods?category=${encodeURIComponent(category)}`);
+    }
+  };
+
   const renderTopBarRight = () => (
     <View style={styles.topBarRight}>
       <TouchableOpacity onPress={handleProfilePress} style={styles.profileIconContainer}>
@@ -154,7 +164,7 @@ export const Home: React.FC = () => {
             {CATEGORIES.map((category) => (
               <TouchableOpacity
                 key={category}
-                onPress={() => setSelectedCategory(category)}
+                onPress={() => handleCategoryPress(category)}
                 style={[
                   styles.categoryButton,
                   {
