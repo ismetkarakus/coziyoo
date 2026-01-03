@@ -26,7 +26,6 @@ export const FoodDetail: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const params = useLocalSearchParams();
-  const [quantity, setQuantity] = useState(1);
 
   // Get food details from URL parameters
   const foodName = params.name as string;
@@ -34,19 +33,9 @@ export const FoodDetail: React.FC = () => {
   console.log('FoodDetail params:', { foodName, foodImageUrl, allParams: params });
   const food = getMockFoodDetail(foodName, foodImageUrl);
 
-  const handleAddToCart = () => {
-    console.log(`Added ${quantity} of ${food.name} to cart`);
-    router.push('/(tabs)/cart');
-  };
-
-  const incrementQuantity = () => {
-    setQuantity(prev => prev + 1);
-  };
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
+  const handleMessageSeller = () => {
+    console.log(`Opening chat with ${food.cookName}`);
+    router.push(`/(tabs)/chat-detail?sellerId=${food.id}&sellerName=${encodeURIComponent(food.cookName)}`);
   };
 
   return (
@@ -106,28 +95,6 @@ export const FoodDetail: React.FC = () => {
               </View>
             </View>
 
-            {/* Delivery Options */}
-            <View style={styles.deliveryOptions}>
-              <Text variant="subheading" weight="medium" style={styles.deliveryTitle}>
-                Teslimat Seçenekleri
-              </Text>
-              <View style={styles.badges}>
-                {food.hasPickup && (
-                  <View style={[styles.badge, { backgroundColor: colors.success }]}>
-                    <Text variant="caption" style={{ color: 'white' }}>
-                      ✓ Pickup (Gel Al)
-                    </Text>
-                  </View>
-                )}
-                {food.hasDelivery && (
-                  <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-                    <Text variant="caption" style={{ color: 'white' }}>
-                      ✓ Delivery (Teslimat)
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
           </Card>
 
           {/* Description */}
@@ -140,48 +107,75 @@ export const FoodDetail: React.FC = () => {
             </Text>
           </Card>
 
-          {/* Quantity & Add to Cart */}
-          <Card variant="default" padding="md" style={styles.actionCard}>
-            <View style={styles.quantityContainer}>
-              <Text variant="subheading" weight="medium">
-                Miktar
+          {/* Seller Reviews */}
+          <Card variant="default" padding="md" style={styles.reviewsCard}>
+            <Text variant="subheading" weight="medium" style={styles.reviewsTitle}>
+              {food.cookName} Hakkında Yorumlar
+            </Text>
+            
+            {/* Overall Rating */}
+            <View style={styles.overallRating}>
+              <View style={styles.ratingStars}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Text key={star} style={styles.star}>
+                    {star <= Math.floor(food.rating) ? '⭐' : '☆'}
+                  </Text>
+                ))}
+              </View>
+              <Text variant="body" color="textSecondary" style={styles.ratingText}>
+                {food.rating} ({food.reviewCount} değerlendirme)
               </Text>
-              <View style={styles.quantityControls}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={decrementQuantity}
-                  style={styles.quantityButton}
-                >
-                  -
-                </Button>
-                <Text variant="body" weight="semibold" style={styles.quantityText}>
-                  {quantity}
+            </View>
+
+            {/* Sample Reviews */}
+            <View style={styles.reviewsList}>
+              <View style={styles.reviewItem}>
+                <View style={styles.reviewHeader}>
+                  <Text variant="body" weight="semibold">Ahmet K.</Text>
+                  <View style={styles.reviewStars}>
+                    <Text style={styles.smallStar}>⭐⭐⭐⭐⭐</Text>
+                  </View>
+                </View>
+                <Text variant="body" color="textSecondary" style={styles.reviewText}>
+                  "Çok lezzetli ve taze. Kesinlikle tavsiye ederim!"
                 </Text>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onPress={incrementQuantity}
-                  style={styles.quantityButton}
-                >
-                  +
-                </Button>
+              </View>
+
+              <View style={styles.reviewItem}>
+                <View style={styles.reviewHeader}>
+                  <Text variant="body" weight="semibold">Zeynep M.</Text>
+                  <View style={styles.reviewStars}>
+                    <Text style={styles.smallStar}>⭐⭐⭐⭐☆</Text>
+                  </View>
+                </View>
+                <Text variant="body" color="textSecondary" style={styles.reviewText}>
+                  "Güzel bir deneyimdi, tekrar sipariş vereceğim."
+                </Text>
+              </View>
+
+              <View style={styles.reviewItem}>
+                <View style={styles.reviewHeader}>
+                  <Text variant="body" weight="semibold">Can Y.</Text>
+                  <View style={styles.reviewStars}>
+                    <Text style={styles.smallStar}>⭐⭐⭐⭐⭐</Text>
+                  </View>
+                </View>
+                <Text variant="body" color="textSecondary" style={styles.reviewText}>
+                  "Harika bir tat! Ev yemeği tadında."
+                </Text>
               </View>
             </View>
+          </Card>
 
-            <View style={styles.totalContainer}>
-              <Text variant="subheading" weight="semibold">
-                Toplam: ₺{(food.price * quantity).toFixed(2)}
-              </Text>
-            </View>
-
+          {/* Message Seller */}
+          <Card variant="default" padding="md" style={styles.messageCard}>
             <Button
               variant="primary"
               fullWidth
-              onPress={handleAddToCart}
-              style={styles.addToCartButton}
+              onPress={handleMessageSeller}
+              style={styles.messageButton}
             >
-              Sepete Ekle
+              💬 {food.cookName} ile Mesajlaş
             </Button>
           </Card>
         </View>
@@ -238,21 +232,6 @@ const styles = StyleSheet.create({
   metaItem: {
     alignItems: 'center',
   },
-  deliveryOptions: {
-    marginTop: Spacing.md,
-  },
-  deliveryTitle: {
-    marginBottom: Spacing.sm,
-  },
-  badges: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  badge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: commonStyles.borderRadius.sm,
-  },
   descriptionCard: {
     marginBottom: 0,
   },
@@ -262,33 +241,61 @@ const styles = StyleSheet.create({
   description: {
     lineHeight: 22,
   },
-  actionCard: {
+  reviewsCard: {
     marginBottom: 0,
   },
-  quantityContainer: {
+  reviewsTitle: {
+    marginBottom: Spacing.md,
+  },
+  overallRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    marginRight: Spacing.sm,
+  },
+  star: {
+    fontSize: 20,
+    marginRight: 2,
+  },
+  ratingText: {
+    fontSize: 14,
+  },
+  reviewsList: {
+    gap: Spacing.md,
+  },
+  reviewItem: {
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
-  quantityControls: {
+  reviewStars: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
   },
-  quantityButton: {
-    minWidth: 40,
+  smallStar: {
+    fontSize: 12,
   },
-  quantityText: {
-    minWidth: 30,
-    textAlign: 'center',
+  reviewText: {
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
-  totalContainer: {
-    alignItems: 'center',
-    marginBottom: Spacing.md,
+  messageCard: {
+    marginBottom: 0,
   },
-  addToCartButton: {
-    marginTop: Spacing.sm,
+  messageButton: {
+    backgroundColor: Colors.light.primary,
+    paddingVertical: Spacing.md,
   },
 });
 
