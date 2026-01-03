@@ -7,9 +7,9 @@ import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 
 // Mock data - in real app, this would come from API
-const MOCK_FOOD_DETAIL = {
+const getMockFoodDetail = (name: string, imageUrl: string) => ({
   id: '1',
-  name: 'Ev Yapımı Mantı',
+  name: name || 'Ev Yapımı Mantı',
   cookName: 'Ayşe Hanım',
   rating: 4.8,
   reviewCount: 24,
@@ -19,8 +19,8 @@ const MOCK_FOOD_DETAIL = {
   description: 'Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, özel baharatlarla tatlandırılmış ev yapımı mantı. Yanında yoğurt ve tereyağlı sos ile servis edilir.',
   hasPickup: true,
   hasDelivery: true,
-  imageUrl: null,
-};
+  imageUrl: imageUrl,
+});
 
 export const FoodDetail: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -28,8 +28,10 @@ export const FoodDetail: React.FC = () => {
   const params = useLocalSearchParams();
   const [quantity, setQuantity] = useState(1);
 
-  // In real app, fetch food details using params.id
-  const food = MOCK_FOOD_DETAIL;
+  // Get food details from URL parameters
+  const foodName = params.name as string;
+  const foodImageUrl = params.imageUrl as string;
+  const food = getMockFoodDetail(foodName, foodImageUrl);
 
   const handleAddToCart = () => {
     console.log(`Added ${quantity} of ${food.name} to cart`);
@@ -54,7 +56,11 @@ export const FoodDetail: React.FC = () => {
         {/* Food Image */}
         <View style={[styles.imageContainer, { backgroundColor: colors.surface }]}>
           {food.imageUrl ? (
-            <Image source={{ uri: food.imageUrl }} style={styles.image} />
+            <Image 
+              source={{ uri: food.imageUrl }} 
+              style={styles.image}
+              resizeMode="cover"
+            />
           ) : (
             <Text variant="title" color="textSecondary">
               📸

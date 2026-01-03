@@ -48,7 +48,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   const [quantity, setQuantity] = useState(0);
 
   const handlePress = () => {
-    router.push(`/(tabs)/food-detail?id=${id}`);
+    const foodImageUrl = imageUrl || getDefaultImage(name).uri;
+    router.push(`/(tabs)/food-detail?id=${id}&name=${encodeURIComponent(name)}&imageUrl=${encodeURIComponent(foodImageUrl)}`);
   };
 
   const incrementQuantity = () => {
