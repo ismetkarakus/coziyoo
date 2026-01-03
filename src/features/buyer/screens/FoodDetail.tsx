@@ -31,6 +31,7 @@ export const FoodDetail: React.FC = () => {
   // Get food details from URL parameters
   const foodName = params.name as string;
   const foodImageUrl = params.imageUrl as string;
+  console.log('FoodDetail params:', { foodName, foodImageUrl, allParams: params });
   const food = getMockFoodDetail(foodName, foodImageUrl);
 
   const handleAddToCart = () => {
