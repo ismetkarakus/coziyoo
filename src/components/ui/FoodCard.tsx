@@ -191,12 +191,14 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
     overflow: 'hidden',
-    // NO margin or padding - flush to left edge
+    marginHorizontal: 0, // Ensure no horizontal margins like detail page
+    paddingHorizontal: 0, // Ensure no horizontal padding like detail page
   },
   image: {
-    width: 90,
-    height: 90,
-    // NO border radius - container handles it
+    width: '100%', // Use percentage like detail page
+    height: '100%', // Use percentage like detail page
+    marginHorizontal: 0, // No horizontal margins like detail page
+    paddingHorizontal: 0, // No horizontal padding like detail page
   },
   info: {
     flex: 1,
