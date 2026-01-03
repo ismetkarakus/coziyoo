@@ -88,13 +88,13 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           <View style={styles.info}>
             <View style={styles.headerRow}>
               <Text variant="subheading" weight="semibold" numberOfLines={1} style={styles.foodName}>
-                {name}
+                Türk {name}
               </Text>
             </View>
             
             <View style={styles.cookInfo}>
               <Text variant="body" color="textSecondary" style={styles.cookName}>
-                {cookName} (Türk)
+                {cookName}
               </Text>
             </View>
 
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   rightControls: {
     alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start', // Changed from space-between to flex-start
     minWidth: 100,
     paddingVertical: Spacing.sm,
     paddingRight: Spacing.sm,
@@ -246,23 +246,24 @@ const styles = StyleSheet.create({
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs, // Reduced gap for smaller controls
+    gap: 4, // Further reduced gap
     backgroundColor: '#F5F5F5',
-    borderRadius: 16, // Smaller radius to match delivery format
-    padding: 2, // Reduced padding for smaller size
+    borderRadius: 12, // Smaller radius
+    padding: 1, // Further reduced padding
+    marginTop: Spacing.md, // Add top margin to push down
     marginBottom: Spacing.xs,
   },
   quantityButton: {
-    width: 26, // Reduced from 32 to 26
-    height: 26, // Reduced from 32 to 26
-    borderRadius: 4, // Smaller radius
+    width: 22, // Further reduced from 26 to 22
+    height: 22, // Further reduced from 26 to 22
+    borderRadius: 3, // Smaller radius
     ...commonStyles.flex.center,
     backgroundColor: '#FFFFFF',
   },
   quantityText: {
-    minWidth: 20, // Reduced from 24 to 20
+    minWidth: 16, // Further reduced from 20 to 16
     textAlign: 'center',
-    fontSize: 14, // Reduced from 16 to 14
+    fontSize: 12, // Further reduced from 14 to 12
     color: '#2E2E2E',
     fontWeight: 'bold',
   },
