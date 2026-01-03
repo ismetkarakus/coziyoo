@@ -88,7 +88,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           <View style={styles.info}>
             <View style={styles.headerRow}>
               <Text variant="subheading" weight="semibold" numberOfLines={1} style={styles.foodName}>
-                Türk {name}
+                {name} (Türk)
               </Text>
             </View>
             
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     paddingRight: Spacing.sm,
   },
   price: {
-    fontSize: 20,
+    fontSize: 16, // Reduced from 20 to 16
     fontWeight: 'bold',
     marginBottom: Spacing.xs,
   },
