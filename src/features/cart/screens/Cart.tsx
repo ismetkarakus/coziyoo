@@ -1,0 +1,297 @@
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { router } from 'expo-router';
+import { Text, Button, Card } from '../../../components/ui';
+import { TopBar } from '../../../components/layout';
+import { Colors, Spacing } from '../../../theme';
+import { useColorScheme } from '../../../../components/useColorScheme';
+
+// Mock cart data
+const MOCK_CART_ITEMS = [
+  {
+    id: '1',
+    name: 'Ev Yapımı Mantı',
+    cookName: 'Ayşe Hanım',
+    price: 25,
+    quantity: 2,
+    imageUrl: null,
+  },
+  {
+    id: '2',
+    name: 'Karnıyarık',
+    cookName: 'Fatma Teyze',
+    price: 18,
+    quantity: 1,
+    imageUrl: null,
+  },
+];
+
+export const Cart: React.FC = () => {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const [cartItems, setCartItems] = useState(MOCK_CART_ITEMS);
+  const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
+
+  const updateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity === 0) {
+      setCartItems(prev => prev.filter(item => item.id !== itemId));
+    } else {
+      setCartItems(prev => 
+        prev.map(item => 
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        )
+      );
+    }
+  };
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const deliveryFee = deliveryType === 'delivery' ? 5 : 0;
+  const total = subtotal + deliveryFee;
+
+  const handleCheckout = () => {
+    router.push('/(tabs)/order-confirmation');
+  };
+
+  if (cartItems.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <TopBar title="Sepetim" />
+        <View style={styles.emptyContainer}>
+          <Text variant="heading" center>
+            Sepetiniz Boş
+          </Text>
+          <Text variant="body" center color="textSecondary" style={styles.emptyText}>
+            Lezzetli yemekleri keşfetmek için ana sayfaya dönün.
+          </Text>
+          <Button 
+            variant="primary" 
+            onPress={() => router.push('/(tabs)/')}
+            style={styles.browseButton}
+          >
+            Yemekleri Keşfet
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <TopBar title="" leftComponent={
+        <Text variant="heading" weight="bold" color="primary" style={{ fontSize: 24 }}>
+          Sepetim
+        </Text>
+      } />
+      
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Cart Items */}
+        <View style={styles.itemsContainer}>
+          {cartItems.map((item) => (
+            <Card key={item.id} variant="default" padding="md" style={styles.itemCard}>
+              <View style={styles.itemContent}>
+                <View style={[styles.itemImage, { backgroundColor: colors.surface }]}>
+                  <Text variant="body">📸</Text>
+                </View>
+                
+                <View style={styles.itemInfo}>
+                  <Text variant="subheading" weight="semibold" numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text variant="caption" color="textSecondary">
+                    {item.cookName}
+                  </Text>
+                  <Text variant="body" weight="semibold" color="primary">
+                    ₺{item.price}
+                  </Text>
+                </View>
+
+                <View style={styles.quantityControls}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                    style={styles.quantityButton}
+                  >
+                    -
+                  </Button>
+                  <Text variant="body" weight="semibold" style={styles.quantityText}>
+                    {item.quantity}
+                  </Text>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                    style={styles.quantityButton}
+                  >
+                    +
+                  </Button>
+                </View>
+              </View>
+            </Card>
+          ))}
+        </View>
+
+        {/* Delivery Selection */}
+        <Card variant="default" padding="md" style={styles.deliveryCard}>
+          <Text variant="subheading" weight="semibold" style={styles.deliveryTitle}>
+            Teslimat Seçeneği
+          </Text>
+          
+          <View style={styles.deliveryOptions}>
+            <Button
+              variant={deliveryType === 'pickup' ? 'primary' : 'outline'}
+              onPress={() => setDeliveryType('pickup')}
+              style={styles.deliveryButton}
+            >
+              {deliveryType === 'pickup' ? '✓ ' : ''}Pickup (Gel Al)
+            </Button>
+            <Button
+              variant={deliveryType === 'delivery' ? 'primary' : 'outline'}
+              onPress={() => setDeliveryType('delivery')}
+              style={styles.deliveryButton}
+            >
+              {deliveryType === 'delivery' ? '✓ ' : ''}Delivery (+₺5)
+            </Button>
+          </View>
+        </Card>
+
+        {/* Order Summary */}
+        <Card variant="default" padding="md" style={styles.summaryCard}>
+          <Text variant="subheading" weight="semibold" style={styles.summaryTitle}>
+            Sipariş Özeti
+          </Text>
+          
+          <View style={styles.summaryRow}>
+            <Text variant="body">Ara Toplam</Text>
+            <Text variant="body">₺{subtotal.toFixed(2)}</Text>
+          </View>
+          
+          {deliveryType === 'delivery' && (
+            <View style={styles.summaryRow}>
+              <Text variant="body">Teslimat Ücreti</Text>
+              <Text variant="body">₺{deliveryFee.toFixed(2)}</Text>
+            </View>
+          )}
+          
+          <View style={[styles.summaryRow, styles.totalRow]}>
+            <Text variant="subheading" weight="semibold">Toplam Tutar</Text>
+            <Text variant="subheading" weight="semibold" color="primary">
+              ₺{total.toFixed(2)}
+            </Text>
+          </View>
+        </Card>
+      </ScrollView>
+
+      {/* Checkout Button */}
+      <View style={[styles.checkoutContainer, { backgroundColor: colors.background }]}>
+        <Button
+          variant="primary"
+          fullWidth
+          onPress={handleCheckout}
+          style={styles.checkoutButton}
+        >
+          Siparişi Tamamla
+        </Button>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  emptyText: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xl,
+    textAlign: 'center',
+  },
+  browseButton: {
+    minWidth: 200,
+  },
+  itemsContainer: {
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  itemCard: {
+    marginBottom: 0,
+  },
+  itemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
+  },
+  itemInfo: {
+    flex: 1,
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  quantityButton: {
+    minWidth: 36,
+  },
+  quantityText: {
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  deliveryCard: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  deliveryTitle: {
+    marginBottom: Spacing.md,
+  },
+  deliveryOptions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  deliveryButton: {
+    flex: 1,
+  },
+  summaryCard: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  summaryTitle: {
+    marginBottom: Spacing.md,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  totalRow: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+  },
+  checkoutContainer: {
+    padding: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+  },
+  checkoutButton: {
+    marginBottom: 0,
+  },
+});
+
