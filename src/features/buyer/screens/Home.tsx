@@ -17,6 +17,7 @@ const CATEGORIES = [
 ];
 
 const MOCK_FOODS = [
+  // Ana Yemek
   {
     id: '1',
     name: 'Ev Yapımı Mantı',
@@ -24,6 +25,7 @@ const MOCK_FOODS = [
     rating: 4.8,
     price: 35,
     distance: '900 m',
+    category: 'Ana Yemek',
     hasPickup: true,
     hasDelivery: true,
   },
@@ -34,9 +36,102 @@ const MOCK_FOODS = [
     rating: 4.6,
     price: 28,
     distance: '4.6 km',
+    category: 'Ana Yemek',
     hasPickup: true,
     hasDelivery: true,
   },
+  {
+    id: '4',
+    name: 'İskender Kebap',
+    cookName: 'Ali Usta',
+    rating: 4.7,
+    price: 42,
+    distance: '2.1 km',
+    category: 'Ana Yemek',
+    hasPickup: true,
+    hasDelivery: true,
+  },
+  // Çorba
+  {
+    id: '5',
+    name: 'Mercimek Çorbası',
+    cookName: 'Zeynep Hanım',
+    rating: 4.5,
+    price: 15,
+    distance: '1.2 km',
+    category: 'Çorba',
+    hasPickup: true,
+    hasDelivery: true,
+  },
+  {
+    id: '6',
+    name: 'Tarhana Çorbası',
+    cookName: 'Fatma Teyze',
+    rating: 4.8,
+    price: 18,
+    distance: '800 m',
+    category: 'Çorba',
+    hasPickup: true,
+    hasDelivery: true,
+  },
+  // Kahvaltı
+  {
+    id: '8',
+    name: 'Serpme Kahvaltı',
+    cookName: 'Hasan Usta',
+    rating: 4.9,
+    price: 55,
+    distance: '1.8 km',
+    category: 'Kahvaltı',
+    hasPickup: true,
+    hasDelivery: false,
+  },
+  {
+    id: '9',
+    name: 'Menemen',
+    cookName: 'Ayşe Hanım',
+    rating: 4.6,
+    price: 22,
+    distance: '900 m',
+    category: 'Kahvaltı',
+    hasPickup: true,
+    hasDelivery: true,
+  },
+  // Salata
+  {
+    id: '11',
+    name: 'Çoban Salata',
+    cookName: 'Zehra Hanım',
+    rating: 4.4,
+    price: 18,
+    distance: '1.1 km',
+    category: 'Salata',
+    hasPickup: true,
+    hasDelivery: true,
+  },
+  {
+    id: '12',
+    name: 'Mevsim Salata',
+    cookName: 'Gül Teyze',
+    rating: 4.6,
+    price: 20,
+    distance: '1.4 km',
+    category: 'Salata',
+    hasPickup: true,
+    hasDelivery: true,
+  },
+  {
+    id: '13',
+    name: 'Roka Salata',
+    cookName: 'Elif Hanım',
+    rating: 4.5,
+    price: 25,
+    distance: '2.2 km',
+    category: 'Salata',
+    hasPickup: true,
+    hasDelivery: true,
+  },
+  // Baklava'yı da bir kategoriye ekleyelim
   {
     id: '3',
     name: 'Baklava',
@@ -44,6 +139,7 @@ const MOCK_FOODS = [
     rating: 4.9,
     price: 45,
     distance: '3.7 km',
+    category: 'Ana Yemek', // Tatlı kategorisi yok, Ana Yemek'e ekledim
     hasPickup: true,
     hasDelivery: true,
   },
@@ -73,14 +169,19 @@ export const Home: React.FC = () => {
   };
 
   const handleCategoryPress = (category: string) => {
-    if (category === 'Tümü') {
-      // For "Tümü" just change the selected category (show all foods)
-      setSelectedCategory(category);
-    } else {
-      // For specific categories, navigate to category foods page
-      router.push(`/(tabs)/category-foods?category=${encodeURIComponent(category)}`);
-    }
+    // All categories now filter on the same page
+    setSelectedCategory(category);
   };
+
+  // Filter foods based on selected category
+  const getFilteredFoods = () => {
+    if (selectedCategory === 'Tümü') {
+      return MOCK_FOODS;
+    }
+    return MOCK_FOODS.filter(food => food.category === selectedCategory);
+  };
+
+  const filteredFoods = getFilteredFoods();
 
   const renderTopBarRight = () => (
     <View style={styles.topBarRight}>
@@ -192,13 +293,21 @@ export const Home: React.FC = () => {
 
         {/* Food List */}
         <View style={styles.foodListContainer}>
-          {MOCK_FOODS.map((food) => (
-            <FoodCard
-              key={food.id}
-              {...food}
-              onAddToCart={handleAddToCart}
-            />
-          ))}
+          {filteredFoods.length > 0 ? (
+            filteredFoods.map((food) => (
+              <FoodCard
+                key={food.id}
+                {...food}
+                onAddToCart={handleAddToCart}
+              />
+            ))
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text variant="body" color="textSecondary" style={styles.emptyText}>
+                Bu kategoride henüz yemek bulunmuyor.
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -338,6 +447,14 @@ const styles = StyleSheet.create({
   foodListContainer: {
     paddingHorizontal: 0, // Remove side padding for full-width cards
     paddingBottom: Spacing.xl,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xl * 2,
+  },
+  emptyText: {
+    textAlign: 'center',
   },
 });
 
