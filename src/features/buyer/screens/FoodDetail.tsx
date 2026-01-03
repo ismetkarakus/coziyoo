@@ -52,14 +52,18 @@ export const FoodDetail: React.FC = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar title={food.name} />
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Food Image */}
+      <ScrollView 
+        style={styles.content} 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Food Image - Full Width */}
         <View style={[styles.imageContainer, { backgroundColor: colors.surface }]}>
           {food.imageUrl ? (
             <Image 
               source={{ uri: food.imageUrl }} 
               style={styles.image}
-              resizeMode="contain"
+              resizeMode="cover"
             />
           ) : (
             <Text variant="title" color="textSecondary">
@@ -192,17 +196,22 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 20, // Only bottom padding for scroll
+  },
   imageContainer: {
     height: 300, // Increased height for better display
     width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Removed padding - image now touches screen edges
+    marginHorizontal: 0, // Ensure no horizontal margins
+    paddingHorizontal: 0, // Ensure no horizontal padding
+    // Full width container - no spacing on sides
   },
   image: {
     width: '100%',
     height: '100%',
-    // Removed border radius - image now fills full width to screen edges
+    marginHorizontal: 0, // No horizontal margins
+    paddingHorizontal: 0, // No horizontal padding
+    // Full screen width coverage
   },
   detailsContainer: {
     padding: Spacing.md,
