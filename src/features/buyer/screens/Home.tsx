@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: Spacing.sm, // Moved further down (from md to sm)
+    bottom: 8, // Custom small value to get very close to bottom
     alignItems: 'center',
     justifyContent: 'center',
     pointerEvents: 'none', // Allow touches to pass through to icons
