@@ -184,12 +184,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     position: 'relative', // Allow absolute positioning for button
+    minHeight: 130, // Increased to match new image height
   },
   imageContainer: {
-    width: 90,
-    height: 90,
+    width: 120, // Expanded from 90 to 120 (right expansion)
+    height: 130, // Further expanded from 110 to 130 (more downward expansion)
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
+    borderTopRightRadius: 16, // Added right side rounding
+    borderBottomRightRadius: 16, // Added right side rounding
     overflow: 'hidden',
     marginHorizontal: 0, // Ensure no horizontal margins like detail page
     paddingHorizontal: 0, // Ensure no horizontal padding like detail page
