@@ -197,12 +197,12 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.md, // Add padding to prevent edge touching
+    // Removed padding - image now touches screen edges
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 12, // Add rounded corners like in cards
+    // Removed border radius - image now fills full width to screen edges
   },
   detailsContainer: {
     padding: Spacing.md,
