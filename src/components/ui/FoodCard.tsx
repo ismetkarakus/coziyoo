@@ -148,17 +148,17 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                 <Text variant="body" weight="semibold" color="text">+</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Add to cart button */}
-            <TouchableOpacity 
-              onPress={handleAddToCart}
-              style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-            >
-              <Text variant="body" weight="medium" style={{ color: 'white' }}>
-                Sepete Ekle
-              </Text>
-            </TouchableOpacity>
           </View>
+
+          {/* Add to cart button - Bottom Right Corner */}
+          <TouchableOpacity 
+            onPress={handleAddToCart}
+            style={[styles.addToCartButtonBottomRight, { backgroundColor: colors.primary }]}
+          >
+            <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
+              Sepete Ekle
+            </Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     </Card>
@@ -182,6 +182,7 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    position: 'relative', // Allow absolute positioning for button
   },
   imageContainer: {
     width: 90,
@@ -271,5 +272,20 @@ const styles = StyleSheet.create({
     borderRadius: 6, // Same as badge radius
     minWidth: 70,
     alignItems: 'center',
+  },
+  addToCartButtonBottomRight: {
+    position: 'absolute',
+    bottom: Spacing.sm, // Distance from bottom edge
+    right: Spacing.sm, // Distance from right edge
+    paddingHorizontal: Spacing.xs, // Smaller padding
+    paddingVertical: 3, // Smaller vertical padding
+    borderRadius: 6, // Badge format radius
+    minWidth: 60, // Smaller width
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3, // Add shadow for visibility
   },
 });
