@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -192,6 +192,7 @@ export const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
+  const [scrollY, setScrollY] = useState(0);
   const { addToCart } = useCart();
 
 
@@ -240,6 +241,14 @@ export const Home: React.FC = () => {
 
   const filteredFoods = getFilteredFoods();
 
+  const handleScroll = (event: any) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    setScrollY(currentScrollY);
+  };
+
+  // Calculate TopBar opacity based on scroll position
+  const topBarOpacity = Math.max(0.3, Math.min(1, 1 - scrollY / 100));
+
   const renderTopBarRight = () => (
     <View style={styles.topBarRight}>
       <TouchableOpacity onPress={handleProfilePress} style={styles.profileIconContainer}>
@@ -254,9 +263,16 @@ export const Home: React.FC = () => {
 
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       {/* TopBar */}
-      <View style={[styles.topBar, { backgroundColor: colors.primary }]}>
+      <View style={[styles.topBar, { 
+        backgroundColor: colors.primary,
+        opacity: topBarOpacity,
+      }]}>
         {/* Left Icon - Home/Seller */}
         <TouchableOpacity 
           onPress={() => router.push('/(seller)/dashboard')}
@@ -279,7 +295,12 @@ export const Home: React.FC = () => {
         </TouchableOpacity>
       </View>
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         {/* Search */}
         <View style={styles.searchContainer}>
           <View style={[styles.searchInputContainer, { 
@@ -364,7 +385,7 @@ export const Home: React.FC = () => {
           )}
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
