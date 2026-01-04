@@ -231,12 +231,26 @@ export const Home: React.FC = () => {
     setSelectedCategory(category);
   };
 
-  // Filter foods based on selected category
+  // Filter foods based on selected category and search query
   const getFilteredFoods = () => {
-    if (selectedCategory === 'Tümü') {
-      return MOCK_FOODS;
+    let foods = MOCK_FOODS;
+    
+    // First filter by category
+    if (selectedCategory !== 'Tümü') {
+      foods = foods.filter(food => food.category === selectedCategory);
     }
-    return MOCK_FOODS.filter(food => food.category === selectedCategory);
+    
+    // Then filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      foods = foods.filter(food => 
+        food.name.toLowerCase().includes(query) ||
+        food.cookName.toLowerCase().includes(query) ||
+        food.category.toLowerCase().includes(query)
+      );
+    }
+    
+    return foods;
   };
 
   const filteredFoods = getFilteredFoods();
@@ -379,8 +393,16 @@ export const Home: React.FC = () => {
           ) : (
             <View style={styles.emptyContainer}>
               <Text variant="body" color="textSecondary" style={styles.emptyText}>
-                Bu kategoride henüz yemek bulunmuyor.
+                {searchQuery.trim() 
+                  ? `"${searchQuery}" için sonuç bulunamadı.` 
+                  : 'Bu kategoride henüz yemek bulunmuyor.'
+                }
               </Text>
+              {searchQuery.trim() && (
+                <Text variant="caption" color="textSecondary" style={styles.emptySubText}>
+                  Farklı anahtar kelimeler deneyin veya kategori seçimini değiştirin.
+                </Text>
+              )}
             </View>
           )}
         </View>
@@ -506,6 +528,10 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
+  },
+  emptySubText: {
+    textAlign: 'center',
+    marginTop: Spacing.sm,
   },
 });
 

@@ -73,14 +73,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Keşfet',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon 
-              name={focused ? "search" : "search"} 
-              color={color}
-              style={{ fontSize: focused ? 22 : 20 }}
-            />
-          ),
+          href: null, // Hide from tab bar - search functionality moved to main page
         }}
       />
       <Tabs.Screen
