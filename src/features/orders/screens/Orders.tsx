@@ -41,6 +41,16 @@ export const Orders: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
+  const handleTrackOrder = (order: any) => {
+    router.push({
+      pathname: '/(tabs)/order-tracking',
+      params: {
+        orderNumber: order.orderNumber,
+        cookName: order.cookName,
+      },
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'preparing':
@@ -99,7 +109,12 @@ export const Orders: React.FC = () => {
         
         <View style={styles.orderActions}>
           {order.status === 'preparing' && (
-            <Button variant="outline" size="sm" style={styles.actionButton}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              style={styles.actionButton}
+              onPress={() => handleTrackOrder(order)}
+            >
               Takip Et
             </Button>
           )}
