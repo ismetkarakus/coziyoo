@@ -18,7 +18,7 @@ export const Cart: React.FC = () => {
   const total = subtotal + deliveryFee;
 
   const handleCheckout = () => {
-    router.push('/(tabs)/order-confirmation');
+    router.push('/(tabs)/payment');
   };
 
   if (cartItems.length === 0) {
