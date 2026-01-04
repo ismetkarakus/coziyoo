@@ -271,8 +271,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: 160, // Narrower width - reduced from 180 to 160
     height: 140, // Same height
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    borderRadius: 16, // ✅ Tüm köşeler oval (container da)
     overflow: 'hidden',
     position: 'relative', // Enable absolute positioning for child image
     backgroundColor: '#f5f5f5', // Light background for loading state
@@ -291,7 +290,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     margin: 0,
     padding: 0,
-    borderRadius: 12, // ✅ Hafif oval köşeler (container'dan biraz küçük)
+    borderRadius: 16, // ✅ Tüm köşeler oval
   },
   info: {
     flex: 1,

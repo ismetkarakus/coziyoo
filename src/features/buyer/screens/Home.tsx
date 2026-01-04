@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Text, Input, FoodCard } from '../../../components/ui';
+import { Text, FoodCard } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -325,7 +325,7 @@ export const Home: React.FC = () => {
             <View style={styles.searchIconContainer}>
               <Text style={[styles.searchIcon, { color: colors.primary }]}>🔍</Text>
             </View>
-            <Input
+            <TextInput
               placeholder="Bugün ne yemek istersin?"
               value={searchQuery}
               onChangeText={setSearchQuery}
