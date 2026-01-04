@@ -41,9 +41,6 @@ export const Payment: React.FC = () => {
 
   const subtotal = getTotalPrice();
   const deliveryFee = 5;
-  const commissionRate = 0.15; // %15 komisyon
-  const commissionAmount = subtotal * commissionRate;
-  const sellerEarnings = subtotal - commissionAmount;
   const total = subtotal + deliveryFee;
 
   const getCardIcon = (type: string) => {
@@ -203,28 +200,6 @@ export const Payment: React.FC = () => {
             <Text variant="subheading" weight="semibold" color="primary">
               ₺{total.toFixed(2)}
             </Text>
-          </View>
-          
-          {/* Seller Commission Info */}
-          <View style={styles.commissionInfo}>
-            <Text variant="caption" color="textSecondary" style={styles.commissionTitle}>
-              Satıcı Komisyon Bilgisi:
-            </Text>
-            <View style={styles.commissionRow}>
-              <Text variant="caption" color="textSecondary">
-                Yemek Bedeli: ₺{subtotal.toFixed(2)}
-              </Text>
-            </View>
-            <View style={styles.commissionRow}>
-              <Text variant="caption" color="textSecondary">
-                Platform Komisyonu (%15): -₺{commissionAmount.toFixed(2)}
-              </Text>
-            </View>
-            <View style={styles.commissionRow}>
-              <Text variant="caption" weight="medium" color="textSecondary">
-                Satıcının Alacağı: ₺{sellerEarnings.toFixed(2)}
-              </Text>
-            </View>
           </View>
         </Card>
 
@@ -413,21 +388,5 @@ const styles = StyleSheet.create({
   },
   payButton: {
     marginBottom: 0,
-  },
-  commissionInfo: {
-    marginTop: Spacing.md,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    backgroundColor: '#F8F9FA',
-    padding: Spacing.sm,
-    borderRadius: 8,
-  },
-  commissionTitle: {
-    marginBottom: Spacing.xs,
-    fontWeight: '600',
-  },
-  commissionRow: {
-    marginBottom: 2,
   },
 });
