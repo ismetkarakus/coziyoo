@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 // Mock tracking data
 const TRACKING_STEPS = [
@@ -129,8 +130,11 @@ export const OrderTracking: React.FC = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
         title="Sipariş Takip" 
-        leftIcon="arrow-left"
-        onLeftPress={() => router.back()}
+        leftComponent={
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+        }
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -306,5 +310,12 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     flex: 1,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
   },
 });

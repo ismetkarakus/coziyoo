@@ -51,6 +51,19 @@ export const Orders: React.FC = () => {
     });
   };
 
+  const handleOrderDetails = (order: any) => {
+    // For now, navigate to tracking page with order details
+    // Later can be a separate order details page
+    router.push({
+      pathname: '/(tabs)/order-tracking',
+      params: {
+        orderNumber: order.orderNumber,
+        cookName: order.cookName,
+        showDetails: 'true',
+      },
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'preparing':
@@ -118,7 +131,12 @@ export const Orders: React.FC = () => {
               Takip Et
             </Button>
           )}
-          <Button variant="outline" size="sm" style={styles.actionButton}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            style={styles.actionButton}
+            onPress={() => handleOrderDetails(order)}
+          >
             Detaylar
           </Button>
         </View>
@@ -151,11 +169,7 @@ export const Orders: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="" leftComponent={
-        <Text variant="heading" weight="bold" color="primary" style={{ fontSize: 24 }}>
-          Siparişlerim
-        </Text>
-      } />
+      <TopBar title="Siparişlerim" />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.ordersContainer}>
