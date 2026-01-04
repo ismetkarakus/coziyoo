@@ -88,23 +88,39 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
   const handleAddToCart = () => {
     if (localQuantity > 0) {
-      // Add to actual cart
-      addToCart({
-        id,
-        name,
-        cookName,
-        price,
-        imageUrl,
-      }, localQuantity);
-      
-      // Call parent callback
-      onAddToCart?.(id, localQuantity);
-      
-      // Reset local quantity
-      setLocalQuantity(0);
-      
-      // Show success message
-      Alert.alert('Başarılı', `${localQuantity} adet ${name} sepete eklendi!`);
+      // Show confirmation dialog
+      Alert.alert(
+        'Sepete Ekle', 
+        `${localQuantity} adet ${name} sepete eklensin mi?`,
+        [
+          {
+            text: 'Hayır',
+            style: 'cancel',
+          },
+          {
+            text: 'Evet',
+            onPress: () => {
+              // Add to actual cart
+              addToCart({
+                id,
+                name,
+                cookName,
+                price,
+                imageUrl,
+              }, localQuantity);
+              
+              // Call parent callback
+              onAddToCart?.(id, localQuantity);
+              
+              // Reset local quantity
+              setLocalQuantity(0);
+              
+              // Show success message
+              Alert.alert('Başarılı', `${localQuantity} adet ${name} sepete eklendi!`);
+            },
+          },
+        ]
+      );
     } else {
       Alert.alert('Uyarı', 'Lütfen önce miktar seçin.');
     }
