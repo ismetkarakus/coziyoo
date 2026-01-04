@@ -55,9 +55,12 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   const { cartItems, addToCart, removeFromCart } = useCart();
   const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
   
-  // Get current quantity from cart
+  // Local quantity state (not in cart yet)
+  const [localQuantity, setLocalQuantity] = useState(0);
+  
+  // Get current quantity from cart (for display purposes)
   const cartItem = cartItems.find(item => item.id === id);
-  const quantity = cartItem ? cartItem.quantity : 0;
+  const cartQuantity = cartItem ? cartItem.quantity : 0;
 
   const handlePress = () => {
     console.log('FoodCard pressed:', name, id, 'by', cookName);
@@ -69,45 +72,41 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   };
 
   const incrementQuantity = () => {
-    if (currentStock !== undefined && quantity >= currentStock) {
+    if (currentStock !== undefined && localQuantity >= currentStock) {
       Alert.alert('Stok Yetersiz', `Sadece ${currentStock} adet ${name} kaldı.`);
       return;
     }
     
-    const newQuantity = quantity + 1;
-    addToCart({
-      id,
-      name,
-      cookName,
-      price,
-      quantity: newQuantity,
-      imageUrl,
-    });
-    onAddToCart?.(id, newQuantity);
+    setLocalQuantity(prev => prev + 1);
   };
 
   const decrementQuantity = () => {
-    if (quantity > 0) {
-      const newQuantity = quantity - 1;
-      if (newQuantity === 0) {
-        removeFromCart(id);
-      } else {
-        addToCart({
-          id,
-          name,
-          cookName,
-          price,
-          quantity: newQuantity,
-          imageUrl,
-        });
-      }
-      onAddToCart?.(id, newQuantity);
+    if (localQuantity > 0) {
+      setLocalQuantity(prev => prev - 1);
     }
   };
 
   const handleAddToCart = () => {
-    if (quantity === 0) {
-      incrementQuantity();
+    if (localQuantity > 0) {
+      // Add to actual cart
+      addToCart({
+        id,
+        name,
+        cookName,
+        price,
+        imageUrl,
+      }, localQuantity);
+      
+      // Call parent callback
+      onAddToCart?.(id, localQuantity);
+      
+      // Reset local quantity
+      setLocalQuantity(0);
+      
+      // Show success message
+      Alert.alert('Başarılı', `${localQuantity} adet ${name} sepete eklendi!`);
+    } else {
+      Alert.alert('Uyarı', 'Lütfen önce miktar seçin.');
     }
   };
 
@@ -212,7 +211,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                 <Text variant="body" weight="semibold" style={styles.quantityButtonText}>−</Text>
               </TouchableOpacity>
               <Text variant="body" weight="bold" style={styles.quantityText}>
-                {quantity}
+                {localQuantity}
               </Text>
               <TouchableOpacity 
                 onPress={incrementQuantity}

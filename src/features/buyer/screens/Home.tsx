@@ -214,11 +214,10 @@ export const Home: React.FC = () => {
           name: food.name,
           cookName: food.cookName,
           price: food.price,
-          quantity: quantity,
           imageUrl: food.imageUrl,
           currentStock: currentStock - quantity,
           dailyStock: food.dailyStock,
-        });
+        }, quantity);
         console.log(`Added ${quantity} of ${food.name} to cart. Remaining stock: ${currentStock - quantity}`);
       } else {
         alert(`Yeterli stok yok! Sadece ${currentStock} adet kaldı.`);
