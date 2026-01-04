@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -52,19 +53,23 @@ export const SellerPanel: React.FC = () => {
     router.push(route as any);
   };
 
+  const handleBackPress = () => {
+    console.log('Back button pressed - navigating to home'); // Debug log
+    router.push('/(tabs)/'); // Navigate to home/main screen
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="" 
+        title="Satıcı Paneli" 
         leftComponent={
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text variant="body" style={{ fontSize: 24 }}>←</Text>
+          <TouchableOpacity 
+            onPress={handleBackPress}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <FontAwesome name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
-        }
-        rightComponent={
-          <Text variant="heading" weight="bold" color="primary" style={{ fontSize: 24 }}>
-            Satıcı Paneli
-          </Text>
         }
       />
       
@@ -127,25 +132,35 @@ export const SellerPanel: React.FC = () => {
           </View>
         </Card>
 
-        {/* Menu Sections */}
-        <View style={styles.menuContainer}>
-          {MENU_ITEMS.map((item, index) => (
+        {/* Menu Sections - Separate Cards */}
+        <View style={styles.menuSectionsContainer}>
+          {MENU_ITEMS.map((item) => (
             <TouchableOpacity
               key={item.id}
               onPress={() => handleMenuPress(item.route)}
-              style={[
-                styles.menuItem,
-                index !== MENU_ITEMS.length - 1 && styles.menuItemBorder,
-                { borderBottomColor: colors.border }
-              ]}
+              style={[styles.menuCard, { backgroundColor: colors.primary }]}
               activeOpacity={0.7}
             >
-              <View style={styles.menuItemContent}>
-                <Text style={styles.menuIcon}>{item.icon}</Text>
-                <Text variant="body" style={styles.menuTitle}>
-                  {item.title}
+              <View style={styles.menuCardContent}>
+                <Text style={styles.menuCardIcon}>
+                  {item.icon}
                 </Text>
-                <Text variant="body" color="textSecondary">
+                <View style={styles.menuCardTextContainer}>
+                  <Text 
+                    variant="subheading" 
+                    weight="semibold"
+                    style={styles.menuCardTitle}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text 
+                    variant="caption"
+                    style={styles.menuCardDescription}
+                  >
+                    {item.description}
+                  </Text>
+                </View>
+                <Text style={styles.menuCardArrow}>
                   →
                 </Text>
               </View>
@@ -198,30 +213,53 @@ const styles = StyleSheet.create({
   userDetails: {
     flex: 1,
   },
-  menuContainer: {
-    marginHorizontal: Spacing.md,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  menuItem: {
+  menuSectionsContainer: {
     paddingHorizontal: Spacing.md,
+    gap: Spacing.md,
+  },
+  menuCard: {
+    borderRadius: 16,
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: Spacing.xs,
   },
-  menuItemBorder: {
-    borderBottomWidth: 1,
-  },
-  menuItemContent: {
+  menuCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  menuIcon: {
-    fontSize: 20,
-    marginRight: Spacing.md,
-    width: 24,
+  menuCardIcon: {
+    fontSize: 32,
+    marginRight: Spacing.lg,
+    width: 40,
+    color: 'white',
   },
-  menuTitle: {
+  menuCardTextContainer: {
     flex: 1,
+  },
+  menuCardTitle: {
+    fontSize: 18,
+    color: 'white',
+    marginBottom: Spacing.xs,
+  },
+  menuCardDescription: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  menuCardArrow: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  backButton: {
+    padding: Spacing.sm,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

@@ -17,6 +17,11 @@ interface FormFieldProps {
   required?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  multiline?: boolean;
+  numberOfLines?: number;
+  textAlignVertical?: 'auto' | 'top' | 'bottom' | 'center';
+  style?: any;
+  onContentSizeChange?: (event: any) => void;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({

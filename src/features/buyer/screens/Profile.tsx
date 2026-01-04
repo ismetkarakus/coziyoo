@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -50,6 +50,14 @@ const PROFILE_SECTIONS = [
   },
 ];
 
+// Mock user data
+const USER_DATA = {
+  name: 'Ahmet Yılmaz',
+  email: 'ahmet@example.com',
+  location: 'Kadıköy, İstanbul',
+  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+};
+
 export const Profile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -96,20 +104,22 @@ export const Profile: React.FC = () => {
         {/* User Info */}
         <Card variant="default" padding="md" style={styles.userCard}>
           <View style={styles.userInfo}>
-            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-              <Text variant="title" style={{ color: 'white' }}>
-                A
-              </Text>
+            <View style={styles.avatarContainer}>
+              <Image 
+                source={{ uri: USER_DATA.avatar }}
+                style={styles.avatarImage}
+                defaultSource={{ uri: 'https://via.placeholder.com/150x150/7FAF9A/FFFFFF?text=A' }}
+              />
             </View>
             <View style={styles.userDetails}>
               <Text variant="subheading" weight="semibold">
-                Ahmet Yılmaz
+                {USER_DATA.name}
               </Text>
               <Text variant="body" color="textSecondary">
-                ahmet@example.com
+                {USER_DATA.email}
               </Text>
               <Text variant="caption" color="textSecondary">
-                Kadıköy, İstanbul
+                {USER_DATA.location}
               </Text>
             </View>
           </View>
@@ -181,13 +191,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+  avatarContainer: {
+    width: 70, // Slightly larger for better visibility
+    height: 70,
+    borderRadius: 35,
     marginRight: Spacing.md,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: Colors.light.primary, // Sage green border
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 35,
   },
   userDetails: {
     flex: 1,

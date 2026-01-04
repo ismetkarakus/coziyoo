@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { Colors } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import { useCart } from '@/src/context/CartContext';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -17,6 +18,8 @@ function TabBarIcon(props: {
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { getTotalItems } = useCart();
+  const cartItemCount = getTotalItems();
 
   return (
     <Tabs
@@ -60,7 +63,7 @@ export default function TabLayout() {
           title: 'Ana Sayfa',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "home" : "home"} 
+              name={focused ? "list" : "list"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
             />
@@ -84,7 +87,7 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: 'Sepet',
-          tabBarBadge: 3,
+          tabBarBadge: cartItemCount > 0 ? cartItemCount : undefined,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
               name={focused ? "shopping-cart" : "shopping-cart"} 
@@ -117,6 +120,12 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="profile"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="seller"
         options={{
           href: null, // Hide from tab bar
         }}

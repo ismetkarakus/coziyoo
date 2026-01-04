@@ -45,7 +45,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           
           <View style={styles.center}>
             {title && (
-              <Text variant="subheading" weight="semibold" center>
+              <Text variant="heading" weight="bold" center style={{ fontSize: 20 }}>
                 {title}
               </Text>
             )}

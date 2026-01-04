@@ -5,46 +5,15 @@ import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
-
-// Mock cart data
-const MOCK_CART_ITEMS = [
-  {
-    id: '1',
-    name: 'Ev Yapımı Mantı',
-    cookName: 'Ayşe Hanım',
-    price: 25,
-    quantity: 2,
-    imageUrl: null,
-  },
-  {
-    id: '2',
-    name: 'Karnıyarık',
-    cookName: 'Fatma Teyze',
-    price: 18,
-    quantity: 1,
-    imageUrl: null,
-  },
-];
+import { useCart } from '../../../context/CartContext';
 
 export const Cart: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const [cartItems, setCartItems] = useState(MOCK_CART_ITEMS);
+  const { cartItems, updateQuantity, getTotalPrice } = useCart();
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
 
-  const updateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity === 0) {
-      setCartItems(prev => prev.filter(item => item.id !== itemId));
-    } else {
-      setCartItems(prev => 
-        prev.map(item => 
-          item.id === itemId ? { ...item, quantity: newQuantity } : item
-        )
-      );
-    }
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = getTotalPrice();
   const deliveryFee = deliveryType === 'delivery' ? 5 : 0;
   const total = subtotal + deliveryFee;
 

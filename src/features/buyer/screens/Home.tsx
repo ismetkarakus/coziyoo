@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, Input, FoodCard } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useCart } from '../../../context/CartContext';
 
 // Mock data
 const USER_DATA = {
@@ -33,6 +35,9 @@ const MOCK_FOODS = [
     category: 'Ana Yemek',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '15-20 Ocak',
+    currentStock: 8,
+    dailyStock: 10,
   },
   {
     id: '2',
@@ -44,6 +49,9 @@ const MOCK_FOODS = [
     category: 'Ana Yemek',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '16-22 Ocak',
+    currentStock: 5,
+    dailyStock: 12,
   },
   {
     id: '4',
@@ -55,6 +63,9 @@ const MOCK_FOODS = [
     category: 'Ana Yemek',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '18-25 Ocak',
+    currentStock: 3,
+    dailyStock: 8,
   },
   // Çorba
   {
@@ -67,6 +78,9 @@ const MOCK_FOODS = [
     category: 'Çorba',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '15-30 Ocak',
+    currentStock: 15,
+    dailyStock: 20,
   },
   {
     id: '6',
@@ -78,6 +92,9 @@ const MOCK_FOODS = [
     category: 'Çorba',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '19-26 Ocak',
+    currentStock: 10,
+    dailyStock: 12,
   },
   // Kahvaltı
   {
@@ -90,6 +107,9 @@ const MOCK_FOODS = [
     category: 'Kahvaltı',
     hasPickup: true,
     hasDelivery: false,
+    availableDates: '21-28 Ocak',
+    currentStock: 3,
+    dailyStock: 5,
   },
   {
     id: '9',
@@ -101,6 +121,9 @@ const MOCK_FOODS = [
     category: 'Kahvaltı',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '17-24 Ocak',
+    currentStock: 7,
+    dailyStock: 10,
   },
   // Salata
   {
@@ -113,6 +136,9 @@ const MOCK_FOODS = [
     category: 'Salata',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '15-22 Ocak',
+    currentStock: 9,
+    dailyStock: 10,
   },
   {
     id: '12',
@@ -124,6 +150,9 @@ const MOCK_FOODS = [
     category: 'Salata',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '23-30 Ocak',
+    currentStock: 6,
+    dailyStock: 8,
   },
   {
     id: '13',
@@ -135,6 +164,9 @@ const MOCK_FOODS = [
     category: 'Salata',
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '16-23 Ocak',
+    currentStock: 4,
+    dailyStock: 5,
   },
   // Baklava'yı da bir kategoriye ekleyelim
   {
@@ -147,6 +179,9 @@ const MOCK_FOODS = [
     category: 'Ana Yemek', // Tatlı kategorisi yok, Ana Yemek'e ekledim
     hasPickup: true,
     hasDelivery: true,
+    availableDates: '17-24 Ocak',
+    currentStock: 2,
+    dailyStock: 3,
   },
 ];
 
@@ -156,21 +191,39 @@ export const Home: React.FC = () => {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
+  const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
+  const { addToCart } = useCart();
 
-  const handleProfilePress = () => {
-    router.push('/(tabs)/profile');
-  };
 
-  const handleNotificationsPress = () => {
-    router.push('/(tabs)/notifications');
-  };
 
-  const handleLogoPress = () => {
-    router.push('/(seller)/dashboard');
-  };
 
   const handleAddToCart = (foodId: string, quantity: number) => {
-    console.log(`Added ${quantity} of food ${foodId} to cart`);
+    const food = MOCK_FOODS.find(f => f.id === foodId);
+    if (food && quantity > 0) {
+      // Check current stock
+      const currentStock = foodStocks[foodId] ?? food.currentStock ?? 0;
+      if (currentStock >= quantity) {
+        // Update local stock
+        setFoodStocks(prev => ({
+          ...prev,
+          [foodId]: currentStock - quantity
+        }));
+        
+        addToCart({
+          id: food.id,
+          name: food.name,
+          cookName: food.cookName,
+          price: food.price,
+          quantity: quantity,
+          imageUrl: food.imageUrl,
+          currentStock: currentStock - quantity,
+          dailyStock: food.dailyStock,
+        });
+        console.log(`Added ${quantity} of ${food.name} to cart. Remaining stock: ${currentStock - quantity}`);
+      } else {
+        alert(`Yeterli stok yok! Sadece ${currentStock} adet kaldı.`);
+      }
+    }
   };
 
   const handleCategoryPress = (category: string) => {
@@ -200,39 +253,31 @@ export const Home: React.FC = () => {
     </View>
   );
 
-  const renderTopBarCenter = () => (
-    <TouchableOpacity onPress={handleLogoPress}>
-      <Text variant="heading" weight="bold" color="text" style={styles.logoText}>
-        Cazi
-      </Text>
-    </TouchableOpacity>
-  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* TopBar */}
       <View style={[styles.topBar, { backgroundColor: colors.primary }]}>
-        <View style={styles.topBarContent}>
-          {/* Left Icon - positioned at bottom */}
-          <View style={styles.leftIconWrapper}>
-            <TouchableOpacity onPress={handleLogoPress} style={styles.homeIconContainer}>
-              <Text style={styles.homeIcon}>🏠</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Center Logo */}
-          <View style={styles.centerLogoWrapper}>
-            <Text variant="heading" weight="bold" style={styles.logoText}>
-              Cazi
-            </Text>
-          </View>
-          
-          {/* Right Icon - positioned at bottom */}
-          <View style={styles.rightIconWrapper}>
-            <TouchableOpacity onPress={handleProfilePress} style={styles.profileIconContainer}>
-              <Text style={styles.profileIcon}>👤</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* Left Icon - Home/Seller */}
+        <TouchableOpacity 
+          onPress={() => router.push('/(seller)/dashboard')}
+          style={styles.leftIcon}
+        >
+          <FontAwesome name="home" size={20} color="white" />
+        </TouchableOpacity>
+        
+        {/* Center Title */}
+        <Text variant="heading" weight="bold" style={styles.topBarTitle}>
+          Cazi
+        </Text>
+        
+        {/* Right Icon - Profile */}
+        <TouchableOpacity 
+          onPress={() => router.push('/(tabs)/profile')}
+          style={styles.rightIcon}
+        >
+          <FontAwesome name="user" size={20} color="white" />
+        </TouchableOpacity>
       </View>
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -307,6 +352,7 @@ export const Home: React.FC = () => {
               <FoodCard
                 key={food.id}
                 {...food}
+                currentStock={foodStocks[food.id] ?? food.currentStock}
                 onAddToCart={handleAddToCart}
               />
             ))
@@ -328,75 +374,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
-    paddingTop: 0,
-    paddingBottom: Spacing.lg, // Increased bottom padding to extend downward
-  },
-  topBarContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-end', // Align items to bottom
-    justifyContent: 'space-between',
+    paddingTop: 50, // Safe area padding
+    paddingBottom: Spacing.xl, // Increased bottom padding to extend downward
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.md, // Increased bottom padding for more space
-    height: 100, // Increased height to extend downward
-    position: 'relative', // For absolute positioning of center logo
+    flexDirection: 'row',
+    alignItems: 'flex-end', // Align icons to bottom
+    justifyContent: 'space-between',
+    minHeight: 100, // Added minimum height for more space
+    position: 'relative',
   },
-  leftIconWrapper: {
-    position: 'absolute',
-    left: Spacing.sm, // Closer to the very left edge
-    bottom: Spacing.xs, // Moved further down (from sm to xs)
-  },
-  centerLogoWrapper: {
+  topBarTitle: {
+    fontSize: 24,
+    color: 'white',
+    letterSpacing: 1,
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 8, // Custom small value to get very close to bottom
-    alignItems: 'center',
-    justifyContent: 'center',
-    pointerEvents: 'none', // Allow touches to pass through to icons
+    bottom: Spacing.xl,
+    textAlign: 'center',
   },
-  rightIconWrapper: {
-    position: 'absolute',
-    right: Spacing.sm, // Closer to the very right edge
-    bottom: Spacing.xs, // Moved further down (from sm to xs)
-  },
-  homeIconContainer: {
+  leftIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 4, // Much closer to bottom edge
   },
-  homeIcon: {
-    fontSize: 20,
-    color: 'white',
-  },
-  logoText: {
-    fontSize: 28, // Increased from 24 to 28
-    color: 'white',
-    letterSpacing: 1,
-    fontWeight: 'bold', // Added bold for better visibility
-  },
-  profileIconContainer: {
+  rightIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  profileIcon: {
-    fontSize: 20,
-    color: 'white',
-  },
-  profileAvatar: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 20,
+    marginBottom: 4, // Much closer to bottom edge
   },
   content: {
     flex: 1,

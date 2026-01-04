@@ -39,6 +39,7 @@ export const Input = forwardRef<TextInput, InputProps>(({
     color: colors.text,
     ...(leftIcon && styles.inputWithLeftIcon),
     ...(rightIcon && styles.inputWithRightIcon),
+    ...(props.multiline && styles.multilineInput),
   };
   
   const inputStyle = style ? [baseStyle, style] : baseStyle;
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     position: 'relative',
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start', // Multiline için üstten hizala
   },
   input: {
     flex: 1,
@@ -125,5 +126,12 @@ const styles = StyleSheet.create({
   },
   helperText: {
     marginTop: Spacing.xs,
+  },
+  multilineInput: {
+    paddingTop: 12, // Üst padding
+    paddingBottom: 12, // Alt padding
+    textAlignVertical: 'top', // Metin üstten başlasın
+    lineHeight: 22, // Satır yüksekliği
+    // Yükseklik dinamik olarak parent'tan gelecek
   },
 });
