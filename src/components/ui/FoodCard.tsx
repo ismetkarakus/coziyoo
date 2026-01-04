@@ -115,8 +115,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
               // Reset local quantity
               setLocalQuantity(0);
               
-              // Show success message
-              Alert.alert('Başarılı', `${localQuantity} adet ${name} sepete eklendi!`);
+              // No success dialog - just add to cart silently
             },
           },
         ]
