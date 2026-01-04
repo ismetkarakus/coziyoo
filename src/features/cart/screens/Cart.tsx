@@ -46,11 +46,7 @@ export const Cart: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="" leftComponent={
-        <Text variant="heading" weight="bold" color="primary" style={{ fontSize: 24 }}>
-          Sepetim
-        </Text>
-      } />
+      <TopBar title="Sepetim" />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Cart Items */}
