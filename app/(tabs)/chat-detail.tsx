@@ -4,3 +4,4 @@ export default function ChatDetailScreen() {
   return <ChatDetail />;
 }
 
+

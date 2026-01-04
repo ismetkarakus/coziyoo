@@ -11,12 +11,12 @@ import { useCart } from '../../context/CartContext';
 // Default images for food items (using placeholder URLs for now)
 const getDefaultImage = (foodName: string) => {
   const foodImages: { [key: string]: string } = {
-    'Ev Yapımı Mantı': 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=200&h=200&fit=crop',
-    'Karnıyarık': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=200&h=200&fit=crop',
-    'Baklava': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=200&h=200&fit=crop',
+    'Ev Yapımı Mantı': 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=320&h=280&fit=crop',
+    'Karnıyarık': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
+    'Baklava': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
   };
   
-  return { uri: foodImages[foodName] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&h=200&fit=crop' };
+  return { uri: foodImages[foodName] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=320&h=280&fit=crop' };
 };
 
 interface FoodCardProps {
@@ -119,8 +119,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({
             <Image 
               source={imageUrl ? { uri: imageUrl } : getDefaultImage(name)} 
               style={styles.image}
-              resizeMode="cover"
-              defaultSource={{ uri: 'https://via.placeholder.com/120x110/f5f5f5/cccccc?text=📸' }}
+              resizeMode="contain"
+              defaultSource={{ uri: 'https://via.placeholder.com/160x140/f5f5f5/cccccc?text=📸' }}
             />
           </TouchableOpacity>
 
@@ -146,11 +146,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
       {/* Date Range and Stock Info */}
       <View style={styles.availabilityInfo}>
-        <Text variant="caption" color="textSecondary">
-          📅 {availableDates || 'Tarih belirtilmemiş'}
-        </Text>
-        <Text variant="caption" color={currentStock && currentStock > 0 ? "primary" : "error"}>
-          📦 {currentStock || 0}/{dailyStock || 0} kalan
+        <Text variant="caption" color="textSecondary" style={styles.compactDateText}>
+          📅 {availableDates || 'Tarih belirtilmemiş'} • {currentStock || 0} adet
         </Text>
       </View>
 
@@ -168,9 +165,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                     }
                   ]}
                 >
-                  <Text variant="caption" style={{ 
+                  <Text variant="body" weight="medium" style={{ 
                     color: selectedDeliveryType === 'pickup' ? 'white' : colors.primary, 
-                    fontWeight: '500' 
+                    fontSize: 11 // Same as sepete ekle button
                   }}>
                     Pickup
                   </Text>
@@ -188,9 +185,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                     }
                   ]}
                 >
-                  <Text variant="caption" style={{ 
+                  <Text variant="body" weight="medium" style={{ 
                     color: selectedDeliveryType === 'delivery' ? 'white' : colors.primary, 
-                    fontWeight: '500' 
+                    fontSize: 11 // Same as sepete ekle button
                   }}>
                     Delivery
                   </Text>
@@ -242,8 +239,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: Spacing.xs, // Reduced from md to xs for tighter spacing
-    borderRadius: 16,
+    marginBottom: 4, // Minimal spacing between cards
+    borderRadius: 16, // Restore original radius
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -253,79 +250,93 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'flex-start', // Back to flex-start
     position: 'relative', // Allow absolute positioning for button
-    minHeight: 110, // Reduced from 130 to 110
+    minHeight: 140, // Slightly reduced height
   },
   imageContainer: {
-    width: 120,
-    height: 110,
+    width: 160, // Narrower width - reduced from 180 to 160
+    height: 140, // Same height
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
     overflow: 'hidden',
     position: 'relative', // Enable absolute positioning for child image
     backgroundColor: '#f5f5f5', // Light background for loading state
+    margin: 0,
+    padding: 0,
+    justifyContent: 'center', // Center the image
+    alignItems: 'center', // Center the image
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: '100%', // Full width like detail page
+    height: '100%', // Full height like detail page
     position: 'absolute', // Position absolute to fill container completely
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+    margin: 0,
+    padding: 0,
+    borderRadius: 12, // ✅ Hafif oval köşeler (container'dan biraz küçük)
   },
   info: {
     flex: 1,
-    paddingLeft: Spacing.sm, // Reduced gap between image and content
-    paddingRight: Spacing.xs,
-    paddingVertical: Spacing.xs, // Reduced from sm to xs for tighter vertical spacing
+    paddingLeft: 10, // Slightly more space for readability
+    paddingRight: 4,
+    paddingVertical: 4, // Reduced vertical spacing
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-    marginBottom: Spacing.xs,
+    marginBottom: 1, // Minimal margin
   },
   foodName: {
     flex: 1,
     marginRight: Spacing.sm,
   },
   cookInfo: {
-    marginBottom: Spacing.xs,
+    marginBottom: 1, // Minimal margin
   },
   cookName: {
-    fontSize: 14,
+    fontSize: 12, // Smaller font
   },
   ratingDistance: {
-    marginBottom: Spacing.xs,
+    marginBottom: 1, // Minimal margin
   },
   availabilityInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs, // Reduced from sm to xs
+    marginBottom: 1, // Minimal margin
   },
   badges: {
     flexDirection: 'row',
     gap: Spacing.xs,
   },
   badge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: Spacing.xs, // Same as sepete ekle button
+    paddingVertical: 1, // Reduced from 3 to 1 for thinner buttons
+    borderRadius: 6, // Same as sepete ekle button
+    minWidth: 60, // Same as sepete ekle button
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3, // Same shadow as sepete ekle button
   },
   rightControls: {
     alignItems: 'flex-end',
     justifyContent: 'flex-start', // Changed from space-between to flex-start
-    minWidth: 100,
-    paddingVertical: Spacing.xs, // Reduced from sm to xs for tighter vertical spacing
-    paddingRight: Spacing.sm,
+    minWidth: 80,
+    paddingVertical: 2, // Minimal vertical padding
+    paddingRight: 8,
   },
   price: {
-    fontSize: 16, // Reduced from 20 to 16
+    fontSize: 14, // Further reduced font size
     fontWeight: 'bold',
-    marginBottom: Spacing.xs,
+    marginBottom: 2, // Minimal margin
   },
   quantityControls: {
     flexDirection: 'row',
@@ -389,5 +400,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 3, // Add shadow for visibility
+  },
+  compactDateText: {
+    fontSize: 11, // Slightly smaller for compact look
+    paddingHorizontal: 4, // Narrower from sides
   },
 });
