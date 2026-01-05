@@ -13,6 +13,32 @@ export const MealPreview: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { previewData } = useLocalSearchParams();
 
+  // Format date range for display (e.g., "1-3 Ocak")
+  const formatDateRange = (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) return 'Tarih belirtilmemiş';
+    
+    try {
+      const months = [
+        'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+      ];
+      
+      // Parse dates (assuming DD/MM/YYYY format)
+      const [startDay, startMonth, startYear] = startDate.split('/').map(Number);
+      const [endDay, endMonth, endYear] = endDate.split('/').map(Number);
+      
+      // Same month and year
+      if (startMonth === endMonth && startYear === endYear) {
+        return `${startDay}-${endDay} ${months[startMonth - 1]}`;
+      }
+      
+      // Different months or years
+      return `${startDay} ${months[startMonth - 1]} - ${endDay} ${months[endMonth - 1]}`;
+    } catch (error) {
+      return `${startDate} - ${endDate}`;
+    }
+  };
+
   // Parse preview data
   let data = {};
   try {
@@ -42,9 +68,7 @@ export const MealPreview: React.FC = () => {
         category: data.category,
         hasPickup: data.hasPickup,
         hasDelivery: data.hasDelivery,
-        availableDates: data.startDate && data.endDate ? 
-          `${data.startDate} - ${data.endDate}` : 
-          'Tarih belirtilmemiş',
+        availableDates: formatDateRange(data.startDate, data.endDate),
         currentStock: parseInt(data.dailyStock),
         dailyStock: parseInt(data.dailyStock),
         maxDeliveryDistance: parseInt(data.maxDistance) || 0,
@@ -101,9 +125,7 @@ export const MealPreview: React.FC = () => {
     category: data.category || 'Kategori',
     hasPickup: data.hasPickup || false,
     hasDelivery: data.hasDelivery || false,
-    availableDates: data.startDate && data.endDate ? 
-      `${data.startDate} - ${data.endDate}` : 
-      'Tarih belirtilmemiş',
+    availableDates: data.availableDates || formatDateRange(data.startDate, data.endDate),
     currentStock: parseInt(data.dailyStock) || 0,
     dailyStock: parseInt(data.dailyStock) || 0,
     maxDeliveryDistance: parseInt(data.maxDistance) || 0,

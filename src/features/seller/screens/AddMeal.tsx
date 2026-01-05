@@ -13,6 +13,32 @@ export const AddMeal: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
+  // Format date range for display (e.g., "1-3 Ocak")
+  const formatDateRange = (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) return 'Tarih belirtilmemiş';
+    
+    try {
+      const months = [
+        'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+      ];
+      
+      // Parse dates (assuming DD/MM/YYYY format)
+      const [startDay, startMonth, startYear] = startDate.split('/').map(Number);
+      const [endDay, endMonth, endYear] = endDate.split('/').map(Number);
+      
+      // Same month and year
+      if (startMonth === endMonth && startYear === endYear) {
+        return `${startDay}-${endDay} ${months[startMonth - 1]}`;
+      }
+      
+      // Different months or years
+      return `${startDay} ${months[startMonth - 1]} - ${endDay} ${months[endMonth - 1]}`;
+    } catch (error) {
+      return `${startDate} - ${endDate}`;
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -284,6 +310,7 @@ export const AddMeal: React.FC = () => {
       deliveryFee: formData.deliveryFee,
       startDate: formData.startDate,
       endDate: formData.endDate,
+      availableDates: formatDateRange(formData.startDate, formData.endDate),
       hasPickup: deliveryOptions.pickup,
       hasDelivery: deliveryOptions.delivery,
       images: selectedImages,
@@ -339,9 +366,7 @@ export const AddMeal: React.FC = () => {
         category: formData.category,
         hasPickup: deliveryOptions.pickup,
         hasDelivery: deliveryOptions.delivery,
-        availableDates: formData.startDate && formData.endDate ? 
-          `${formData.startDate} - ${formData.endDate}` : 
-          'Tarih belirtilmemiş',
+        availableDates: formatDateRange(formData.startDate, formData.endDate),
         currentStock: parseInt(formData.dailyStock),
         dailyStock: parseInt(formData.dailyStock),
         maxDeliveryDistance: parseInt(formData.maxDistance) || 0,
