@@ -521,18 +521,6 @@ export const AddMeal: React.FC = () => {
               required
             />
 
-            {/* Teslimat Mesafesi - Sadece delivery seçildiğinde görünür */}
-            {deliveryOptions.delivery && (
-              <FormField
-                label="🚗 Teslimat Mesafesi (km)"
-                value={formData.maxDistance}
-                onChangeText={handleInputChange('maxDistance')}
-                placeholder="Örn: 5"
-                keyboardType="numeric"
-                helperText="Yemeği kaç kilometre uzağa götürebilirsiniz? (Ana ekranda görünecek)"
-                required
-              />
-            )}
 
             <View style={styles.dateInputs}>
               <View style={styles.dateInput}>
@@ -593,22 +581,22 @@ export const AddMeal: React.FC = () => {
             {deliveryOptions.delivery && (
               <View style={styles.deliverySettings}>
                 <FormField
+                  label="🚗 Teslimat Mesafesi (km)"
+                  value={formData.maxDistance}
+                  onChangeText={handleInputChange('maxDistance')}
+                  placeholder="Örn: 5"
+                  keyboardType="numeric"
+                  helperText="Yemeği kaç kilometre uzağa götürebilirsiniz? (Ana ekranda görünecek)"
+                  required
+                />
+
+                <FormField
                   label="Teslimat Ücreti (₺)"
                   value={formData.deliveryFee}
                   onChangeText={handleInputChange('deliveryFee')}
                   placeholder="Örn: 10 ₺"
                   keyboardType="numeric"
                   helperText="Müşterilerden alacağınız teslimat ücreti"
-                />
-
-                <FormField
-                  label="Kaç Kilometre Uzağa Teslimat Yapacaksınız?"
-                  value={formData.maxDistance}
-                  onChangeText={handleInputChange('maxDistance')}
-                  placeholder="Örn: 5 km"
-                  keyboardType="numeric"
-                  helperText="Teslimat yapabileceğiniz maksimum mesafeyi belirtin"
-                  required
                 />
               </View>
             )}
