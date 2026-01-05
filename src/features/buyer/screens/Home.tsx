@@ -203,6 +203,34 @@ export const Home: React.FC = () => {
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
   const { addToCart } = useCart();
 
+  // Remove Tavuk pilav from published meals
+  const removeTavukPilav = async () => {
+    try {
+      const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
+      if (publishedMealsJson) {
+        const meals = JSON.parse(publishedMealsJson);
+        console.log('Before removal:', meals);
+        
+        // Filter out Tavuk pilav
+        const filteredMeals = meals.filter(meal => 
+          !meal.name || !meal.name.toLowerCase().includes('tavuk pilav')
+        );
+        
+        console.log('After removal:', filteredMeals);
+        
+        // Save back to AsyncStorage
+        await AsyncStorage.setItem('publishedMeals', JSON.stringify(filteredMeals));
+        
+        // Update state
+        setPublishedMeals(filteredMeals);
+        
+        console.log('Tavuk pilav removed successfully');
+      }
+    } catch (error) {
+      console.error('Error removing Tavuk pilav:', error);
+    }
+  };
+
   // Load published meals from AsyncStorage
   useEffect(() => {
     const loadPublishedMeals = async () => {
@@ -222,6 +250,9 @@ export const Home: React.FC = () => {
     };
 
     loadPublishedMeals();
+    
+    // Auto-remove Tavuk pilav on component mount
+    removeTavukPilav();
   }, []);
 
   // Reload published meals when screen comes into focus
