@@ -334,18 +334,18 @@ export const SellerProfile: React.FC = () => {
                   Uzmanlık Alanları
                 </Text>
                 
-                {/* Mevcut Uzmanlık Alanları */}
-                <View style={styles.specialtiesContainer}>
+                {/* Mevcut Uzmanlık Alanları - Liste Formatında */}
+                <View style={styles.specialtiesListContainer}>
                   {specialties.map((specialty, index) => (
-                    <View key={index} style={[styles.specialtyTagEditable, { backgroundColor: colors.primary }]}>
-                      <Text variant="caption" style={styles.specialtyText}>
+                    <View key={index} style={[styles.specialtyListItem, { borderColor: colors.border }]}>
+                      <Text variant="body" style={styles.specialtyListText}>
                         {specialty}
                       </Text>
                       <TouchableOpacity
                         onPress={() => handleRemoveSpecialty(specialty)}
-                        style={styles.removeSpecialtyButton}
+                        style={[styles.removeSpecialtyListButton, { backgroundColor: colors.error }]}
                       >
-                        <FontAwesome name="times" size={12} color="white" />
+                        <FontAwesome name="trash" size={14} color="white" />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -357,16 +357,23 @@ export const SellerProfile: React.FC = () => {
                     <Input
                       value={newSpecialty}
                       onChangeText={setNewSpecialty}
-                      placeholder="Yeni uzmanlık alanı ekle"
+                      placeholder="Yeni uzmanlık alanı ekle (örn: İtalyan Mutfağı)"
                       style={styles.addSpecialtyInput}
                       onSubmitEditing={handleAddSpecialty}
                     />
                     <TouchableOpacity
                       onPress={handleAddSpecialty}
-                      style={[styles.addSpecialtyButton, { backgroundColor: colors.primary }]}
+                      style={[
+                        styles.addSpecialtyListButton, 
+                        { 
+                          backgroundColor: newSpecialty.trim() ? colors.primary : colors.textSecondary,
+                          opacity: newSpecialty.trim() ? 1 : 0.5
+                        }
+                      ]}
                       disabled={!newSpecialty.trim()}
                     >
                       <FontAwesome name="plus" size={16} color="white" />
+                      <Text variant="caption" style={styles.addButtonText}>Ekle</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -384,10 +391,11 @@ export const SellerProfile: React.FC = () => {
                   <Text variant="body" weight="medium" style={styles.specialtiesViewTitle}>
                     Uzmanlık Alanları
                   </Text>
-                  <View style={styles.specialtiesContainer}>
+                  <View style={styles.specialtiesViewList}>
                     {specialties.map((specialty, index) => (
-                      <View key={index} style={[styles.specialtyTag, { backgroundColor: colors.primary }]}>
-                        <Text variant="caption" style={styles.specialtyText}>
+                      <View key={index} style={styles.specialtyViewItem}>
+                        <FontAwesome name="check-circle" size={16} color={colors.primary} />
+                        <Text variant="body" style={styles.specialtyViewText}>
                           {specialty}
                         </Text>
                       </View>
@@ -760,39 +768,71 @@ const styles = StyleSheet.create({
   specialtiesViewTitle: {
     marginBottom: Spacing.sm,
   },
-  specialtyTagEditable: {
+  // Yeni liste formatı stilleri
+  specialtiesListContainer: {
+    gap: Spacing.sm,
+  },
+  specialtyListItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 16,
-    gap: Spacing.xs,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
   },
-  removeSpecialtyButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+  specialtyListText: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  removeSpecialtyListButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Görüntüleme modu stilleri
+  specialtiesViewList: {
+    gap: Spacing.sm,
+  },
+  specialtyViewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  specialtyViewText: {
+    flex: 1,
+  },
+  // Ekleme bölümü stilleri
   addSpecialtyContainer: {
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.border,
   },
   addSpecialtyInputContainer: {
     flexDirection: 'row',
     gap: Spacing.sm,
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
   addSpecialtyInput: {
     flex: 1,
   },
-  addSpecialtyButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
+  addSpecialtyListButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 8,
+    gap: Spacing.xs,
+    minHeight: 44,
+  },
+  addButtonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
 

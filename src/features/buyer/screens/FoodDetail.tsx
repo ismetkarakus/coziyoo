@@ -302,10 +302,11 @@ export const FoodDetail: React.FC = () => {
                   <Text variant="body" weight="medium" style={styles.cookSpecialtiesTitle}>
                     Uzmanlık Alanları
                   </Text>
-                  <View style={styles.cookSpecialtiesContainer}>
+                  <View style={styles.cookSpecialtiesList}>
                     {food.cookInfo.specialties.map((specialty: string, index: number) => (
-                      <View key={index} style={[styles.cookSpecialtyTag, { backgroundColor: colors.primary }]}>
-                        <Text variant="caption" style={styles.cookSpecialtyText}>
+                      <View key={index} style={styles.cookSpecialtyItem}>
+                        <FontAwesome name="check-circle" size={16} color={colors.primary} />
+                        <Text variant="body" style={styles.cookSpecialtyItemText}>
                           {specialty}
                         </Text>
                       </View>
@@ -541,19 +542,17 @@ const styles = StyleSheet.create({
   cookSpecialtiesTitle: {
     marginBottom: Spacing.sm,
   },
-  cookSpecialtiesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  cookSpecialtiesList: {
     gap: Spacing.sm,
   },
-  cookSpecialtyTag: {
-    paddingHorizontal: Spacing.sm,
+  cookSpecialtyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
     paddingVertical: Spacing.xs,
-    borderRadius: 16,
   },
-  cookSpecialtyText: {
-    color: 'white',
-    fontWeight: '500',
+  cookSpecialtyItemText: {
+    flex: 1,
   },
   reviewsCard: {
     marginBottom: 0,
