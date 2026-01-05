@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
+import { router } from 'expo-router';
 
-// Bu sayfa hiçbir zaman görünmeyecek çünkü href: null
-// Sadece tab bar'daki geri butonu için gerekli
+// Bu sayfa yanlışlıkla açılırsa otomatik geri döner
 export default function BackScreen() {
+  useEffect(() => {
+    // Sayfa yüklendiğinde otomatik geri dön
+    router.back();
+  }, []);
+
   return <View />;
 }

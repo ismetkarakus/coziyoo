@@ -151,7 +151,6 @@ export default function TabLayout() {
               }}
             />
           ),
-          href: null, // Bu tab'a doğrudan navigate edilmesini engelle
         }}
       />
       {/* Hidden screens - accessible via navigation but not in tabs */}
