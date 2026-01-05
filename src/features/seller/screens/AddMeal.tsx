@@ -586,7 +586,6 @@ export const AddMeal: React.FC = () => {
                   onChangeText={handleInputChange('maxDistance')}
                   placeholder="Örn: 5"
                   keyboardType="numeric"
-                  helperText="Yemeği kaç kilometre uzağa götürebilirsiniz? (Ana ekranda görünecek)"
                   required
                 />
 
