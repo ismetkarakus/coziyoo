@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { Colors } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
@@ -127,6 +127,31 @@ export default function TabLayout() {
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="back"
+        options={{
+          title: 'Geri',
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon 
+              name="arrow-left" 
+              color={color}
+              style={{ fontSize: 20 }}
+            />
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              activeOpacity={0.7}
+              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => {
+                router.back();
+              }}
+            />
+          ),
+          href: null, // Bu tab'a doğrudan navigate edilmesini engelle
         }}
       />
       {/* Hidden screens - accessible via navigation but not in tabs */}
