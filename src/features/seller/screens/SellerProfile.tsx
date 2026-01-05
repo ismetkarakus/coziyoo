@@ -334,18 +334,18 @@ export const SellerProfile: React.FC = () => {
                   Uzmanlık Alanları
                 </Text>
                 
-                {/* Mevcut Uzmanlık Alanları - Liste Formatında */}
-                <View style={styles.specialtiesListContainer}>
+                {/* Mevcut Uzmanlık Alanları - Yan Yana Dizilim */}
+                <View style={styles.specialtiesGridContainer}>
                   {specialties.map((specialty, index) => (
-                    <View key={index} style={[styles.specialtyListItem, { borderColor: colors.border }]}>
-                      <Text variant="body" style={styles.specialtyListText}>
+                    <View key={index} style={[styles.specialtyGridItem, { borderColor: colors.border, backgroundColor: colors.background }]}>
+                      <Text variant="body" style={styles.specialtyGridText} numberOfLines={1}>
                         {specialty}
                       </Text>
                       <TouchableOpacity
                         onPress={() => handleRemoveSpecialty(specialty)}
-                        style={[styles.removeSpecialtyListButton, { backgroundColor: colors.error }]}
+                        style={[styles.removeSpecialtyGridButton, { backgroundColor: colors.error }]}
                       >
-                        <FontAwesome name="trash" size={14} color="white" />
+                        <FontAwesome name="times" size={12} color="white" />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -353,27 +353,30 @@ export const SellerProfile: React.FC = () => {
 
                 {/* Yeni Uzmanlık Alanı Ekleme */}
                 <View style={styles.addSpecialtyContainer}>
+                  <Text variant="body" weight="medium" style={styles.addSpecialtyLabel}>
+                    Yeni Kategori Ekle
+                  </Text>
                   <View style={styles.addSpecialtyInputContainer}>
-                    <Input
-                      value={newSpecialty}
-                      onChangeText={setNewSpecialty}
-                      placeholder="Yeni uzmanlık alanı ekle (örn: İtalyan Mutfağı)"
-                      style={styles.addSpecialtyInput}
-                      onSubmitEditing={handleAddSpecialty}
-                    />
+                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                      <Input
+                        value={newSpecialty}
+                        onChangeText={setNewSpecialty}
+                        placeholder="Örn: İtalyan Mutfağı, Vegan Yemekler"
+                        style={styles.addSpecialtyInput}
+                        onSubmitEditing={handleAddSpecialty}
+                      />
+                    </View>
                     <TouchableOpacity
                       onPress={handleAddSpecialty}
                       style={[
-                        styles.addSpecialtyListButton, 
+                        styles.addSpecialtyModernButton, 
                         { 
-                          backgroundColor: newSpecialty.trim() ? colors.primary : colors.textSecondary,
-                          opacity: newSpecialty.trim() ? 1 : 0.5
+                          backgroundColor: newSpecialty.trim() ? colors.primary : colors.textSecondary + '80',
                         }
                       ]}
                       disabled={!newSpecialty.trim()}
                     >
-                      <FontAwesome name="plus" size={16} color="white" />
-                      <Text variant="caption" style={styles.addButtonText}>Ekle</Text>
+                      <FontAwesome name="plus" size={14} color="white" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -391,11 +394,11 @@ export const SellerProfile: React.FC = () => {
                   <Text variant="body" weight="medium" style={styles.specialtiesViewTitle}>
                     Uzmanlık Alanları
                   </Text>
-                  <View style={styles.specialtiesViewList}>
+                  <View style={styles.specialtiesViewGrid}>
                     {specialties.map((specialty, index) => (
-                      <View key={index} style={styles.specialtyViewItem}>
-                        <FontAwesome name="check-circle" size={16} color={colors.primary} />
-                        <Text variant="body" style={styles.specialtyViewText}>
+                      <View key={index} style={[styles.specialtyViewGridItem, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
+                        <FontAwesome name="check-circle" size={14} color={colors.primary} />
+                        <Text variant="caption" style={[styles.specialtyViewGridText, { color: colors.primary }]} numberOfLines={1}>
                           {specialty}
                         </Text>
                       </View>
@@ -768,71 +771,95 @@ const styles = StyleSheet.create({
   specialtiesViewTitle: {
     marginBottom: Spacing.sm,
   },
-  // Yeni liste formatı stilleri
-  specialtiesListContainer: {
+  // Yan yana dizilim stilleri - Düzenleme modu
+  specialtiesGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.sm,
   },
-  specialtyListItem: {
+  specialtyGridItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderWidth: 1,
+    borderRadius: 20,
+    gap: Spacing.xs,
+    maxWidth: '48%', // İki sütun için
+  },
+  specialtyGridText: {
+    flex: 1,
+    fontSize: 14,
+  },
+  removeSpecialtyGridButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Görüntüleme modu yan yana dizilim
+  specialtiesViewGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  specialtyViewGridItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: Spacing.xs,
+    maxWidth: '48%', // İki sütun için
+  },
+  specialtyViewGridText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  // Modern ekleme bölümü stilleri
+  addSpecialtyContainer: {
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.border,
+    gap: Spacing.sm,
+  },
+  addSpecialtyLabel: {
+    fontSize: 14,
+    marginBottom: Spacing.xs,
+  },
+  addSpecialtyInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  inputWrapper: {
+    flex: 1,
     borderWidth: 1,
     borderRadius: 8,
     backgroundColor: 'transparent',
   },
-  specialtyListText: {
-    flex: 1,
-    marginRight: Spacing.sm,
+  addSpecialtyInput: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    fontSize: 14,
   },
-  removeSpecialtyListButton: {
-    width: 36,
-    height: 36,
+  addSpecialtyModernButton: {
+    width: 40,
+    height: 40,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  // Görüntüleme modu stilleri
-  specialtiesViewList: {
-    gap: Spacing.sm,
-  },
-  specialtyViewItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  specialtyViewText: {
-    flex: 1,
-  },
-  // Ekleme bölümü stilleri
-  addSpecialtyContainer: {
-    marginTop: Spacing.md,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
-  },
-  addSpecialtyInputContainer: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    alignItems: 'flex-end',
-  },
-  addSpecialtyInput: {
-    flex: 1,
-  },
-  addSpecialtyListButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: 8,
-    gap: Spacing.xs,
-    minHeight: 44,
-  },
-  addButtonText: {
-    color: 'white',
-    fontWeight: '600',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

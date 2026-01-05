@@ -302,11 +302,11 @@ export const FoodDetail: React.FC = () => {
                   <Text variant="body" weight="medium" style={styles.cookSpecialtiesTitle}>
                     Uzmanlık Alanları
                   </Text>
-                  <View style={styles.cookSpecialtiesList}>
+                  <View style={styles.cookSpecialtiesGrid}>
                     {food.cookInfo.specialties.map((specialty: string, index: number) => (
-                      <View key={index} style={styles.cookSpecialtyItem}>
-                        <FontAwesome name="check-circle" size={16} color={colors.primary} />
-                        <Text variant="body" style={styles.cookSpecialtyItemText}>
+                      <View key={index} style={[styles.cookSpecialtyGridItem, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
+                        <FontAwesome name="check-circle" size={14} color={colors.primary} />
+                        <Text variant="caption" style={[styles.cookSpecialtyGridText, { color: colors.primary }]} numberOfLines={1}>
                           {specialty}
                         </Text>
                       </View>
@@ -542,17 +542,25 @@ const styles = StyleSheet.create({
   cookSpecialtiesTitle: {
     marginBottom: Spacing.sm,
   },
-  cookSpecialtiesList: {
+  cookSpecialtiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.sm,
   },
-  cookSpecialtyItem: {
+  cookSpecialtyGridItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: Spacing.xs,
+    maxWidth: '48%', // İki sütun için
   },
-  cookSpecialtyItemText: {
+  cookSpecialtyGridText: {
     flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
   },
   reviewsCard: {
     marginBottom: 0,
