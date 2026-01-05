@@ -33,6 +33,7 @@ interface FoodCardProps {
   currentStock?: number;
   dailyStock?: number;
   onAddToCart?: (id: string, quantity: number) => void;
+  maxDeliveryDistance?: number; // Satıcının belirlediği maksimum teslimat mesafesi
 }
 
 export const FoodCard: React.FC<FoodCardProps> = ({
@@ -49,6 +50,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   currentStock,
   dailyStock,
   onAddToCart,
+  maxDeliveryDistance,
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -154,7 +156,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
       <View style={styles.ratingDistance}>
         <Text variant="body" color="textSecondary">
-          ⭐ {rating.toFixed(1)} • {distance}
+          ⭐ {rating.toFixed(1)} • {maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance}
         </Text>
       </View>
 

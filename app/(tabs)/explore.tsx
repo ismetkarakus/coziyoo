@@ -23,9 +23,10 @@ const MOCK_FOODS = [
     cookName: 'Ayşe Hanım',
     rating: 4.8,
     price: 25,
-    distance: '1.2 km',
+    distance: '3 km', // Satıcının belirlediği maksimum teslimat mesafesi
     hasPickup: true,
     hasDelivery: true,
+    maxDeliveryDistance: 3, // AddMeal'dan gelen değer
   },
   {
     id: '2',
@@ -33,9 +34,10 @@ const MOCK_FOODS = [
     cookName: 'Fatma Teyze',
     rating: 4.6,
     price: 18,
-    distance: '0.8 km',
+    distance: '2 km', // Satıcının belirlediği maksimum teslimat mesafesi
     hasPickup: true,
     hasDelivery: false,
+    maxDeliveryDistance: 2, // AddMeal'dan gelen değer
   },
   {
     id: '3',
@@ -43,9 +45,10 @@ const MOCK_FOODS = [
     cookName: 'Mehmet Usta',
     rating: 4.9,
     price: 35,
-    distance: '2.1 km',
+    distance: '4 km', // Satıcının belirlediği maksimum teslimat mesafesi
     hasPickup: true,
     hasDelivery: true,
+    maxDeliveryDistance: 4, // AddMeal'dan gelen değer
   },
   {
     id: '4',
@@ -53,9 +56,10 @@ const MOCK_FOODS = [
     cookName: 'Zehra Hanım',
     rating: 4.7,
     price: 12,
-    distance: '1.5 km',
+    distance: '1 km', // Satıcının belirlediği maksimum teslimat mesafesi
     hasPickup: true,
     hasDelivery: true,
+    maxDeliveryDistance: 1, // AddMeal'dan gelen değer
   },
 ];
 
@@ -138,6 +142,7 @@ export default function ExploreScreen() {
               key={food.id}
               {...food}
               onAddToCart={handleAddToCart}
+              maxDeliveryDistance={food.maxDeliveryDistance}
             />
           ))}
         </View>

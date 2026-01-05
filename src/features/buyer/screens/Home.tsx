@@ -31,13 +31,14 @@ const MOCK_FOODS = [
     cookName: 'Ayşe Hanım',
     rating: 4.8,
     price: 35,
-    distance: '900 m',
+    distance: '3 km', // Satıcının belirlediği maksimum teslimat mesafesi
     category: 'Ana Yemek',
     hasPickup: true,
     hasDelivery: true,
     availableDates: '15-20 Ocak',
     currentStock: 8,
     dailyStock: 10,
+    maxDeliveryDistance: 3, // AddMeal'dan gelen değer
   },
   {
     id: '2',
@@ -45,13 +46,14 @@ const MOCK_FOODS = [
     cookName: 'Mehmet Usta',
     rating: 4.6,
     price: 28,
-    distance: '4.6 km',
+    distance: '5 km', // Satıcının belirlediği maksimum teslimat mesafesi
     category: 'Ana Yemek',
     hasPickup: true,
     hasDelivery: true,
     availableDates: '16-22 Ocak',
     currentStock: 5,
     dailyStock: 12,
+    maxDeliveryDistance: 5, // AddMeal'dan gelen değer
   },
   {
     id: '4',
@@ -59,13 +61,14 @@ const MOCK_FOODS = [
     cookName: 'Ali Usta',
     rating: 4.7,
     price: 42,
-    distance: '2.1 km',
+    distance: '4 km', // Satıcının belirlediği maksimum teslimat mesafesi
     category: 'Ana Yemek',
     hasPickup: true,
     hasDelivery: true,
     availableDates: '18-25 Ocak',
     currentStock: 3,
     dailyStock: 8,
+    maxDeliveryDistance: 4, // AddMeal'dan gelen değer
   },
   // Çorba
   {
@@ -74,13 +77,14 @@ const MOCK_FOODS = [
     cookName: 'Zeynep Hanım',
     rating: 4.5,
     price: 15,
-    distance: '1.2 km',
+    distance: '2 km', // Satıcının belirlediği maksimum teslimat mesafesi
     category: 'Çorba',
     hasPickup: true,
     hasDelivery: true,
     availableDates: '15-30 Ocak',
     currentStock: 15,
     dailyStock: 20,
+    maxDeliveryDistance: 2, // AddMeal'dan gelen değer
   },
   {
     id: '6',
@@ -88,13 +92,14 @@ const MOCK_FOODS = [
     cookName: 'Fatma Teyze',
     rating: 4.8,
     price: 18,
-    distance: '800 m',
+    distance: '1 km', // Satıcının belirlediği maksimum teslimat mesafesi
     category: 'Çorba',
     hasPickup: true,
     hasDelivery: true,
     availableDates: '19-26 Ocak',
     currentStock: 10,
     dailyStock: 12,
+    maxDeliveryDistance: 1, // AddMeal'dan gelen değer
   },
   // Kahvaltı
   {
@@ -175,13 +180,14 @@ const MOCK_FOODS = [
     cookName: 'Fatma Teyze',
     rating: 4.9,
     price: 45,
-    distance: '3.7 km',
+    distance: '6 km', // Satıcının belirlediği maksimum teslimat mesafesi
     category: 'Ana Yemek', // Tatlı kategorisi yok, Ana Yemek'e ekledim
     hasPickup: true,
     hasDelivery: true,
     availableDates: '17-24 Ocak',
     currentStock: 2,
     dailyStock: 3,
+    maxDeliveryDistance: 6, // AddMeal'dan gelen değer
   },
 ];
 
@@ -388,6 +394,7 @@ export const Home: React.FC = () => {
                 {...food}
                 currentStock={foodStocks[food.id] ?? food.currentStock}
                 onAddToCart={handleAddToCart}
+                maxDeliveryDistance={food.maxDeliveryDistance}
               />
             ))
           ) : (
