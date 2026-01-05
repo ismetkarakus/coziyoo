@@ -361,9 +361,12 @@ export const SellerProfile: React.FC = () => {
                       <Input
                         value={newSpecialty}
                         onChangeText={setNewSpecialty}
-                        placeholder="Örn: İtalyan Mutfağı, Vegan Yemekler"
+                        placeholder="Örn: İtalyan Mutfağı, Vegan Yemekler, Gluten-Free Tarifler"
                         style={styles.addSpecialtyInput}
                         onSubmitEditing={handleAddSpecialty}
+                        multiline={true}
+                        numberOfLines={1}
+                        textAlignVertical="top"
                       />
                     </View>
                     <TouchableOpacity
@@ -782,8 +785,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    width: '31%', // 3 sütun için
-    minWidth: '31%',
+    width: '23%', // 4 sütun için
+    minWidth: '23%',
   },
   specialtyPlainText: {
     fontSize: 14,
@@ -809,8 +812,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    width: '31%', // 3 sütun için
-    minWidth: '31%',
+    width: '23%', // 4 sütun için
+    minWidth: '23%',
   },
   specialtyViewPlainText: {
     fontSize: 14,
@@ -840,6 +843,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     backgroundColor: 'transparent',
+    minHeight: 44,
   },
   addSpecialtyInput: {
     borderWidth: 0,
@@ -847,6 +851,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     fontSize: 14,
+    minHeight: 44,
+    maxHeight: 120, // Maksimum yükseklik
+    textAlignVertical: 'top',
   },
   addSpecialtyModernButton: {
     width: 40,

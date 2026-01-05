@@ -552,8 +552,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    width: '31%', // 3 sütun için
-    minWidth: '31%',
+    width: '23%', // 4 sütun için
+    minWidth: '23%',
   },
   cookSpecialtyPlainText: {
     fontSize: 14,
