@@ -37,6 +37,10 @@ export const SellerProfile: React.FC = () => {
     description: SELLER_DATA.description,
   });
 
+  // Uzmanlık alanları state'i
+  const [specialties, setSpecialties] = useState(SELLER_DATA.specialties);
+  const [newSpecialty, setNewSpecialty] = useState('');
+
   // Kimlik ve banka bilgileri state'leri
   const [identityImages, setIdentityImages] = useState({
     front: null as string | null,
@@ -143,6 +147,19 @@ export const SellerProfile: React.FC = () => {
 
   const calculateNetAmount = (amount: number) => {
     return amount - calculateCommission(amount);
+  };
+
+  // Uzmanlık alanı ekleme
+  const handleAddSpecialty = () => {
+    if (newSpecialty.trim() && !specialties.includes(newSpecialty.trim())) {
+      setSpecialties(prev => [...prev, newSpecialty.trim()]);
+      setNewSpecialty('');
+    }
+  };
+
+  // Uzmanlık alanı silme
+  const handleRemoveSpecialty = (specialtyToRemove: string) => {
+    setSpecialties(prev => prev.filter(specialty => specialty !== specialtyToRemove));
   };
 
   return (
@@ -301,37 +318,87 @@ export const SellerProfile: React.FC = () => {
           </Text>
           
           {isEditing ? (
-            <FormField
-              label="Açıklama"
-              value={formData.description}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
-              placeholder="Kendinizi ve mutfak deneyiminizi tanıtın"
-              multiline
-              numberOfLines={4}
-            />
+            <View style={styles.aboutEditContainer}>
+              <FormField
+                label="Açıklama"
+                value={formData.description}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
+                placeholder="Kendinizi ve mutfak deneyiminizi tanıtın"
+                multiline
+                numberOfLines={4}
+              />
+              
+              {/* Uzmanlık Alanları Düzenleme */}
+              <View style={styles.specialtiesEditSection}>
+                <Text variant="body" weight="medium" style={styles.specialtiesEditTitle}>
+                  Uzmanlık Alanları
+                </Text>
+                
+                {/* Mevcut Uzmanlık Alanları */}
+                <View style={styles.specialtiesContainer}>
+                  {specialties.map((specialty, index) => (
+                    <View key={index} style={[styles.specialtyTagEditable, { backgroundColor: colors.primary }]}>
+                      <Text variant="caption" style={styles.specialtyText}>
+                        {specialty}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleRemoveSpecialty(specialty)}
+                        style={styles.removeSpecialtyButton}
+                      >
+                        <FontAwesome name="times" size={12} color="white" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Yeni Uzmanlık Alanı Ekleme */}
+                <View style={styles.addSpecialtyContainer}>
+                  <View style={styles.addSpecialtyInputContainer}>
+                    <Input
+                      value={newSpecialty}
+                      onChangeText={setNewSpecialty}
+                      placeholder="Yeni uzmanlık alanı ekle"
+                      style={styles.addSpecialtyInput}
+                      onSubmitEditing={handleAddSpecialty}
+                    />
+                    <TouchableOpacity
+                      onPress={handleAddSpecialty}
+                      style={[styles.addSpecialtyButton, { backgroundColor: colors.primary }]}
+                      disabled={!newSpecialty.trim()}
+                    >
+                      <FontAwesome name="plus" size={16} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
           ) : (
-            <Text variant="body" style={styles.description}>
-              {formData.description}
-            </Text>
+            <View style={styles.aboutViewContainer}>
+              <Text variant="body" style={styles.description}>
+                {formData.description}
+              </Text>
+              
+              {/* Uzmanlık Alanları Görüntüleme */}
+              {specialties.length > 0 && (
+                <View style={styles.specialtiesViewSection}>
+                  <Text variant="body" weight="medium" style={styles.specialtiesViewTitle}>
+                    Uzmanlık Alanları
+                  </Text>
+                  <View style={styles.specialtiesContainer}>
+                    {specialties.map((specialty, index) => (
+                      <View key={index} style={[styles.specialtyTag, { backgroundColor: colors.primary }]}>
+                        <Text variant="caption" style={styles.specialtyText}>
+                          {specialty}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
           )}
         </Card>
 
-        {/* Specialties */}
-        <Card variant="default" padding="md" style={styles.sectionCard}>
-          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Uzmanlık Alanları
-          </Text>
-          
-          <View style={styles.specialtiesContainer}>
-            {SELLER_DATA.specialties.map((specialty, index) => (
-              <View key={index} style={[styles.specialtyTag, { backgroundColor: colors.primary }]}>
-                <Text variant="caption" style={styles.specialtyText}>
-                  {specialty}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </Card>
 
         {/* Identity Documents */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
@@ -672,6 +739,60 @@ const styles = StyleSheet.create({
   },
   commissionExample: {
     gap: Spacing.xs,
+  },
+  // Hakkımda bölümü stilleri
+  aboutEditContainer: {
+    gap: Spacing.lg,
+  },
+  aboutViewContainer: {
+    gap: Spacing.md,
+  },
+  specialtiesEditSection: {
+    gap: Spacing.md,
+  },
+  specialtiesEditTitle: {
+    marginBottom: Spacing.sm,
+  },
+  specialtiesViewSection: {
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  specialtiesViewTitle: {
+    marginBottom: Spacing.sm,
+  },
+  specialtyTagEditable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: 16,
+    gap: Spacing.xs,
+  },
+  removeSpecialtyButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addSpecialtyContainer: {
+    marginTop: Spacing.sm,
+  },
+  addSpecialtyInputContainer: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    alignItems: 'center',
+  },
+  addSpecialtyInput: {
+    flex: 1,
+  },
+  addSpecialtyButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

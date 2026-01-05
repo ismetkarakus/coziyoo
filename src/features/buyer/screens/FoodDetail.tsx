@@ -47,12 +47,38 @@ const getCookAvatar = (cookName: string) => {
   return cookAvatars[cookName] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face';
 };
 
+// Mock cook data - in real app, this would come from API
+const getMockCookInfo = (cookName: string) => {
+  const cookData: { [key: string]: any } = {
+    'Ayşe Hanım': {
+      description: 'Ev yemekleri konusunda 15 yıllık deneyimim var. Geleneksel Türk mutfağının lezzetlerini sizlerle paylaşmaktan mutluluk duyuyorum.',
+      specialties: ['Türk Mutfağı', 'Ev Yemekleri', 'Hamur İşleri', 'Çorbalar'],
+      joinDate: 'Ocak 2023',
+      totalOrders: 156,
+    },
+    'Mehmet Usta': {
+      description: 'Profesyonel aşçı olarak 20 yıllık deneyimim var. Özellikle et yemekleri ve kebap çeşitlerinde uzmanım.',
+      specialties: ['Et Yemekleri', 'Kebap', 'Izgara', 'Türk Mutfağı'],
+      joinDate: 'Mart 2022',
+      totalOrders: 203,
+    },
+    'Fatma Teyze': {
+      description: 'Geleneksel ev yemeklerini modern dokunuşlarla hazırlıyorum. Özellikle hamur işleri ve tatlılarım çok sevilir.',
+      specialties: ['Hamur İşleri', 'Tatlılar', 'Börek', 'Ev Yemekleri'],
+      joinDate: 'Haziran 2023',
+      totalOrders: 89,
+    },
+  };
+  return cookData[cookName] || cookData['Ayşe Hanım'];
+};
+
 // Mock data - in real app, this would come from API
 const getMockFoodDetail = (name: string, cookName: string, imageUrl: string) => ({
   id: '1',
   name: name || 'Ev Yapımı Mantı',
   cookName: cookName || 'Ayşe Hanım',
   cookAvatar: getCookAvatar(cookName || 'Ayşe Hanım'),
+  cookInfo: getMockCookInfo(cookName || 'Ayşe Hanım'),
   rating: 4.8,
   reviewCount: 24,
   price: 25,
@@ -235,6 +261,59 @@ export const FoodDetail: React.FC = () => {
             <Text variant="body" style={styles.description}>
               {food.description}
             </Text>
+          </Card>
+
+          {/* Cook About Section */}
+          <Card variant="default" padding="md" style={styles.cookAboutCard}>
+            <Text variant="subheading" weight="medium" style={styles.cookAboutTitle}>
+              {food.cookName} Hakkında
+            </Text>
+            
+            <View style={styles.cookAboutContent}>
+              <Text variant="body" style={styles.cookDescription}>
+                {food.cookInfo.description}
+              </Text>
+              
+              {/* Cook Stats */}
+              <View style={styles.cookStats}>
+                <View style={styles.cookStatItem}>
+                  <Text variant="body" weight="semibold" color="primary">
+                    {food.cookInfo.totalOrders}
+                  </Text>
+                  <Text variant="caption" color="textSecondary">Toplam Sipariş</Text>
+                </View>
+                <View style={styles.cookStatItem}>
+                  <Text variant="body" weight="semibold" color="primary">
+                    ⭐ {food.rating}
+                  </Text>
+                  <Text variant="caption" color="textSecondary">Ortalama Puan</Text>
+                </View>
+                <View style={styles.cookStatItem}>
+                  <Text variant="body" weight="semibold" color="primary">
+                    {food.cookInfo.joinDate}
+                  </Text>
+                  <Text variant="caption" color="textSecondary">Üyelik Tarihi</Text>
+                </View>
+              </View>
+
+              {/* Specialties */}
+              {food.cookInfo.specialties && food.cookInfo.specialties.length > 0 && (
+                <View style={styles.cookSpecialtiesSection}>
+                  <Text variant="body" weight="medium" style={styles.cookSpecialtiesTitle}>
+                    Uzmanlık Alanları
+                  </Text>
+                  <View style={styles.cookSpecialtiesContainer}>
+                    {food.cookInfo.specialties.map((specialty: string, index: number) => (
+                      <View key={index} style={[styles.cookSpecialtyTag, { backgroundColor: colors.primary }]}>
+                        <Text variant="caption" style={styles.cookSpecialtyText}>
+                          {specialty}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
           </Card>
 
           {/* Seller Reviews */}
@@ -430,6 +509,51 @@ const styles = StyleSheet.create({
   },
   description: {
     lineHeight: 22,
+  },
+  // Cook About Section Styles
+  cookAboutCard: {
+    marginBottom: 0,
+  },
+  cookAboutTitle: {
+    marginBottom: Spacing.md,
+  },
+  cookAboutContent: {
+    gap: Spacing.md,
+  },
+  cookDescription: {
+    lineHeight: 22,
+  },
+  cookStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: Spacing.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  cookStatItem: {
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  cookSpecialtiesSection: {
+    gap: Spacing.sm,
+  },
+  cookSpecialtiesTitle: {
+    marginBottom: Spacing.sm,
+  },
+  cookSpecialtiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  cookSpecialtyTag: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: 16,
+  },
+  cookSpecialtyText: {
+    color: 'white',
+    fontWeight: '500',
   },
   reviewsCard: {
     marginBottom: 0,
