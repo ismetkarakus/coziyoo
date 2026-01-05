@@ -77,9 +77,6 @@ export const SellerEarnings: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const [selectedPeriod, setSelectedPeriod] = useState('week');
 
-  const handleBackPress = () => {
-    router.back();
-  };
 
   // Komisyon hesaplama
   const calculateCommission = (amount: number) => {
@@ -138,15 +135,6 @@ export const SellerEarnings: React.FC = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
         title="Kazançlarım"
-        leftComponent={
-          <TouchableOpacity 
-            onPress={handleBackPress}
-            style={styles.backButton}
-            activeOpacity={0.7}
-          >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
-          </TouchableOpacity>
-        }
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -239,10 +227,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: Spacing.md,
-  },
-  backButton: {
-    padding: Spacing.xs,
-    borderRadius: 8,
   },
   // Toplam Özet
   summaryCard: {
