@@ -83,15 +83,6 @@ export const MealPreview: React.FC = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
         title="Önizleme - Müşteri Görünümü"
-        leftComponent={
-          <TouchableOpacity 
-            onPress={handleBackPress}
-            style={styles.backButton}
-            activeOpacity={0.7}
-          >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
-          </TouchableOpacity>
-        }
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -198,9 +189,7 @@ export const MealPreview: React.FC = () => {
             onPress={handleBackPress}
             style={[styles.backButton, { backgroundColor: colors.surface }]}
           >
-            <Text variant="body" weight="medium" style={{ color: colors.text }}>
-              ← Geri Dön
-            </Text>
+            <FontAwesome name="arrow-left" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -217,10 +206,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: Spacing.md,
-  },
-  backButton: {
-    padding: Spacing.xs,
-    borderRadius: 8,
   },
   // Info Section
   infoSection: {
@@ -279,11 +264,18 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   backButton: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: 12,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: 16,
     alignItems: 'center',
-    minWidth: 120,
+    justifyContent: 'center',
+    width: 60,
+    height: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   bottomSpace: {
     height: Spacing.xl,
