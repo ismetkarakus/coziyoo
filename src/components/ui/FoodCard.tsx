@@ -156,7 +156,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
       <View style={styles.ratingDistance}>
         <Text variant="caption" color="textSecondary" style={{ fontSize: 11 }}>
-          {maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance} • ⭐ {rating.toFixed(1)}
+          ⭐ {rating.toFixed(1)} • {maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance}
         </Text>
       </View>
 
