@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, FoodCard } from '../../../components/ui';
@@ -208,10 +208,13 @@ export const Home: React.FC = () => {
     const loadPublishedMeals = async () => {
       try {
         const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
+        console.log('AsyncStorage publishedMeals:', publishedMealsJson);
         if (publishedMealsJson) {
           const meals = JSON.parse(publishedMealsJson);
           setPublishedMeals(meals);
-          console.log('Loaded published meals:', meals.length);
+          console.log('Loaded published meals:', meals.length, meals);
+        } else {
+          console.log('No published meals found in AsyncStorage');
         }
       } catch (error) {
         console.error('Error loading published meals:', error);
@@ -220,6 +223,27 @@ export const Home: React.FC = () => {
 
     loadPublishedMeals();
   }, []);
+
+  // Reload published meals when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadPublishedMeals = async () => {
+        try {
+          const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
+          console.log('Focus - AsyncStorage publishedMeals:', publishedMealsJson);
+          if (publishedMealsJson) {
+            const meals = JSON.parse(publishedMealsJson);
+            setPublishedMeals(meals);
+            console.log('Focus - Loaded published meals:', meals.length, meals);
+          }
+        } catch (error) {
+          console.error('Focus - Error loading published meals:', error);
+        }
+      };
+
+      loadPublishedMeals();
+    }, [])
+  );
 
   const handleAddToCart = (foodId: string, quantity: number) => {
     const food = MOCK_FOODS.find(f => f.id === foodId);

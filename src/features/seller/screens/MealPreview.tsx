@@ -66,6 +66,7 @@ export const MealPreview: React.FC = () => {
         price: parseInt(data.price),
         distance: data.maxDistance ? `${data.maxDistance} km teslimat` : '0 km teslimat',
         category: data.category,
+        country: data.country || 'Türk',
         hasPickup: data.hasPickup,
         hasDelivery: data.hasDelivery,
         availableDates: formatDateRange(data.startDate, data.endDate),
