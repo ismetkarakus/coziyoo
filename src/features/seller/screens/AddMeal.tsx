@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
@@ -284,7 +284,12 @@ export const AddMeal: React.FC = () => {
         }
       />
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      >
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
           {/* Photo Upload */}
           <View style={styles.photoSection}>
@@ -391,7 +396,7 @@ export const AddMeal: React.FC = () => {
 
             {/* Category Selection */}
             <View style={styles.categoryContainer}>
-              <Text variant="body" weight="medium" style={[styles.categoryLabel, { color: '#FFFFFF' }]}>
+              <Text variant="body" weight="medium" style={[styles.categoryLabel, { color: '#000000' }]}>
                 Kategori Seç
               </Text>
               <TouchableOpacity
@@ -439,7 +444,7 @@ export const AddMeal: React.FC = () => {
 
           {/* Delivery Options */}
           <View style={styles.section}>
-            <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: '#FFFFFF' }]}>
+            <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: '#000000' }]}>
               Teslimat Seçenekleri
             </Text>
             
@@ -494,7 +499,8 @@ export const AddMeal: React.FC = () => {
             Yemeği Yayınla
           </Button>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Date Picker Modal */}
       <Modal
@@ -659,6 +665,9 @@ export const AddMeal: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoidingView: {
     flex: 1,
   },
   content: {
