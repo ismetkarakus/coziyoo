@@ -173,6 +173,7 @@ export const MealPreview: React.FC = () => {
           <View style={styles.cardContainer}>
             <FoodCard
               {...mockFoodData}
+              isPreview={true} // Önizleme modunda local resimlere izin ver
               onAddToCart={() => {}} // Empty function for preview
             />
           </View>

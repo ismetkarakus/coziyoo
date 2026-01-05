@@ -37,6 +37,7 @@ interface FoodCardProps {
   onAddToCart?: (id: string, quantity: number) => void;
   maxDeliveryDistance?: number; // Satıcının belirlediği maksimum teslimat mesafesi
   country?: string; // Ülke bilgisi
+  isPreview?: boolean; // Önizleme modunda local resimlere izin ver
 }
 
 export const FoodCard: React.FC<FoodCardProps> = ({
@@ -55,6 +56,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   onAddToCart,
   maxDeliveryDistance,
   country = 'Türk', // Default olarak Türk
+  isPreview = false, // Default olarak false
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -140,8 +142,22 @@ export const FoodCard: React.FC<FoodCardProps> = ({
               source={(() => {
                 console.log('FoodCard - Name:', name);
                 console.log('FoodCard - ImageUrl:', imageUrl);
-                console.log('FoodCard - Using default:', !imageUrl || !imageUrl.startsWith('http'));
-                return imageUrl && imageUrl.startsWith('http') ? { uri: imageUrl } : getDefaultImage(name);
+                console.log('FoodCard - IsPreview:', isPreview);
+                
+                // Önizlemede local resimlere izin ver
+                if (isPreview && imageUrl) {
+                  console.log('FoodCard - Using preview image:', imageUrl);
+                  return { uri: imageUrl };
+                }
+                
+                // Normal modda sadece HTTP URL'leri kabul et
+                if (imageUrl && imageUrl.startsWith('http')) {
+                  console.log('FoodCard - Using HTTP image:', imageUrl);
+                  return { uri: imageUrl };
+                }
+                
+                console.log('FoodCard - Using default image for:', name);
+                return getDefaultImage(name);
               })()} 
               style={styles.image}
               resizeMode="cover"
