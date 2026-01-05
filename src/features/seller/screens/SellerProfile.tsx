@@ -334,18 +334,18 @@ export const SellerProfile: React.FC = () => {
                   Uzmanlık Alanları
                 </Text>
                 
-                {/* Mevcut Uzmanlık Alanları - Yan Yana Dizilim */}
+                {/* Mevcut Uzmanlık Alanları - 3 Sütun Düzeni */}
                 <View style={styles.specialtiesGridContainer}>
                   {specialties.map((specialty, index) => (
-                    <View key={index} style={[styles.specialtyGridItem, { borderColor: colors.border, backgroundColor: colors.background }]}>
-                      <Text variant="body" style={styles.specialtyGridText} numberOfLines={1}>
+                    <View key={index} style={styles.specialtyPlainItem}>
+                      <Text style={[styles.specialtyPlainText, { color: colors.text }]}>
                         {specialty}
                       </Text>
                       <TouchableOpacity
                         onPress={() => handleRemoveSpecialty(specialty)}
-                        style={[styles.removeSpecialtyGridButton, { backgroundColor: colors.error }]}
+                        style={[styles.removeSpecialtyPlainButton, { backgroundColor: colors.error }]}
                       >
-                        <FontAwesome name="times" size={12} color="white" />
+                        <FontAwesome name="times" size={10} color="white" />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -396,9 +396,9 @@ export const SellerProfile: React.FC = () => {
                   </Text>
                   <View style={styles.specialtiesViewGrid}>
                     {specialties.map((specialty, index) => (
-                      <View key={index} style={[styles.specialtyViewGridItem, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
+                      <View key={index} style={styles.specialtyViewPlainItem}>
                         <FontAwesome name="check-circle" size={14} color={colors.primary} />
-                        <Text variant="caption" style={[styles.specialtyViewGridText, { color: colors.primary }]} numberOfLines={1}>
+                        <Text style={[styles.specialtyViewPlainText, { color: colors.text }]}>
                           {specialty}
                         </Text>
                       </View>
@@ -771,53 +771,52 @@ const styles = StyleSheet.create({
   specialtiesViewTitle: {
     marginBottom: Spacing.sm,
   },
-  // Yan yana dizilim stilleri - Düzenleme modu
+  // 3 sütun düzeni - Düzenleme modu (oval yok)
   specialtiesGridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
+    justifyContent: 'flex-start',
   },
-  specialtyGridItem: {
+  specialtyPlainItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderWidth: 1,
-    borderRadius: 20,
     gap: Spacing.xs,
-    maxWidth: '48%', // İki sütun için
+    width: '31%', // 3 sütun için
+    minWidth: '31%',
   },
-  specialtyGridText: {
-    flex: 1,
+  specialtyPlainText: {
     fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
+    flexShrink: 0,
   },
-  removeSpecialtyGridButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  removeSpecialtyPlainButton: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Görüntüleme modu yan yana dizilim
+  // Görüntüleme modu 3 sütun (oval yok)
   specialtiesViewGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
+    justifyContent: 'flex-start',
   },
-  specialtyViewGridItem: {
+  specialtyViewPlainItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 16,
-    borderWidth: 1,
     gap: Spacing.xs,
-    maxWidth: '48%', // İki sütun için
+    width: '31%', // 3 sütun için
+    minWidth: '31%',
   },
-  specialtyViewGridText: {
-    flex: 1,
-    fontSize: 13,
+  specialtyViewPlainText: {
+    fontSize: 14,
     fontWeight: '500',
+    flex: 1,
+    flexShrink: 0,
   },
   // Modern ekleme bölümü stilleri
   addSpecialtyContainer: {

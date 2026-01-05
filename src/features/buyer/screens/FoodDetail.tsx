@@ -304,9 +304,9 @@ export const FoodDetail: React.FC = () => {
                   </Text>
                   <View style={styles.cookSpecialtiesGrid}>
                     {food.cookInfo.specialties.map((specialty: string, index: number) => (
-                      <View key={index} style={[styles.cookSpecialtyGridItem, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
+                      <View key={index} style={styles.cookSpecialtyPlainItem}>
                         <FontAwesome name="check-circle" size={14} color={colors.primary} />
-                        <Text variant="caption" style={[styles.cookSpecialtyGridText, { color: colors.primary }]} numberOfLines={1}>
+                        <Text style={[styles.cookSpecialtyPlainText, { color: colors.text }]}>
                           {specialty}
                         </Text>
                       </View>
@@ -546,21 +546,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
+    justifyContent: 'flex-start',
   },
-  cookSpecialtyGridItem: {
+  cookSpecialtyPlainItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 16,
-    borderWidth: 1,
     gap: Spacing.xs,
-    maxWidth: '48%', // İki sütun için
+    width: '31%', // 3 sütun için
+    minWidth: '31%',
   },
-  cookSpecialtyGridText: {
-    flex: 1,
-    fontSize: 13,
+  cookSpecialtyPlainText: {
+    fontSize: 14,
     fontWeight: '500',
+    flex: 1,
+    flexShrink: 0,
   },
   reviewsCard: {
     marginBottom: 0,
