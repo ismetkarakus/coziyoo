@@ -325,7 +325,9 @@ export const SellerProfile: React.FC = () => {
                 onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
                 placeholder="Kendinizi ve mutfak deneyiminizi tanıtın"
                 multiline
-                numberOfLines={4}
+                numberOfLines={3}
+                style={styles.aboutTextArea}
+                textAlignVertical="top"
               />
               
               {/* Uzmanlık Alanları Düzenleme */}
@@ -789,7 +791,7 @@ const styles = StyleSheet.create({
     minWidth: '23%',
   },
   specialtyPlainText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     flex: 1,
     flexShrink: 0,
@@ -816,7 +818,7 @@ const styles = StyleSheet.create({
     minWidth: '23%',
   },
   specialtyViewPlainText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     flex: 1,
     flexShrink: 0,
@@ -866,6 +868,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  // Hakkımda textarea stili
+  aboutTextArea: {
+    minHeight: 80,
+    maxHeight: 200,
+    textAlignVertical: 'top',
+    paddingTop: Spacing.sm,
   },
 });
 

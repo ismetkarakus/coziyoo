@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     minWidth: '23%',
   },
   cookSpecialtyPlainText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     flex: 1,
     flexShrink: 0,
