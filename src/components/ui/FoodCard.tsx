@@ -36,6 +36,7 @@ interface FoodCardProps {
   dailyStock?: number;
   onAddToCart?: (id: string, quantity: number) => void;
   maxDeliveryDistance?: number; // Satıcının belirlediği maksimum teslimat mesafesi
+  country?: string; // Ülke bilgisi
 }
 
 export const FoodCard: React.FC<FoodCardProps> = ({
@@ -53,6 +54,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   dailyStock,
   onAddToCart,
   maxDeliveryDistance,
+  country = 'Türk', // Default olarak Türk
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -146,7 +148,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           <View style={styles.info}>
             <View style={styles.headerRow}>
               <Text variant="subheading" weight="semibold" numberOfLines={1} style={styles.foodName}>
-                {name} (Türk)
+                {name} ({country})
               </Text>
             </View>
             

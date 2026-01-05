@@ -13,6 +13,15 @@ export const AddMeal: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
+  // Countries list for autocomplete
+  const COUNTRIES = [
+    'Türk', 'İtalyan', 'Çin', 'Japon', 'Meksika', 'Hint', 'Fransız', 'Yunan', 
+    'Arap', 'İspanyol', 'Tayland', 'Kore', 'Alman', 'Rus', 'İngiliz', 'Amerika',
+    'Fas', 'Lübnan', 'İran', 'Afgan', 'Etiyopya', 'Brezilya', 'Arjantin', 'Peru',
+    'Vietnam', 'Malezya', 'Singapur', 'Endonezya', 'Filipin', 'Pakistan', 'Bangladeş',
+    'Nepal', 'Sri Lanka', 'Myanmar', 'Kamboçya', 'Laos', 'Moğol', 'Kazak', 'Özbek'
+  ];
+
   // Format date range for display (e.g., "1-3 Ocak")
   const formatDateRange = (startDate: string, endDate: string) => {
     if (!startDate || !endDate) return 'Tarih belirtilmemiş';
@@ -49,6 +58,7 @@ export const AddMeal: React.FC = () => {
     startDate: '',
     endDate: '',
     category: '',
+    country: '',
   });
 
   const [deliveryOptions, setDeliveryOptions] = useState({
@@ -60,6 +70,8 @@ export const AddMeal: React.FC = () => {
   const [selectedDateField, setSelectedDateField] = useState<'startDate' | 'endDate'>('startDate');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [countryModalVisible, setCountryModalVisible] = useState(false);
+  const [filteredCountries, setFilteredCountries] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [descriptionHeight, setDescriptionHeight] = useState(60); // Başlangıç yüksekliği
 
@@ -83,6 +95,20 @@ export const AddMeal: React.FC = () => {
     }
     
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Filter countries for autocomplete
+    if (field === 'country') {
+      if (value.length > 0) {
+        const filtered = COUNTRIES.filter(country => 
+          country.toLowerCase().startsWith(value.toLowerCase())
+        );
+        setFilteredCountries(filtered);
+        setCountryModalVisible(filtered.length > 0);
+      } else {
+        setFilteredCountries([]);
+        setCountryModalVisible(false);
+      }
+    }
   };
 
   const handleDescriptionContentSizeChange = (event: any) => {
@@ -99,6 +125,12 @@ export const AddMeal: React.FC = () => {
   const handleCategorySelect = (category: string) => {
     setFormData(prev => ({ ...prev, category }));
     setCategoryModalVisible(false);
+  };
+
+  const handleCountrySelect = (country: string) => {
+    setFormData(prev => ({ ...prev, country }));
+    setCountryModalVisible(false);
+    setFilteredCountries([]);
   };
 
   const handleImageSelection = async () => {
@@ -304,6 +336,7 @@ export const AddMeal: React.FC = () => {
       name: formData.name,
       price: formData.price,
       category: formData.category,
+      country: formData.country,
       description: formData.description,
       dailyStock: formData.dailyStock,
       maxDistance: formData.maxDistance,
@@ -364,6 +397,7 @@ export const AddMeal: React.FC = () => {
         price: parseInt(formData.price),
         distance: formData.maxDistance ? `${formData.maxDistance} km teslimat` : '0 km teslimat',
         category: formData.category,
+        country: formData.country,
         hasPickup: deliveryOptions.pickup,
         hasDelivery: deliveryOptions.delivery,
         availableDates: formatDateRange(formData.startDate, formData.endDate),
@@ -473,6 +507,36 @@ export const AddMeal: React.FC = () => {
 
           {/* Basic Info */}
           <View style={styles.section}>
+            
+            {/* Country Selection */}
+            <View style={styles.countryContainer}>
+              <FormField
+                label="🌍 Hangi Ülke Yemeği"
+                value={formData.country}
+                onChangeText={handleInputChange('country')}
+                placeholder="Örn: Türk, İtalyan, Çin..."
+                required
+              />
+              
+              {/* Country Autocomplete Modal */}
+              {countryModalVisible && (
+                <View style={styles.autocompleteContainer}>
+                  <ScrollView style={styles.autocompleteList} keyboardShouldPersistTaps="handled">
+                    {filteredCountries.map((country, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => handleCountrySelect(country)}
+                        style={styles.autocompleteItem}
+                      >
+                        <Text variant="body" style={styles.autocompleteText}>
+                          {country}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
             
             {/* Category Selection */}
             <View style={styles.categoryContainer}>
@@ -1169,6 +1233,40 @@ const styles = StyleSheet.create({
   lineCounter: {
     fontSize: 12,
     fontStyle: 'italic',
+  },
+  // Country Autocomplete Styles
+  countryContainer: {
+    position: 'relative',
+    marginBottom: Spacing.md,
+  },
+  autocompleteContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    maxHeight: 200,
+    zIndex: 1000,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  autocompleteList: {
+    maxHeight: 200,
+  },
+  autocompleteItem: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  autocompleteText: {
+    fontSize: 16,
   },
 });
 
