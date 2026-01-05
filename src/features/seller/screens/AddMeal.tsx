@@ -338,6 +338,22 @@ export const AddMeal: React.FC = () => {
           {/* Basic Info */}
           <View style={styles.section}>
             
+            {/* Category Selection */}
+            <View style={styles.categoryContainer}>
+              <Text variant="body" weight="medium" style={[styles.categoryLabel, { color: '#000000' }]}>
+                Kategori Seç
+              </Text>
+              <TouchableOpacity
+                onPress={() => setCategoryModalVisible(true)}
+                style={[styles.categoryButton, { borderColor: colors.border }]}
+              >
+                <Text variant="body" style={{ color: formData.category ? '#000000' : '#666666', fontSize: 16 }}>
+                  {formData.category || "Kategori seçin"}
+                </Text>
+                <Text variant="body" style={{ color: '#666666' }}>📁</Text>
+              </TouchableOpacity>
+            </View>
+
             <FormField
               label="Yemek Adı"
               value={formData.name}
@@ -394,21 +410,15 @@ export const AddMeal: React.FC = () => {
               required
             />
 
-            {/* Category Selection */}
-            <View style={styles.categoryContainer}>
-              <Text variant="body" weight="medium" style={[styles.categoryLabel, { color: '#000000' }]}>
-                Kategori Seç
-              </Text>
-              <TouchableOpacity
-                onPress={() => setCategoryModalVisible(true)}
-                style={[styles.categoryButton, { borderColor: colors.border }]}
-              >
-                <Text variant="body" style={{ color: formData.category ? '#000000' : '#666666', fontSize: 16 }}>
-                  {formData.category || "Kategori seçin"}
-                </Text>
-                <Text variant="body" style={{ color: '#666666' }}>📁</Text>
-              </TouchableOpacity>
-            </View>
+            <FormField
+              label="🚗 Teslimat Mesafesi (km)"
+              value={formData.maxDistance}
+              onChangeText={handleInputChange('maxDistance')}
+              placeholder="Örn: 5"
+              keyboardType="numeric"
+              helperText="Yemeği kaç kilometre uzağa götürebilirsiniz? (Ana ekranda görünecek)"
+              required
+            />
 
             <View style={styles.dateInputs}>
               <View style={styles.dateInput}>
