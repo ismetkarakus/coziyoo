@@ -153,30 +153,16 @@ export const SellerEarnings: React.FC = () => {
         {/* Toplam Özet */}
         <Card variant="default" padding="lg" style={styles.summaryCard}>
           <Text variant="subheading" weight="semibold" style={styles.summaryTitle}>
-            Toplam Kazanç Özeti
+            Toplam Kazançlarım
           </Text>
           
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryItem}>
-              <Text variant="title" weight="bold" color="primary">
-                ₺{overallTotal.total.toFixed(2)}
-              </Text>
-              <Text variant="caption" color="textSecondary">Brüt Satış</Text>
-            </View>
-            
-            <View style={styles.summaryItem}>
-              <Text variant="title" weight="bold" color="error">
-                -₺{overallTotal.commission.toFixed(2)}
-              </Text>
-              <Text variant="caption" color="textSecondary">Komisyon (%{COMMISSION_RATE})</Text>
-            </View>
-            
-            <View style={styles.summaryItem}>
-              <Text variant="title" weight="bold" color="success">
-                ₺{overallTotal.net.toFixed(2)}
-              </Text>
-              <Text variant="caption" color="textSecondary">Net Kazanç</Text>
-            </View>
+          <View style={styles.summaryCenter}>
+            <Text variant="display" weight="bold" color="success">
+              ₺{overallTotal.net.toFixed(2)}
+            </Text>
+            <Text variant="body" color="textSecondary" style={styles.summarySubtext}>
+              {MOCK_SALES_DATA.length} siparişten toplam kazanç
+            </Text>
           </View>
         </Card>
 
@@ -199,14 +185,11 @@ export const SellerEarnings: React.FC = () => {
                       {formatDate(date)}
                     </Text>
                     <View style={styles.dailyTotals}>
-                      <Text variant="caption" color="textSecondary">
-                        Brüt: ₺{dailyTotal.total.toFixed(2)}
-                      </Text>
-                      <Text variant="caption" color="error">
-                        Komisyon: -₺{dailyTotal.commission.toFixed(2)}
-                      </Text>
                       <Text variant="body" weight="semibold" color="success">
-                        Net: ₺{dailyTotal.net.toFixed(2)}
+                        ₺{dailyTotal.net.toFixed(2)}
+                      </Text>
+                      <Text variant="caption" color="textSecondary">
+                        {sales.length} sipariş
                       </Text>
                     </View>
                   </View>
@@ -219,8 +202,8 @@ export const SellerEarnings: React.FC = () => {
                           <Text variant="body" weight="medium">
                             {sale.orderNumber}
                           </Text>
-                          <Text variant="body" weight="semibold" color="primary">
-                            ₺{sale.totalAmount.toFixed(2)}
+                          <Text variant="body" weight="semibold" color="success">
+                            ₺{calculateNetAmount(sale.totalAmount).toFixed(2)}
                           </Text>
                         </View>
                         
@@ -234,15 +217,6 @@ export const SellerEarnings: React.FC = () => {
                               {item.quantity}x {item.name} - ₺{(item.quantity * item.price).toFixed(2)}
                             </Text>
                           ))}
-                        </View>
-                        
-                        <View style={styles.orderFooter}>
-                          <Text variant="caption" color="textSecondary">
-                            Komisyon: -₺{calculateCommission(sale.totalAmount).toFixed(2)}
-                          </Text>
-                          <Text variant="caption" weight="semibold" color="success">
-                            Net: ₺{calculateNetAmount(sale.totalAmount).toFixed(2)}
-                          </Text>
                         </View>
                       </View>
                     ))}
@@ -275,19 +249,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   summaryTitle: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
     textAlign: 'center',
   },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
-  },
-  summaryItem: {
+  summaryCenter: {
     alignItems: 'center',
-    gap: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  summarySubtext: {
+    textAlign: 'center',
   },
   // Günlük Satışlar
   dailySalesContainer: {
@@ -333,15 +303,6 @@ const styles = StyleSheet.create({
   },
   itemsList: {
     gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
-  orderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: Spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
   },
   bottomSpace: {
     height: Spacing.xl,

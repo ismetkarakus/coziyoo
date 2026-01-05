@@ -93,7 +93,7 @@ export const SellerPanel: React.FC = () => {
             <TouchableOpacity onPress={() => handleMenuPress('/(seller)/earnings')}>
               <Card variant="default" padding="md" style={styles.statCard}>
                 <Text variant="title" weight="bold" color="success" center>
-                  ₺480
+                  ₺285
                 </Text>
                 <Text variant="caption" center color="textSecondary">
                   Kazanç
