@@ -517,7 +517,6 @@ export const AddMeal: React.FC = () => {
               onChangeText={handleInputChange('dailyStock')}
               placeholder="10"
               keyboardType="numeric"
-              helperText="Günde kaç porsiyon hazırlayabilirsiniz?"
               required
             />
 
