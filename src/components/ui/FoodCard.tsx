@@ -14,6 +14,8 @@ const getDefaultImage = (foodName: string) => {
     'Ev Yapımı Mantı': 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=320&h=280&fit=crop',
     'Karnıyarık': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
     'Baklava': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
+    'Kuru fasülye pilav': 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=320&h=280&fit=crop',
+    'Tavuk pilav': 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=320&h=280&fit=crop',
   };
   
   return { uri: foodImages[foodName] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=320&h=280&fit=crop' };
@@ -133,7 +135,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           {/* Clickable Food Image ONLY */}
           <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.imageContainer}>
             <Image 
-              source={imageUrl ? { uri: imageUrl } : getDefaultImage(name)} 
+              source={imageUrl && imageUrl.startsWith('http') ? { uri: imageUrl } : getDefaultImage(name)} 
               style={styles.image}
               resizeMode="cover"
               defaultSource={{ uri: 'https://via.placeholder.com/160x140/f5f5f5/cccccc?text=📸' }}
