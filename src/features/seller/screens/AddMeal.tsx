@@ -425,7 +425,6 @@ export const AddMeal: React.FC = () => {
   };
 
   const performPublish = async () => {
-
     try {
       // Create new meal object
       const newMeal = {

@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, FoodCard } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -56,6 +55,10 @@ export const MealPreview: React.FC = () => {
   };
 
 
+  // Debug: Log the incoming data
+  console.log('MealPreview - Incoming data:', data);
+  console.log('MealPreview - Images:', data.images);
+  console.log('MealPreview - Name:', data.name);
 
   // Create mock food card data from form data
   const mockFoodData = {
@@ -187,14 +190,14 @@ export const MealPreview: React.FC = () => {
           )}
         </View>
 
-        {/* Back/Close Button */}
+        {/* Back Button */}
         <View style={styles.backButtonContainer}>
           <TouchableOpacity
             onPress={handleBackPress}
-            style={[styles.backButtonStyle, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
           >
             <Text variant="body" weight="medium" style={{ color: colors.text }}>
-              ✕ Geri Dön
+              ← Geri Dön
             </Text>
           </TouchableOpacity>
         </View>
@@ -264,39 +267,19 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.light.border,
   },
   // Action Buttons
-  actionButtons: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  editButton: {
-    borderWidth: 1,
-    backgroundColor: 'transparent',
-  },
-  publishButton: {
-    borderWidth: 0,
-  },
-  bottomSpace: {
-    height: Spacing.xl,
-  },
-  // Back Button
   backButtonContainer: {
-    alignItems: 'center',
     marginTop: Spacing.lg,
+    alignItems: 'center',
   },
-  backButtonStyle: {
+  backButton: {
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
     borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    minWidth: 120,
+  },
+  bottomSpace: {
+    height: Spacing.xl,
   },
 });
