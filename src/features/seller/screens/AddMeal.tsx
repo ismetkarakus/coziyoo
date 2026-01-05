@@ -249,6 +249,39 @@ export const AddMeal: React.FC = () => {
   };
 
 
+  const handlePreview = () => {
+    // Basic validation for preview
+    if (!formData.name || !formData.price || !formData.category) {
+      Alert.alert(
+        'Eksik Bilgi',
+        'Önizleme için en az yemek adı, fiyat ve kategori gereklidir.',
+        [{ text: 'Tamam' }]
+      );
+      return;
+    }
+
+    // Navigate to preview screen with form data
+    const previewData = {
+      name: formData.name,
+      price: formData.price,
+      category: formData.category,
+      description: formData.description,
+      dailyStock: formData.dailyStock,
+      maxDistance: formData.maxDistance,
+      deliveryFee: formData.deliveryFee,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      hasPickup: deliveryOptions.pickup,
+      hasDelivery: deliveryOptions.delivery,
+      images: selectedImages,
+    };
+
+    router.push({
+      pathname: '/(seller)/meal-preview',
+      params: { previewData: JSON.stringify(previewData) }
+    });
+  };
+
   const handlePublish = () => {
     // Validation
     if (!formData.name || !formData.price || !formData.dailyStock || !formData.category) {
@@ -499,6 +532,15 @@ export const AddMeal: React.FC = () => {
               </View>
             )}
           </View>
+
+          <Button
+            variant="outline"
+            fullWidth
+            onPress={handlePreview}
+            style={styles.previewButton}
+          >
+            👁️ Önizleme (Müşteri Görünümü)
+          </Button>
 
           <Button
             variant="primary"
@@ -782,8 +824,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
   },
-  publishButton: {
+  previewButton: {
     marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  publishButton: {
+    marginBottom: Spacing.xl,
   },
   dateInputs: {
     flexDirection: 'row',
