@@ -131,10 +131,23 @@ export const SellerEarnings: React.FC = () => {
   const groupedSales = groupSalesByDate();
   const overallTotal = calculateOverallTotal();
 
+  const handleBackPress = () => {
+    router.back();
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
         title="Kazançlarım"
+        leftComponent={
+          <TouchableOpacity 
+            onPress={handleBackPress}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+        }
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -151,6 +164,20 @@ export const SellerEarnings: React.FC = () => {
             <Text variant="body" color="textSecondary" style={styles.summarySubtext}>
               {MOCK_SALES_DATA.length} siparişten toplam kazanç
             </Text>
+            
+            {/* Komisyon Bilgisi */}
+            <View style={styles.commissionInfo}>
+              <Text variant="caption" color="textSecondary" style={styles.commissionText}>
+                Brüt Tutar: ₺{overallTotal.total.toFixed(2)}
+              </Text>
+              <Text variant="caption" color="warning" style={styles.commissionText}>
+                Komisyon (%{COMMISSION_RATE}): -₺{overallTotal.commission.toFixed(2)}
+              </Text>
+              <View style={styles.divider} />
+              <Text variant="body" weight="semibold" color="success" style={styles.commissionText}>
+                Net Kazanç: ₺{overallTotal.net.toFixed(2)}
+              </Text>
+            </View>
           </View>
         </Card>
 
@@ -228,6 +255,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.md,
   },
+  backButton: {
+    padding: Spacing.sm,
+    marginLeft: -Spacing.sm,
+  },
   // Toplam Özet
   summaryCard: {
     marginBottom: Spacing.lg,
@@ -242,6 +273,24 @@ const styles = StyleSheet.create({
   },
   summarySubtext: {
     textAlign: 'center',
+  },
+  commissionInfo: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    backgroundColor: Colors.light.surfaceVariant,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+  },
+  commissionText: {
+    textAlign: 'center',
+    marginBottom: Spacing.xs,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.light.border,
+    width: '80%',
+    marginVertical: Spacing.sm,
   },
   // Günlük Satışlar
   dailySalesContainer: {

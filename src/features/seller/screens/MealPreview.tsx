@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, FoodCard } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -60,11 +61,32 @@ export const MealPreview: React.FC = () => {
   console.log('MealPreview - Images:', data.images);
   console.log('MealPreview - Name:', data.name);
 
+  // Get seller name from profile
+  const [sellerName, setSellerName] = React.useState('Sizin Adınız');
+
+  React.useEffect(() => {
+    const loadSellerName = async () => {
+      try {
+        const savedProfile = await AsyncStorage.getItem('sellerProfile');
+        if (savedProfile) {
+          const profile = JSON.parse(savedProfile);
+          if (profile.formData) {
+            // Nickname varsa onu kullan, yoksa gerçek ismi kullan
+            setSellerName(profile.formData.nickname || profile.formData.name || 'Sizin Adınız');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading seller name:', error);
+      }
+    };
+    loadSellerName();
+  }, []);
+
   // Create mock food card data from form data
   const mockFoodData = {
     id: 'preview-' + Date.now(),
     name: data.name || 'Yemek Adı',
-    cookName: 'Sizin Adınız', // This would come from user profile
+    cookName: sellerName,
     rating: 4.8, // Default rating for preview
     price: parseInt(data.price) || 0,
     distance: data.maxDistance ? `${data.maxDistance} km teslimat` : '0 km teslimat',
@@ -83,6 +105,15 @@ export const MealPreview: React.FC = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
         title="Önizleme - Müşteri Görünümü"
+        leftComponent={
+          <TouchableOpacity 
+            onPress={handleBackPress}
+            style={styles.topBarBackButton}
+            activeOpacity={0.7}
+          >
+            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+        }
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -183,15 +214,6 @@ export const MealPreview: React.FC = () => {
           )}
         </View>
 
-        {/* Back Button */}
-        <View style={styles.backButtonContainer}>
-          <TouchableOpacity
-            onPress={handleBackPress}
-            style={[styles.backButton, { backgroundColor: colors.surface }]}
-          >
-            <FontAwesome name="arrow-left" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
 
         <View style={styles.bottomSpace} />
       </ScrollView>
@@ -258,24 +280,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.border,
   },
-  // Action Buttons
-  backButtonContainer: {
-    marginTop: Spacing.lg,
-    alignItems: 'flex-start',
-  },
-  backButton: {
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 60,
-    height: 60,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  // TopBar Back Button
+  topBarBackButton: {
+    padding: Spacing.sm,
+    marginLeft: -Spacing.sm,
   },
   bottomSpace: {
     height: Spacing.xl,

@@ -68,7 +68,7 @@ export const Profile: React.FC = () => {
         router.push('/(tabs)/chat-list');
         break;
       case 'order-history':
-        router.push('/(tabs)/notifications');
+        router.push('/(tabs)/order-history');
         break;
       default:
         Alert.alert('Yakında', 'Bu özellik yakında gelecek.');

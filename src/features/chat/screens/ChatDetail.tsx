@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { Text, Input, Button } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 // Mock messages data
 const MOCK_MESSAGES = [
@@ -81,6 +82,11 @@ export const ChatDetail: React.FC = () => {
     sendMessage(reply);
   };
 
+  const handleBackPress = () => {
+    console.log('Back button pressed from ChatDetail');
+    router.back();
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Hazırlanıyor':
@@ -151,13 +157,24 @@ export const ChatDetail: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title={foodName}
+        title={foodName || 'Mesajlaşma'}
+        leftComponent={
+          <TouchableOpacity 
+            onPress={handleBackPress}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+        }
         rightComponent={
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(orderStatus) }]}>
-            <Text variant="caption" style={{ color: 'white' }}>
-              {orderStatus}
-            </Text>
-          </View>
+          orderStatus ? (
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(orderStatus) }]}>
+              <Text variant="caption" style={{ color: 'white' }}>
+                {orderStatus}
+              </Text>
+            </View>
+          ) : null
         }
       />
       
@@ -216,6 +233,10 @@ export const ChatDetail: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  backButton: {
+    padding: Spacing.xs,
+    borderRadius: 8,
   },
   statusBadge: {
     paddingHorizontal: Spacing.sm,
@@ -295,6 +316,7 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
 });
+
 
 
 

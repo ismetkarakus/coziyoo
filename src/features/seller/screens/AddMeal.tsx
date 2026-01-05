@@ -221,25 +221,102 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
-    // Çoklu resim seçimi
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true, // Çoklu seçim aktif
-      selectionLimit: remainingSlots, // Kalan slot kadar seçim
-      quality: 0.8,
-      aspect: [4, 3],
-      allowsEditing: false, // Çoklu seçimde editing kapalı
-    });
+    // Resim seçme seçenekleri
+    Alert.alert(
+      'Fotoğraf Ekle',
+      'Nasıl fotoğraf eklemek istiyorsunuz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        { text: 'Tek Resim Seç', onPress: () => pickSingleImage() },
+        { text: 'Çoklu Resim Seç', onPress: () => pickMultipleImages() },
+        { text: 'Kameradan Çek', onPress: () => takePhoto() },
+      ]
+    );
+  };
 
-    if (!result.canceled && result.assets) {
-      const newImages = result.assets.map(asset => asset.uri);
-      setSelectedImages(prev => [...prev, ...newImages]);
+  const pickSingleImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: false,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newImage = result.assets[0].uri;
+        setSelectedImages(prev => [...prev, newImage]);
+        
+        Alert.alert(
+          'Başarılı',
+          'Resim başarıyla eklendi.',
+          [{ text: 'Tamam' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error picking single image:', error);
+      Alert.alert('Hata', 'Resim seçilirken bir hata oluştu.');
+    }
+  };
+
+  const pickMultipleImages = async () => {
+    try {
+      const remainingSlots = 5 - selectedImages.length;
       
-      // Başarı mesajı
-      Alert.alert(
-        'Resimler Eklendi',
-        `${newImages.length} resim başarıyla eklendi. Toplam: ${selectedImages.length + newImages.length}/5`
-      );
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        selectionLimit: remainingSlots,
+        quality: 0.8,
+        allowsEditing: false,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newImages = result.assets.map(asset => asset.uri);
+        setSelectedImages(prev => [...prev, ...newImages]);
+        
+        Alert.alert(
+          'Başarılı',
+          `${newImages.length} resim başarıyla eklendi. Toplam: ${selectedImages.length + newImages.length}/5`,
+          [{ text: 'Tamam' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error picking multiple images:', error);
+      Alert.alert('Hata', 'Resimler seçilirken bir hata oluştu.');
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      // Kamera izni kontrolü
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newImage = result.assets[0].uri;
+        setSelectedImages(prev => [...prev, newImage]);
+        
+        Alert.alert(
+          'Başarılı',
+          'Fotoğraf başarıyla çekildi ve eklendi.',
+          [{ text: 'Tamam' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Hata', 'Fotoğraf çekilirken bir hata oluştu.');
     }
   };
 
@@ -426,11 +503,26 @@ export const AddMeal: React.FC = () => {
 
   const performPublish = async () => {
     try {
+      // Get seller name from profile (nickname preferred)
+      let sellerName = 'Sizin Adınız';
+      try {
+        const savedProfile = await AsyncStorage.getItem('sellerProfile');
+        if (savedProfile) {
+          const profile = JSON.parse(savedProfile);
+          if (profile.formData) {
+            // Nickname varsa onu kullan, yoksa gerçek ismi kullan
+            sellerName = profile.formData.nickname || profile.formData.name || 'Sizin Adınız';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading seller name:', error);
+      }
+
       // Create new meal object
       const newMeal = {
         id: 'meal-' + Date.now(),
         name: formData.name,
-        cookName: 'Sizin Adınız', // This would come from user profile
+        cookName: sellerName,
         rating: 4.8, // Default rating for new meals
         price: parseInt(formData.price),
         distance: formData.maxDistance ? `${formData.maxDistance} km teslimat` : '0 km teslimat',
@@ -458,7 +550,7 @@ export const AddMeal: React.FC = () => {
       // Save back to AsyncStorage
       await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
 
-      console.log('Meal published successfully:', newMeal);
+      console.log('Meal published successfully:', newMeal.name);
 
       // Show success message
       Alert.alert(
@@ -532,10 +624,13 @@ export const AddMeal: React.FC = () => {
                     📸
                   </Text>
                   <Text variant="caption" style={[styles.photoText, { color: colors.primary, fontWeight: '600' }]}>
-                    Fotoğraf Ekle
+                    Resim Ekle
                   </Text>
                   <Text variant="caption" style={[styles.photoCounter, { color: colors.textSecondary }]}>
                     ({selectedImages.length}/5)
+                  </Text>
+                  <Text variant="caption" style={[styles.photoHint, { color: colors.textSecondary }]}>
+                    Tek/Çoklu/Kamera
                   </Text>
                 </TouchableOpacity>
               )}
@@ -998,6 +1093,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 2,
   },
+  photoHint: {
+    fontSize: 8,
+    marginTop: 1,
+    textAlign: 'center',
+  },
   section: {
     gap: Spacing.sm,
   },
@@ -1246,6 +1346,7 @@ const styles = StyleSheet.create({
     lineHeight: 22, // Satır yüksekliği
     fontSize: 16, // Font boyutu
     textAlignVertical: 'top', // Metin üstten başlasın
+    color: '#000000', // Siyah renk
     borderRadius: 12, // Köşe yuvarlaklığı
     borderWidth: 1.5, // Kalın border
     borderColor: '#E0E0E0', // Açık gri border
@@ -1305,6 +1406,7 @@ const styles = StyleSheet.create({
   },
   autocompleteText: {
     fontSize: 16,
+    color: '#000000', // Siyah renk
   },
 });
 

@@ -7,51 +7,51 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-// Mock chat data
-const MOCK_CHATS = [
+// Mock seller chat data - satıcı perspektifinden mesajlar
+const MOCK_SELLER_CHATS = [
   {
     id: '1',
     foodName: 'Ev Yapımı Mantı',
-    cookName: 'Ayşe Hanım',
+    customerName: 'Ahmet Y.',
     orderStatus: 'Hazırlanıyor',
-    lastMessage: 'Yemeğiniz 15 dakika içinde hazır olacak.',
+    lastMessage: 'Ne zaman hazır olur?',
     timestamp: '14:30',
-    unreadCount: 2,
+    unreadCount: 1,
     orderId: 'ORD-001',
   },
   {
     id: '2',
     foodName: 'Karnıyarık',
-    cookName: 'Fatma Teyze',
+    customerName: 'Zeynep M.',
     orderStatus: 'Hazır',
-    lastMessage: 'Yemeğiniz hazır, gel al yapabilirsiniz.',
+    lastMessage: 'Teşekkür ederim, geliyorum.',
     timestamp: '13:45',
-    unreadCount: 1,
+    unreadCount: 0,
     orderId: 'ORD-002',
   },
   {
     id: '3',
     foodName: 'Ev Böreği',
-    cookName: 'Zehra Hanım',
+    customerName: 'Can K.',
     orderStatus: 'Teslim Edildi',
-    lastMessage: 'Teşekkür ederim, çok lezzetliydi!',
+    lastMessage: 'Çok lezzetliydi, teşekkürler!',
     timestamp: 'Dün',
     unreadCount: 0,
     orderId: 'ORD-003',
   },
 ];
 
-export const ChatList: React.FC = () => {
+export const SellerMessages: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const handleChatPress = (chatId: string, orderId: string, foodName: string, orderStatus: string) => {
-    router.push(`/(tabs)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(orderStatus)}`);
+  const handleBackPress = () => {
+    console.log('Back button pressed from SellerMessages');
+    router.back();
   };
 
-  const handleBackPress = () => {
-    console.log('Back button pressed from ChatList');
-    router.back();
+  const handleChatPress = (chatId: string, orderId: string, foodName: string, orderStatus: string) => {
+    router.push(`/(tabs)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(orderStatus)}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -72,7 +72,7 @@ export const ChatList: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Mesajlar"
+        title="Müşteri Mesajları"
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -85,18 +85,18 @@ export const ChatList: React.FC = () => {
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {MOCK_CHATS.length === 0 ? (
+        {MOCK_SELLER_CHATS.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text variant="heading" center>
               Mesaj Yok
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.emptyText}>
-              Sipariş verdiğinde satıcılarla buradan mesajlaşabilirsin.
+              Müşterilerden gelen mesajlar burada görünecek.
             </Text>
           </View>
         ) : (
           <View style={styles.chatsContainer}>
-            {MOCK_CHATS.map((chat) => (
+            {MOCK_SELLER_CHATS.map((chat) => (
               <TouchableOpacity
                 key={chat.id}
                 onPress={() => handleChatPress(chat.id, chat.orderId, chat.foodName, chat.orderStatus)}
@@ -110,7 +110,7 @@ export const ChatList: React.FC = () => {
                           {chat.foodName}
                         </Text>
                         <Text variant="caption" color="textSecondary">
-                          {chat.cookName} • Sipariş: {chat.orderId}
+                          {chat.customerName} • Sipariş: {chat.orderId}
                         </Text>
                       </View>
                       
@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.lg,
+    marginTop: 100,
   },
   emptyText: {
     marginTop: Spacing.md,
@@ -219,10 +220,3 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
-
-
-
-
-
-

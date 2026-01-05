@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 // Mock orders data
 const MOCK_ORDERS = [
@@ -48,8 +50,36 @@ export const SellerOrders: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [orders, setOrders] = useState(MOCK_ORDERS);
+  const [realOrders, setRealOrders] = useState<any[]>([]);
 
-  const handleOrderAction = (orderId: string, action: 'confirm' | 'reject') => {
+  // Load orders from AsyncStorage when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadOrders();
+    }, [])
+  );
+
+  const loadOrders = async () => {
+    try {
+      const savedOrders = await AsyncStorage.getItem('orders');
+      if (savedOrders) {
+        const allOrders = JSON.parse(savedOrders);
+        // Filter orders for this seller (in real app, use seller ID)
+        const sellerOrders = allOrders.filter((order: any) => 
+          order.status === 'pending_seller_approval' || 
+          order.status === 'seller_approved' ||
+          order.status === 'pending_buyer_approval' ||
+          order.status === 'confirmed' ||
+          order.status === 'rejected'
+        );
+        setRealOrders(sellerOrders);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    }
+  };
+
+  const handleOrderAction = async (orderId: string, action: 'confirm' | 'reject') => {
     const actionText = action === 'confirm' ? 'onaylamak' : 'reddetmek';
     
     Alert.alert(
@@ -60,14 +90,46 @@ export const SellerOrders: React.FC = () => {
         {
           text: action === 'confirm' ? 'Onayla' : 'Reddet',
           style: action === 'confirm' ? 'default' : 'destructive',
-          onPress: () => {
-            setOrders(prev => 
-              prev.map(order => 
-                order.id === orderId 
-                  ? { ...order, status: action === 'confirm' ? 'confirmed' : 'rejected' }
-                  : order
-              )
-            );
+          onPress: async () => {
+            try {
+              // Update local state
+              setOrders(prev => 
+                prev.map(order => 
+                  order.id === orderId 
+                    ? { ...order, status: action === 'confirm' ? 'confirmed' : 'rejected' }
+                    : order
+                )
+              );
+
+              // Update AsyncStorage
+              const savedOrders = await AsyncStorage.getItem('orders');
+              if (savedOrders) {
+                const allOrders = JSON.parse(savedOrders);
+                const updatedOrders = allOrders.map((order: any) => 
+                  order.id === orderId 
+                    ? { 
+                        ...order, 
+                        status: action === 'confirm' ? 'seller_approved' : 'rejected',
+                        sellerApprovedAt: action === 'confirm' ? new Date().toISOString() : undefined
+                      }
+                    : order
+                );
+                await AsyncStorage.setItem('orders', JSON.stringify(updatedOrders));
+                
+                // Reload orders
+                loadOrders();
+              }
+
+              Alert.alert(
+                'Başarılı',
+                action === 'confirm' 
+                  ? 'Sipariş onaylandı. Müşteri bilgilendirildi.' 
+                  : 'Sipariş reddedildi.'
+              );
+            } catch (error) {
+              console.error('Error updating order:', error);
+              Alert.alert('Hata', 'Sipariş güncellenirken bir hata oluştu.');
+            }
           },
         },
       ]
@@ -87,10 +149,20 @@ export const SellerOrders: React.FC = () => {
     }
   };
 
+  const handleBackPress = () => {
+    console.log('Back button pressed from SellerOrders');
+    router.back();
+  };
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'Bekliyor';
+      case 'pending_seller_approval':
+        return 'Onay Bekliyor';
+      case 'seller_approved':
+        return 'Onaylandı (Müşteri Onayı Bekliyor)';
+      case 'pending_buyer_approval':
+        return 'Müşteri Onayı Bekliyor';
       case 'confirmed':
         return 'Onaylandı';
       case 'rejected':
@@ -100,22 +172,27 @@ export const SellerOrders: React.FC = () => {
     }
   };
 
-  const pendingOrders = orders.filter(order => order.status === 'pending');
-  const otherOrders = orders.filter(order => order.status !== 'pending');
+  // Combine mock orders with real orders for display
+  const allOrders = [...orders, ...realOrders];
+  const pendingOrders = allOrders.filter(order => 
+    order.status === 'pending' || order.status === 'pending_seller_approval'
+  );
+  const otherOrders = allOrders.filter(order => 
+    order.status !== 'pending' && order.status !== 'pending_seller_approval'
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="" 
+        title="Siparişler"
         leftComponent={
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text variant="body" style={{ fontSize: 24 }}>←</Text>
+          <TouchableOpacity 
+            onPress={handleBackPress}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <FontAwesome name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
-        }
-        rightComponent={
-          <Text variant="heading" weight="bold" color="primary" style={{ fontSize: 20 }}>
-            Siparişler
-          </Text>
         }
       />
       
@@ -142,20 +219,23 @@ export const SellerOrders: React.FC = () => {
 
                 <View style={styles.orderInfo}>
                   <Text variant="body">
-                    <Text weight="medium">Müşteri:</Text> {order.customerName}
+                    <Text weight="medium">Müşteri:</Text> {order.customerName || order.buyerName}
                   </Text>
-                  <Text variant="body">
-                    <Text weight="medium">Telefon:</Text> {order.customerPhone}
-                  </Text>
+                  {(order.customerPhone || order.buyerPhone) && (
+                    <Text variant="body">
+                      <Text weight="medium">Telefon:</Text> {order.customerPhone || order.buyerPhone || 'Belirtilmemiş'}
+                    </Text>
+                  )}
                   <Text variant="body">
                     <Text weight="medium">Miktar:</Text> {order.quantity} adet
                   </Text>
                   <Text variant="body">
                     <Text weight="medium">Toplam:</Text> ₺{order.totalPrice}
                   </Text>
-                  <Text variant="body">
-                    <Text weight="medium">Sipariş Saati:</Text> {order.orderTime}
-                  </Text>
+                      <Text variant="body">
+                        <Text weight="medium">Sipariş Tarihi:</Text> {order.requestedDate || order.orderTime || 'Belirtilmemiş'}
+                        {order.requestedTime && ` - ${order.requestedTime}`}
+                      </Text>
                   <Text variant="body">
                     <Text weight="medium">Teslimat:</Text> {order.deliveryType === 'pickup' ? 'Gel Al' : 'Teslimat'}
                   </Text>
@@ -164,9 +244,14 @@ export const SellerOrders: React.FC = () => {
                       <Text weight="medium">Adres:</Text> {order.address}
                     </Text>
                   )}
+                  {order.createdAt && (
+                    <Text variant="caption" color="textSecondary">
+                      Sipariş Zamanı: {new Date(order.createdAt).toLocaleString('tr-TR')}
+                    </Text>
+                  )}
                 </View>
 
-                {order.status === 'pending' && (
+                {(order.status === 'pending' || order.status === 'pending_seller_approval') && (
                   <View style={styles.orderActions}>
                     <Button
                       variant="outline"
@@ -243,6 +328,10 @@ export const SellerOrders: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  backButton: {
+    padding: Spacing.xs,
+    borderRadius: 8,
   },
   content: {
     flex: 1,

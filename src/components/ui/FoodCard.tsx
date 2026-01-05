@@ -16,6 +16,7 @@ const getDefaultImage = (foodName: string) => {
     'Baklava': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
     'Kuru fasülye pilav': 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=320&h=280&fit=crop',
     'Tavuk pilav': 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=320&h=280&fit=crop',
+    'Helva': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=320&h=280&fit=crop',
   };
   
   return { uri: foodImages[foodName] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=320&h=280&fit=crop' };
@@ -140,23 +141,12 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.imageContainer}>
             <Image 
               source={(() => {
-                console.log('FoodCard - Name:', name);
-                console.log('FoodCard - ImageUrl:', imageUrl);
-                console.log('FoodCard - IsPreview:', isPreview);
-                
-                // Önizlemede local resimlere izin ver
-                if (isPreview && imageUrl) {
-                  console.log('FoodCard - Using preview image:', imageUrl);
+                // Önizleme modunda veya local file varsa kullan
+                if (imageUrl && (isPreview || imageUrl.startsWith('file://') || imageUrl.startsWith('http'))) {
                   return { uri: imageUrl };
                 }
                 
-                // Normal modda sadece HTTP URL'leri kabul et
-                if (imageUrl && imageUrl.startsWith('http')) {
-                  console.log('FoodCard - Using HTTP image:', imageUrl);
-                  return { uri: imageUrl };
-                }
-                
-                console.log('FoodCard - Using default image for:', name);
+                // Default resim kullan
                 return getDefaultImage(name);
               })()} 
               style={styles.image}

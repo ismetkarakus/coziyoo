@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -21,6 +22,13 @@ const MENU_ITEMS = [
     description: 'Yeni yemek menüye ekle',
     icon: '🍽️',
     route: '/(seller)/add-meal',
+  },
+  {
+    id: 'manage-meals',
+    title: 'Yemeklerimi Yönet',
+    description: 'Yemekleri düzenle, sil veya güncelle',
+    icon: '📝',
+    route: '/(seller)/manage-meals',
   },
   {
     id: 'orders',
@@ -45,9 +53,44 @@ const MENU_ITEMS = [
   },
 ];
 
+// Default seller data
+const DEFAULT_SELLER_DATA = {
+  name: 'Ayşe Hanım',
+  email: 'ayse@example.com',
+  location: 'Kadıköy, İstanbul',
+  avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+};
+
 export const SellerPanel: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const [profileData, setProfileData] = useState(DEFAULT_SELLER_DATA);
+
+  // Load profile data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProfileData();
+    }, [])
+  );
+
+  const loadProfileData = async () => {
+    try {
+      const savedProfile = await AsyncStorage.getItem('sellerProfile');
+      if (savedProfile) {
+        const profile = JSON.parse(savedProfile);
+        if (profile.formData) {
+          setProfileData({
+            name: profile.formData.nickname || profile.formData.name || DEFAULT_SELLER_DATA.name, // Nickname öncelikli
+            email: profile.formData.email || DEFAULT_SELLER_DATA.email,
+            location: profile.formData.location || DEFAULT_SELLER_DATA.location,
+            avatar: profile.avatarUri || DEFAULT_SELLER_DATA.avatar,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+    }
+  };
 
   const handleMenuPress = (route: string) => {
     router.push(route as any);
@@ -115,20 +158,22 @@ export const SellerPanel: React.FC = () => {
         {/* User Info Card - Like Profile */}
         <Card variant="default" padding="md" style={styles.userCard}>
           <View style={styles.userInfo}>
-            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-              <Text variant="title" style={{ color: 'white' }}>
-                A
-              </Text>
+            <View style={styles.avatarContainer}>
+              <Image
+                source={{ uri: profileData.avatar }}
+                style={styles.avatarImage}
+                defaultSource={{ uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' }}
+              />
             </View>
             <View style={styles.userDetails}>
               <Text variant="subheading" weight="semibold">
-                Ayşe Hanım
+                {profileData.name}
               </Text>
               <Text variant="body" color="textSecondary">
-                ayse@example.com
+                {profileData.email}
               </Text>
               <Text variant="caption" color="textSecondary">
-                Satıcı • Kadıköy, İstanbul
+                Satıcı • {profileData.location}
               </Text>
             </View>
           </View>
@@ -204,13 +249,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatar: {
+  avatarContainer: {
+    marginRight: Spacing.md,
+  },
+  avatarImage: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
+    borderWidth: 2,
+    borderColor: Colors.light.primary,
   },
   userDetails: {
     flex: 1,

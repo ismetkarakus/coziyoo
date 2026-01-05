@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, FoodCard } from '../../../components/ui';
@@ -196,53 +196,40 @@ export const Home: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
   const [scrollY, setScrollY] = useState(0);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
+  const [cookFilter, setCookFilter] = useState<string>('');
   const { addToCart } = useCart();
 
-  // Remove Tavuk pilav from published meals
-  const removeTavukPilav = async () => {
-    try {
-      const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-      if (publishedMealsJson) {
-        const meals = JSON.parse(publishedMealsJson);
-        console.log('Before removal:', meals);
-        
-        // Filter out Tavuk pilav
-        const filteredMeals = meals.filter(meal => 
-          !meal.name || !meal.name.toLowerCase().includes('tavuk pilav')
-        );
-        
-        console.log('After removal:', filteredMeals);
-        
-        // Save back to AsyncStorage
-        await AsyncStorage.setItem('publishedMeals', JSON.stringify(filteredMeals));
-        
-        // Update state
-        setPublishedMeals(filteredMeals);
-        
-        console.log('Tavuk pilav removed successfully');
-      }
-    } catch (error) {
-      console.error('Error removing Tavuk pilav:', error);
+
+  // Handle cook filter from params
+  useEffect(() => {
+    console.log('Home params:', params);
+    if (params.filterByCook && params.showCookFilter) {
+      console.log('Setting cook filter to:', params.filterByCook);
+      setCookFilter(params.filterByCook as string);
+      setSearchQuery(''); // Clear search when filtering by cook
+      setSelectedCategory('Tümü'); // Reset category when filtering by cook
+    } else if (!params.filterByCook && !params.showCookFilter) {
+      // Clear cook filter if no params
+      setCookFilter('');
     }
-  };
+  }, [params.filterByCook, params.showCookFilter]);
 
   // Load published meals from AsyncStorage
   useEffect(() => {
     const loadPublishedMeals = async () => {
       try {
         const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-        console.log('AsyncStorage publishedMeals:', publishedMealsJson);
         if (publishedMealsJson) {
           const meals = JSON.parse(publishedMealsJson);
           setPublishedMeals(meals);
-          console.log('Loaded published meals:', meals.length, meals);
         } else {
-          console.log('No published meals found in AsyncStorage');
+          setPublishedMeals([]);
         }
       } catch (error) {
         console.error('Error loading published meals:', error);
@@ -250,9 +237,6 @@ export const Home: React.FC = () => {
     };
 
     loadPublishedMeals();
-    
-    // Auto-remove Tavuk pilav on component mount
-    removeTavukPilav();
   }, []);
 
   // Reload published meals when screen comes into focus
@@ -261,18 +245,35 @@ export const Home: React.FC = () => {
       const loadPublishedMeals = async () => {
         try {
           const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-          console.log('Focus - AsyncStorage publishedMeals:', publishedMealsJson);
           if (publishedMealsJson) {
             const meals = JSON.parse(publishedMealsJson);
             setPublishedMeals(meals);
-            console.log('Focus - Loaded published meals:', meals.length, meals);
+          } else {
+            setPublishedMeals([]);
           }
         } catch (error) {
           console.error('Focus - Error loading published meals:', error);
         }
       };
 
+      const loadCookFilter = async () => {
+        try {
+          const savedCookFilter = await AsyncStorage.getItem('cookFilter');
+          if (savedCookFilter) {
+            console.log('Loading cook filter from storage:', savedCookFilter);
+            setCookFilter(savedCookFilter);
+            setSearchQuery(''); // Clear search when filtering by cook
+            setSelectedCategory('Tümü'); // Reset category when filtering by cook
+            // Clear the filter from storage after using it
+            await AsyncStorage.removeItem('cookFilter');
+          }
+        } catch (error) {
+          console.error('Error loading cook filter:', error);
+        }
+      };
+
       loadPublishedMeals();
+      loadCookFilter();
     }, [])
   );
 
@@ -309,17 +310,24 @@ export const Home: React.FC = () => {
     setSelectedCategory(category);
   };
 
-  // Filter foods based on selected category and search query
+  // Filter foods based on selected category, search query, and cook filter
   const getFilteredFoods = () => {
     // Combine mock foods with published meals
     let foods = [...MOCK_FOODS, ...publishedMeals];
+    console.log('All foods:', foods.length, 'Cook filter:', cookFilter);
     
-    // First filter by category
+    // First filter by cook if specified
+    if (cookFilter.trim()) {
+      foods = foods.filter(food => food.cookName === cookFilter);
+      console.log('After cook filter:', foods.length, 'foods for', cookFilter);
+    }
+    
+    // Then filter by category
     if (selectedCategory !== 'Tümü') {
       foods = foods.filter(food => food.category === selectedCategory);
     }
     
-    // Then filter by search query
+    // Finally filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       foods = foods.filter(food => 
@@ -394,6 +402,26 @@ export const Home: React.FC = () => {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
+        {/* Cook Filter Indicator */}
+        {cookFilter.trim() && (
+          <View style={[styles.cookFilterContainer, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}>
+            <FontAwesome name="user-circle" size={16} color={colors.primary} />
+            <Text variant="body" style={{ color: colors.primary, flex: 1 }}>
+              {cookFilter}'ın yemekleri gösteriliyor
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setCookFilter('');
+                // Clear URL params
+                router.replace('/(tabs)/home');
+              }}
+              style={[styles.cookFilterCloseButton, { backgroundColor: colors.primary }]}
+            >
+              <FontAwesome name="times" size={12} color="white" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Search */}
         <View style={styles.searchContainer}>
           <View style={[styles.searchInputContainer, { 
@@ -421,6 +449,7 @@ export const Home: React.FC = () => {
             )}
           </View>
         </View>
+
 
         {/* Categories */}
         <View style={styles.categoriesContainer}>
@@ -581,6 +610,24 @@ const styles = StyleSheet.create({
   clearIcon: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  cookFilterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  cookFilterCloseButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   categoriesContainer: {
     paddingHorizontal: Spacing.md,

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Text, Button, Card, Input } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
@@ -28,8 +29,10 @@ export const SellerProfile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [isEditing, setIsEditing] = useState(false);
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: SELLER_DATA.name,
+    nickname: '', // Nickname alanı eklendi
     email: SELLER_DATA.email,
     phone: SELLER_DATA.phone,
     location: SELLER_DATA.location,
@@ -46,6 +49,14 @@ export const SellerProfile: React.FC = () => {
     front: null as string | null,
     back: null as string | null,
   });
+
+  // Kimlik doğrulama durumu
+  const [identityVerification, setIdentityVerification] = useState({
+    status: 'pending', // pending, verified, rejected
+    submittedAt: null as string | null,
+    verifiedAt: null as string | null,
+    rejectionReason: null as string | null,
+  });
   
   const [bankDetails, setBankDetails] = useState({
     bankName: '',
@@ -55,30 +66,126 @@ export const SellerProfile: React.FC = () => {
   });
 
 
+  // Load profile data on component mount
+  useEffect(() => {
+    loadProfileData();
+  }, []);
+
+  const loadProfileData = async () => {
+    try {
+      const savedProfile = await AsyncStorage.getItem('sellerProfile');
+      if (savedProfile) {
+        const profileData = JSON.parse(savedProfile);
+        setFormData(profileData.formData || formData);
+        setAvatarUri(profileData.avatarUri || null);
+        setSpecialties(profileData.specialties || SELLER_DATA.specialties);
+        setBankDetails(profileData.bankDetails || bankDetails);
+        setIdentityImages(profileData.identityImages || identityImages);
+        setIdentityVerification(profileData.identityVerification || identityVerification);
+      }
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+    }
+  };
+
+  const saveProfileData = async () => {
+    try {
+      const profileData = {
+        formData,
+        avatarUri,
+        specialties,
+        bankDetails,
+        identityImages,
+        identityVerification,
+        updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem('sellerProfile', JSON.stringify(profileData));
+      console.log('Profile data saved successfully');
+    } catch (error) {
+      console.error('Error saving profile data:', error);
+      throw error;
+    }
+  };
+
   const handleBackPress = () => {
     console.log('Back button pressed from SellerProfile');
     router.back(); // Go back to previous page
   };
 
-  const handleSave = () => {
-    Alert.alert(
-      'Profil Güncellendi',
-      'Profil bilgileriniz başarıyla güncellendi.',
-      [{ text: 'Tamam', onPress: () => setIsEditing(false) }]
-    );
+  const handleSave = async () => {
+    try {
+      await saveProfileData();
+      Alert.alert(
+        'Profil Güncellendi',
+        'Profil bilgileriniz başarıyla güncellendi.',
+        [{ text: 'Tamam', onPress: () => setIsEditing(false) }]
+      );
+    } catch (error) {
+      Alert.alert(
+        'Hata',
+        'Profil bilgileri kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.',
+        [{ text: 'Tamam' }]
+      );
+    }
   };
 
   const handleCancel = () => {
     // Reset form data
-    setFormData({
-      name: SELLER_DATA.name,
-      email: SELLER_DATA.email,
-      phone: SELLER_DATA.phone,
-      location: SELLER_DATA.location,
-      address: SELLER_DATA.address,
-      description: SELLER_DATA.description,
-    });
+    loadProfileData(); // Reload saved data
     setIsEditing(false);
+  };
+
+  // Avatar image picker
+  const handleAvatarImagePicker = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+      return;
+    }
+
+    Alert.alert(
+      'Profil Fotoğrafı',
+      'Nasıl eklemek istiyorsunuz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        { text: 'Kameradan Çek', onPress: () => takeAvatarPhoto() },
+        { text: 'Galeriden Seç', onPress: () => pickAvatarImage() },
+      ]
+    );
+  };
+
+  const takeAvatarPhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setAvatarUri(result.assets[0].uri);
+    }
+  };
+
+  const pickAvatarImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setAvatarUri(result.assets[0].uri);
+    }
   };
 
   // Kimlik belgesi fotoğrafı çekme/seçme
@@ -154,6 +261,47 @@ export const SellerProfile: React.FC = () => {
     setSpecialties(prev => prev.filter(specialty => specialty !== specialtyToRemove));
   };
 
+  // Kimlik doğrulama gönderme
+  const handleSubmitIdentityVerification = () => {
+    if (!formData.name.trim()) {
+      Alert.alert('Hata', 'Lütfen gerçek ad soyad bilginizi girin.');
+      return;
+    }
+
+    if (!identityImages.front || !identityImages.back) {
+      Alert.alert('Hata', 'Lütfen kimlik belgenizin ön ve arka yüzünü ekleyin.');
+      return;
+    }
+
+    Alert.alert(
+      'Kimlik Doğrulama Gönder',
+      'Kimlik doğrulama talebiniz gönderilsin mi? Bu işlem sonrası belgeleriniz incelenecek.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Gönder',
+          onPress: () => submitIdentityVerification(),
+        },
+      ]
+    );
+  };
+
+  const submitIdentityVerification = () => {
+    // Kimlik doğrulama durumunu güncelle
+    setIdentityVerification({
+      status: 'pending',
+      submittedAt: new Date().toISOString(),
+      verifiedAt: null,
+      rejectionReason: null,
+    });
+
+    Alert.alert(
+      'Başarılı',
+      'Kimlik doğrulama talebiniz gönderildi. 24-48 saat içinde sonuçlandırılacak.',
+      [{ text: 'Tamam' }]
+    );
+  };
+
   return (
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -195,22 +343,32 @@ export const SellerProfile: React.FC = () => {
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
               <Image
-                source={{ uri: SELLER_DATA.avatar }}
+                source={{ uri: avatarUri || SELLER_DATA.avatar }}
                 style={styles.avatar}
                 defaultSource={{ uri: 'https://via.placeholder.com/100x100/7FAF9A/FFFFFF?text=S' }}
               />
               {isEditing && (
-                <TouchableOpacity style={styles.avatarEditButton}>
+                <TouchableOpacity 
+                  style={styles.avatarEditButton}
+                  onPress={handleAvatarImagePicker}
+                >
                   <FontAwesome name="camera" size={16} color="white" />
                 </TouchableOpacity>
               )}
             </View>
             
             <View style={styles.profileInfo}>
-              <Text variant="heading" weight="bold" style={styles.profileName}>
-                {formData.name}
-              </Text>
-              <Text variant="body" color="textSecondary">
+              {/* Nickname Display */}
+              {formData.nickname && (
+                <Text variant="heading" weight="bold" style={styles.profileNickname}>
+                  {formData.nickname}
+                  {identityVerification.status === 'verified' && (
+                    <Text style={styles.verifiedBadge}> ✓</Text>
+                  )}
+                </Text>
+              )}
+              
+              <Text variant="caption" color="textSecondary">
                 {SELLER_DATA.joinDate} tarihinden beri üye
               </Text>
               
@@ -241,11 +399,19 @@ export const SellerProfile: React.FC = () => {
           {isEditing ? (
             <View style={styles.formContainer}>
               <FormField
+                label="Nickname"
+                value={formData.nickname}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, nickname: text }))}
+                placeholder="Kullanıcı adınızı girin"
+              />
+              
+              <FormField
                 label="Ad Soyad"
                 value={formData.name}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="Adınızı ve soyadınızı girin"
               />
+              
               <FormField
                 label="E-posta"
                 value={formData.email}
@@ -263,6 +429,15 @@ export const SellerProfile: React.FC = () => {
             </View>
           ) : (
             <View style={styles.infoContainer}>
+              <View style={styles.infoRow}>
+                <FontAwesome name="user" size={16} color={colors.textSecondary} />
+                <Text variant="body" style={styles.infoText}>
+                  {formData.name}
+                  {identityVerification.status === 'verified' && (
+                    <Text style={styles.verifiedBadge}> ✓ Doğrulandı</Text>
+                  )}
+                </Text>
+              </View>
               <View style={styles.infoRow}>
                 <FontAwesome name="envelope" size={16} color={colors.textSecondary} />
                 <Text variant="body" style={styles.infoText}>{formData.email}</Text>
@@ -419,9 +594,37 @@ export const SellerProfile: React.FC = () => {
 
         {/* Identity Documents */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Kimlik Bilgileri
-          </Text>
+          <View style={styles.identityHeader}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              Kimlik Doğrulama
+            </Text>
+            <View style={[
+              styles.verificationStatus,
+              {
+                backgroundColor: identityVerification.status === 'verified' ? colors.success + '20' :
+                               identityVerification.status === 'rejected' ? colors.error + '20' :
+                               colors.warning + '20'
+              }
+            ]}>
+              <Text variant="caption" style={{
+                color: identityVerification.status === 'verified' ? colors.success :
+                       identityVerification.status === 'rejected' ? colors.error :
+                       colors.warning
+              }}>
+                {identityVerification.status === 'verified' ? '✓ Doğrulandı' :
+                 identityVerification.status === 'rejected' ? '✗ Reddedildi' :
+                 '⏳ Beklemede'}
+              </Text>
+            </View>
+          </View>
+          
+          {identityVerification.status === 'rejected' && identityVerification.rejectionReason && (
+            <View style={[styles.rejectionNote, { backgroundColor: colors.error + '10', borderColor: colors.error }]}>
+              <Text variant="caption" color="error">
+                ❌ Red Sebebi: {identityVerification.rejectionReason}
+              </Text>
+            </View>
+          )}
           
           <View style={styles.identityContainer}>
             {/* Kimlik Ön Yüz */}
@@ -443,9 +646,6 @@ export const SellerProfile: React.FC = () => {
                     </Text>
                   </View>
                 )}
-                <View style={[styles.identityEditIcon, { backgroundColor: colors.primary }]}>
-                  <FontAwesome name="camera" size={16} color="white" />
-                </View>
               </TouchableOpacity>
             </View>
 
@@ -468,17 +668,28 @@ export const SellerProfile: React.FC = () => {
                     </Text>
                   </View>
                 )}
-                <View style={[styles.identityEditIcon, { backgroundColor: colors.primary }]}>
-                  <FontAwesome name="camera" size={16} color="white" />
-                </View>
               </TouchableOpacity>
             </View>
           </View>
 
+          {/* Submit Identity Verification */}
+          {identityImages.front && identityImages.back && identityVerification.status === 'pending' && (
+            <View style={styles.submitSection}>
+              <Button
+                variant="primary"
+                onPress={handleSubmitIdentityVerification}
+                style={styles.submitButton}
+              >
+                Kimlik Doğrulama Gönder
+              </Button>
+            </View>
+          )}
+
           <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
             <FontAwesome name="info-circle" size={16} color={colors.warning} />
             <Text variant="caption" color="warning" style={styles.warningText}>
-              Kimlik belgeleriniz güvenlik amacıyla şifrelenerek saklanır ve sadece doğrulama için kullanılır.
+              Kimlik belgeleriniz güvenlik amacıyla şifrelenerek saklanır ve sadece doğrulama için kullanılır. 
+              Gerçek adınız kimlik belgenizdeki isimle eşleşmelidir.
             </Text>
           </View>
         </Card>
@@ -637,6 +848,18 @@ const styles = StyleSheet.create({
   },
   profileName: {
     marginBottom: Spacing.xs,
+  },
+  profileNickname: {
+    marginBottom: Spacing.xs,
+    color: Colors.light.primary,
+  },
+  realName: {
+    fontSize: 14,
+    marginBottom: Spacing.xs,
+  },
+  verifiedBadge: {
+    color: Colors.light.success,
+    fontWeight: 'bold',
   },
   statsRow: {
     flexDirection: 'row',
@@ -883,6 +1106,40 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: Spacing.lg,
+  },
+  // Nickname ve kimlik doğrulama stilleri
+  realNameSection: {
+    marginBottom: Spacing.md,
+  },
+  privacyNote: {
+    padding: Spacing.sm,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginTop: Spacing.xs,
+  },
+  identityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  verificationStatus: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: 12,
+  },
+  rejectionNote: {
+    padding: Spacing.sm,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+  },
+  submitSection: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  submitButton: {
+    backgroundColor: Colors.light.primary,
   },
 });
 
