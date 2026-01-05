@@ -112,11 +112,13 @@ export const MealPreview: React.FC = () => {
           </Text>
           
           <View style={styles.cardContainer}>
-            <FoodCard
-              {...mockFoodData}
-              isPreview={true} // Önizleme modunda local resimlere izin ver
-              onAddToCart={() => {}} // Empty function for preview
-            />
+            <View style={styles.fullWidthCard}>
+              <FoodCard
+                {...mockFoodData}
+                isPreview={true} // Önizleme modunda local resimlere izin ver
+                onAddToCart={() => {}} // Empty function for preview
+              />
+            </View>
           </View>
         </View>
 
@@ -247,9 +249,14 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: Colors.light.surface,
     borderRadius: 12,
-    padding: Spacing.md,
+    marginHorizontal: -Spacing.md, // Negatif margin ile tam genişlik
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.light.border,
+  },
+  fullWidthCard: {
+    width: '100%', // Tam genişlik
   },
   // Details Section
   detailsSection: {
