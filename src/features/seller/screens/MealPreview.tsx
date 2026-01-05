@@ -114,6 +114,11 @@ export const MealPreview: React.FC = () => {
     }
   };
 
+  // Debug: Log the incoming data
+  console.log('MealPreview - Incoming data:', data);
+  console.log('MealPreview - Images:', data.images);
+  console.log('MealPreview - Name:', data.name);
+
   // Create mock food card data from form data
   const mockFoodData = {
     id: 'preview-' + Date.now(),
@@ -123,6 +128,7 @@ export const MealPreview: React.FC = () => {
     price: parseInt(data.price) || 0,
     distance: data.maxDistance ? `${data.maxDistance} km teslimat` : '0 km teslimat',
     category: data.category || 'Kategori',
+    country: data.country || 'Türk',
     hasPickup: data.hasPickup || false,
     hasDelivery: data.hasDelivery || false,
     availableDates: data.availableDates || formatDateRange(data.startDate, data.endDate),

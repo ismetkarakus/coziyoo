@@ -137,7 +137,12 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           {/* Clickable Food Image ONLY */}
           <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.imageContainer}>
             <Image 
-              source={imageUrl && imageUrl.startsWith('http') ? { uri: imageUrl } : getDefaultImage(name)} 
+              source={(() => {
+                console.log('FoodCard - Name:', name);
+                console.log('FoodCard - ImageUrl:', imageUrl);
+                console.log('FoodCard - Using default:', !imageUrl || !imageUrl.startsWith('http'));
+                return imageUrl && imageUrl.startsWith('http') ? { uri: imageUrl } : getDefaultImage(name);
+              })()} 
               style={styles.image}
               resizeMode="cover"
               defaultSource={{ uri: 'https://via.placeholder.com/160x140/f5f5f5/cccccc?text=📸' }}
