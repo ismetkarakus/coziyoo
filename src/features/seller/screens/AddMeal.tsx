@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
@@ -305,7 +306,7 @@ export const AddMeal: React.FC = () => {
     }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     // Validation
     if (!formData.name || !formData.price || !formData.dailyStock || !formData.category) {
       Alert.alert(
@@ -326,17 +327,61 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
-    // Mock publish with category
-    Alert.alert(
-      'Başarılı!',
-      `Yemeğiniz "${formData.category}" kategorisinde başarıyla yayınlandı.`,
-      [
-        {
-          text: 'Tamam',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    try {
+      // Create new meal object
+      const newMeal = {
+        id: 'meal-' + Date.now(),
+        name: formData.name,
+        cookName: 'Sizin Adınız', // This would come from user profile
+        rating: 4.8, // Default rating for new meals
+        price: parseInt(formData.price),
+        distance: formData.maxDistance ? `${formData.maxDistance} km teslimat` : '0 km teslimat',
+        category: formData.category,
+        hasPickup: deliveryOptions.pickup,
+        hasDelivery: deliveryOptions.delivery,
+        availableDates: formData.startDate && formData.endDate ? 
+          `${formData.startDate} - ${formData.endDate}` : 
+          'Tarih belirtilmemiş',
+        currentStock: parseInt(formData.dailyStock),
+        dailyStock: parseInt(formData.dailyStock),
+        maxDeliveryDistance: parseInt(formData.maxDistance) || 0,
+        imageUrl: selectedImages.length > 0 ? selectedImages[0] : undefined,
+        description: formData.description,
+        deliveryFee: formData.deliveryFee ? parseInt(formData.deliveryFee) : 0,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Get existing meals from AsyncStorage
+      const existingMealsJson = await AsyncStorage.getItem('publishedMeals');
+      const existingMeals = existingMealsJson ? JSON.parse(existingMealsJson) : [];
+
+      // Add new meal to the beginning of the array
+      const updatedMeals = [newMeal, ...existingMeals];
+
+      // Save back to AsyncStorage
+      await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
+
+      console.log('Meal published successfully:', newMeal);
+
+      // Show success message
+      Alert.alert(
+        'Başarılı!',
+        `Yemeğiniz "${formData.category}" kategorisinde başarıyla yayınlandı ve ana ekranda görünecek.`,
+        [
+          {
+            text: 'Tamam',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error publishing meal:', error);
+      Alert.alert(
+        'Hata',
+        'Yemek yayınlanırken bir hata oluştu. Lütfen tekrar deneyin.',
+        [{ text: 'Tamam' }]
+      );
+    }
   };
 
   return (

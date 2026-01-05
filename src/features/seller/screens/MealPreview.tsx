@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, FoodCard } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -26,6 +27,67 @@ export const MealPreview: React.FC = () => {
 
   const handleBackPress = () => {
     router.back();
+  };
+
+  const handlePublish = async () => {
+    try {
+      // Create new meal object from preview data
+      const newMeal = {
+        id: 'meal-' + Date.now(),
+        name: data.name,
+        cookName: 'Sizin Adınız', // This would come from user profile
+        rating: 4.8, // Default rating for new meals
+        price: parseInt(data.price),
+        distance: data.maxDistance ? `${data.maxDistance} km teslimat` : '0 km teslimat',
+        category: data.category,
+        hasPickup: data.hasPickup,
+        hasDelivery: data.hasDelivery,
+        availableDates: data.startDate && data.endDate ? 
+          `${data.startDate} - ${data.endDate}` : 
+          'Tarih belirtilmemiş',
+        currentStock: parseInt(data.dailyStock),
+        dailyStock: parseInt(data.dailyStock),
+        maxDeliveryDistance: parseInt(data.maxDistance) || 0,
+        imageUrl: data.images && data.images.length > 0 ? data.images[0] : undefined,
+        description: data.description,
+        deliveryFee: data.deliveryFee ? parseInt(data.deliveryFee) : 0,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Get existing meals from AsyncStorage
+      const existingMealsJson = await AsyncStorage.getItem('publishedMeals');
+      const existingMeals = existingMealsJson ? JSON.parse(existingMealsJson) : [];
+
+      // Add new meal to the beginning of the array
+      const updatedMeals = [newMeal, ...existingMeals];
+
+      // Save back to AsyncStorage
+      await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
+
+      console.log('Meal published from preview:', newMeal);
+
+      // Show success message and navigate back
+      Alert.alert(
+        'Başarılı!',
+        `Yemeğiniz "${data.category}" kategorisinde başarıyla yayınlandı ve ana ekranda görünecek.`,
+        [
+          {
+            text: 'Ana Sayfaya Git',
+            onPress: () => {
+              router.back(); // Go back to AddMeal
+              router.back(); // Go back to SellerPanel or wherever
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error publishing meal from preview:', error);
+      Alert.alert(
+        'Hata',
+        'Yemek yayınlanırken bir hata oluştu. Lütfen tekrar deneyin.',
+        [{ text: 'Tamam' }]
+      );
+    }
   };
 
   // Create mock food card data from form data
@@ -170,11 +232,7 @@ export const MealPreview: React.FC = () => {
           </TouchableOpacity>
           
           <TouchableOpacity
-            onPress={() => {
-              // Go back and trigger publish
-              router.back();
-              // You could add a callback here to trigger publish
-            }}
+            onPress={handlePublish}
             style={[styles.actionButton, styles.publishButton, { backgroundColor: colors.primary }]}
           >
             <Text variant="body" weight="medium" style={{ color: 'white' }}>

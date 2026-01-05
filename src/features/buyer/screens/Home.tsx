@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -199,10 +200,26 @@ export const Home: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
   const [scrollY, setScrollY] = useState(0);
+  const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
   const { addToCart } = useCart();
 
+  // Load published meals from AsyncStorage
+  useEffect(() => {
+    const loadPublishedMeals = async () => {
+      try {
+        const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
+        if (publishedMealsJson) {
+          const meals = JSON.parse(publishedMealsJson);
+          setPublishedMeals(meals);
+          console.log('Loaded published meals:', meals.length);
+        }
+      } catch (error) {
+        console.error('Error loading published meals:', error);
+      }
+    };
 
-
+    loadPublishedMeals();
+  }, []);
 
   const handleAddToCart = (foodId: string, quantity: number) => {
     const food = MOCK_FOODS.find(f => f.id === foodId);
@@ -239,7 +256,8 @@ export const Home: React.FC = () => {
 
   // Filter foods based on selected category and search query
   const getFilteredFoods = () => {
-    let foods = MOCK_FOODS;
+    // Combine mock foods with published meals
+    let foods = [...MOCK_FOODS, ...publishedMeals];
     
     // First filter by category
     if (selectedCategory !== 'Tümü') {
