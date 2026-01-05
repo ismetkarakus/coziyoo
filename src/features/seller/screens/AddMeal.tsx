@@ -260,6 +260,16 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
+    // Delivery seçilmişse teslimat mesafesi gerekli
+    if (deliveryOptions.delivery && !formData.maxDistance) {
+      Alert.alert(
+        'Teslimat Mesafesi Gerekli',
+        'Delivery seçeneğini aktifleştirdiğiniz için teslimat mesafesini belirtmelisiniz.',
+        [{ text: 'Tamam' }]
+      );
+      return;
+    }
+
     // Navigate to preview screen with form data
     const previewData = {
       name: formData.name,
@@ -288,6 +298,16 @@ export const AddMeal: React.FC = () => {
       Alert.alert(
         'Eksik Bilgi',
         'Lütfen tüm zorunlu alanları doldurun.',
+        [{ text: 'Tamam' }]
+      );
+      return;
+    }
+
+    // Delivery seçilmişse teslimat mesafesi gerekli
+    if (deliveryOptions.delivery && !formData.maxDistance) {
+      Alert.alert(
+        'Teslimat Mesafesi Gerekli',
+        'Delivery seçeneğini aktifleştirdiğiniz için teslimat mesafesini belirtmelisiniz.',
         [{ text: 'Tamam' }]
       );
       return;
@@ -443,15 +463,18 @@ export const AddMeal: React.FC = () => {
               required
             />
 
-            <FormField
-              label="🚗 Teslimat Mesafesi (km)"
-              value={formData.maxDistance}
-              onChangeText={handleInputChange('maxDistance')}
-              placeholder="Örn: 5"
-              keyboardType="numeric"
-              helperText="Yemeği kaç kilometre uzağa götürebilirsiniz? (Ana ekranda görünecek)"
-              required
-            />
+            {/* Teslimat Mesafesi - Sadece delivery seçildiğinde görünür */}
+            {deliveryOptions.delivery && (
+              <FormField
+                label="🚗 Teslimat Mesafesi (km)"
+                value={formData.maxDistance}
+                onChangeText={handleInputChange('maxDistance')}
+                placeholder="Örn: 5"
+                keyboardType="numeric"
+                helperText="Yemeği kaç kilometre uzağa götürebilirsiniz? (Ana ekranda görünecek)"
+                required
+              />
+            )}
 
             <View style={styles.dateInputs}>
               <View style={styles.dateInput}>
