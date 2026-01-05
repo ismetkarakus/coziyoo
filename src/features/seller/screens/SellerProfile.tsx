@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Text, Button, Card, Input } from '../../../components/ui';
@@ -54,7 +54,6 @@ export const SellerProfile: React.FC = () => {
     accountNumber: '',
   });
 
-  const [commissionRate] = useState(15); // %15 sabit komisyon
 
   const handleBackPress = () => {
     console.log('Back button pressed from SellerProfile');
@@ -141,13 +140,6 @@ export const SellerProfile: React.FC = () => {
     }
   };
 
-  const calculateCommission = (amount: number) => {
-    return (amount * commissionRate) / 100;
-  };
-
-  const calculateNetAmount = (amount: number) => {
-    return amount - calculateCommission(amount);
-  };
 
   // Uzmanlık alanı ekleme
   const handleAddSpecialty = () => {
@@ -163,7 +155,11 @@ export const SellerProfile: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <TopBar 
         title="Satıcı Profili"
         leftComponent={
@@ -188,7 +184,12 @@ export const SellerProfile: React.FC = () => {
         }
       />
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Profile Header */}
         <Card variant="default" padding="lg" style={styles.headerCard}>
           <View style={styles.profileHeader}>
@@ -488,53 +489,69 @@ export const SellerProfile: React.FC = () => {
             Banka Bilgileri
           </Text>
           
-          <View style={styles.formContainer}>
-            <FormField
-              label="Banka Adı"
-              value={bankDetails.bankName}
-              onChangeText={(text) => setBankDetails(prev => ({ ...prev, bankName: text }))}
-              placeholder="Örn: Türkiye İş Bankası"
-            />
-            <FormField
-              label="Hesap Sahibi Adı"
-              value={bankDetails.accountHolderName}
-              onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountHolderName: text }))}
-              placeholder="Hesap sahibinin tam adı"
-            />
-            <FormField
-              label="IBAN"
-              value={bankDetails.iban}
-              onChangeText={(text) => setBankDetails(prev => ({ ...prev, iban: text }))}
-              placeholder="TR00 0000 0000 0000 0000 0000 00"
-              maxLength={32}
-            />
-            <FormField
-              label="Hesap Numarası"
-              value={bankDetails.accountNumber}
-              onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountNumber: text }))}
-              placeholder="Hesap numaranız"
-              keyboardType="numeric"
-            />
-          </View>
+          {isEditing ? (
+            <View style={styles.formContainer}>
+              <FormField
+                label="Banka Adı"
+                value={bankDetails.bankName}
+                onChangeText={(text) => setBankDetails(prev => ({ ...prev, bankName: text }))}
+                placeholder="Örn: Türkiye İş Bankası"
+              />
+              <FormField
+                label="Hesap Sahibi Adı"
+                value={bankDetails.accountHolderName}
+                onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountHolderName: text }))}
+                placeholder="Hesap sahibinin tam adı"
+              />
+              <FormField
+                label="IBAN"
+                value={bankDetails.iban}
+                onChangeText={(text) => setBankDetails(prev => ({ ...prev, iban: text }))}
+                placeholder="TR00 0000 0000 0000 0000 0000 00"
+                maxLength={32}
+              />
+              <FormField
+                label="Hesap Numarası"
+                value={bankDetails.accountNumber}
+                onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountNumber: text }))}
+                placeholder="Hesap numaranız"
+                keyboardType="numeric"
+              />
+            </View>
+          ) : (
+            <View style={styles.infoContainer}>
+              {bankDetails.bankName ? (
+                <View style={styles.infoRow}>
+                  <FontAwesome name="bank" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{bankDetails.bankName}</Text>
+                </View>
+              ) : null}
+              {bankDetails.accountHolderName ? (
+                <View style={styles.infoRow}>
+                  <FontAwesome name="user" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{bankDetails.accountHolderName}</Text>
+                </View>
+              ) : null}
+              {bankDetails.iban ? (
+                <View style={styles.infoRow}>
+                  <FontAwesome name="credit-card" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{bankDetails.iban}</Text>
+                </View>
+              ) : null}
+              {bankDetails.accountNumber ? (
+                <View style={styles.infoRow}>
+                  <FontAwesome name="hashtag" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{bankDetails.accountNumber}</Text>
+                </View>
+              ) : null}
+              {!bankDetails.bankName && !bankDetails.accountHolderName && !bankDetails.iban && !bankDetails.accountNumber && (
+                <Text variant="body" color="textSecondary" style={styles.emptyStateText}>
+                  Banka bilgileri henüz eklenmemiş. Düzenle butonuna tıklayarak ekleyebilirsiniz.
+                </Text>
+              )}
+            </View>
+          )}
 
-          {/* Commission Info */}
-          <View style={[styles.commissionBox, { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}>
-            <View style={styles.commissionHeader}>
-              <FontAwesome name="info-circle" size={16} color={colors.primary} />
-              <Text variant="body" weight="semibold" color="primary">
-                Komisyon Bilgisi
-              </Text>
-            </View>
-            <Text variant="body" style={styles.commissionText}>
-              Her satıştan %{commissionRate} hizmet bedeli kesilir.
-            </Text>
-            <View style={styles.commissionExample}>
-              <Text variant="caption" color="textSecondary">Örnek:</Text>
-              <Text variant="caption" color="textSecondary">
-                100₺ satış → {calculateCommission(100)}₺ komisyon → {calculateNetAmount(100)}₺ size ödenecek
-              </Text>
-            </View>
-          </View>
         </Card>
 
         {/* Action Buttons */}
@@ -559,7 +576,7 @@ export const SellerProfile: React.FC = () => {
 
         <View style={styles.bottomSpace} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -569,6 +586,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
+    flexGrow: 1,
   },
   backButton: {
     padding: Spacing.xs,
@@ -737,25 +758,6 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 18,
   },
-  // Banka bilgileri stilleri
-  commissionBox: {
-    padding: Spacing.md,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: Spacing.md,
-  },
-  commissionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  commissionText: {
-    marginBottom: Spacing.sm,
-  },
-  commissionExample: {
-    gap: Spacing.xs,
-  },
   // Hakkımda bölümü stilleri
   aboutEditContainer: {
     gap: Spacing.lg,
@@ -875,6 +877,12 @@ const styles = StyleSheet.create({
     maxHeight: 200,
     textAlignVertical: 'top',
     paddingTop: Spacing.sm,
+  },
+  // Boş durum metni
+  emptyStateText: {
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingVertical: Spacing.lg,
   },
 });
 
