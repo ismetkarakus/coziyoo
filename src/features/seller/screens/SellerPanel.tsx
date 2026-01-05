@@ -90,14 +90,16 @@ export const SellerPanel: React.FC = () => {
               </Text>
             </Card>
             
-            <Card variant="default" padding="md" style={styles.statCard}>
-              <Text variant="title" weight="bold" color="success" center>
-                ₺480
-              </Text>
-              <Text variant="caption" center color="textSecondary">
-                Kazanç
-              </Text>
-            </Card>
+            <TouchableOpacity onPress={() => handleMenuPress('/(seller)/earnings')}>
+              <Card variant="default" padding="md" style={styles.statCard}>
+                <Text variant="title" weight="bold" color="success" center>
+                  ₺480
+                </Text>
+                <Text variant="caption" center color="textSecondary">
+                  Kazanç
+                </Text>
+              </Card>
+            </TouchableOpacity>
             
             <Card variant="default" padding="md" style={styles.statCard}>
               <Text variant="title" weight="bold" color="warning" center>
