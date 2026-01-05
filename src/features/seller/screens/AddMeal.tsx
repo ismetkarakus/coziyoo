@@ -250,6 +250,8 @@ export const AddMeal: React.FC = () => {
 
 
   const handlePreview = () => {
+    console.log('Preview button pressed'); // Debug log
+    
     // Basic validation for preview
     if (!formData.name || !formData.price || !formData.category) {
       Alert.alert(
@@ -286,10 +288,21 @@ export const AddMeal: React.FC = () => {
       images: selectedImages,
     };
 
-    router.push({
-      pathname: '/(seller)/meal-preview',
-      params: { previewData: JSON.stringify(previewData) }
-    });
+    console.log('Preview data:', previewData); // Debug log
+    
+    try {
+      // URL encode the data to avoid issues with special characters
+      const encodedData = encodeURIComponent(JSON.stringify(previewData));
+      console.log('Navigating to preview with encoded data'); // Debug log
+      router.push(`/(seller)/meal-preview?previewData=${encodedData}`);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      Alert.alert(
+        'Navigasyon Hatası',
+        'Önizleme sayfasına geçiş yapılamadı. Lütfen tekrar deneyin.',
+        [{ text: 'Tamam' }]
+      );
+    }
   };
 
   const handlePublish = () => {

@@ -13,7 +13,16 @@ export const MealPreview: React.FC = () => {
   const { previewData } = useLocalSearchParams();
 
   // Parse preview data
-  const data = previewData ? JSON.parse(previewData as string) : {};
+  let data = {};
+  try {
+    if (previewData) {
+      const decodedData = decodeURIComponent(previewData as string);
+      data = JSON.parse(decodedData);
+    }
+  } catch (error) {
+    console.error('Error parsing preview data:', error);
+    data = {};
+  }
 
   const handleBackPress = () => {
     router.back();
