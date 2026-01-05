@@ -194,7 +194,7 @@ export const MealPreview: React.FC = () => {
         <View style={styles.backButtonContainer}>
           <TouchableOpacity
             onPress={handleBackPress}
-            style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[styles.backButton, { backgroundColor: colors.surface }]}
           >
             <Text variant="body" weight="medium" style={{ color: colors.text }}>
               ← Geri Dön
@@ -269,13 +269,12 @@ const styles = StyleSheet.create({
   // Action Buttons
   backButtonContainer: {
     marginTop: Spacing.lg,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   backButton: {
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
     borderRadius: 12,
-    borderWidth: 1,
     alignItems: 'center',
     minWidth: 120,
   },
