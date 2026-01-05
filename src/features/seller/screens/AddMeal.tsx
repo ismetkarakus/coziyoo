@@ -321,6 +321,16 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
+    // Tarih seçimi kontrolü
+    if (!formData.startDate || !formData.endDate) {
+      Alert.alert(
+        'Tarih Seçimi Gerekli',
+        'Önizleme için başlangıç ve bitiş tarihlerini seçmelisiniz.',
+        [{ text: 'Tamam' }]
+      );
+      return;
+    }
+
     // Delivery seçilmişse teslimat mesafesi gerekli
     if (deliveryOptions.delivery && !formData.maxDistance) {
       Alert.alert(
@@ -372,6 +382,16 @@ export const AddMeal: React.FC = () => {
       Alert.alert(
         'Eksik Bilgi',
         'Lütfen tüm zorunlu alanları doldurun.',
+        [{ text: 'Tamam' }]
+      );
+      return;
+    }
+
+    // Tarih seçimi kontrolü
+    if (!formData.startDate || !formData.endDate) {
+      Alert.alert(
+        'Tarih Seçimi Gerekli',
+        'Yayınlama için başlangıç ve bitiş tarihlerini seçmelisiniz.',
         [{ text: 'Tamam' }]
       );
       return;
