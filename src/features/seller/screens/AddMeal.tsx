@@ -467,16 +467,19 @@ export const AddMeal: React.FC = () => {
                   label="Teslimat Ücreti (₺)"
                   value={formData.deliveryFee}
                   onChangeText={handleInputChange('deliveryFee')}
-                  placeholder="5"
+                  placeholder="Örn: 10 ₺"
                   keyboardType="numeric"
+                  helperText="Müşterilerden alacağınız teslimat ücreti"
                 />
 
                 <FormField
-                  label="Maksimum Teslimat Mesafesi (km)"
+                  label="Kaç Kilometre Uzağa Teslimat Yapacaksınız?"
                   value={formData.maxDistance}
                   onChangeText={handleInputChange('maxDistance')}
-                  placeholder="3"
+                  placeholder="Örn: 5 km"
                   keyboardType="numeric"
+                  helperText="Teslimat yapabileceğiniz maksimum mesafeyi belirtin"
+                  required
                 />
               </View>
             )}
