@@ -787,11 +787,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    width: '23%', // 4 sütun için
-    minWidth: '23%',
+    width: '31%', // 3 sütun için
+    minWidth: '31%',
   },
   specialtyPlainText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     flex: 1,
     flexShrink: 0,
@@ -814,11 +814,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    width: '23%', // 4 sütun için
-    minWidth: '23%',
+    width: '31%', // 3 sütun için
+    minWidth: '31%',
   },
   specialtyViewPlainText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     flex: 1,
     flexShrink: 0,
