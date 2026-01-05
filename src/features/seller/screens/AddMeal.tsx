@@ -407,6 +407,25 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
+    // Yayınlama onayı
+    Alert.alert(
+      'Yemeği Yayınla',
+      `"${formData.name}" adlı yemeğinizi ana sayfada yayınlamak istediğinizden emin misiniz?`,
+      [
+        {
+          text: 'İptal',
+          style: 'cancel',
+        },
+        {
+          text: 'Evet, Yayınla',
+          onPress: () => performPublish(),
+        },
+      ]
+    );
+  };
+
+  const performPublish = async () => {
+
     try {
       // Create new meal object
       const newMeal = {

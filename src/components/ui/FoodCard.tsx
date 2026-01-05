@@ -140,23 +140,16 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.imageContainer}>
             <Image 
               source={(() => {
-                console.log('FoodCard - Name:', name);
-                console.log('FoodCard - ImageUrl:', imageUrl);
-                console.log('FoodCard - IsPreview:', isPreview);
-                
                 // Önizlemede local resimlere izin ver
                 if (isPreview && imageUrl) {
-                  console.log('FoodCard - Using preview image:', imageUrl);
                   return { uri: imageUrl };
                 }
                 
                 // Normal modda sadece HTTP URL'leri kabul et
                 if (imageUrl && imageUrl.startsWith('http')) {
-                  console.log('FoodCard - Using HTTP image:', imageUrl);
                   return { uri: imageUrl };
                 }
                 
-                console.log('FoodCard - Using default image for:', name);
                 return getDefaultImage(name);
               })()} 
               style={styles.image}

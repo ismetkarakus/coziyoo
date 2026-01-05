@@ -55,70 +55,7 @@ export const MealPreview: React.FC = () => {
     router.back();
   };
 
-  const handlePublish = async () => {
-    try {
-      // Create new meal object from preview data
-      const newMeal = {
-        id: 'meal-' + Date.now(),
-        name: data.name,
-        cookName: 'Sizin Adınız', // This would come from user profile
-        rating: 4.8, // Default rating for new meals
-        price: parseInt(data.price),
-        distance: data.maxDistance ? `${data.maxDistance} km teslimat` : '0 km teslimat',
-        category: data.category,
-        country: data.country || 'Türk',
-        hasPickup: data.hasPickup,
-        hasDelivery: data.hasDelivery,
-        availableDates: formatDateRange(data.startDate, data.endDate),
-        currentStock: parseInt(data.dailyStock),
-        dailyStock: parseInt(data.dailyStock),
-        maxDeliveryDistance: parseInt(data.maxDistance) || 0,
-        imageUrl: data.images && data.images.length > 0 ? data.images[0] : undefined,
-        description: data.description,
-        deliveryFee: data.deliveryFee ? parseInt(data.deliveryFee) : 0,
-        createdAt: new Date().toISOString(),
-      };
 
-      // Get existing meals from AsyncStorage
-      const existingMealsJson = await AsyncStorage.getItem('publishedMeals');
-      const existingMeals = existingMealsJson ? JSON.parse(existingMealsJson) : [];
-
-      // Add new meal to the beginning of the array
-      const updatedMeals = [newMeal, ...existingMeals];
-
-      // Save back to AsyncStorage
-      await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
-
-      console.log('Meal published from preview:', newMeal);
-
-      // Show success message and navigate back
-      Alert.alert(
-        'Başarılı!',
-        `Yemeğiniz "${data.category}" kategorisinde başarıyla yayınlandı ve ana ekranda görünecek.`,
-        [
-          {
-            text: 'Ana Sayfaya Git',
-            onPress: () => {
-              router.back(); // Go back to AddMeal
-              router.back(); // Go back to SellerPanel or wherever
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      console.error('Error publishing meal from preview:', error);
-      Alert.alert(
-        'Hata',
-        'Yemek yayınlanırken bir hata oluştu. Lütfen tekrar deneyin.',
-        [{ text: 'Tamam' }]
-      );
-    }
-  };
-
-  // Debug: Log the incoming data
-  console.log('MealPreview - Incoming data:', data);
-  console.log('MealPreview - Images:', data.images);
-  console.log('MealPreview - Name:', data.name);
 
   // Create mock food card data from form data
   const mockFoodData = {
@@ -250,23 +187,14 @@ export const MealPreview: React.FC = () => {
           )}
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
+        {/* Back/Close Button */}
+        <View style={styles.backButtonContainer}>
           <TouchableOpacity
             onPress={handleBackPress}
-            style={[styles.actionButton, styles.editButton, { borderColor: colors.primary }]}
+            style={[styles.backButtonStyle, { backgroundColor: colors.surface, borderColor: colors.border }]}
           >
-            <Text variant="body" weight="medium" style={{ color: colors.primary }}>
-              ✏️ Düzenle
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            onPress={handlePublish}
-            style={[styles.actionButton, styles.publishButton, { backgroundColor: colors.primary }]}
-          >
-            <Text variant="body" weight="medium" style={{ color: 'white' }}>
-              ✅ Yayınla
+            <Text variant="body" weight="medium" style={{ color: colors.text }}>
+              ✕ Geri Dön
             </Text>
           </TouchableOpacity>
         </View>
@@ -357,5 +285,18 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: Spacing.xl,
+  },
+  // Back Button
+  backButtonContainer: {
+    alignItems: 'center',
+    marginTop: Spacing.lg,
+  },
+  backButtonStyle: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
