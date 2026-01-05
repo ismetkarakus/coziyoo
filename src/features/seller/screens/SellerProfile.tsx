@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { Text, Button, Card, Input } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { TopBar } from '../../../components/layout';
@@ -36,6 +37,21 @@ export const SellerProfile: React.FC = () => {
     description: SELLER_DATA.description,
   });
 
+  // Kimlik ve banka bilgileri state'leri
+  const [identityImages, setIdentityImages] = useState({
+    front: null as string | null,
+    back: null as string | null,
+  });
+  
+  const [bankDetails, setBankDetails] = useState({
+    bankName: '',
+    accountHolderName: '',
+    iban: '',
+    accountNumber: '',
+  });
+
+  const [commissionRate] = useState(15); // %15 sabit komisyon
+
   const handleBackPress = () => {
     console.log('Back button pressed from SellerProfile');
     router.back(); // Go back to previous page
@@ -60,6 +76,73 @@ export const SellerProfile: React.FC = () => {
       description: SELLER_DATA.description,
     });
     setIsEditing(false);
+  };
+
+  // Kimlik belgesi fotoğrafı çekme/seçme
+  const handleIdentityImagePicker = async (side: 'front' | 'back') => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+      return;
+    }
+
+    Alert.alert(
+      'Kimlik Belgesi Fotoğrafı',
+      'Nasıl eklemek istiyorsunuz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        { text: 'Kameradan Çek', onPress: () => takeIdentityPhoto(side) },
+        { text: 'Galeriden Seç', onPress: () => pickIdentityImage(side) },
+      ]
+    );
+  };
+
+  const takeIdentityPhoto = async (side: 'front' | 'back') => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setIdentityImages(prev => ({
+        ...prev,
+        [side]: result.assets[0].uri,
+      }));
+    }
+  };
+
+  const pickIdentityImage = async (side: 'front' | 'back') => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setIdentityImages(prev => ({
+        ...prev,
+        [side]: result.assets[0].uri,
+      }));
+    }
+  };
+
+  const calculateCommission = (amount: number) => {
+    return (amount * commissionRate) / 100;
+  };
+
+  const calculateNetAmount = (amount: number) => {
+    return amount - calculateCommission(amount);
   };
 
   return (
@@ -250,6 +333,127 @@ export const SellerProfile: React.FC = () => {
           </View>
         </Card>
 
+        {/* Identity Documents */}
+        <Card variant="default" padding="md" style={styles.sectionCard}>
+          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+            Kimlik Bilgileri
+          </Text>
+          
+          <View style={styles.identityContainer}>
+            {/* Kimlik Ön Yüz */}
+            <View style={styles.identitySection}>
+              <Text variant="body" weight="medium" style={styles.identityLabel}>
+                Kimlik Ön Yüzü
+              </Text>
+              <TouchableOpacity
+                style={[styles.identityImageContainer, { borderColor: colors.border }]}
+                onPress={() => handleIdentityImagePicker('front')}
+              >
+                {identityImages.front ? (
+                  <Image source={{ uri: identityImages.front }} style={styles.identityImage} />
+                ) : (
+                  <View style={styles.identityPlaceholder}>
+                    <FontAwesome name="id-card" size={40} color={colors.textSecondary} />
+                    <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
+                      Kimlik ön yüzü ekle
+                    </Text>
+                  </View>
+                )}
+                <View style={[styles.identityEditIcon, { backgroundColor: colors.primary }]}>
+                  <FontAwesome name="camera" size={16} color="white" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Kimlik Arka Yüz */}
+            <View style={styles.identitySection}>
+              <Text variant="body" weight="medium" style={styles.identityLabel}>
+                Kimlik Arka Yüzü
+              </Text>
+              <TouchableOpacity
+                style={[styles.identityImageContainer, { borderColor: colors.border }]}
+                onPress={() => handleIdentityImagePicker('back')}
+              >
+                {identityImages.back ? (
+                  <Image source={{ uri: identityImages.back }} style={styles.identityImage} />
+                ) : (
+                  <View style={styles.identityPlaceholder}>
+                    <FontAwesome name="id-card-o" size={40} color={colors.textSecondary} />
+                    <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
+                      Kimlik arka yüzü ekle
+                    </Text>
+                  </View>
+                )}
+                <View style={[styles.identityEditIcon, { backgroundColor: colors.primary }]}>
+                  <FontAwesome name="camera" size={16} color="white" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
+            <FontAwesome name="info-circle" size={16} color={colors.warning} />
+            <Text variant="caption" color="warning" style={styles.warningText}>
+              Kimlik belgeleriniz güvenlik amacıyla şifrelenerek saklanır ve sadece doğrulama için kullanılır.
+            </Text>
+          </View>
+        </Card>
+
+        {/* Bank Details */}
+        <Card variant="default" padding="md" style={styles.sectionCard}>
+          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+            Banka Bilgileri
+          </Text>
+          
+          <View style={styles.formContainer}>
+            <FormField
+              label="Banka Adı"
+              value={bankDetails.bankName}
+              onChangeText={(text) => setBankDetails(prev => ({ ...prev, bankName: text }))}
+              placeholder="Örn: Türkiye İş Bankası"
+            />
+            <FormField
+              label="Hesap Sahibi Adı"
+              value={bankDetails.accountHolderName}
+              onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountHolderName: text }))}
+              placeholder="Hesap sahibinin tam adı"
+            />
+            <FormField
+              label="IBAN"
+              value={bankDetails.iban}
+              onChangeText={(text) => setBankDetails(prev => ({ ...prev, iban: text }))}
+              placeholder="TR00 0000 0000 0000 0000 0000 00"
+              maxLength={32}
+            />
+            <FormField
+              label="Hesap Numarası"
+              value={bankDetails.accountNumber}
+              onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountNumber: text }))}
+              placeholder="Hesap numaranız"
+              keyboardType="numeric"
+            />
+          </View>
+
+          {/* Commission Info */}
+          <View style={[styles.commissionBox, { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}>
+            <View style={styles.commissionHeader}>
+              <FontAwesome name="info-circle" size={16} color={colors.primary} />
+              <Text variant="body" weight="semibold" color="primary">
+                Komisyon Bilgisi
+              </Text>
+            </View>
+            <Text variant="body" style={styles.commissionText}>
+              Her satıştan %{commissionRate} hizmet bedeli kesilir.
+            </Text>
+            <View style={styles.commissionExample}>
+              <Text variant="caption" color="textSecondary">Örnek:</Text>
+              <Text variant="caption" color="textSecondary">
+                100₺ satış → {calculateCommission(100)}₺ komisyon → {calculateNetAmount(100)}₺ size ödenecek
+              </Text>
+            </View>
+          </View>
+        </Card>
+
         {/* Action Buttons */}
         {isEditing && (
           <View style={styles.actionButtons}>
@@ -391,6 +595,86 @@ const styles = StyleSheet.create({
   bottomSpace: {
     height: Spacing.xl,
   },
+  // Kimlik bilgileri stilleri
+  identityContainer: {
+    gap: Spacing.lg,
+  },
+  identitySection: {
+    alignItems: 'center',
+  },
+  identityLabel: {
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
+  },
+  identityImageContainer: {
+    width: 200,
+    height: 120,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  identityImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },
+  identityPlaceholder: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  identityPlaceholderText: {
+    textAlign: 'center',
+  },
+  identityEditIcon: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: Spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  warningText: {
+    flex: 1,
+    lineHeight: 18,
+  },
+  // Banka bilgileri stilleri
+  commissionBox: {
+    padding: Spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: Spacing.md,
+  },
+  commissionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  commissionText: {
+    marginBottom: Spacing.sm,
+  },
+  commissionExample: {
+    gap: Spacing.xs,
+  },
 });
+
+
 
 
