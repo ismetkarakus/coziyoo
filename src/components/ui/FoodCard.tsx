@@ -135,7 +135,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
             <Image 
               source={imageUrl ? { uri: imageUrl } : getDefaultImage(name)} 
               style={styles.image}
-              resizeMode="contain"
+              resizeMode="cover"
               defaultSource={{ uri: 'https://via.placeholder.com/160x140/f5f5f5/cccccc?text=📸' }}
             />
           </TouchableOpacity>
