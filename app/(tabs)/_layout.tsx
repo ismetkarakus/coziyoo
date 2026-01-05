@@ -1,4 +1,5 @@
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import { Colors } from '@/src/theme';
@@ -63,9 +64,17 @@ export default function TabLayout() {
           title: 'Ana Sayfa',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "list" : "list"} 
+              name={focused ? "home" : "home"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
+            />
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              activeOpacity={0.7}
+              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             />
           ),
         }}
@@ -88,6 +97,14 @@ export default function TabLayout() {
               style={{ fontSize: focused ? 22 : 20 }}
             />
           ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              activeOpacity={0.7}
+              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            />
+          ),
         }}
       />
       <Tabs.Screen
@@ -100,6 +117,14 @@ export default function TabLayout() {
               name={focused ? "bell" : "bell-o"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
+            />
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              activeOpacity={0.7}
+              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             />
           ),
         }}
