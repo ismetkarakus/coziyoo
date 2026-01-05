@@ -23,6 +23,7 @@ export const AddMeal: React.FC = () => {
     startDate: '',
     endDate: '',
     category: '',
+    customerDeliveryDistance: '',
   });
 
   const [deliveryOptions, setDeliveryOptions] = useState({
@@ -287,6 +288,7 @@ export const AddMeal: React.FC = () => {
       hasPickup: deliveryOptions.pickup,
       hasDelivery: deliveryOptions.delivery,
       images: selectedImages,
+      customerDeliveryDistance: formData.customerDeliveryDistance,
     };
 
     console.log('Preview data:', previewData); // Debug log
@@ -348,6 +350,7 @@ export const AddMeal: React.FC = () => {
         imageUrl: selectedImages.length > 0 ? selectedImages[0] : undefined,
         description: formData.description,
         deliveryFee: formData.deliveryFee ? parseInt(formData.deliveryFee) : 0,
+        customerDeliveryDistance: formData.customerDeliveryDistance ? parseInt(formData.customerDeliveryDistance) : 0,
         createdAt: new Date().toISOString(),
       };
 
@@ -520,6 +523,42 @@ export const AddMeal: React.FC = () => {
               helperText="Günde kaç porsiyon hazırlayabilirsiniz?"
               required
             />
+
+            {/* Customer Delivery Distance Selection */}
+            <View style={styles.deliveryDistanceContainer}>
+              <Text variant="body" weight="medium" style={[styles.deliveryDistanceLabel, { color: '#000000' }]}>
+                🚚 Müşteri Delivery Mesafesi
+              </Text>
+              <Text variant="caption" color="textSecondary" style={styles.deliveryDistanceHelper}>
+                Müşterilerin sizden ne kadar uzaktan sipariş verebileceğini belirleyin
+              </Text>
+              
+              <View style={styles.distanceOptions}>
+                {[1, 2, 3, 5, 10, 15].map((distance) => (
+                  <TouchableOpacity
+                    key={distance}
+                    onPress={() => setFormData(prev => ({ ...prev, customerDeliveryDistance: distance.toString() }))}
+                    style={[
+                      styles.distanceOption,
+                      {
+                        backgroundColor: formData.customerDeliveryDistance === distance.toString() ? colors.primary : colors.surface,
+                        borderColor: formData.customerDeliveryDistance === distance.toString() ? colors.primary : colors.border,
+                      }
+                    ]}
+                  >
+                    <Text
+                      variant="body"
+                      weight="medium"
+                      style={{
+                        color: formData.customerDeliveryDistance === distance.toString() ? 'white' : colors.text
+                      }}
+                    >
+                      {distance} km
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
 
 
             <View style={styles.dateInputs}>
@@ -1145,6 +1184,30 @@ const styles = StyleSheet.create({
   lineCounter: {
     fontSize: 12,
     fontStyle: 'italic',
+  },
+  // Delivery Distance Styles
+  deliveryDistanceContainer: {
+    marginTop: Spacing.md,
+  },
+  deliveryDistanceLabel: {
+    marginBottom: Spacing.xs,
+  },
+  deliveryDistanceHelper: {
+    marginBottom: Spacing.md,
+    lineHeight: 18,
+  },
+  distanceOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  distanceOption: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    minWidth: 60,
+    alignItems: 'center',
   },
 });
 
