@@ -33,6 +33,36 @@ export default function SellerLayout() {
           headerShown: false,
         }} 
       />
+      <Stack.Screen 
+        name="meal-preview" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="profile" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="earnings" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="messages" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="delivery-settings" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
     </Stack>
   );
 }
