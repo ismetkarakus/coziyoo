@@ -184,13 +184,6 @@ export default function TabLayout() {
           href: null, // Hide from tab bar
         }}
       />
-      {/* Hidden screens - accessible via navigation but not in tabs */}
-      <Tabs.Screen
-        name="food-detail"
-        options={{
-          href: null, // Hide from tab bar
-        }}
-      />
       <Tabs.Screen
         name="category-foods"
         options={{
