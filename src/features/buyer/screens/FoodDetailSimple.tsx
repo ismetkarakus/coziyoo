@@ -135,29 +135,9 @@ export default function FoodDetailSimple() {
             </View>
           </View>
           
-          <View style={styles.detailsRow}>
-            <View style={styles.detailItem}>
-              <Text variant="caption" color="textSecondary">Hazırlık</Text>
-              <Text variant="body" weight="medium">30 dk</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text variant="caption" color="textSecondary">Mesafe</Text>
-              <Text variant="body" weight="medium">1.2 km</Text>
-            </View>
-          </View>
           
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
-              onPress={() => {
-                // Satıcıya mesaj gönder
-                router.push(`/(tabs)/messages?cookName=${encodeURIComponent(cookName)}`);
-              }}
-            >
-              <Text variant="body" color="primary">💬 Mesaj Gönder</Text>
-            </TouchableOpacity>
-            
             <TouchableOpacity 
               style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => {
@@ -166,6 +146,17 @@ export default function FoodDetailSimple() {
               }}
             >
               <Text variant="body" color="primary">❤️ Favoriye Ekle</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.orderButton, { backgroundColor: colors.primary }]}
+              onPress={() => {
+                // Sipariş ver ve siparişlerim sayfasına git
+                alert('Sipariş verildi! 🎉');
+                router.push('/(tabs)/orders');
+              }}
+            >
+              <Text variant="body" weight="bold" style={{ color: 'white' }}>🛒 Sipariş Ver - ₺25</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -202,13 +193,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     lineHeight: 22,
   },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailItem: {
-    alignItems: 'center',
-  },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -220,6 +204,12 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: 8,
     borderWidth: 1,
+    alignItems: 'center',
+  },
+  orderButton: {
+    flex: 2,
+    padding: Spacing.md,
+    borderRadius: 8,
     alignItems: 'center',
   },
   reviewsSection: {
