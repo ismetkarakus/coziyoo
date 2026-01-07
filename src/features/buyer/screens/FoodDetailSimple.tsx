@@ -184,10 +184,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   reviewsSection: {
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.lg,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
+    marginBottom: Spacing.sm,
   },
   reviewsTitle: {
     marginBottom: Spacing.md,
@@ -239,7 +240,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   aboutSellerSection: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.md,
   },
   ingredientsText: {
     lineHeight: 22,
