@@ -61,7 +61,7 @@ export default function FoodDetailSimple() {
               </View>
               {/* Yıldız Değerlendirme - Sağ Üst Köşe */}
               <View style={styles.ratingCorner}>
-                <Text variant="body" weight="bold" color="warning">
+                <Text variant="body" weight="bold" color="text">
                   ⭐ 4.8
                 </Text>
               </View>
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   ratingCorner: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 0,
+    right: 0,
   },
 });
