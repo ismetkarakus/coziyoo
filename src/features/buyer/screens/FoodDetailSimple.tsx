@@ -37,9 +37,19 @@ export default function FoodDetailSimple() {
         
         {/* Food Info */}
         <View style={[styles.infoContainer, { backgroundColor: colors.surface }]}>
-          <Text variant="heading" weight="bold" style={styles.title}>
-            {foodName}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text variant="heading" weight="bold" style={styles.title}>
+              {foodName}
+            </Text>
+            <View style={styles.priceCorner}>
+              <Text variant="caption" color="textSecondary">
+                / porsiyon
+              </Text>
+              <Text variant="subheading" weight="bold" color="primary">
+                ₺25
+              </Text>
+            </View>
+          </View>
           
           {/* Satıcı Profil Kartı - Satıcı Panelinden */}
           <Card variant="default" padding="md" style={styles.sellerCard}>
@@ -78,15 +88,6 @@ export default function FoodDetailSimple() {
           >
             <Text variant="body" color="primary">❤️ Favoriye Ekle</Text>
           </TouchableOpacity>
-          
-          <View style={styles.priceContainer}>
-            <Text variant="heading" weight="bold" color="primary">
-              ₺25
-            </Text>
-            <Text variant="caption" color="textSecondary">
-              / porsiyon
-            </Text>
-          </View>
           
           {/* İçindekiler/Baharatlar/Tarif */}
           <View style={styles.ingredientsSection}>
@@ -168,13 +169,18 @@ const styles = StyleSheet.create({
     margin: Spacing.md,
     borderRadius: 12,
   },
-  title: {
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: Spacing.sm,
   },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: Spacing.md,
+  title: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  priceCorner: {
+    alignItems: 'flex-end',
   },
   description: {
     marginBottom: Spacing.lg,
