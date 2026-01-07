@@ -66,13 +66,23 @@ class FoodService {
   // Tüm yemekleri getirme
   async getAllFoods(): Promise<Food[]> {
     try {
+      console.log('🔍 Starting Firebase query...');
+      
+      // Daha hızlı query - sadece ilk 10 item
       const q = query(
         collection(db, 'foods'),
         where('isAvailable', '==', true),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
+        limit(10) // Sadece 10 item yükle
       );
       
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await Promise.race([
+        getDocs(q),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Firebase query timeout')), 3000) // 3 saniye timeout
+        )
+      ]) as any;
+      
       const foods: Food[] = [];
       
       querySnapshot.forEach((doc) => {

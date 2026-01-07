@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, ScrollView, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
-import { Text, Button, StarRating } from './';
+import { Text } from './Text';
+import { Button } from './Button';
+import { StarRating } from './StarRating';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -338,3 +340,4 @@ const styles = StyleSheet.create({
     flex: 2,
   },
 });
+

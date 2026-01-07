@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Modal, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { Text, Button, PaymentMethodCard } from './';
+import { Text } from './Text';
+import { Button } from './Button';
+import { PaymentMethodCard } from './PaymentMethodCard';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { PaymentMethod, PaymentRequest, paymentService } from '../../services/paymentService';
@@ -365,3 +367,4 @@ const styles = StyleSheet.create({
     flex: 2,
   },
 });
+

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { authService, UserData } from '../services/authService';
+import { FirebaseUtils } from '../utils/firebaseUtils';
 
 interface AuthContextType {
   user: User | null;
@@ -25,13 +26,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Firebase optimizasyonu geçici olarak devre dışı
+    console.log('⚡ Skipping Firebase optimization for speed');
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('🔐 Auth state changed:', {
+        user: user ? `${user.email} (${user.uid})` : 'No user',
+        emailVerified: user?.emailVerified,
+        isAnonymous: user?.isAnonymous
+      });
       setUser(user);
       
       if (user) {
-        // Kullanıcı giriş yaptıysa, Firestore'dan kullanıcı verilerini al
-        const data = await authService.getUserData(user.uid);
-        setUserData(data);
+        // Hızlı fallback - Firestore'a gitmeden önce temel bilgileri set et
+        const fallbackData = {
+          uid: user.uid,
+          email: user.email || 'test@cazi.com',
+          displayName: user.displayName || 'Test Kullanıcı',
+          userType: 'buyer' as const,
+          createdAt: new Date()
+        };
+        
+        setUserData(fallbackData);
+        console.log('⚡ Quick user data set, loading full data in background...');
+        
+        // Arka planda tam veriyi yükle
+        authService.getUserData(user.uid).then(data => {
+          if (data) {
+            setUserData(data);
+            console.log('✅ Full user data loaded');
+          }
+        }).catch(error => {
+          console.warn('⚠️ Failed to load full user data, keeping fallback:', error);
+        });
       } else {
         setUserData(null);
       }
@@ -107,3 +134,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

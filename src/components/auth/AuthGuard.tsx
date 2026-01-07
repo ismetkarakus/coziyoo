@@ -14,16 +14,39 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const segments = useSegments();
 
   useEffect(() => {
-    if (loading) return; // Auth durumu henüz yükleniyor
+    console.log('🔐 AuthGuard Check:', {
+      user: user ? `${user.email} (${user.uid})` : 'null',
+      loading,
+      segments,
+      inAuthGroup: segments[0] === '(auth)',
+      currentPath: segments.join('/')
+    });
+
+    if (loading) {
+      console.log('⏳ Auth still loading, waiting...');
+      return; // Auth durumu henüz yükleniyor
+    }
 
     const inAuthGroup = segments[0] === '(auth)';
 
+    // ZORLA REDIRECT - Kullanıcı yoksa auth'a git
     if (!user && !inAuthGroup) {
-      // Kullanıcı giriş yapmamış ve auth sayfasında değil
+      console.log('🚨 FORCING REDIRECT: No user, going to sign-in');
       router.replace('/(auth)/sign-in');
-    } else if (user && inAuthGroup) {
-      // Kullanıcı giriş yapmış ama auth sayfasında
+      return;
+    }
+
+    // Kullanıcı varsa ve auth'daysa tabs'a git
+    if (user && inAuthGroup) {
+      console.log('✅ User logged in, redirecting to tabs');
       router.replace('/(tabs)');
+      return;
+    }
+
+    if (user && !inAuthGroup) {
+      console.log('✅ User logged in and in correct section');
+    } else if (!user && inAuthGroup) {
+      console.log('👤 No user but in auth section - OK');
     }
   }, [user, loading, segments]);
 
@@ -33,6 +56,38 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       <View style={styles.loadingContainer}>
         <Text variant="body" color="textSecondary">
           Yükleniyor...
+        </Text>
+      </View>
+    );
+  }
+
+  // GÜÇLÜ KONTROL: Kullanıcı yoksa erişimi engelle
+  const inAuthGroup = segments[0] === '(auth)';
+  
+  if (!user && !inAuthGroup) {
+    console.log('🚫 BLOCKING ACCESS - no user and not in auth');
+    // Zorla redirect
+    router.replace('/(auth)/sign-in');
+    return (
+      <View style={styles.loadingContainer}>
+        <Text variant="body" color="textSecondary">
+          🔐 Giriş yapmanız gerekiyor...
+        </Text>
+        <Text variant="caption" color="textSecondary" style={{ marginTop: 8 }}>
+          Giriş sayfasına yönlendiriliyor...
+        </Text>
+      </View>
+    );
+  }
+
+  // Kullanıcı varsa ama auth sayfasındaysa tabs'a yönlendir
+  if (user && inAuthGroup) {
+    console.log('🔄 User exists but in auth, redirecting to tabs');
+    router.replace('/(tabs)');
+    return (
+      <View style={styles.loadingContainer}>
+        <Text variant="body" color="textSecondary">
+          Ana sayfaya yönlendiriliyor...
         </Text>
       </View>
     );
@@ -49,3 +104,4 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.background,
   },
 });
+

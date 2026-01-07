@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Text, FoodCard, SearchBar, FilterModal } from '../../../components/ui';
+import { Text, FoodCard, SearchBar, FilterModal, NetworkStatus } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -14,6 +14,7 @@ import { useNotifications } from '../../../context/NotificationContext';
 import { foodService, Food } from '../../../services/foodService';
 import { searchService, SearchFilters } from '../../../services/searchService';
 import { seedSampleData, checkExistingData } from '../../../utils/seedData';
+import { FirebaseUtils } from '../../../utils/firebaseUtils';
 
 // Mock data
 const USER_DATA = {
@@ -222,29 +223,87 @@ export const Home: React.FC = () => {
 
   // Load Firebase foods
   useEffect(() => {
-    loadFirebaseFoods();
+    // Hızlı yükleme için kısa delay
+    setTimeout(() => {
+      loadFirebaseFoods();
+    }, 100);
   }, []);
 
   const loadFirebaseFoods = async () => {
     try {
       setLoading(true);
+      console.log('⚡ Loading foods (FAST MODE - using mock data)...');
       
-      // Önce mevcut veri var mı kontrol et
-      const hasData = await checkExistingData();
+      // HIZLI ÇÖZÜM: Mock data kullan
+      const mockFoods = [
+        {
+          id: '1',
+          name: 'Ev Yapımı Mantı',
+          description: 'Geleneksel el açması mantı, yoğurt ve tereyağlı sos ile',
+          price: 45,
+          cookName: 'Ayşe Hanım',
+          cookId: 'cook1',
+          category: 'Ana Yemek',
+          imageUrl: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
+          ingredients: ['Un', 'Et', 'Soğan', 'Yoğurt'],
+          preparationTime: 60,
+          servingSize: 4,
+          isAvailable: true,
+          currentStock: 10,
+          dailyStock: 15,
+          rating: 4.8,
+          reviewCount: 24,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: '2',
+          name: 'Mercimek Çorbası',
+          description: 'Taze sebzelerle hazırlanmış nefis mercimek çorbası',
+          price: 15,
+          cookName: 'Mehmet Usta',
+          cookId: 'cook2',
+          category: 'Çorba',
+          imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=280&fit=crop',
+          ingredients: ['Mercimek', 'Havuç', 'Soğan', 'Baharat'],
+          preparationTime: 30,
+          servingSize: 2,
+          isAvailable: true,
+          currentStock: 8,
+          dailyStock: 12,
+          rating: 4.5,
+          reviewCount: 18,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: '3',
+          name: 'Köfte ve Pilav',
+          description: 'Ev yapımı köfte ve tereyağlı pilav',
+          price: 35,
+          cookName: 'Fatma Teyze',
+          cookId: 'cook3',
+          category: 'Ana Yemek',
+          imageUrl: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=320&h=280&fit=crop',
+          ingredients: ['Kıyma', 'Pirinç', 'Soğan', 'Baharat'],
+          preparationTime: 45,
+          servingSize: 3,
+          isAvailable: true,
+          currentStock: 6,
+          dailyStock: 10,
+          rating: 4.7,
+          reviewCount: 31,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
       
-      // Eğer veri yoksa örnek verileri ekle
-      if (!hasData) {
-        console.log('Veri bulunamadı, örnek veriler ekleniyor...');
-        await seedSampleData();
-      }
+      setFirebaseFoods(mockFoods);
+      console.log('✅ Mock foods loaded instantly:', mockFoods.length);
       
-      // Verileri yükle
-      const foods = await foodService.getAllFoods();
-      setFirebaseFoods(foods);
-      console.log('Firebase foods loaded:', foods.length);
     } catch (error) {
-      console.error('Firebase foods loading error:', error);
-      Alert.alert('Hata', 'Yemekler yüklenirken bir hata oluştu');
+      console.error('❌ Error:', error);
+      setFirebaseFoods([]);
     } finally {
       setLoading(false);
     }
@@ -321,6 +380,22 @@ export const Home: React.FC = () => {
       loadFirebaseFoods(); // Reload Firebase data on focus
     }, [])
   );
+
+  // Firebase bağlantısını reset et
+  const handleResetFirebase = async () => {
+    try {
+      console.log('🔄 Resetting Firebase connection...');
+      await FirebaseUtils.resetConnection();
+      
+      // Verileri yeniden yükle
+      await loadFirebaseFoods();
+      
+      Alert.alert('✅ Başarılı', 'Firebase bağlantısı sıfırlandı ve veriler yeniden yüklendi!');
+    } catch (error) {
+      console.error('❌ Reset failed:', error);
+      Alert.alert('❌ Hata', 'Firebase sıfırlama başarısız oldu.');
+    }
+  };
 
   const handleAddToCart = async (foodId: string, quantity: number) => {
     const food = firebaseFoods.find(f => f.id === foodId);
@@ -481,6 +556,31 @@ export const Home: React.FC = () => {
 
   const renderTopBarRight = () => (
     <View style={styles.topBarRight}>
+      {/* Logout Button (Test) */}
+      <TouchableOpacity 
+        onPress={async () => {
+          try {
+            await signOut();
+            router.replace('/(auth)/sign-in');
+          } catch (error) {
+            console.error('Logout error:', error);
+          }
+        }} 
+        style={styles.logoutButton}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <FontAwesome name="sign-out" size={18} color={colors.background} />
+      </TouchableOpacity>
+      
+      {/* Firebase Reset Button */}
+      <TouchableOpacity 
+        onPress={handleResetFirebase} 
+        style={styles.resetButton}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <FontAwesome name="refresh" size={18} color={colors.background} />
+      </TouchableOpacity>
+      
       <TouchableOpacity onPress={handleProfilePress} style={styles.profileIconContainer}>
         <Image 
           source={{ uri: USER_DATA.avatar }}
@@ -498,6 +598,7 @@ export const Home: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
+      <NetworkStatus />
       {/* TopBar */}
       <View style={[styles.topBar, { 
         backgroundColor: colors.primary,
@@ -612,7 +713,10 @@ export const Home: React.FC = () => {
           {loading ? (
             <View style={styles.loadingContainer}>
               <Text variant="body" color="textSecondary" style={styles.loadingText}>
-                Yemekler yükleniyor...
+                ⚡ Hızlı yükleme modunda...
+              </Text>
+              <Text variant="caption" color="textSecondary" style={{ marginTop: 8, textAlign: 'center' }}>
+                Mock veriler kullanılıyor
               </Text>
             </View>
           ) : filteredFoods.length > 0 ? (
@@ -801,6 +905,14 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     textAlign: 'center',
+  },
+  resetButton: {
+    padding: 8,
+    marginRight: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

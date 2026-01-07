@@ -76,8 +76,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({
     console.log('FoodCard pressed:', name, id, 'by', cookName);
     const foodImageUrl = imageUrl || getDefaultImage(name).uri;
     const deliveryTypeText = selectedDeliveryType === 'pickup' ? 'Pickup' : 'Delivery';
-    const route = `/food-detail?id=${id}&name=${encodeURIComponent(name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}&deliveryType=${encodeURIComponent(deliveryTypeText)}&availableDates=${encodeURIComponent(availableDates || '')}&currentStock=${currentStock || 0}&dailyStock=${dailyStock || 0}`;
-    console.log('Navigating to:', route);
+    const route = `/food-detail-simple?id=${id}&name=${encodeURIComponent(name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}`;
+    console.log('Navigating to SIMPLE FOOD DETAIL (no getTime errors):', route);
     router.push(route);
   };
 

@@ -15,3 +15,4 @@ export { RatingStats } from './RatingStats';
 export { ReviewModal } from './ReviewModal';
 export { PaymentMethodCard } from './PaymentMethodCard';
 export { PaymentModal } from './PaymentModal';
+export { NetworkStatus } from './NetworkStatus';

@@ -134,3 +134,4 @@ Bu hesabı Firebase Console'dan manuel oluşturun.
 5. **Network bağlantısını test edin** → API çağrıları gidiyor mu?
 
 Bu adımları takip ederek sorunu çözebilirsiniz! 🚀
+

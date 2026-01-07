@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, ScrollView, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { Text, Button, Card } from './';
+import { Text } from './Text';
+import { Button } from './Button';
+import { Card } from './Card';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { SearchFilters } from '../../services/searchService';
