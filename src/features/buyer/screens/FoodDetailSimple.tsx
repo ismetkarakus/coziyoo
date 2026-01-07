@@ -67,7 +67,17 @@ export default function FoodDetailSimple() {
               </View>
             </View>
           </Card>
-          
+
+          {/* Favoriye Ekle Butonu - Profil Kartının Altında */}
+          <TouchableOpacity 
+            style={[styles.favoriteButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => {
+              // Favorilere ekle
+              alert('Favorilere eklendi! ❤️');
+            }}
+          >
+            <Text variant="body" color="primary">❤️ Favoriye Ekle</Text>
+          </TouchableOpacity>
           
           <View style={styles.priceContainer}>
             <Text variant="heading" weight="bold" color="primary">
@@ -136,29 +146,6 @@ export default function FoodDetailSimple() {
           </View>
           
           
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
-              onPress={() => {
-                // Favorilere ekle
-                alert('Favorilere eklendi! ❤️');
-              }}
-            >
-              <Text variant="body" color="primary">❤️ Favoriye Ekle</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.orderButton, { backgroundColor: colors.primary }]}
-              onPress={() => {
-                // Sipariş ver ve siparişlerim sayfasına git
-                alert('Sipariş verildi! 🎉');
-                router.push('/(tabs)/orders');
-              }}
-            >
-              <Text variant="body" weight="bold" style={{ color: 'white' }}>🛒 Sipariş Ver - ₺25</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
     </View>
@@ -193,25 +180,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     lineHeight: 22,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: Spacing.lg,
-    gap: Spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    padding: Spacing.md,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  orderButton: {
-    flex: 2,
-    padding: Spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
   reviewsSection: {
     marginTop: Spacing.lg,
     paddingTop: Spacing.lg,
@@ -226,6 +194,13 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.sm,
   },
   sectionTitle: {
+    marginBottom: Spacing.md,
+  },
+  favoriteButton: {
+    padding: Spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
     marginBottom: Spacing.md,
   },
   sellerCard: {
