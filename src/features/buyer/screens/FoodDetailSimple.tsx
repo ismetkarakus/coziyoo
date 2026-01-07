@@ -59,6 +59,12 @@ export default function FoodDetailSimple() {
                   Satıcı • Kadıköy, İstanbul
                 </Text>
               </View>
+              {/* Yıldız Değerlendirme - Sağ Üst Köşe */}
+              <View style={styles.ratingCorner}>
+                <Text variant="body" weight="bold" color="warning">
+                  ⭐ 4.8
+                </Text>
+              </View>
             </View>
           </Card>
           
@@ -105,10 +111,6 @@ export default function FoodDetailSimple() {
             <View style={styles.detailItem}>
               <Text variant="caption" color="textSecondary">Mesafe</Text>
               <Text variant="body" weight="medium">1.2 km</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text variant="caption" color="textSecondary">Değerlendirme</Text>
-              <Text variant="body" weight="medium">⭐ 4.8</Text>
             </View>
           </View>
           
@@ -269,6 +271,7 @@ const styles = StyleSheet.create({
   sellerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
   },
   sellerAvatarContainer: {
     marginRight: Spacing.md,
@@ -282,5 +285,10 @@ const styles = StyleSheet.create({
   },
   sellerDetails: {
     flex: 1,
+  },
+  ratingCorner: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
   },
 });
