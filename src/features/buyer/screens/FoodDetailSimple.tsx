@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Text, Button } from '../../../components/ui';
+import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -41,16 +41,29 @@ export default function FoodDetailSimple() {
             {foodName}
           </Text>
           
-          {/* Satıcı Bilgileri - Yemek İsmi Altında */}
-          <View style={styles.sellerUnderTitle}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face' }}
-              style={styles.sellerAvatarSmall}
-            />
-            <Text variant="body" weight="medium" color="textSecondary">
-              👨‍🍳 {cookName}
-            </Text>
-          </View>
+          {/* Satıcı Profil Kartı - Satıcı Panelinden */}
+          <Card variant="default" padding="md" style={styles.sellerCard}>
+            <View style={styles.sellerInfo}>
+              <View style={styles.sellerAvatarContainer}>
+                <Image
+                  source={{ uri: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face' }}
+                  style={styles.sellerAvatarImage}
+                  defaultSource={{ uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' }}
+                />
+              </View>
+              <View style={styles.sellerDetails}>
+                <Text variant="subheading" weight="semibold">
+                  {cookName}
+                </Text>
+                <Text variant="body" color="textSecondary">
+                  ayse@example.com
+                </Text>
+                <Text variant="caption" color="textSecondary">
+                  Satıcı • Kadıköy, İstanbul
+                </Text>
+              </View>
+            </View>
+          </Card>
           
           
           <View style={styles.priceContainer}>
@@ -253,16 +266,24 @@ const styles = StyleSheet.create({
   sellerDetails: {
     flex: 1,
   },
-  sellerUnderTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Spacing.xs,
+  sellerCard: {
     marginBottom: Spacing.md,
   },
-  sellerAvatarSmall: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: Spacing.sm,
+  sellerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sellerAvatarContainer: {
+    marginRight: Spacing.md,
+  },
+  sellerAvatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#7FAF9A',
+  },
+  sellerDetails: {
+    flex: 1,
   },
 });
