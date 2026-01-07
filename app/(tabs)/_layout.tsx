@@ -1,19 +1,26 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs, router } from 'expo-router';
 import { Colors } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useCart } from '@/src/context/CartContext';
+import { WebSafeIcon } from '@/src/components/ui/WebSafeIcon';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
+  name: string;
   color: string;
   style?: any;
 }) {
-  return <FontAwesome size={20} style={{ marginBottom: -2, ...props.style }} {...props} />;
+  return (
+    <WebSafeIcon 
+      name={props.name}
+      size={20}
+      color={props.color}
+      style={{ marginBottom: -2, ...props.style }}
+    />
+  );
 }
 
 export default function TabLayout() {
@@ -108,13 +115,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
+        name="messages"
         options={{
-          title: 'Bildirimler',
-          tabBarBadge: 2, // Mock notification count
+          title: 'Mesajlar',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "bell" : "bell-o"} 
+              name={focused ? "comments" : "comments-o"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
             />
@@ -147,7 +153,13 @@ export default function TabLayout() {
               style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               onPress={() => {
-                router.back();
+                // Check if we can go back safely
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  // If no history, stay on current tab (do nothing)
+                  console.log('No navigation history, staying on current tab');
+                }
               }}
             />
           ),

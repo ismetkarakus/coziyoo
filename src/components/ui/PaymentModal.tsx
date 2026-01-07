@@ -1,0 +1,367 @@
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Modal, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { Text, Button, PaymentMethodCard } from './';
+import { Colors, Spacing } from '../../theme';
+import { useColorScheme } from '../../../components/useColorScheme';
+import { PaymentMethod, PaymentRequest, paymentService } from '../../services/paymentService';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+
+interface PaymentModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onPaymentSuccess: (transactionId: string) => void;
+  paymentRequest: PaymentRequest;
+  loading?: boolean;
+}
+
+export const PaymentModal: React.FC<PaymentModalProps> = ({
+  visible,
+  onClose,
+  onPaymentSuccess,
+  paymentRequest,
+  loading = false,
+}) => {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [loadingMethods, setLoadingMethods] = useState(true);
+
+  useEffect(() => {
+    if (visible) {
+      loadPaymentMethods();
+    }
+  }, [visible]);
+
+  const loadPaymentMethods = async () => {
+    try {
+      setLoadingMethods(true);
+      const methods = await paymentService.getPaymentMethods('current_user_id');
+      setPaymentMethods(methods);
+      
+      // Select default payment method
+      const defaultMethod = methods.find(method => method.isDefault);
+      if (defaultMethod) {
+        setSelectedPaymentMethod(defaultMethod);
+      } else if (methods.length > 0) {
+        setSelectedPaymentMethod(methods[0]);
+      }
+    } catch (error) {
+      console.error('Error loading payment methods:', error);
+      Alert.alert('Hata', 'Ödeme yöntemleri yüklenemedi.');
+    } finally {
+      setLoadingMethods(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (!selectedPaymentMethod) {
+      Alert.alert('Hata', 'Lütfen bir ödeme yöntemi seçin.');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+
+      // Check 3D Secure requirement
+      const requires3DSecure = await paymentService.check3DSecure(
+        selectedPaymentMethod.id,
+        paymentRequest.amount
+      );
+
+      if (requires3DSecure) {
+        Alert.alert(
+          '3D Secure Doğrulama',
+          'Bu işlem için 3D Secure doğrulaması gereklidir. Devam etmek istiyor musunuz?',
+          [
+            { text: 'İptal', style: 'cancel' },
+            { text: 'Devam Et', onPress: () => processPaymentWithSecure() }
+          ]
+        );
+      } else {
+        await processPayment();
+      }
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      Alert.alert('Hata', 'Ödeme başlatılamadı.');
+      setProcessing(false);
+    }
+  };
+
+  const processPayment = async () => {
+    try {
+      const request: PaymentRequest = {
+        ...paymentRequest,
+        paymentMethodId: selectedPaymentMethod!.id,
+      };
+
+      const result = await paymentService.processPayment(request);
+
+      if (result.success && result.transactionId) {
+        Alert.alert(
+          'Ödeme Başarılı',
+          'Ödemeniz başarıyla tamamlandı.',
+          [
+            {
+              text: 'Tamam',
+              onPress: () => {
+                onPaymentSuccess(result.transactionId!);
+                onClose();
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Ödeme Başarısız', result.error || 'Ödeme işlemi başarısız oldu.');
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      Alert.alert('Hata', 'Ödeme işlemi sırasında bir hata oluştu.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const processPaymentWithSecure = async () => {
+    // Simulate 3D Secure flow
+    Alert.alert(
+      '3D Secure',
+      'Bankanızın güvenlik sayfasına yönlendiriliyorsunuz...',
+      [
+        {
+          text: 'Tamam',
+          onPress: async () => {
+            // Simulate 3D Secure success
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await processPayment();
+          }
+        }
+      ]
+    );
+  };
+
+  const handleAddPaymentMethod = () => {
+    Alert.alert(
+      'Yeni Ödeme Yöntemi',
+      'Yeni ödeme yöntemi eklemek için ayarlar sayfasına gidin.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        { text: 'Ayarlara Git', onPress: onClose }
+      ]
+    );
+  };
+
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: 'TRY',
+    }).format(amount);
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <FontAwesome name="times" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <Text variant="heading" style={styles.title}>
+            Ödeme
+          </Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Order Summary */}
+          <View style={[styles.section, { backgroundColor: colors.surface }]}>
+            <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
+              Sipariş Özeti
+            </Text>
+            <View style={styles.orderInfo}>
+              <Text variant="body" style={{ color: colors.text }}>
+                {paymentRequest.description}
+              </Text>
+              <Text variant="heading" weight="bold" style={{ color: colors.primary }}>
+                {formatAmount(paymentRequest.amount)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Payment Methods */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
+                Ödeme Yöntemi
+              </Text>
+              <TouchableOpacity
+                onPress={handleAddPaymentMethod}
+                style={[styles.addButton, { backgroundColor: colors.primary }]}
+              >
+                <FontAwesome name="plus" size={12} color={colors.background} />
+                <Text variant="caption" style={{ color: colors.background, marginLeft: 4 }}>
+                  Ekle
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {loadingMethods ? (
+              <View style={styles.loadingContainer}>
+                <Text variant="body" color="textSecondary">
+                  Ödeme yöntemleri yükleniyor...
+                </Text>
+              </View>
+            ) : paymentMethods.length > 0 ? (
+              paymentMethods.map((method) => (
+                <PaymentMethodCard
+                  key={method.id}
+                  paymentMethod={method}
+                  isSelected={selectedPaymentMethod?.id === method.id}
+                  onPress={() => setSelectedPaymentMethod(method)}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text variant="body" color="textSecondary" style={{ textAlign: 'center' }}>
+                  Kayıtlı ödeme yönteminiz bulunmuyor.
+                </Text>
+                <TouchableOpacity
+                  onPress={handleAddPaymentMethod}
+                  style={[styles.addMethodButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
+                >
+                  <Text variant="body" style={{ color: colors.primary }}>
+                    İlk ödeme yönteminizi ekleyin
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {/* Security Info */}
+          <View style={[styles.securityInfo, { backgroundColor: colors.surface }]}>
+            <FontAwesome name="shield" size={16} color={colors.success} />
+            <Text variant="caption" style={{ color: colors.textSecondary, flex: 1, marginLeft: 8 }}>
+              Ödeme bilgileriniz SSL ile şifrelenir ve güvenli bir şekilde işlenir.
+            </Text>
+          </View>
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={[styles.footer, { borderTopColor: colors.border }]}>
+          <Button
+            variant="outline"
+            onPress={onClose}
+            style={styles.cancelButton}
+            disabled={processing}
+          >
+            İptal
+          </Button>
+          <Button
+            variant="primary"
+            onPress={handlePayment}
+            loading={processing}
+            disabled={!selectedPaymentMethod || processing || loading}
+            style={styles.payButton}
+          >
+            {formatAmount(paymentRequest.amount)} Öde
+          </Button>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+  },
+  closeButton: {
+    padding: Spacing.sm,
+  },
+  title: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    padding: Spacing.lg,
+  },
+  section: {
+    marginBottom: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: 12,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  sectionTitle: {
+    flex: 1,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: 12,
+  },
+  orderInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+    gap: Spacing.md,
+  },
+  addMethodButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  securityInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: 8,
+    marginBottom: Spacing.lg,
+  },
+  footer: {
+    flexDirection: 'row',
+    padding: Spacing.lg,
+    borderTopWidth: 1,
+    gap: Spacing.md,
+  },
+  cancelButton: {
+    flex: 1,
+  },
+  payButton: {
+    flex: 2,
+  },
+});

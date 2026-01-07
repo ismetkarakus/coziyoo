@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Text } from './Text';
 import { Button } from './Button';
 import { Card } from './Card';
+import { StarRating } from './StarRating';
 import { Colors, Spacing, commonStyles } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { useCart } from '../../context/CartContext';
@@ -75,7 +76,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
     console.log('FoodCard pressed:', name, id, 'by', cookName);
     const foodImageUrl = imageUrl || getDefaultImage(name).uri;
     const deliveryTypeText = selectedDeliveryType === 'pickup' ? 'Pickup' : 'Delivery';
-    const route = `/(tabs)/food-detail?id=${id}&name=${encodeURIComponent(name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}&deliveryType=${encodeURIComponent(deliveryTypeText)}&availableDates=${encodeURIComponent(availableDates || '')}&currentStock=${currentStock || 0}&dailyStock=${dailyStock || 0}`;
+    const route = `/food-detail?id=${id}&name=${encodeURIComponent(name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}&deliveryType=${encodeURIComponent(deliveryTypeText)}&availableDates=${encodeURIComponent(availableDates || '')}&currentStock=${currentStock || 0}&dailyStock=${dailyStock || 0}`;
     console.log('Navigating to:', route);
     router.push(route);
   };
@@ -170,8 +171,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({
             </View>
 
       <View style={styles.ratingDistance}>
-        <Text variant="caption" color="textSecondary" style={{ fontSize: 11 }}>
-          ⭐ {rating.toFixed(1)} • {maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance}
+        <StarRating rating={rating} size="small" showNumber />
+        <Text variant="caption" color="textSecondary" style={{ fontSize: 11, marginLeft: 8 }}>
+          • {maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance}
         </Text>
       </View>
 

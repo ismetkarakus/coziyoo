@@ -1,0 +1,22 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Kullanıcı profil resimleri - sadece sahibi yükleyebilir
+    match /users/{userId}/profile/{allPaths=**} {
+      allow read: if true; // Profil resimleri herkese açık
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Yemek resimleri - sadece sahibi yükleyebilir
+    match /meals/{mealId}/{allPaths=**} {
+      allow read: if true; // Yemek resimleri herkese açık
+      allow write: if request.auth != null; // Giriş yapmış kullanıcılar yükleyebilir
+    }
+    
+    // Kimlik belgeleri - sadece sahibi yükleyebilir ve görebilir
+    match /identity/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+

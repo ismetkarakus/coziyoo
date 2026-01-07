@@ -8,10 +8,14 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import * as ImagePicker from 'expo-image-picker';
+import { useAuth } from '../../../context/AuthContext';
+import { foodService } from '../../../services/foodService';
+import { storageService } from '../../../services/storageService';
 
 export const AddMeal: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { user } = useAuth();
 
   // Countries list for autocomplete
   const COUNTRIES = [
@@ -74,6 +78,8 @@ export const AddMeal: React.FC = () => {
   const [filteredCountries, setFilteredCountries] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [descriptionHeight, setDescriptionHeight] = useState(60); // Başlangıç yüksekliği
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Categories from Home page
   const CATEGORIES = [
@@ -131,6 +137,122 @@ export const AddMeal: React.FC = () => {
     setFormData(prev => ({ ...prev, country }));
     setCountryModalVisible(false);
     setFilteredCountries([]);
+  };
+
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.name.trim()) {
+      Alert.alert('Hata', 'Yemek adı gereklidir.');
+      return;
+    }
+    if (!formData.description.trim()) {
+      Alert.alert('Hata', 'Açıklama gereklidir.');
+      return;
+    }
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      Alert.alert('Hata', 'Geçerli bir fiyat giriniz.');
+      return;
+    }
+    if (!formData.category) {
+      Alert.alert('Hata', 'Kategori seçiniz.');
+      return;
+    }
+    if (!user) {
+      Alert.alert('Hata', 'Giriş yapmalısınız.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      let imageUrl = '';
+      
+      // Eğer resim seçildiyse Firebase Storage'a yükle
+      if (selectedImages.length > 0) {
+        console.log('Uploading image to Firebase Storage...');
+        imageUrl = await storageService.uploadFoodImage(
+          selectedImages[0], // İlk resmi kullan
+          user.uid,
+          (progress) => {
+            setUploadProgress(progress.progress);
+          }
+        );
+        console.log('Image uploaded:', imageUrl);
+      }
+
+      // Firebase'e yemek verilerini kaydet
+      const foodData = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
+        cookName: user.displayName || 'Satıcı',
+        cookId: user.uid,
+        category: formData.category,
+        imageUrl: imageUrl || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop',
+        ingredients: [], // Şimdilik boş, ileride eklenebilir
+        preparationTime: 30, // Default değer
+        servingSize: parseInt(formData.dailyStock) || 1,
+        isAvailable: true,
+      };
+
+      const foodId = await foodService.addFood(foodData);
+      console.log('Food added to Firebase:', foodId);
+
+      // AsyncStorage'a da kaydet (backward compatibility için)
+      const mealData = {
+        id: foodId,
+        ...formData,
+        images: selectedImages,
+        deliveryOptions,
+        createdAt: new Date().toISOString(),
+        sellerId: user.uid,
+        sellerName: user.displayName || 'Satıcı',
+        imageUrl,
+      };
+
+      const existingMeals = await AsyncStorage.getItem('publishedMeals');
+      const meals = existingMeals ? JSON.parse(existingMeals) : [];
+      meals.push(mealData);
+      await AsyncStorage.setItem('publishedMeals', JSON.stringify(meals));
+
+      Alert.alert(
+        'Başarılı!',
+        'Yemeğiniz başarıyla eklendi ve satışa sunuldu.',
+        [
+          {
+            text: 'Tamam',
+            onPress: () => {
+              // Form'u temizle
+              setFormData({
+                name: '',
+                description: '',
+                price: '',
+                dailyStock: '',
+                deliveryFee: '',
+                maxDistance: '',
+                startDate: '',
+                endDate: '',
+                category: '',
+                country: '',
+              });
+              setSelectedImages([]);
+              setDeliveryOptions({ pickup: true, delivery: false });
+              
+              // Ana sayfaya dön
+              router.replace('/(seller)/dashboard');
+            }
+          }
+        ]
+      );
+
+    } catch (error) {
+      console.error('Error adding food:', error);
+      Alert.alert('Hata', 'Yemek eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   const handleImageSelection = async () => {
@@ -464,112 +586,101 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
-    // Tarih seçimi kontrolü
-    if (!formData.startDate || !formData.endDate) {
-      Alert.alert(
-        'Tarih Seçimi Gerekli',
-        'Yayınlama için başlangıç ve bitiş tarihlerini seçmelisiniz.',
-        [{ text: 'Tamam' }]
-      );
+    if (!user) {
+      Alert.alert('Hata', 'Giriş yapmalısınız.');
       return;
     }
 
-    // Delivery seçilmişse teslimat mesafesi gerekli
-    if (deliveryOptions.delivery && !formData.maxDistance) {
-      Alert.alert(
-        'Teslimat Mesafesi Gerekli',
-        'Delivery seçeneğini aktifleştirdiğiniz için teslimat mesafesini belirtmelisiniz.',
-        [{ text: 'Tamam' }]
-      );
-      return;
-    }
-
-    // Yayınlama onayı
-    Alert.alert(
-      'Yemeği Yayınla',
-      `"${formData.name}" adlı yemeğinizi ana sayfada yayınlamak istediğinizden emin misiniz?`,
-      [
-        {
-          text: 'İptal',
-          style: 'cancel',
-        },
-        {
-          text: 'Evet, Yayınla',
-          onPress: () => performPublish(),
-        },
-      ]
-    );
-  };
-
-  const performPublish = async () => {
     try {
-      // Get seller name from profile (nickname preferred)
-      let sellerName = 'Sizin Adınız';
-      try {
-        const savedProfile = await AsyncStorage.getItem('sellerProfile');
-        if (savedProfile) {
-          const profile = JSON.parse(savedProfile);
-          if (profile.formData) {
-            // Nickname varsa onu kullan, yoksa gerçek ismi kullan
-            sellerName = profile.formData.nickname || profile.formData.name || 'Sizin Adınız';
+      setUploading(true);
+      setUploadProgress(0);
+
+      let imageUrl = '';
+      
+      // Eğer resim seçildiyse Firebase Storage'a yükle
+      if (selectedImages.length > 0) {
+        console.log('Uploading image to Firebase Storage...');
+        imageUrl = await storageService.uploadFoodImage(
+          selectedImages[0], // İlk resmi kullan
+          user.uid,
+          (progress) => {
+            setUploadProgress(progress.progress);
           }
-        }
-      } catch (error) {
-        console.error('Error loading seller name:', error);
+        );
+        console.log('Image uploaded:', imageUrl);
       }
 
-      // Create new meal object
-      const newMeal = {
-        id: 'meal-' + Date.now(),
-        name: formData.name,
-        cookName: sellerName,
-        rating: 4.8, // Default rating for new meals
-        price: parseInt(formData.price),
-        distance: formData.maxDistance ? `${formData.maxDistance} km teslimat` : '0 km teslimat',
+      // Firebase'e yemek verilerini kaydet
+      const foodData = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
+        cookName: user.displayName || 'Satıcı',
+        cookId: user.uid,
         category: formData.category,
-        country: formData.country,
-        hasPickup: deliveryOptions.pickup,
-        hasDelivery: deliveryOptions.delivery,
-        availableDates: formatDateRange(formData.startDate, formData.endDate),
-        currentStock: parseInt(formData.dailyStock),
-        dailyStock: parseInt(formData.dailyStock),
-        maxDeliveryDistance: parseInt(formData.maxDistance) || 0,
-        imageUrl: selectedImages.length > 0 ? selectedImages[0] : undefined,
-        description: formData.description,
-        deliveryFee: formData.deliveryFee ? parseInt(formData.deliveryFee) : 0,
-        createdAt: new Date().toISOString(),
+        imageUrl: imageUrl || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop',
+        ingredients: [], // Şimdilik boş, ileride eklenebilir
+        preparationTime: 30, // Default değer
+        servingSize: parseInt(formData.dailyStock) || 1,
+        isAvailable: true,
       };
 
-      // Get existing meals from AsyncStorage
-      const existingMealsJson = await AsyncStorage.getItem('publishedMeals');
-      const existingMeals = existingMealsJson ? JSON.parse(existingMealsJson) : [];
+      const foodId = await foodService.addFood(foodData);
+      console.log('Food added to Firebase:', foodId);
 
-      // Add new meal to the beginning of the array
-      const updatedMeals = [newMeal, ...existingMeals];
+      // AsyncStorage'a da kaydet (backward compatibility için)
+      const mealData = {
+        id: foodId,
+        ...formData,
+        images: selectedImages,
+        deliveryOptions,
+        createdAt: new Date().toISOString(),
+        sellerId: user.uid,
+        sellerName: user.displayName || 'Satıcı',
+        imageUrl,
+      };
 
-      // Save back to AsyncStorage
-      await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
+      const existingMeals = await AsyncStorage.getItem('publishedMeals');
+      const meals = existingMeals ? JSON.parse(existingMeals) : [];
+      meals.push(mealData);
+      await AsyncStorage.setItem('publishedMeals', JSON.stringify(meals));
 
-      console.log('Meal published successfully:', newMeal.name);
-
-      // Show success message
       Alert.alert(
         'Başarılı!',
-        `Yemeğiniz "${formData.category}" kategorisinde başarıyla yayınlandı ve ana ekranda görünecek.`,
+        'Yemeğiniz başarıyla eklendi ve satışa sunuldu.',
         [
           {
             text: 'Tamam',
-            onPress: () => router.back(),
-          },
+            onPress: () => {
+              // Form'u temizle
+              setFormData({
+                name: '',
+                description: '',
+                price: '',
+                dailyStock: '',
+                deliveryFee: '',
+                maxDistance: '',
+                startDate: '',
+                endDate: '',
+                category: '',
+                country: '',
+              });
+              setSelectedImages([]);
+              setDeliveryOptions({ pickup: true, delivery: false });
+              
+              // Ana sayfaya dön
+              router.replace('/(seller)/dashboard');
+            }
+          }
         ]
       );
+
     } catch (error) {
-      console.error('Error publishing meal:', error);
-      Alert.alert(
-        'Hata',
-        'Yemek yayınlanırken bir hata oluştu. Lütfen tekrar deneyin.',
-        [{ text: 'Tamam' }]
-      );
+      console.error('Error adding food:', error);
+      Alert.alert('Hata', 'Yemek eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -836,8 +947,9 @@ export const AddMeal: React.FC = () => {
             fullWidth
             onPress={handlePublish}
             style={styles.publishButton}
+            loading={uploading}
           >
-            Yemeği Yayınla
+            {uploading ? `Yükleniyor... %${uploadProgress.toFixed(0)}` : 'Yemeği Yayınla'}
           </Button>
         </View>
         </ScrollView>

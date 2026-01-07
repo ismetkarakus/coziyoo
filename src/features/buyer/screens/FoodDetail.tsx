@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, Modal, Alert, Animated } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, Modal, Alert, Animated, Platform } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Text, Button, Card } from '../../../components/ui';
+import { Text, Button, Card, WebSafeIcon, StarRating, ReviewCard, RatingStats, ReviewModal, PaymentModal } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useAuth } from '../../../context/AuthContext';
+import { useNotifications } from '../../../context/NotificationContext';
+import { foodService, Food } from '../../../services/foodService';
+import { chatService } from '../../../services/chatService';
+import { reviewService, Review, ReviewStats } from '../../../services/reviewService';
+import { paymentService, PaymentRequest } from '../../../services/paymentService';
 
 // Mock review data
 const MOCK_REVIEWS = [
@@ -105,6 +111,8 @@ export const FoodDetail: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const params = useLocalSearchParams();
+  const { user } = useAuth();
+  const { sendOrderNotification } = useNotifications();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sellerProfile, setSellerProfile] = useState<any>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -115,14 +123,52 @@ export const FoodDetail: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [quantity, setQuantity] = useState(1);
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
+  const [firebaseFood, setFirebaseFood] = useState<Food | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [hasUserReviewed, setHasUserReviewed] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
   const screenWidth = Dimensions.get('window').width;
 
   // Get food details from URL parameters
+  const foodId = params.id as string;
   const foodName = params.name as string;
   const cookName = params.cookName as string;
   const foodImageUrl = params.imageUrl as string;
   const paramDeliveryType = params.deliveryType as string || 'Pickup';
-  console.log('FoodDetail params:', { foodName, cookName, foodImageUrl, paramDeliveryType, allParams: params });
+  console.log('FoodDetail params:', { foodId, foodName, cookName, foodImageUrl, paramDeliveryType, allParams: params });
+
+  // Load Firebase food data
+  useEffect(() => {
+    loadFoodData();
+  }, [foodId]);
+
+  const loadFoodData = async () => {
+    if (!foodId) {
+      console.log('No foodId provided, using mock data');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const food = await foodService.getFoodById(foodId);
+      if (food) {
+        setFirebaseFood(food);
+        console.log('Firebase food loaded:', food);
+      } else {
+        console.log('Food not found in Firebase, using mock data');
+      }
+    } catch (error) {
+      console.error('Error loading food from Firebase:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Load seller profile data whenever screen comes into focus
   const loadSellerProfile = async () => {
@@ -138,10 +184,30 @@ export const FoodDetail: React.FC = () => {
     }
   };
 
+  // Load reviews and stats
+  const loadReviews = async () => {
+    if (!food.id) return;
+    
+    try {
+      const [reviewsData, statsData, hasReviewed] = await Promise.all([
+        reviewService.getFoodReviews(food.id, 10),
+        reviewService.getReviewStats(food.id),
+        user ? reviewService.hasUserReviewedFood(user.uid, food.id) : Promise.resolve(false)
+      ]);
+      
+      setReviews(reviewsData);
+      setReviewStats(statsData);
+      setHasUserReviewed(hasReviewed);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       loadSellerProfile();
-    }, [])
+      loadReviews();
+    }, [food.id, user])
   );
 
   // Saat ve dakika değiştiğinde selectedTime'ı güncelle
@@ -149,8 +215,35 @@ export const FoodDetail: React.FC = () => {
     handleTimeChange();
   }, [selectedHour, selectedMinute]);
   
-  // Create food object with real seller profile data
-  const food = {
+  // Create food object with Firebase or mock data
+  const food = firebaseFood ? {
+    id: firebaseFood.id,
+    name: firebaseFood.name,
+    cookName: firebaseFood.cookName,
+    cookAvatar: getCookAvatar(firebaseFood.cookName),
+    cookInfo: getMockCookInfo(firebaseFood.cookName),
+    rating: 4.8, // Mock rating for now
+    reviewCount: 24, // Mock review count
+    price: firebaseFood.price,
+    distance: '1.2 km', // Mock distance
+    prepTime: `${firebaseFood.preparationTime} dk`,
+    availableDates: '15-20 Ocak', // Mock dates
+    currentStock: 8, // Mock stock
+    dailyStock: 10, // Mock daily stock
+    description: firebaseFood.description,
+    hasPickup: true,
+    hasDelivery: true,
+    imageUrl: firebaseFood.imageUrl,
+    images: [
+      firebaseFood.imageUrl,
+      'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=400&fit=crop',
+    ],
+    ingredients: firebaseFood.ingredients,
+    preparationTime: firebaseFood.preparationTime,
+    servingSize: firebaseFood.servingSize,
+    category: firebaseFood.category,
+  } : {
     ...getMockFoodDetail(foodName, cookName, foodImageUrl),
     cookName: sellerProfile?.formData?.nickname || sellerProfile?.formData?.name || cookName || 'Satıcı',
     cookAvatar: sellerProfile?.avatarUri || sellerProfile?.formData?.profileImage || getCookAvatar(cookName || 'Ayşe Hanım'),
@@ -164,15 +257,42 @@ export const FoodDetail: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed from FoodDetail');
-    console.log('Can go back:', router.canGoBack());
     
-    // Force navigation to home for now to ensure it works
-    router.push('/(tabs)/home');
+    try {
+      // Always go to home - safer since FoodDetail is now in main stack
+      console.log('Going to home page...');
+      router.push('/(tabs)');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback to home
+      router.replace('/(tabs)');
+    }
   };
 
-  const handleMessageSeller = () => {
-    console.log(`Opening chat with ${food.cookName}`);
-    router.push(`/(tabs)/chat-detail?foodName=${encodeURIComponent(food.name)}&orderStatus=Aktif&sellerId=${food.id}&sellerName=${encodeURIComponent(food.cookName)}`);
+  const handleMessageSeller = async () => {
+    if (!user || !firebaseFood) {
+      Alert.alert('Hata', 'Mesaj göndermek için giriş yapmalısınız.');
+      return;
+    }
+
+    try {
+      // Create or get existing chat
+      const chatId = await chatService.getOrCreateChat(
+        user.uid,
+        user.displayName || user.email || 'Alıcı',
+        firebaseFood.cookId,
+        firebaseFood.cookName,
+        undefined, // no specific order
+        firebaseFood.id,
+        firebaseFood.name
+      );
+
+      // Navigate to chat
+      router.push(`/chat?id=${chatId}&name=${encodeURIComponent(firebaseFood.cookName)}&type=buyer`);
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      Alert.alert('Hata', 'Sohbet başlatılamadı. Lütfen tekrar deneyin.');
+    }
   };
 
   const handleOrderPress = () => {
@@ -359,53 +479,229 @@ export const FoodDetail: React.FC = () => {
       return;
     }
 
+    if (!user) {
+      Alert.alert('Hata', 'Sipariş vermek için giriş yapmalısınız.');
+      return;
+    }
+
     try {
+      // Önce stok kontrolü yap
+      if (firebaseFood?.id) {
+        const stockDecreased = await foodService.decreaseStock(firebaseFood.id, quantity);
+        if (!stockDecreased) {
+          Alert.alert('Stok Yetersiz', 'Seçtiğiniz miktarda ürün stokta bulunmuyor.');
+          return;
+        }
+      }
+
+      // Firebase'e sipariş oluştur
+      const orderId = await foodService.createOrder({
+        foodId: food.id || 'mock_food_id',
+        buyerId: user.uid,
+        sellerId: firebaseFood?.cookId || 'mock_seller_id',
+        quantity: quantity,
+        totalPrice: food.price * quantity,
+        status: 'pending',
+        deliveryAddress: deliveryType === 'delivery' ? 'Kullanıcı adresi' : 'Gel al',
+      });
+
+      // AsyncStorage'a da kaydet (backward compatibility için)
       const orderData = {
-        id: Date.now().toString(),
+        id: orderId,
         foodId: food.id,
         foodName: food.name,
         cookName: food.cookName,
-        cookId: sellerProfile?.formData?.id || 'seller1',
+        cookId: firebaseFood?.cookId || 'seller1',
         quantity: quantity,
         price: food.price,
         totalPrice: food.price * quantity,
         deliveryType: deliveryType,
         requestedDate: selectedDate,
         requestedTime: selectedTime,
-        status: 'pending_seller_approval', // Satıcı onayı bekliyor
+        status: 'pending',
         createdAt: new Date().toISOString(),
-        buyerId: 'buyer1', // Gerçek uygulamada kullanıcı ID'si
-        buyerName: 'Ahmet Yılmaz', // Gerçek uygulamada kullanıcı adı
+        buyerId: user.uid,
+        buyerName: user.displayName || 'Kullanıcı',
       };
 
-      // Siparişi AsyncStorage'a kaydet
       const existingOrders = await AsyncStorage.getItem('orders');
       const orders = existingOrders ? JSON.parse(existingOrders) : [];
       orders.push(orderData);
       await AsyncStorage.setItem('orders', JSON.stringify(orders));
 
+      // Send notification to seller about new order
+      await sendOrderNotification(orderId, 'pending_seller_approval', user.displayName || 'Müşteri', food.name);
+
+      // Create chat for this order
+      try {
+        const chatId = await chatService.getOrCreateChat(
+          user.uid,
+          user.displayName || user.email || 'Alıcı',
+          firebaseFood?.cookId || 'seller_id',
+          food.cookName,
+          orderId,
+          firebaseFood?.id || food.id,
+          food.name
+        );
+
+        // Send initial order message to chat
+        await chatService.sendOrderUpdateMessage(
+          chatId,
+          orderId,
+          'pending',
+          food.name,
+          user.uid,
+          user.displayName || user.email || 'Alıcı',
+          'buyer'
+        );
+      } catch (error) {
+        console.error('Error creating chat for order:', error);
+        // Don't fail the order if chat creation fails
+      }
+
+      // Prepare payment request
+      const totalAmount = food.price * quantity;
+      const paymentReq: PaymentRequest = {
+        amount: totalAmount,
+        currency: 'TRY',
+        orderId: orderId,
+        description: `${food.name} - ${food.cookName}`,
+        paymentMethodId: '', // Will be selected in payment modal
+        customerInfo: {
+          name: user.displayName || user.email || 'Kullanıcı',
+          email: user.email || '',
+          phone: user.phoneNumber || undefined,
+        },
+      };
+
+      setPaymentRequest(paymentReq);
       setShowOrderModal(false);
-      Alert.alert(
-        'Sipariş Gönderildi',
-        `${food.cookName} adlı satıcıya ${selectedDate} ${selectedTime} tarihli sipariş talebiniz gönderildi. Onay bekliyor.`,
-        [
-          {
-            text: 'Tamam',
-            onPress: () => {
-              setSelectedDate('');
-              setSelectedTime('');
-              setSelectedHour(12);
-              setSelectedMinute(0);
-              setQuantity(1);
-            }
-          }
-        ]
-      );
+      setShowPaymentModal(true);
     } catch (error) {
       console.error('Error submitting order:', error);
       Alert.alert('Hata', 'Sipariş gönderilirken bir hata oluştu.');
     }
   };
+
+  // Review handlers
+  const handleSubmitReview = async (rating: number, comment: string, images: string[]) => {
+    if (!user || !food.id) {
+      Alert.alert('Hata', 'Yorum yapmak için giriş yapmalısınız.');
+      return;
+    }
+
+    try {
+      setReviewLoading(true);
+      
+      await reviewService.addReview({
+        foodId: food.id,
+        foodName: food.name,
+        buyerId: user.uid,
+        buyerName: user.displayName || user.email || 'Kullanıcı',
+        buyerAvatar: user.photoURL || undefined,
+        sellerId: firebaseFood?.cookId || 'seller_id',
+        sellerName: food.cookName,
+        rating,
+        comment,
+        images,
+        isVerifiedPurchase: true, // Gerçek uygulamada sipariş geçmişinden kontrol edilecek
+      });
+
+      setShowReviewModal(false);
+      Alert.alert('Başarılı', 'Yorumunuz başarıyla gönderildi!');
+      
+      // Refresh reviews
+      loadReviews();
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      Alert.alert('Hata', 'Yorum gönderilirken bir hata oluştu.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleReviewHelpful = async (reviewId: string) => {
+    try {
+      await reviewService.markReviewHelpful(reviewId);
+      // Refresh reviews to show updated helpful count
+      loadReviews();
+    } catch (error) {
+      console.error('Error marking review helpful:', error);
+      Alert.alert('Hata', 'İşlem gerçekleştirilemedi.');
+    }
+  };
+
+  const handleReviewReport = async (reviewId: string) => {
+    Alert.alert(
+      'Yorumu Şikayet Et',
+      'Bu yorumu neden şikayet ediyorsunuz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Şikayet Et',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await reviewService.reportReview(reviewId);
+              Alert.alert('Teşekkürler', 'Şikayetiniz alındı ve incelenecek.');
+            } catch (error) {
+              console.error('Error reporting review:', error);
+              Alert.alert('Hata', 'Şikayet gönderilemedi.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Payment handlers
+  const handlePaymentSuccess = (transactionId: string) => {
+    Alert.alert(
+      'Sipariş Tamamlandı!',
+      `Ödemeniz başarıyla alındı. Sipariş numaranız: ${paymentRequest?.orderId}\n\nİşlem ID: ${transactionId}`,
+      [
+        {
+          text: 'Tamam',
+          onPress: () => {
+            // Reset form
+            setSelectedDate(new Date().toISOString().split('T')[0]);
+            setSelectedTime('12:00');
+            setSelectedHour(12);
+            setSelectedMinute(0);
+            setQuantity(1);
+            setPaymentRequest(null);
+            
+            // Navigate to orders or home
+            router.push('/(tabs)/orders');
+          }
+        }
+      ]
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <TopBar 
+          title="Yükleniyor..."
+          leftComponent={
+            <TouchableOpacity 
+              onPress={handleBackPress}
+              style={styles.backButton}
+              activeOpacity={0.7}
+            >
+              <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
+            </TouchableOpacity>
+          }
+        />
+        <View style={styles.loadingContainer}>
+          <Text variant="body" color="textSecondary">
+            Yemek detayları yükleniyor...
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -417,7 +713,7 @@ export const FoodDetail: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />
@@ -502,10 +798,18 @@ export const FoodDetail: React.FC = () => {
                       style={styles.inlineViewAllButton}
                       onPress={async () => {
                         console.log('Filtering by cook:', food.cookName);
-                        // Store filter in AsyncStorage
-                        await AsyncStorage.setItem('cookFilter', food.cookName);
-                        // Navigate to home
-                        router.push('/(tabs)/home');
+                        try {
+                          // Store filter in AsyncStorage
+                          await AsyncStorage.setItem('cookFilter', food.cookName);
+                          console.log('Cook filter saved to AsyncStorage');
+                          
+                          // Navigate directly to home with filter
+                          router.push('/(tabs)');
+                        } catch (error) {
+                          console.error('Error setting cook filter:', error);
+                          // Fallback to home
+                          router.push('/(tabs)');
+                        }
                       }}
                     >
                       <Text variant="body" style={{ color: colors.primary }}>
@@ -514,8 +818,9 @@ export const FoodDetail: React.FC = () => {
                     </TouchableOpacity>
                   </View>
                   <View style={styles.rating}>
-                    <Text variant="body" color="textSecondary">
-                      ⭐ {food.rating} ({food.reviewCount} değerlendirme)
+                    <StarRating rating={food.rating} size="small" showNumber />
+                    <Text variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
+                      ({food.reviewCount} değerlendirme)
                     </Text>
                   </View>
                 </View>
@@ -604,7 +909,7 @@ export const FoodDetail: React.FC = () => {
                   <View style={styles.cookSpecialtiesGrid}>
                     {food.cookInfo.specialties.map((specialty: string, index: number) => (
                       <View key={index} style={styles.cookSpecialtyPlainItem}>
-                        <FontAwesome name="check-circle" size={14} color={colors.primary} />
+                        <WebSafeIcon name="check" size={14} color={colors.primary} />
                         <Text style={[styles.cookSpecialtyPlainText, { color: colors.text }]}>
                           {specialty}
                         </Text>
@@ -617,56 +922,73 @@ export const FoodDetail: React.FC = () => {
             </View>
           </Card>
 
-          {/* Seller Reviews */}
+          {/* Reviews Section */}
           <Card variant="default" padding="md" style={styles.reviewsCard}>
-            <Text variant="subheading" weight="medium" style={styles.reviewsTitle}>
-              {food.cookName} Hakkında Yorumlar
-            </Text>
-            
-            {/* Overall Rating */}
-            <View style={styles.overallRating}>
-              <View style={styles.ratingStars}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Text key={star} style={styles.star}>
-                    {star <= Math.floor(food.rating) ? '⭐' : '☆'}
-                  </Text>
-                ))}
-              </View>
-              <Text variant="body" color="textSecondary" style={styles.ratingText}>
-                {food.rating} ({food.reviewCount} değerlendirme)
+            <View style={styles.reviewsHeader}>
+              <Text variant="subheading" weight="medium" style={styles.reviewsTitle}>
+                Değerlendirmeler
               </Text>
+              {user && !hasUserReviewed && (
+                <TouchableOpacity
+                  onPress={() => setShowReviewModal(true)}
+                  style={[styles.addReviewButton, { backgroundColor: colors.primary }]}
+                >
+                  <Text variant="caption" style={{ color: colors.background }}>
+                    Yorum Yap
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {/* Rating Stats */}
+            {reviewStats && (
+              <RatingStats stats={reviewStats} compact />
+            )}
+
+            {/* Recent Reviews */}
+            <View style={styles.reviewsList}>
+              {reviews.length > 0 ? (
+                reviews.slice(0, 3).map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    review={review}
+                    onHelpfulPress={() => handleReviewHelpful(review.id!)}
+                    onReportPress={() => handleReviewReport(review.id!)}
+                    compact
+                  />
+                ))
+              ) : (
+                <View style={styles.noReviews}>
+                  <Text variant="body" color="textSecondary" style={{ textAlign: 'center' }}>
+                    Henüz değerlendirme yapılmamış.
+                  </Text>
+                  {user && (
+                    <TouchableOpacity
+                      onPress={() => setShowReviewModal(true)}
+                      style={[styles.firstReviewButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
+                    >
+                      <Text variant="body" style={{ color: colors.primary }}>
+                        İlk yorumu sen yap!
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
             </View>
 
-            {/* Sample Reviews */}
-            <View style={styles.reviewsList}>
-              {MOCK_REVIEWS.map((review) => (
-                <View key={review.id} style={styles.reviewItem}>
-                  <View style={styles.reviewHeader}>
-                    <View style={styles.reviewUserInfo}>
-                      <Image 
-                        source={{ uri: review.userAvatar }}
-                        style={styles.reviewAvatar}
-                        defaultSource={{ uri: 'https://via.placeholder.com/40x40/7FAF9A/FFFFFF?text=U' }}
-                      />
-                      <View style={styles.reviewUserDetails}>
-                        <Text variant="body" weight="semibold">{review.userName}</Text>
-                        <Text variant="caption" color="textSecondary">{review.date}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.reviewStars}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Text key={star} style={styles.starIcon}>
-                          {star <= review.rating ? '⭐' : '☆'}
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                  <Text variant="body" color="textSecondary" style={styles.reviewText}>
-                    "{review.comment}"
-                  </Text>
-                </View>
-              ))}
-            </View>
+            {reviews.length > 3 && (
+              <TouchableOpacity
+                style={styles.viewAllReviews}
+                onPress={() => {
+                  // Navigate to all reviews page
+                  router.push(`/reviews?foodId=${food.id}&foodName=${encodeURIComponent(food.name)}`);
+                }}
+              >
+                <Text variant="body" style={{ color: colors.primary }}>
+                  Tüm yorumları gör ({reviews.length})
+                </Text>
+              </TouchableOpacity>
+            )}
           </Card>
 
         </View>
@@ -969,6 +1291,28 @@ export const FoodDetail: React.FC = () => {
         </View>
       </Modal>
 
+      {/* Review Modal */}
+      <ReviewModal
+        visible={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        onSubmit={handleSubmitReview}
+        foodName={food.name}
+        loading={reviewLoading}
+      />
+
+      {/* Payment Modal */}
+      {paymentRequest && (
+        <PaymentModal
+          visible={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setPaymentRequest(null);
+          }}
+          onPaymentSuccess={handlePaymentSuccess}
+          paymentRequest={paymentRequest}
+        />
+      )}
+
     </View>
   );
 };
@@ -1149,20 +1493,37 @@ const styles = StyleSheet.create({
   reviewsCard: {
     marginBottom: 0,
   },
-  reviewsTitle: {
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: Spacing.md,
   },
-  overallRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-    paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+  reviewsTitle: {
+    flex: 1,
   },
-  ratingStars: {
-    flexDirection: 'row',
-    marginRight: Spacing.sm,
+  addReviewButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 16,
+  },
+  noReviews: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+    gap: Spacing.md,
+  },
+  firstReviewButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  viewAllReviews: {
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
   },
   star: {
     fontSize: 20,
@@ -1546,6 +1907,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

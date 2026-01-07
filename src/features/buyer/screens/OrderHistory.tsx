@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Text, Button, Card } from '../../../components/ui';
+import { Text, Button, Card, WebSafeIcon } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export const OrderHistory: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -38,6 +37,7 @@ export const OrderHistory: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed from OrderHistory');
+    // Go back to previous page (should be profile)
     router.back();
   };
 
@@ -137,7 +137,7 @@ export const OrderHistory: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />

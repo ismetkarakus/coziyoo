@@ -1,0 +1,168 @@
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
+
+// Configure notification behavior
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+export interface NotificationData {
+  title: string;
+  body: string;
+  data?: Record<string, any>;
+}
+
+class NotificationService {
+  private expoPushToken: string | null = null;
+  private fcmToken: string | null = null;
+
+  // Initialize notification service
+  async initialize() {
+    try {
+      // Request permissions
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn('Notification permissions not granted');
+        return false;
+      }
+
+      // Get Expo push token (works with Expo)
+      if (Platform.OS !== 'web') {
+        const token = (await Notifications.getExpoPushTokenAsync()).data;
+        this.expoPushToken = token;
+        console.log('Expo Push Token:', token);
+        
+        // For Expo projects, we use Expo push token instead of FCM
+        this.fcmToken = token;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error initializing notifications:', error);
+      return false;
+    }
+  }
+
+  // Get current push tokens
+  getTokens() {
+    return {
+      expoPushToken: this.expoPushToken,
+      fcmToken: this.fcmToken,
+    };
+  }
+
+  // Send local notification
+  async sendLocalNotification(notification: NotificationData) {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: notification.title,
+          body: notification.body,
+          data: notification.data || {},
+        },
+        trigger: null, // Send immediately
+      });
+    } catch (error) {
+      console.error('Error sending local notification:', error);
+    }
+  }
+
+  // Handle foreground messages (Expo notifications)
+  setupForegroundHandler() {
+    return Notifications.addNotificationReceivedListener(notification => {
+      console.log('Foreground notification received:', notification);
+      // Notification is automatically shown by Expo
+    });
+  }
+
+  // Handle background messages (Expo notifications)
+  setupBackgroundHandler() {
+    return Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Background notification response:', response);
+      // Handle notification tap
+    });
+  }
+
+  // Subscribe to topic (Expo push notifications)
+  async subscribeToTopic(topic: string) {
+    try {
+      // In Expo, topics are handled differently
+      // You would typically send the token to your server
+      // and manage subscriptions server-side
+      console.log(`Topic subscription for ${topic} would be handled server-side`);
+    } catch (error) {
+      console.error(`Error subscribing to topic ${topic}:`, error);
+    }
+  }
+
+  // Unsubscribe from topic (Expo push notifications)
+  async unsubscribeFromTopic(topic: string) {
+    try {
+      console.log(`Topic unsubscription for ${topic} would be handled server-side`);
+    } catch (error) {
+      console.error(`Error unsubscribing from topic ${topic}:`, error);
+    }
+  }
+
+  // Send notification for order status updates
+  async sendOrderNotification(orderId: string, status: string, buyerName: string, foodName: string) {
+    const notifications = {
+      pending_seller_approval: {
+        title: '🍽️ Yeni Sipariş!',
+        body: `${buyerName} "${foodName}" için sipariş verdi. Onayınızı bekliyor.`,
+      },
+      approved: {
+        title: '✅ Sipariş Onaylandı!',
+        body: `"${foodName}" siparişiniz onaylandı. Hazırlanıyor...`,
+      },
+      preparing: {
+        title: '👨‍🍳 Hazırlanıyor',
+        body: `"${foodName}" siparişiniz hazırlanıyor.`,
+      },
+      ready: {
+        title: '🎉 Sipariş Hazır!',
+        body: `"${foodName}" siparişiniz hazır. Teslim alabilirsiniz.`,
+      },
+      completed: {
+        title: '✨ Sipariş Tamamlandı',
+        body: `"${foodName}" siparişiniz teslim edildi. Afiyet olsun!`,
+      },
+      cancelled: {
+        title: '❌ Sipariş İptal Edildi',
+        body: `"${foodName}" siparişiniz iptal edildi.`,
+      },
+    };
+
+    const notification = notifications[status as keyof typeof notifications];
+    if (notification) {
+      await this.sendLocalNotification({
+        ...notification,
+        data: { orderId, status, type: 'order_update' },
+      });
+    }
+  }
+
+  // Send notification for new messages
+  async sendMessageNotification(senderName: string, message: string, chatId: string) {
+    await this.sendLocalNotification({
+      title: `💬 ${senderName}`,
+      body: message,
+      data: { chatId, type: 'new_message' },
+    });
+  }
+
+  // Send notification for low stock
+  async sendLowStockNotification(foodName: string, currentStock: number) {
+    await this.sendLocalNotification({
+      title: '⚠️ Stok Azalıyor',
+      body: `"${foodName}" için sadece ${currentStock} adet kaldı!`,
+      data: { type: 'low_stock', foodName, currentStock },
+    });
+  }
+}
+
+export const notificationService = new NotificationService();

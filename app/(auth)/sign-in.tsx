@@ -1,5 +1,5 @@
-import { Welcome } from '@/src/features/auth/screens';
+import { SignIn } from '@/src/features/auth/screens';
 
 export default function SignInScreen() {
-  return <Welcome />;
+  return <SignIn />;
 }

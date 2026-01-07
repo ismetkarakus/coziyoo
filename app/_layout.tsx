@@ -7,6 +7,9 @@ import { useEffect } from 'react';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { CartProvider } from '@/src/context/CartContext';
+import { AuthProvider } from '@/src/context/AuthContext';
+import { NotificationProvider } from '@/src/context/NotificationContext';
+import { AuthGuard } from '@/src/components/auth/AuthGuard';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -49,13 +52,30 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <CartProvider>
-      <Stack>
+    <AuthProvider>
+      <NotificationProvider>
+        <AuthGuard>
+          <CartProvider>
+            <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(seller)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </CartProvider>
+        <Stack.Screen name="food-detail" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="personal-info" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="change-password" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="addresses" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="location-settings" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="favorites" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="notification-settings" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="help-center" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="contact" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="about" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="order-history" options={{ headerShown: false, presentation: 'card' }} />
+            </Stack>
+          </CartProvider>
+        </AuthGuard>
+      </NotificationProvider>
+    </AuthProvider>
   );
 }

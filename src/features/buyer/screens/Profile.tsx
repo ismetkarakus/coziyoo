@@ -64,11 +64,38 @@ export const Profile: React.FC = () => {
 
   const handleItemPress = (itemId: string) => {
     switch (itemId) {
+      case 'personal-info':
+        router.push('/personal-info');
+        break;
+      case 'change-password':
+        router.push('/change-password');
+        break;
+      case 'addresses':
+        router.push('/addresses');
+        break;
+      case 'location-settings':
+        router.push('/location-settings');
+        break;
+      case 'order-history':
+        router.push('/order-history');
+        break;
+      case 'favorites':
+        router.push('/favorites');
+        break;
       case 'messages':
         router.push('/(tabs)/chat-list');
         break;
-      case 'order-history':
-        router.push('/(tabs)/order-history');
+      case 'notifications':
+        router.push('/notification-settings');
+        break;
+      case 'help':
+        router.push('/help-center');
+        break;
+      case 'contact':
+        router.push('/contact');
+        break;
+      case 'about':
+        router.push('/about');
         break;
       default:
         Alert.alert('Yakında', 'Bu özellik yakında gelecek.');

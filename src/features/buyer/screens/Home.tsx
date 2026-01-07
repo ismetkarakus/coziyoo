@@ -4,11 +4,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Text, FoodCard } from '../../../components/ui';
+import { Text, FoodCard, SearchBar, FilterModal } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCart } from '../../../context/CartContext';
+import { useAuth } from '../../../context/AuthContext';
+import { useNotifications } from '../../../context/NotificationContext';
+import { foodService, Food } from '../../../services/foodService';
+import { searchService, SearchFilters } from '../../../services/searchService';
+import { seedSampleData, checkExistingData } from '../../../utils/seedData';
 
 // Mock data
 const USER_DATA = {
@@ -197,14 +202,53 @@ export const Home: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
   const [scrollY, setScrollY] = useState(0);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
   const [cookFilter, setCookFilter] = useState<string>('');
+  const [firebaseFoods, setFirebaseFoods] = useState<Food[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<Food[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const { addToCart } = useCart();
+  const { sendLowStockNotification } = useNotifications();
 
+
+  // Load Firebase foods
+  useEffect(() => {
+    loadFirebaseFoods();
+  }, []);
+
+  const loadFirebaseFoods = async () => {
+    try {
+      setLoading(true);
+      
+      // Önce mevcut veri var mı kontrol et
+      const hasData = await checkExistingData();
+      
+      // Eğer veri yoksa örnek verileri ekle
+      if (!hasData) {
+        console.log('Veri bulunamadı, örnek veriler ekleniyor...');
+        await seedSampleData();
+      }
+      
+      // Verileri yükle
+      const foods = await foodService.getAllFoods();
+      setFirebaseFoods(foods);
+      console.log('Firebase foods loaded:', foods.length);
+    } catch (error) {
+      console.error('Firebase foods loading error:', error);
+      Alert.alert('Hata', 'Yemekler yüklenirken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle cook filter from params
   useEffect(() => {
@@ -239,7 +283,7 @@ export const Home: React.FC = () => {
     loadPublishedMeals();
   }, []);
 
-  // Reload published meals when screen comes into focus
+  // Reload data when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       const loadPublishedMeals = async () => {
@@ -274,52 +318,107 @@ export const Home: React.FC = () => {
 
       loadPublishedMeals();
       loadCookFilter();
+      loadFirebaseFoods(); // Reload Firebase data on focus
     }, [])
   );
 
-  const handleAddToCart = (foodId: string, quantity: number) => {
-    const food = MOCK_FOODS.find(f => f.id === foodId);
+  const handleAddToCart = async (foodId: string, quantity: number) => {
+    const food = firebaseFoods.find(f => f.id === foodId);
     if (food && quantity > 0) {
       // Check current stock
-      const currentStock = foodStocks[foodId] ?? food.currentStock ?? 0;
+      const currentStock = food.currentStock ?? 0;
       if (currentStock >= quantity) {
-        // Update local stock
-        setFoodStocks(prev => ({
-          ...prev,
-          [foodId]: currentStock - quantity
-        }));
-        
-        addToCart({
-          id: food.id,
-          name: food.name,
-          cookName: food.cookName,
-          price: food.price,
-          imageUrl: food.imageUrl,
-          currentStock: currentStock - quantity,
-          dailyStock: food.dailyStock,
-        }, quantity);
-        console.log(`Added ${quantity} of ${food.name} to cart. Remaining stock: ${currentStock - quantity}`);
+        try {
+          // Update stock in Firebase with low stock notification
+          await foodService.updateFoodStock(foodId, currentStock - quantity, sendLowStockNotification);
+          
+          addToCart({
+            id: food.id!,
+            name: food.name,
+            cookName: food.cookName,
+            price: food.price,
+            imageUrl: food.imageUrl,
+            currentStock: currentStock - quantity,
+            dailyStock: food.dailyStock || 0,
+          }, quantity);
+          
+          console.log(`Added ${quantity} of ${food.name} to cart. Remaining stock: ${currentStock - quantity}`);
+          
+          // Reload Firebase data to reflect stock changes
+          loadFirebaseFoods();
+        } catch (error) {
+          console.error('Error updating stock:', error);
+          Alert.alert('Hata', 'Stok güncellenirken bir hata oluştu.');
+        }
       } else {
-        alert(`Yeterli stok yok! Sadece ${currentStock} adet kaldı.`);
+        Alert.alert('Stok Yetersiz', `Yeterli stok yok! Sadece ${currentStock} adet kaldı.`);
       }
     }
   };
 
   const handleCategoryPress = (category: string) => {
-    // All categories now filter on the same page
     setSelectedCategory(category);
+    // If we have active search or filters, re-run search with new category
+    if (searchQuery.trim() || Object.keys(searchFilters).length > 0) {
+      performSearch(searchQuery, searchFilters);
+    }
   };
 
-  // Filter foods based on selected category, search query, and cook filter
+  // Advanced search with filters
+  const performSearch = async (query: string = searchQuery, filters: SearchFilters = searchFilters) => {
+    if (!query.trim() && Object.keys(filters).length === 0) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const searchParams: SearchFilters = {
+        ...filters,
+        query: query.trim() || undefined,
+        category: selectedCategory !== 'Tümü' ? selectedCategory : filters.category,
+      };
+
+      const result = await searchService.searchFoods(searchParams);
+      setSearchResults(result.foods);
+    } catch (error) {
+      console.error('Search error:', error);
+      Alert.alert('Hata', 'Arama yapılırken bir hata oluştu.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Get autocomplete suggestions
+  const getSuggestions = async (query: string) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const autocompleteSuggestions = await searchService.getAutocompleteSuggestions(query);
+      setSuggestions(autocompleteSuggestions);
+    } catch (error) {
+      console.error('Error getting suggestions:', error);
+      setSuggestions([]);
+    }
+  };
+
+  // Filter foods based on selected category, search query, and cook filter (fallback)
   const getFilteredFoods = () => {
-    // Combine mock foods with published meals
-    let foods = [...MOCK_FOODS, ...publishedMeals];
-    console.log('All foods:', foods.length, 'Cook filter:', cookFilter);
+    // If we have search results, use them
+    if (isSearching || searchResults.length > 0 || searchQuery.trim() || Object.keys(searchFilters).length > 0) {
+      return searchResults;
+    }
+
+    // Otherwise use local filtering
+    let foods = [...firebaseFoods, ...MOCK_FOODS, ...publishedMeals];
     
     // First filter by cook if specified
     if (cookFilter.trim()) {
       foods = foods.filter(food => food.cookName === cookFilter);
-      console.log('After cook filter:', foods.length, 'foods for', cookFilter);
     }
     
     // Then filter by category
@@ -327,17 +426,43 @@ export const Home: React.FC = () => {
       foods = foods.filter(food => food.category === selectedCategory);
     }
     
-    // Finally filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      foods = foods.filter(food => 
-        food.name.toLowerCase().includes(query) ||
-        food.cookName.toLowerCase().includes(query) ||
-        food.category.toLowerCase().includes(query)
-      );
-    }
-    
     return foods;
+  };
+
+  // Search event handlers
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    getSuggestions(text);
+  };
+
+  const handleSearchSubmit = (text: string) => {
+    performSearch(text, searchFilters);
+  };
+
+  const handleSuggestionPress = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    performSearch(suggestion, searchFilters);
+  };
+
+  const handleFilterPress = () => {
+    setShowFilterModal(true);
+  };
+
+  const handleApplyFilters = (filters: SearchFilters) => {
+    setSearchFilters(filters);
+    performSearch(searchQuery, filters);
+  };
+
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (searchFilters.category && searchFilters.category !== selectedCategory) count++;
+    if (searchFilters.priceRange) count++;
+    if (searchFilters.rating) count++;
+    if (searchFilters.deliveryOptions?.length) count++;
+    if (searchFilters.maxDistance) count++;
+    if (searchFilters.preparationTime) count++;
+    if (searchFilters.sortBy && searchFilters.sortBy !== 'newest') count++;
+    return count;
   };
 
   const filteredFoods = getFilteredFoods();
@@ -349,6 +474,10 @@ export const Home: React.FC = () => {
 
   // Calculate TopBar opacity based on scroll position
   const topBarOpacity = Math.max(0.3, Math.min(1, 1 - scrollY / 100));
+
+  const handleProfilePress = () => {
+    router.push('/(tabs)/profile');
+  };
 
   const renderTopBarRight = () => (
     <View style={styles.topBarRight}>
@@ -376,8 +505,13 @@ export const Home: React.FC = () => {
       }]}>
         {/* Left Icon - Home/Seller */}
         <TouchableOpacity 
-          onPress={() => router.push('/(seller)/dashboard')}
+          onPress={() => {
+            console.log('TopBar left button pressed - going to seller dashboard');
+            router.push('/(seller)/dashboard');
+          }}
           style={styles.leftIcon}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          activeOpacity={0.7}
         >
           <FontAwesome name="home" size={20} color="white" />
         </TouchableOpacity>
@@ -394,6 +528,20 @@ export const Home: React.FC = () => {
         >
           <FontAwesome name="user" size={20} color="white" />
         </TouchableOpacity>
+      </View>
+      
+      {/* Search - Outside ScrollView to avoid VirtualizedList warning */}
+      <View style={styles.searchContainer}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={handleSearchChange}
+          onSubmit={handleSearchSubmit}
+          onFilterPress={handleFilterPress}
+          placeholder="Bugün ne yemek istersin?"
+          suggestions={suggestions}
+          onSuggestionPress={handleSuggestionPress}
+          filterCount={getActiveFilterCount()}
+        />
       </View>
       
       <ScrollView 
@@ -421,34 +569,6 @@ export const Home: React.FC = () => {
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <View style={[styles.searchInputContainer, { 
-            backgroundColor: colors.card, 
-            borderColor: 'transparent',
-            shadowColor: colors.text,
-          }]}>
-            <View style={styles.searchIconContainer}>
-              <Text style={[styles.searchIcon, { color: colors.primary }]}>🔍</Text>
-            </View>
-            <TextInput
-              placeholder="Bugün ne yemek istersin?"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              style={[styles.searchInput, { color: colors.text }]}
-              placeholderTextColor={colors.textSecondary}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity 
-                onPress={() => setSearchQuery('')}
-                style={styles.clearButton}
-              >
-                <Text style={[styles.clearIcon, { color: colors.textSecondary }]}>✕</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
 
 
         {/* Categories */}
@@ -489,7 +609,13 @@ export const Home: React.FC = () => {
 
         {/* Food List */}
         <View style={styles.foodListContainer}>
-          {filteredFoods.length > 0 ? (
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text variant="body" color="textSecondary" style={styles.loadingText}>
+                Yemekler yükleniyor...
+              </Text>
+            </View>
+          ) : filteredFoods.length > 0 ? (
             filteredFoods.map((food) => (
               <FoodCard
                 key={food.id}
@@ -516,6 +642,14 @@ export const Home: React.FC = () => {
           )}
         </View>
       </ScrollView>
+
+      {/* Filter Modal */}
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleApplyFilters}
+        initialFilters={searchFilters}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -659,6 +793,14 @@ const styles = StyleSheet.create({
   emptySubText: {
     textAlign: 'center',
     marginTop: Spacing.sm,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xl * 2,
+  },
+  loadingText: {
+    textAlign: 'center',
   },
 });
 

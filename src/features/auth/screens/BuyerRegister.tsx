@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useAuth } from '../../../context/AuthContext';
 
 export const BuyerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { signUp, loading } = useAuth();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -22,9 +24,19 @@ export const BuyerRegister: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    // Mock registration - navigate to buyer tabs
-    router.replace('/(tabs)/');
+  const handleSubmit = async () => {
+    if (!formData.fullName || !formData.email || !formData.password || !formData.phone || !formData.location) {
+      Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
+      return;
+    }
+
+    try {
+      await signUp(formData.email, formData.password, formData.fullName, 'buyer');
+      // Kayıt başarılı - AuthContext otomatik olarak yönlendirecek
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      Alert.alert('Kayıt Hatası', error.message);
+    }
   };
 
   return (
@@ -90,6 +102,7 @@ export const BuyerRegister: React.FC = () => {
               variant="primary" 
               fullWidth 
               onPress={handleSubmit}
+              loading={loading}
               style={styles.submitButton}
             >
               Devam Et
@@ -128,6 +141,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
+
+
 
 
 
