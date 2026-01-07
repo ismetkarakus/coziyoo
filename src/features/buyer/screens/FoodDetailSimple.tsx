@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -14,6 +15,28 @@ export default function FoodDetailSimple() {
   const foodName = params.name as string || 'Ev Yapımı Mantı';
   const cookName = params.cookName as string || 'Ayşe Hanım';
   const foodImageUrl = params.imageUrl as string || 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop';
+  
+  // Satıcı profil resmi için state
+  const [sellerAvatar, setSellerAvatar] = useState('https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face');
+
+  // Satıcı profil verilerini yükle
+  useEffect(() => {
+    const loadSellerProfile = async () => {
+      try {
+        const savedProfile = await AsyncStorage.getItem('sellerProfile');
+        if (savedProfile) {
+          const profile = JSON.parse(savedProfile);
+          if (profile.avatarUri) {
+            setSellerAvatar(profile.avatarUri);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading seller profile:', error);
+      }
+    };
+
+    loadSellerProfile();
+  }, []);
 
   const handleBackPress = () => {
     router.push('/(tabs)');
@@ -53,7 +76,7 @@ export default function FoodDetailSimple() {
             <View style={styles.sellerInfo}>
               <View style={styles.sellerAvatarContainer}>
                 <Image
-                  source={{ uri: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face' }}
+                  source={{ uri: sellerAvatar }}
                   style={styles.sellerAvatarImage}
                   defaultSource={{ uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' }}
                 />
