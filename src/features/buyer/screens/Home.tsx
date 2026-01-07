@@ -237,7 +237,7 @@ export const Home: React.FC = () => {
       // HIZLI ÇÖZÜM: Mock data kullan
       const mockFoods = [
         {
-          id: '1',
+          id: 'mock1',
           name: 'Ev Yapımı Mantı',
           description: 'Geleneksel el açması mantı, yoğurt ve tereyağlı sos ile',
           price: 45,
@@ -257,7 +257,7 @@ export const Home: React.FC = () => {
           updatedAt: new Date()
         },
         {
-          id: '2',
+          id: 'mock2',
           name: 'Mercimek Çorbası',
           description: 'Taze sebzelerle hazırlanmış nefis mercimek çorbası',
           price: 15,
@@ -277,7 +277,7 @@ export const Home: React.FC = () => {
           updatedAt: new Date()
         },
         {
-          id: '3',
+          id: 'mock3',
           name: 'Köfte ve Pilav',
           description: 'Ev yapımı köfte ve tereyağlı pilav',
           price: 35,

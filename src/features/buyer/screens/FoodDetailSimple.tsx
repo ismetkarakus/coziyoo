@@ -102,6 +102,24 @@ export default function FoodDetailSimple() {
             </View>
           </View>
           
+          {/* Satıcı Bilgileri */}
+          <View style={styles.sellerSection}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              Satıcı Bilgileri
+            </Text>
+            <View style={styles.sellerInfo}>
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face' }}
+                style={styles.sellerAvatar}
+              />
+              <View style={styles.sellerDetails}>
+                <Text variant="body" weight="semibold">{cookName}</Text>
+                <Text variant="caption" color="textSecondary">⭐ 4.9 • 127 değerlendirme</Text>
+                <Text variant="caption" color="textSecondary">📍 Kadıköy, İstanbul</Text>
+              </View>
+            </View>
+          </View>
+          
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity 
@@ -223,5 +241,27 @@ const styles = StyleSheet.create({
   },
   orderButton: {
     width: '100%',
+  },
+  sellerSection: {
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  sectionTitle: {
+    marginBottom: Spacing.md,
+  },
+  sellerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sellerAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: Spacing.md,
+  },
+  sellerDetails: {
+    flex: 1,
   },
 });
