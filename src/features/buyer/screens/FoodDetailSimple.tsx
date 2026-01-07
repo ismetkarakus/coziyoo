@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   aboutSection: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   aboutSellerSection: {
     marginBottom: Spacing.lg,
