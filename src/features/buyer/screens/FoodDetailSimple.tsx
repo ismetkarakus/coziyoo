@@ -78,11 +78,30 @@ export default function FoodDetailSimple() {
             </Text>
           </View>
           
-          <Text variant="body" style={styles.description}>
-            Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, 
-            özel baharatlarla tatlandırılmış ev yapımı {foodName}. Taze malzemeler 
-            kullanılarak özenle hazırlanmıştır.
-          </Text>
+          {/* İçindekiler/Baharatlar/Tarif */}
+          <View style={styles.ingredientsSection}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              İçindekiler / Baharatlar / Tarif
+            </Text>
+            <Text variant="body" style={styles.ingredientsText}>
+              • Un, yumurta, su, tuz (hamur için)
+              • Kıyma, soğan, maydanoz (iç için)
+              • Yoğurt, sarımsak, tereyağı (sos için)
+              • Kırmızı biber, nane, karabiber
+            </Text>
+          </View>
+
+          {/* Hakkımda */}
+          <View style={styles.aboutSection}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              Hakkımda
+            </Text>
+            <Text variant="body" style={styles.description}>
+              Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, 
+              özel baharatlarla tatlandırılmış ev yapımı {foodName}. Taze malzemeler 
+              kullanılarak özenle hazırlanmıştır.
+            </Text>
+          </View>
           
           {/* Reviews Section */}
           <View style={styles.reviewsSection}>
@@ -156,21 +175,6 @@ export default function FoodDetailSimple() {
           </View>
         </View>
       </ScrollView>
-      
-      {/* Order Button */}
-      <View style={[styles.orderContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-        <Button
-          variant="primary"
-          size="large"
-          onPress={() => {
-            // Simple order action
-            alert('Sipariş verildi! 🎉');
-          }}
-          style={styles.orderButton}
-        >
-          Sipariş Ver - ₺25
-        </Button>
-      </View>
     </View>
   );
 }
@@ -236,13 +240,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     paddingLeft: Spacing.sm,
   },
-  orderContainer: {
-    padding: Spacing.lg,
-    borderTopWidth: 1,
-  },
-  orderButton: {
-    width: '100%',
-  },
   sellerSection: {
     marginTop: Spacing.lg,
     paddingTop: Spacing.lg,
@@ -290,5 +287,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
+  },
+  ingredientsSection: {
+    marginBottom: Spacing.lg,
+  },
+  aboutSection: {
+    marginBottom: Spacing.lg,
+  },
+  ingredientsText: {
+    lineHeight: 22,
+    marginTop: Spacing.sm,
+  },
+  sectionTitle: {
+    marginBottom: Spacing.sm,
   },
 });
