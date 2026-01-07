@@ -91,15 +91,28 @@ export default function FoodDetailSimple() {
             </Text>
           </View>
 
-          {/* Hakkımda */}
+          {/* Tarif */}
           <View style={styles.aboutSection}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Hakkımda
+              Tarif
             </Text>
             <Text variant="body" style={styles.description}>
               Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, 
               özel baharatlarla tatlandırılmış ev yapımı {foodName}. Taze malzemeler 
               kullanılarak özenle hazırlanmıştır.
+            </Text>
+          </View>
+
+          {/* Hakkımda - Satıcı Hakkında */}
+          <View style={styles.aboutSellerSection}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              Hakkımda
+            </Text>
+            <Text variant="body" style={styles.description}>
+              15 yıldır ev yemekleri yapıyorum. Özellikle mantı, börek ve geleneksel 
+              Türk mutfağının lezzetlerinde uzmanım. Her yemekte annemin tariflerini 
+              kullanarak, aile sıcaklığını sofranıza taşıyorum. Hijyen ve kalite 
+              benim için en önemli öncelikler.
             </Text>
           </View>
           
@@ -130,24 +143,6 @@ export default function FoodDetailSimple() {
             <View style={styles.detailItem}>
               <Text variant="caption" color="textSecondary">Mesafe</Text>
               <Text variant="body" weight="medium">1.2 km</Text>
-            </View>
-          </View>
-          
-          {/* Satıcı Bilgileri */}
-          <View style={styles.sellerSection}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Satıcı Bilgileri
-            </Text>
-            <View style={styles.sellerInfo}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face' }}
-                style={styles.sellerAvatar}
-              />
-              <View style={styles.sellerDetails}>
-                <Text variant="body" weight="semibold">{cookName}</Text>
-                <Text variant="caption" color="textSecondary">⭐ 4.9 • 127 değerlendirme</Text>
-                <Text variant="caption" color="textSecondary">📍 Kadıköy, İstanbul</Text>
-              </View>
             </View>
           </View>
           
@@ -240,27 +235,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     paddingLeft: Spacing.sm,
   },
-  sellerSection: {
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
   sectionTitle: {
     marginBottom: Spacing.md,
-  },
-  sellerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sellerAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: Spacing.md,
-  },
-  sellerDetails: {
-    flex: 1,
   },
   sellerCard: {
     marginBottom: Spacing.md,
@@ -292,6 +268,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   aboutSection: {
+    marginBottom: Spacing.lg,
+  },
+  aboutSellerSection: {
     marginBottom: Spacing.lg,
   },
   ingredientsText: {
