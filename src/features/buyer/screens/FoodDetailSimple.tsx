@@ -98,9 +98,9 @@ export default function FoodDetailSimple() {
             </View>
           </Card>
 
-          {/* Favoriye Ekle Butonu - Profil Kartının Altında */}
+          {/* Favoriye Ekle Butonu - Çerçevesiz */}
           <TouchableOpacity 
-            style={[styles.favoriteButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[styles.favoriteButton, { backgroundColor: colors.surface }]}
             onPress={() => {
               // Favorilere ekle
               alert('Favorilere eklendi! ❤️');
@@ -226,7 +226,6 @@ const styles = StyleSheet.create({
   favoriteButton: {
     padding: Spacing.md,
     borderRadius: 8,
-    borderWidth: 1,
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
