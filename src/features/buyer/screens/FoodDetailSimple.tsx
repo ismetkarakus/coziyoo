@@ -41,17 +41,6 @@ export default function FoodDetailSimple() {
             {foodName}
           </Text>
           
-          <TouchableOpacity 
-            style={styles.cookButton}
-            onPress={() => {
-              // Satıcı profiline git
-              router.push(`/(seller)/profile?cookName=${encodeURIComponent(cookName)}`);
-            }}
-          >
-            <Text variant="body" color="primary" style={styles.cook}>
-              👨‍🍳 {cookName} - Profili Gör →
-            </Text>
-          </TouchableOpacity>
           
           <View style={styles.priceContainer}>
             <Text variant="heading" weight="bold" color="primary">
@@ -181,17 +170,6 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: Spacing.sm,
-  },
-  cookButton: {
-    marginBottom: Spacing.md,
-    padding: Spacing.sm,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  cook: {
-    marginBottom: 0,
   },
   priceContainer: {
     flexDirection: 'row',
