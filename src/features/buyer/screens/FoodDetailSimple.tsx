@@ -42,11 +42,8 @@ export default function FoodDetailSimple() {
               {foodName}
             </Text>
             <View style={styles.priceCorner}>
-              <Text variant="caption" color="textSecondary">
-                / porsiyon
-              </Text>
               <Text variant="subheading" weight="bold" color="primary">
-                ₺25
+                ₺25 <Text variant="caption" color="textSecondary">/ porsiyon</Text>
               </Text>
             </View>
           </View>
