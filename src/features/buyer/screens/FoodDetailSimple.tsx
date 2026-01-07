@@ -55,9 +55,6 @@ export default function FoodDetailSimple() {
                 <Text variant="subheading" weight="semibold">
                   {cookName}
                 </Text>
-                <Text variant="body" color="textSecondary">
-                  ayse@example.com
-                </Text>
                 <Text variant="caption" color="textSecondary">
                   Satıcı • Kadıköy, İstanbul
                 </Text>
