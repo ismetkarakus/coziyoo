@@ -41,6 +41,17 @@ export default function FoodDetailSimple() {
             {foodName}
           </Text>
           
+          {/* Satıcı Bilgileri - Yemek İsmi Altında */}
+          <View style={styles.sellerUnderTitle}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face' }}
+              style={styles.sellerAvatarSmall}
+            />
+            <Text variant="body" weight="medium" color="textSecondary">
+              👨‍🍳 {cookName}
+            </Text>
+          </View>
+          
           
           <View style={styles.priceContainer}>
             <Text variant="heading" weight="bold" color="primary">
@@ -241,5 +252,17 @@ const styles = StyleSheet.create({
   },
   sellerDetails: {
     flex: 1,
+  },
+  sellerUnderTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  sellerAvatarSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: Spacing.sm,
   },
 });
