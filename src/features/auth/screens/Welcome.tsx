@@ -10,7 +10,7 @@ export const Welcome: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
 
   const handleSignIn = () => {
-    router.push('/(auth)/sign-in');
+    router.push('/sign-in');
   };
 
   const handleSignUp = () => {
@@ -84,6 +84,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
 });
+
+
+
+
+
+
 
 
 

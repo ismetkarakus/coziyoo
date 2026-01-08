@@ -7,12 +7,15 @@ import { useColorScheme } from '@/components/useColorScheme';
 
 // Mock data for categories
 const CATEGORIES = [
-  { id: 'all', name: 'Tümü', count: 24 },
-  { id: 'home-cooking', name: 'Ev Yemekleri', count: 12 },
-  { id: 'daily-menu', name: 'Günlük Menü', count: 8 },
-  { id: 'vegetarian', name: 'Vejetaryen', count: 6 },
-  { id: 'desserts', name: 'Tatlılar', count: 4 },
-  { id: 'local', name: 'Yöresel', count: 3 },
+  { id: 'main-course', name: 'Ana Yemek', count: 8 },
+  { id: 'soup', name: 'Çorba', count: 4 },
+  { id: 'meze', name: 'Meze', count: 4 },
+  { id: 'salad', name: 'Salata', count: 3 },
+  { id: 'breakfast', name: 'Kahvaltı', count: 3 },
+  { id: 'desserts', name: 'Tatlı/Kek', count: 4 },
+  { id: 'beverages', name: 'İçecekler', count: 2 },
+  { id: 'vegetarian', name: 'Vejetaryen', count: 2 },
+  { id: 'gluten-free', name: 'Gluten Free', count: 2 },
 ];
 
 // Mock food data
@@ -67,7 +70,7 @@ export default function ExploreScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('main-course');
 
   const handleAddToCart = (foodId: string, quantity: number) => {
     console.log(`Added ${quantity} of food ${foodId} to cart`);
@@ -134,7 +137,7 @@ export default function ExploreScreen() {
         {/* Food List */}
         <View style={styles.foodListContainer}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {selectedCategory === 'all' ? 'Tüm Yemekler' : CATEGORIES.find(c => c.id === selectedCategory)?.name}
+            {CATEGORIES.find(c => c.id === selectedCategory)?.name || 'Ana Yemek'}
           </Text>
           
           {MOCK_FOODS.map((food) => (

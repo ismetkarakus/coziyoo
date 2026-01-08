@@ -32,6 +32,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        swipeEnabled: false, // Disable swipe between tabs
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
@@ -123,6 +124,27 @@ export default function TabLayout() {
               name={focused ? "comments" : "comments-o"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
+                  />
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              activeOpacity={0.7}
+              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Bildirimler',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon 
+              name={focused ? "bell" : "bell-o"} 
+              color={color}
+              style={{ fontSize: focused ? 22 : 20 }}
             />
           ),
           tabBarButton: (props) => (
@@ -136,33 +158,39 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="back"
+        name="seller"
         options={{
-          title: 'Geri',
-          tabBarIcon: ({ color }) => (
+          title: 'Satıcı',
+          tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name="arrow-left" 
+              name="user" 
               color={color}
-              style={{ fontSize: 20 }}
+              style={{ fontSize: focused ? 22 : 20 }}
             />
           ),
-          tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              activeOpacity={0.7}
-              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              onPress={() => {
-                // Check if we can go back safely
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  // If no history, stay on current tab (do nothing)
-                  console.log('No navigation history, staying on current tab');
-                }
-              }}
-            />
-          ),
+          tabBarButton: (props) => {
+            const { onPress, ...otherProps } = props;
+            return (
+              <TouchableOpacity
+                {...otherProps}
+                activeOpacity={0.6}
+                style={[props.style, { 
+                  flex: 1, 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  paddingVertical: 8,
+                  paddingHorizontal: 4,
+                }]}
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                onPress={() => {
+                  console.log('🔥 Seller tab button pressed!');
+                  router.push('/(seller)/dashboard');
+                }}
+              >
+                {props.children}
+              </TouchableOpacity>
+            );
+          },
         }}
       />
       {/* Hidden screens - accessible via navigation but not in tabs */}
@@ -174,12 +202,6 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="profile"
-        options={{
-          href: null, // Hide from tab bar
-        }}
-      />
-      <Tabs.Screen
-        name="seller"
         options={{
           href: null, // Hide from tab bar
         }}

@@ -11,7 +11,7 @@ export const OrderConfirmation: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
 
   const handleBackToHome = () => {
-    router.replace('/(tabs)/');
+    router.replace('/(tabs)');
   };
 
   const handleViewOrders = () => {
@@ -106,6 +106,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
 });
+
+
+
+
+
+
 
 
 

@@ -266,11 +266,11 @@ class SearchService {
   }
 
   // Otomatik tamamlama önerileri
-  async getAutocompleteSuggestions(query: string): Promise<string[]> {
-    if (!query || query.length < 2) return [];
+  async getAutocompleteSuggestions(searchQuery: string): Promise<string[]> {
+    if (!searchQuery || searchQuery.length < 2) return [];
 
     try {
-      const searchTerm = query.toLowerCase();
+      const searchTerm = searchQuery.toLowerCase();
       
       // Food names
       const foodQuery = query(
@@ -359,5 +359,7 @@ class SearchService {
 }
 
 export const searchService = new SearchService();
+
+
 
 

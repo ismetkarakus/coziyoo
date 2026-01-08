@@ -809,60 +809,6 @@ export const FoodDetail: React.FC = () => {
             </Text>
           </Card>
 
-          {/* Cook About Section */}
-          <Card variant="default" padding="md" style={styles.cookAboutCard}>
-            <Text variant="subheading" weight="medium" style={styles.cookAboutTitle}>
-              {food.cookName} Hakkında
-            </Text>
-            
-            <View style={styles.cookAboutContent}>
-              <Text variant="body" style={styles.cookDescription}>
-                {food.cookInfo.description}
-              </Text>
-              
-              {/* Cook Stats */}
-              <View style={styles.cookStats}>
-                <View style={styles.cookStatItem}>
-                  <Text variant="body" weight="semibold" color="primary">
-                    {food.cookInfo.totalOrders}
-                  </Text>
-                  <Text variant="caption" color="textSecondary">Toplam Sipariş</Text>
-                </View>
-                <View style={styles.cookStatItem}>
-                  <Text variant="body" weight="semibold" color="primary">
-                    ⭐ {food.rating}
-                  </Text>
-                  <Text variant="caption" color="textSecondary">Ortalama Puan</Text>
-                </View>
-                <View style={styles.cookStatItem}>
-                  <Text variant="body" weight="semibold" color="primary">
-                    {food.cookInfo.joinDate}
-                  </Text>
-                  <Text variant="caption" color="textSecondary">Üyelik Tarihi</Text>
-                </View>
-              </View>
-
-              {/* Specialties */}
-              {food.cookInfo.specialties && food.cookInfo.specialties.length > 0 && (
-                <View style={styles.cookSpecialtiesSection}>
-                  <Text variant="body" weight="medium" style={styles.cookSpecialtiesTitle}>
-                    Uzmanlık Alanları
-                  </Text>
-                  <View style={styles.cookSpecialtiesGrid}>
-                    {food.cookInfo.specialties.map((specialty: string, index: number) => (
-                      <View key={index} style={styles.cookSpecialtyPlainItem}>
-                        <WebSafeIcon name="check" size={14} color={colors.primary} />
-                        <Text style={[styles.cookSpecialtyPlainText, { color: colors.text }]}>
-                          {specialty}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-            </View>
-          </Card>
 
           {/* Reviews Section */}
           <Card variant="default" padding="md" style={styles.reviewsCard}>
@@ -1359,56 +1305,6 @@ const styles = StyleSheet.create({
   },
   description: {
     lineHeight: 22,
-  },
-  // Cook About Section Styles
-  cookAboutCard: {
-    marginBottom: 0,
-  },
-  cookAboutTitle: {
-    marginBottom: Spacing.md,
-  },
-  cookAboutContent: {
-    gap: Spacing.md,
-  },
-  cookDescription: {
-    lineHeight: 22,
-  },
-  cookStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: Spacing.md,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  cookStatItem: {
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  cookSpecialtiesSection: {
-    gap: Spacing.sm,
-  },
-  cookSpecialtiesTitle: {
-    marginBottom: Spacing.sm,
-  },
-  cookSpecialtiesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    justifyContent: 'flex-start',
-  },
-  cookSpecialtyPlainItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    width: '31%', // 3 sütun için
-    minWidth: '31%',
-  },
-  cookSpecialtyPlainText: {
-    fontSize: 13,
-    fontWeight: '500',
-    flex: 1,
-    flexShrink: 0,
   },
   reviewsCard: {
     marginBottom: 0,

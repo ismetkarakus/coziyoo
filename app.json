@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Cazi",
+    "name": "cazi",
     "slug": "cazi",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,36 +16,21 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.cazi.app",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.cazi.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "googleServicesFile": "./google-services.json"
+      }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png",
-      "build": {
-        "babel": {
-          "include": []
-        }
-      }
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-notifications",
-        {
-          "projectId": "cazi-app"
-        }
-      ]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true

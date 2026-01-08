@@ -136,3 +136,10 @@ Bu hesabı Firebase Console'dan manuel oluşturun.
 Bu adımları takip ederek sorunu çözebilirsiniz! 🚀
 
 
+
+
+
+
+
+
+

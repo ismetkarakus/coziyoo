@@ -24,6 +24,13 @@ const PROFILE_SECTIONS = [
     ],
   },
   {
+    id: 'wallet',
+    title: 'Cüzdan & Ödemeler',
+    items: [
+      { id: 'wallet', title: 'Cüzdanım', icon: '💰' },
+    ],
+  },
+  {
     id: 'orders',
     title: 'Siparişler',
     items: [
@@ -112,7 +119,7 @@ export const Profile: React.FC = () => {
           text: 'Çıkış Yap',
           style: 'destructive',
           onPress: () => {
-            router.replace('/(auth)/sign-in');
+            router.replace('/sign-in');
           },
         },
       ]

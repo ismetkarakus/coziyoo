@@ -9,7 +9,7 @@ interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string, userType: 'buyer' | 'seller') => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both') => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     email: string, 
     password: string, 
     displayName: string, 
-    userType: 'buyer' | 'seller'
+    userType: 'buyer' | 'seller' | 'both'
   ) => {
     setLoading(true);
     try {

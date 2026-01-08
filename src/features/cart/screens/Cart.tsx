@@ -34,7 +34,7 @@ export const Cart: React.FC = () => {
           </Text>
           <Button 
             variant="primary" 
-            onPress={() => router.push('/(tabs)/')}
+            onPress={() => router.push('/(tabs)')}
             style={styles.browseButton}
           >
             Yemekleri Keşfet

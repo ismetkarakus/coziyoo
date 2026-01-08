@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TouchableWithoutFeedback } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -7,6 +7,7 @@ import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useAuth } from '../../../context/AuthContext';
 
 const MENU_ITEMS = [
   {
@@ -44,13 +45,6 @@ const MENU_ITEMS = [
     icon: '💬',
     route: '/(seller)/messages',
   },
-  {
-    id: 'delivery',
-    title: 'Teslimat Ayarları',
-    description: 'Teslimat seçeneklerini ayarla',
-    icon: '🚗',
-    route: '/(seller)/delivery-settings',
-  },
 ];
 
 // Default seller data
@@ -65,6 +59,26 @@ export const SellerPanel: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [profileData, setProfileData] = useState(DEFAULT_SELLER_DATA);
+  const [complianceExpanded, setComplianceExpanded] = useState(false);
+
+  // UK Compliance Status Check
+  const isComplianceComplete = () => {
+    // Mock data - gerçek uygulamada AsyncStorage veya API'den gelecek
+    const complianceStatus = {
+      councilRegistered: true, // Test için true
+      hygieneCertificate: true,
+      allergensDeclared: true,
+      hygieneRating: true,
+      insurance: true,
+      termsAccepted: true,
+      approved: true // Admin onayı
+    };
+    
+    return Object.values(complianceStatus).every(status => status === true);
+  };
+
+  const complianceComplete = isComplianceComplete();
+  const { signOut } = useAuth();
 
   // Load profile data when screen comes into focus
   useFocusEffect(
@@ -98,7 +112,30 @@ export const SellerPanel: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed - navigating to home'); // Debug log
-    router.push('/(tabs)/'); // Navigate to home/main screen
+    router.push('/(tabs)'); // Navigate to home/main screen
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Çıkış Yap',
+      'Hesabınızdan çıkmak istediğinizden emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Çıkış Yap',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              // AuthGuard will automatically redirect to sign-in
+            } catch (error) {
+              console.error('Sign out error:', error);
+              Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -116,12 +153,22 @@ export const SellerPanel: React.FC = () => {
         }
       />
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Stats Section - Moved to top */}
-        <View style={styles.statsContainer}>
-          <Text variant="subheading" weight="semibold" style={styles.statsTitle}>
-            Bu Hafta
-          </Text>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+      >
+          {/* Stats Section - Moved to top */}
+        <TouchableWithoutFeedback
+          onPress={() => {
+            if (complianceExpanded) {
+              setComplianceExpanded(false);
+            }
+          }}
+        >
+          <View style={styles.statsContainer}>
+            <Text variant="subheading" weight="semibold" style={styles.statsTitle}>
+              Bu Hafta
+            </Text>
           
           <View style={styles.statsGrid}>
             <Card variant="default" padding="md" style={styles.statCard}>
@@ -153,7 +200,8 @@ export const SellerPanel: React.FC = () => {
               </Text>
             </Card>
           </View>
-        </View>
+          </View>
+        </TouchableWithoutFeedback>
 
         {/* User Info Card - Like Profile */}
         <Card variant="default" padding="md" style={styles.userCard}>
@@ -179,41 +227,261 @@ export const SellerPanel: React.FC = () => {
           </View>
         </Card>
 
+        {/* UK Compliance Status Card - Collapsible */}
+        <View style={styles.complianceWrapper}>
+          <TouchableOpacity
+            onPress={() => setComplianceExpanded(!complianceExpanded)}
+            activeOpacity={0.7}
+          >
+            <Card variant="default" padding="md" style={styles.complianceCard}>
+              <View style={styles.complianceHeader}>
+                <Text variant="subheading" weight="semibold" style={styles.complianceTitle}>
+                  🇬🇧 UK Food Business Compliance
+                </Text>
+                <View style={styles.complianceHeaderRight}>
+                  <Text variant="caption" style={[
+                    styles.statusBadge, 
+                    { 
+                      backgroundColor: complianceComplete ? '#28A745' : '#FFC107', 
+                      color: 'white' 
+                    }
+                  ]}>
+                    {complianceComplete ? '✅ APPROVED' : '⏳ PENDING'}
+                  </Text>
+                  <Text variant="body" style={styles.expandIcon}>
+                    {complianceExpanded ? '▼' : '▶'}
+                  </Text>
+                </View>
+              </View>
+            </Card>
+          </TouchableOpacity>
+          
+          {complianceExpanded && (
+            <Card variant="default" padding="md" style={[styles.complianceCard, styles.complianceExpandedCard]}>
+              <View style={styles.complianceItems}>
+            <TouchableOpacity 
+              style={styles.complianceItem}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                router.push('/council-registration');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.complianceItemContent}>
+                <Text variant="body" style={styles.complianceLabel}>
+                  ✅ Council Registration
+                </Text>
+                <Text variant="caption" color="primary" style={styles.editLink}>
+                  Edit →
+                </Text>
+              </View>
+              <Text variant="caption" color="textSecondary">
+                Westminster City Council • SW1A 1AA
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.complianceItem}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                router.push('/hygiene-certificate');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.complianceItemContent}>
+                <Text variant="body" style={styles.complianceLabel}>
+                  ✅ Food Hygiene Certificate
+                </Text>
+                <Text variant="caption" color="primary" style={styles.editLink}>
+                  Edit →
+                </Text>
+              </View>
+              <Text variant="caption" color="textSecondary">
+                Level 2 • Valid until Dec 2025
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.complianceItem}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                router.push('/hygiene-rating');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.complianceItemContent}>
+                <Text variant="body" style={styles.complianceLabel}>
+                  🏛️ Hygiene Rating: 5/5
+                </Text>
+                <Text variant="caption" color="primary" style={styles.editLink}>
+                  Edit →
+                </Text>
+              </View>
+              <Text variant="caption" color="textSecondary">
+                Last inspection: Nov 2024
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.complianceItem}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                router.push('/allergen-declaration');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.complianceItemContent}>
+                <Text variant="body" style={styles.complianceLabel}>
+                  ⚠️ Allergen Declaration
+                </Text>
+                <Text variant="caption" color="primary" style={styles.editLink}>
+                  Edit →
+                </Text>
+              </View>
+              <Text variant="caption" color="textSecondary">
+                All 14 UK allergens covered
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.complianceItem}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                router.push('/insurance-details');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.complianceItemContent}>
+                <Text variant="body" style={styles.complianceLabel}>
+                  🛡️ Public Liability Insurance
+                </Text>
+                <Text variant="caption" color="primary" style={styles.editLink}>
+                  Edit →
+                </Text>
+              </View>
+              <Text variant="caption" color="textSecondary">
+                £2M coverage • Valid until Jan 2026
+              </Text>
+            </TouchableOpacity>
+              
+                <TouchableOpacity 
+                  style={styles.complianceButton}
+                  onPress={(e) => {
+                    e?.stopPropagation?.();
+                    router.push('/terms-and-conditions');
+                  }}
+                >
+                  <Text variant="body" color="primary" style={styles.complianceButtonText}>
+                    📄 View Terms & Conditions →
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Card>
+          )}
+        </View>
+
         {/* Menu Sections - Separate Cards */}
-        <View style={styles.menuSectionsContainer}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            if (complianceExpanded) {
+              setComplianceExpanded(false);
+            }
+          }}
+        >
+          <View style={styles.menuSectionsContainer}>
           {MENU_ITEMS.map((item) => (
             <TouchableOpacity
               key={item.id}
-              onPress={() => handleMenuPress(item.route)}
-              style={[styles.menuCard, { backgroundColor: colors.primary }]}
-              activeOpacity={0.7}
+              onPress={() => {
+                if (complianceComplete) {
+                  handleMenuPress(item.route);
+                } else {
+                  Alert.alert(
+                    'UK Compliance Gerekli',
+                    'Satıcı özelliklerini kullanabilmek için önce UK Food Business Compliance bölümünü tamamlamanız gerekiyor.',
+                    [{ text: 'Tamam' }]
+                  );
+                }
+              }}
+              style={[
+                styles.menuCard, 
+                { 
+                  backgroundColor: complianceComplete ? colors.primary : '#E0E0E0',
+                  opacity: complianceComplete ? 1 : 0.6
+                }
+              ]}
+              activeOpacity={complianceComplete ? 0.7 : 0.3}
             >
               <View style={styles.menuCardContent}>
-                <Text style={styles.menuCardIcon}>
-                  {item.icon}
+                <Text style={[
+                  styles.menuCardIcon,
+                  { opacity: complianceComplete ? 1 : 0.5 }
+                ]}>
+                  {complianceComplete ? item.icon : '🔒'}
                 </Text>
                 <View style={styles.menuCardTextContainer}>
                   <Text 
                     variant="subheading" 
                     weight="semibold"
-                    style={styles.menuCardTitle}
+                    style={[
+                      styles.menuCardTitle,
+                      { color: complianceComplete ? 'white' : '#999999' }
+                    ]}
                   >
                     {item.title}
                   </Text>
                   <Text 
                     variant="caption"
-                    style={styles.menuCardDescription}
+                    style={[
+                      styles.menuCardDescription,
+                      { color: complianceComplete ? 'rgba(255,255,255,0.8)' : '#CCCCCC' }
+                    ]}
                   >
-                    {item.description}
+                    {complianceComplete ? item.description : 'UK Compliance gerekli'}
                   </Text>
                 </View>
-                <Text style={styles.menuCardArrow}>
-                  →
+                <Text style={[
+                  styles.menuCardArrow,
+                  { color: complianceComplete ? 'white' : '#999999' }
+                ]}>
+                  {complianceComplete ? '→' : '🔒'}
                 </Text>
               </View>
             </TouchableOpacity>
           ))}
-        </View>
+          </View>
+        </TouchableWithoutFeedback>
+
+        {/* Sign Out Button */}
+        <TouchableWithoutFeedback
+          onPress={() => {
+            if (complianceExpanded) {
+              setComplianceExpanded(false);
+            }
+          }}
+        >
+          <View>
+            <TouchableOpacity
+              onPress={handleSignOut}
+              style={[styles.signOutButton, { backgroundColor: colors.error }]}
+              activeOpacity={0.7}
+            >
+              <Text variant="body" weight="semibold" style={{ color: 'white' }}>
+                🚪 Çıkış Yap
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+
+        <TouchableWithoutFeedback
+          onPress={() => {
+            if (complianceExpanded) {
+              setComplianceExpanded(false);
+            }
+          }}
+        >
+          <View style={styles.bottomSpace} />
+        </TouchableWithoutFeedback>
       </ScrollView>
     </View>
   );
@@ -309,6 +577,92 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  signOutButton: {
+    marginHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  bottomSpace: {
+    height: Spacing.xl,
+  },
+  complianceWrapper: {
+    margin: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  complianceCard: {
+    borderWidth: 2,
+    borderColor: '#28A745',
+    backgroundColor: 'rgba(40, 167, 69, 0.05)',
+  },
+  complianceExpandedCard: {
+    marginTop: 2,
+    borderTopWidth: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
+  complianceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  complianceHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  expandIcon: {
+    fontSize: 16,
+    color: '#2D5A4A',
+    fontWeight: 'bold',
+  },
+  complianceTitle: {
+    flex: 1,
+    color: '#2D5A4A',
+  },
+  statusBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: 12,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  complianceItems: {
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  complianceItem: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginVertical: 2,
+  },
+  complianceItemContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  editLink: {
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
+  complianceLabel: {
+    marginBottom: 2,
+  },
+  complianceButton: {
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(127, 175, 154, 0.1)',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  complianceButtonText: {
+    fontWeight: '500',
   },
 });
 

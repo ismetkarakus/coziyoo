@@ -9,6 +9,8 @@ export interface CartItem {
   imageUrl?: string;
   currentStock?: number;
   dailyStock?: number;
+  deliveryOption?: 'pickup' | 'delivery';
+  availableOptions?: ('pickup' | 'delivery')[];
 }
 
 interface CartContextType {
@@ -83,6 +85,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const getTotalPrice = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
+
 
   const value: CartContextType = {
     cartItems,

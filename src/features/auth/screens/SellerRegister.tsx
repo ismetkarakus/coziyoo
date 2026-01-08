@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Linking } from 'react-native';
 import { router } from 'expo-router';
-import { Text, Button } from '../../../components/ui';
+import { Text, Button, Checkbox } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -16,11 +16,24 @@ export const SellerRegister: React.FC = () => {
     email: '',
     password: '',
     kitchenLocation: '',
+    postcode: '',
+    councilName: '',
   });
 
   const [deliveryOptions, setDeliveryOptions] = useState({
     pickup: false,
     delivery: false,
+  });
+
+  // UK Compliance Fields
+  const [ukCompliance, setUkCompliance] = useState({
+    councilRegistered: false,
+    foodHygieneCertificate: false,
+    hygieneRating: '',
+    allergenDeclaration: false,
+    legalResponsibility: false,
+    insuranceOptional: false,
+    termsAccepted: false,
   });
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
@@ -32,8 +45,38 @@ export const SellerRegister: React.FC = () => {
   };
 
   const handleSubmit = () => {
+    // Validate UK Compliance requirements
+    if (!ukCompliance.councilRegistered) {
+      Alert.alert('UK Legal Requirement', 'You must be registered with your local council to sell food in the UK.');
+      return;
+    }
+    
+    if (!ukCompliance.allergenDeclaration) {
+      Alert.alert('Food Safety Requirement', 'You must declare allergen information for all food products.');
+      return;
+    }
+    
+    if (!ukCompliance.legalResponsibility) {
+      Alert.alert('Legal Agreement Required', 'You must accept legal responsibility for food safety and compliance.');
+      return;
+    }
+    
+    if (!formData.postcode || !formData.councilName) {
+      Alert.alert('Missing Information', 'Please provide your postcode and council name for verification.');
+      return;
+    }
+    
+    if (!ukCompliance.termsAccepted) {
+      Alert.alert('Terms & Conditions Required', 'You must read and accept the Terms & Conditions to proceed.');
+      return;
+    }
+    
     // Mock registration - navigate to seller panel
-    router.replace('/(seller)/dashboard');
+    Alert.alert(
+      'Registration Submitted',
+      'Your seller application has been submitted for review. You will be notified once approved.',
+      [{ text: 'OK', onPress: () => router.replace('/(seller)/dashboard') }]
+    );
   };
 
   return (
@@ -94,6 +137,177 @@ export const SellerRegister: React.FC = () => {
               required
             />
 
+            <FormField
+              label="Postcode"
+              value={formData.postcode}
+              onChangeText={handleInputChange('postcode')}
+              placeholder="SW1A 1AA"
+              required
+              helperText="Required for council verification"
+            />
+
+            <FormField
+              label="Local Council Name"
+              value={formData.councilName}
+              onChangeText={handleInputChange('councilName')}
+              placeholder="e.g. Westminster City Council"
+              required
+              helperText="The council where your kitchen is located"
+            />
+
+            {/* UK Legal Compliance Section */}
+            <View style={styles.complianceSection}>
+              <Text variant="subheading" style={styles.sectionTitle}>
+                🇬🇧 UK Food Business Requirements
+              </Text>
+              
+              {/* Quick Links */}
+              <View style={styles.quickLinksSection}>
+                <Text variant="body" weight="medium" style={styles.quickLinksTitle}>
+                  📋 Quick Links & Information:
+                </Text>
+                <TouchableOpacity 
+                  style={styles.linkButton}
+                  onPress={() => Linking.openURL('https://www.gov.uk/food-business-registration')}
+                >
+                  <Text variant="caption" color="primary" style={styles.linkText}>
+                    🏛️ Register Food Business with Council →
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.linkButton}
+                  onPress={() => Linking.openURL('https://www.cieh.org/training/food-safety-training/')}
+                >
+                  <Text variant="caption" color="primary" style={styles.linkText}>
+                    📜 Get Food Hygiene Level 2 Certificate →
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.linkButton}
+                  onPress={() => Linking.openURL('https://www.food.gov.uk/business-guidance/allergen-guidance-for-food-businesses')}
+                >
+                  <Text variant="caption" color="primary" style={styles.linkText}>
+                    ⚠️ UK Allergen Requirements (Natasha's Law) →
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.linkButton}
+                  onPress={() => router.push('/admin-panel')}
+                >
+                  <Text variant="caption" color="primary" style={styles.linkText}>
+                    🛠️ View Admin Panel (Seller Management) →
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              
+              <Checkbox
+                label={
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text variant="body">I am registered as a food business with my local council</Text>
+                    <TouchableOpacity 
+                      onPress={() => Linking.openURL('https://www.gov.uk/food-business-registration')}
+                      style={styles.inlineLinkButton}
+                    >
+                      <Text variant="caption" color="primary" style={styles.inlineLinkText}>
+                        (How to register? →)
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                }
+                checked={ukCompliance.councilRegistered}
+                onPress={() => setUkCompliance(prev => ({ ...prev, councilRegistered: !prev.councilRegistered }))}
+                required
+                helperText="This is a legal requirement in the UK before selling food"
+              />
+              
+              <Checkbox
+                label={
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text variant="body">I have a Food Hygiene Level 2 certificate</Text>
+                    <TouchableOpacity 
+                      onPress={() => Linking.openURL('https://www.cieh.org/training/food-safety-training/')}
+                      style={styles.inlineLinkButton}
+                    >
+                      <Text variant="caption" color="primary" style={styles.inlineLinkText}>
+                        (Get certificate →)
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                }
+                checked={ukCompliance.foodHygieneCertificate}
+                onPress={() => setUkCompliance(prev => ({ ...prev, foodHygieneCertificate: !prev.foodHygieneCertificate }))}
+                helperText="Strongly recommended for customer trust"
+              />
+              
+              <View style={styles.ratingSection}>
+                <Text variant="body" weight="medium" style={styles.ratingLabel}>
+                  Food Hygiene Rating
+                </Text>
+                <View style={styles.ratingOptions}>
+                  {['5', '4', '3', '2', '1', 'Pending'].map((rating) => (
+                    <Button
+                      key={rating}
+                      variant={ukCompliance.hygieneRating === rating ? "primary" : "outline"}
+                      onPress={() => setUkCompliance(prev => ({ ...prev, hygieneRating: rating }))}
+                      style={styles.ratingButton}
+                    >
+                      {rating === 'Pending' ? 'Inspection Pending' : `⭐${rating}`}
+                    </Button>
+                  ))}
+                </View>
+              </View>
+              
+              <Checkbox
+                label={
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text variant="body">I will provide accurate allergen information for all products</Text>
+                    <TouchableOpacity 
+                      onPress={() => Linking.openURL('https://www.food.gov.uk/business-guidance/allergen-guidance-for-food-businesses')}
+                      style={styles.inlineLinkButton}
+                    >
+                      <Text variant="caption" color="primary" style={styles.inlineLinkText}>
+                        (View 14 allergens →)
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                }
+                checked={ukCompliance.allergenDeclaration}
+                onPress={() => setUkCompliance(prev => ({ ...prev, allergenDeclaration: !prev.allergenDeclaration }))}
+                required
+                helperText="Required by UK Natasha's Law - covers all 14 major allergens"
+              />
+              
+              <Checkbox
+                label={
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text variant="body">I have Public Liability Insurance</Text>
+                    <TouchableOpacity 
+                      onPress={() => Linking.openURL('https://www.comparethemarket.com/business-insurance/public-liability/')}
+                      style={styles.inlineLinkButton}
+                    >
+                      <Text variant="caption" color="primary" style={styles.inlineLinkText}>
+                        (Get insurance →)
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                }
+                checked={ukCompliance.insuranceOptional}
+                onPress={() => setUkCompliance(prev => ({ ...prev, insuranceOptional: !prev.insuranceOptional }))}
+                helperText="Optional but strongly recommended for protection"
+              />
+              
+              <Checkbox
+                label="I accept full legal responsibility for food safety, hygiene, and compliance"
+                checked={ukCompliance.legalResponsibility}
+                onPress={() => setUkCompliance(prev => ({ ...prev, legalResponsibility: !prev.legalResponsibility }))}
+                required
+                helperText="You are responsible for all food safety aspects as an independent seller"
+              />
+            </View>
+
             <View style={styles.deliverySection}>
               <Text variant="subheading" style={styles.deliveryTitle}>
                 Teslimat Seçenekleri
@@ -116,6 +330,24 @@ export const SellerRegister: React.FC = () => {
                   {deliveryOptions.delivery ? "✓ " : ""}Delivery (Teslimat)
                 </Button>
               </View>
+            </View>
+
+            <View style={styles.termsSection}>
+              <Checkbox
+                label="I have read and agree to the Terms & Conditions and UK food safety regulations"
+                checked={ukCompliance.termsAccepted}
+                onPress={() => setUkCompliance(prev => ({ ...prev, termsAccepted: !prev.termsAccepted }))}
+                required
+                helperText="Required to proceed with seller registration"
+              />
+              <TouchableOpacity 
+                onPress={() => router.push('/terms-and-conditions')}
+                style={styles.termsLinkButton}
+              >
+                <Text variant="body" color="primary" style={styles.termsLinkText}>
+                  📄 Read Terms & Conditions →
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <Button 
@@ -156,6 +388,33 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.sm,
   },
+  complianceSection: {
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    backgroundColor: 'rgba(127, 175, 154, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(127, 175, 154, 0.3)',
+  },
+  sectionTitle: {
+    marginBottom: Spacing.md,
+    color: '#2D5A4A',
+  },
+  ratingSection: {
+    marginVertical: Spacing.sm,
+  },
+  ratingLabel: {
+    marginBottom: Spacing.sm,
+  },
+  ratingOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  ratingButton: {
+    minWidth: 80,
+    paddingHorizontal: Spacing.sm,
+  },
   deliverySection: {
     marginTop: Spacing.md,
   },
@@ -169,10 +428,69 @@ const styles = StyleSheet.create({
   checkboxButton: {
     flex: 1,
   },
+  termsSection: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  termsText: {
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  termsLink: {
+    textDecorationLine: 'underline',
+  },
+  termsLinkButton: {
+    marginTop: Spacing.sm,
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(127, 175, 154, 0.1)',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  quickLinksSection: {
+    marginBottom: Spacing.lg,
+    padding: Spacing.md,
+    backgroundColor: 'rgba(127, 175, 154, 0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(127, 175, 154, 0.2)',
+  },
+  quickLinksTitle: {
+    marginBottom: Spacing.sm,
+    color: '#2D5A4A',
+  },
+  linkButton: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    marginVertical: 2,
+  },
+  linkText: {
+    fontSize: 13,
+    textDecorationLine: 'underline',
+  },
+  checkboxLabelContainer: {
+    flex: 1,
+  },
+  inlineLinkButton: {
+    marginTop: 2,
+  },
+  inlineLinkText: {
+    fontSize: 12,
+    textDecorationLine: 'underline',
+    fontStyle: 'italic',
+  },
+  termsLinkText: {
+    fontWeight: '500',
+  },
   submitButton: {
     marginTop: Spacing.lg,
   },
 });
+
+
+
+
+
+
 
 
 

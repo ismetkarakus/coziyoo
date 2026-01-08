@@ -9,6 +9,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { CartProvider } from '@/src/context/CartContext';
 import { AuthProvider } from '@/src/context/AuthContext';
 import { NotificationProvider } from '@/src/context/NotificationContext';
+import { WalletProvider } from '@/src/context/WalletContext';
 import { AuthGuard } from '@/src/components/auth/AuthGuard';
 
 export {
@@ -55,9 +56,10 @@ function RootLayoutNav() {
     <AuthProvider>
       <NotificationProvider>
         <AuthGuard>
-          <CartProvider>
-            <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <WalletProvider>
+            <CartProvider>
+            <Stack screenOptions={{ gestureEnabled: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(seller)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
@@ -72,8 +74,19 @@ function RootLayoutNav() {
         <Stack.Screen name="contact" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="about" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="order-history" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="seller-profile" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="admin-panel" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="terms-and-conditions" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="council-registration" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="hygiene-certificate" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="allergen-declaration" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="insurance-details" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="hygiene-rating" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="checkout" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="wallet" options={{ headerShown: false, presentation: 'card' }} />
             </Stack>
-          </CartProvider>
+            </CartProvider>
+          </WalletProvider>
         </AuthGuard>
       </NotificationProvider>
     </AuthProvider>

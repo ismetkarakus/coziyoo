@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
+import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { foodService, Food } from '../../../services/foodService';
 import { searchService, SearchFilters } from '../../../services/searchService';
 import { seedSampleData, checkExistingData } from '../../../utils/seedData';
 import { FirebaseUtils } from '../../../utils/firebaseUtils';
+import { AllergenId } from '../../../constants/allergens';
 
 // Mock data
 const USER_DATA = {
@@ -23,11 +25,15 @@ const USER_DATA = {
 };
 
 const CATEGORIES = [
-  'Tümü',
   'Ana Yemek',
   'Çorba',
-  'Kahvaltı',
+  'Meze',
   'Salata',
+  'Kahvaltı',
+  'Tatlı/Kek',
+  'İçecekler',
+  'Vejetaryen',
+  'Gluten Free',
 ];
 
 const MOCK_FOODS = [
@@ -46,6 +52,9 @@ const MOCK_FOODS = [
     currentStock: 8,
     dailyStock: 10,
     maxDeliveryDistance: 3, // AddMeal'dan gelen değer
+    allergens: ['cereals', 'eggs'] as AllergenId[], // Mantı: un (gluten) ve yumurta
+    hygieneRating: '5', // UK Food Hygiene Rating
+    availableDeliveryOptions: ['pickup', 'delivery'] as ('pickup' | 'delivery')[] // İki seçenek
   },
   {
     id: '2',
@@ -61,6 +70,7 @@ const MOCK_FOODS = [
     currentStock: 5,
     dailyStock: 12,
     maxDeliveryDistance: 5, // AddMeal'dan gelen değer
+    availableDeliveryOptions: ['pickup'] as ('pickup' | 'delivery')[] // Sadece gel al
   },
   {
     id: '4',
@@ -76,6 +86,7 @@ const MOCK_FOODS = [
     currentStock: 3,
     dailyStock: 8,
     maxDeliveryDistance: 4, // AddMeal'dan gelen değer
+    availableDeliveryOptions: ['delivery'] as ('pickup' | 'delivery')[] // Sadece teslimat
   },
   // Çorba
   {
@@ -122,6 +133,8 @@ const MOCK_FOODS = [
     availableDates: '21-28 Ocak',
     currentStock: 3,
     dailyStock: 5,
+    allergens: ['milk', 'cereals', 'eggs'] as AllergenId[], // Serpme kahvaltı: süt ürünleri, ekmek, yumurta
+    hygieneRating: '4', // UK Food Hygiene Rating
   },
   {
     id: '9',
@@ -136,6 +149,8 @@ const MOCK_FOODS = [
     availableDates: '17-24 Ocak',
     currentStock: 7,
     dailyStock: 10,
+    allergens: ['eggs'] as AllergenId[], // Menemen: yumurta
+    hygieneRating: 'Pending', // UK Food Hygiene Rating
   },
   // Salata
   {
@@ -196,6 +211,176 @@ const MOCK_FOODS = [
     dailyStock: 3,
     maxDeliveryDistance: 6, // AddMeal'dan gelen değer
   },
+  // Meze
+  {
+    id: '13',
+    name: 'Karışık Meze Tabağı',
+    cookName: 'Elif Hanım',
+    rating: 4.7,
+    price: 28,
+    distance: '2.2 km',
+    category: 'Meze',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '16-23 Ocak',
+    currentStock: 5,
+    dailyStock: 8,
+    maxDeliveryDistance: 2.5,
+  },
+  {
+    id: '14',
+    name: 'Acılı Ezme',
+    cookName: 'Hasan Usta',
+    rating: 4.5,
+    price: 15,
+    distance: '1.8 km',
+    category: 'Meze',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '18-25 Ocak',
+    currentStock: 12,
+    dailyStock: 15,
+    maxDeliveryDistance: 2,
+  },
+  // Vejetaryen
+  {
+    id: '15',
+    name: 'Vejetaryen Köfte',
+    cookName: 'Ayşe Hanım',
+    rating: 4.6,
+    price: 24,
+    distance: '1.5 km',
+    category: 'Vejetaryen',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '17-24 Ocak',
+    currentStock: 8,
+    dailyStock: 10,
+    maxDeliveryDistance: 2,
+  },
+  {
+    id: '16',
+    name: 'Sebze Güveç',
+    cookName: 'Zehra Hanım',
+    rating: 4.8,
+    price: 26,
+    distance: '2.1 km',
+    category: 'Vejetaryen',
+    hasPickup: true,
+    hasDelivery: false,
+    availableDates: '19-26 Ocak',
+    currentStock: 6,
+    dailyStock: 8,
+    maxDeliveryDistance: 0,
+  },
+  // Gluten Free
+  {
+    id: '17',
+    name: 'Glutensiz Ekmek',
+    cookName: 'Fatma Teyze',
+    rating: 4.4,
+    price: 18,
+    distance: '1.3 km',
+    category: 'Gluten Free',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '15-22 Ocak',
+    currentStock: 10,
+    dailyStock: 12,
+    maxDeliveryDistance: 1.5,
+  },
+  {
+    id: '18',
+    name: 'Glutensiz Kurabiye',
+    cookName: 'Gül Teyze',
+    rating: 4.7,
+    price: 22,
+    distance: '2.8 km',
+    category: 'Gluten Free',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '20-27 Ocak',
+    currentStock: 15,
+    dailyStock: 20,
+    maxDeliveryDistance: 3,
+  },
+  // İçecekler
+  {
+    id: '19',
+    name: 'Ev Yapımı Ayran',
+    cookName: 'Mehmet Usta',
+    rating: 4.3,
+    price: 8,
+    distance: '900 m',
+    category: 'İçecekler',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '16-23 Ocak',
+    currentStock: 20,
+    dailyStock: 25,
+    maxDeliveryDistance: 1,
+  },
+  {
+    id: '20',
+    name: 'Taze Sıkılmış Portakal Suyu',
+    cookName: 'Elif Hanım',
+    rating: 4.6,
+    price: 12,
+    distance: '1.7 km',
+    category: 'İçecekler',
+    hasPickup: true,
+    hasDelivery: false,
+    availableDates: '17-24 Ocak',
+    currentStock: 18,
+    dailyStock: 20,
+    maxDeliveryDistance: 0,
+  },
+  // Tatlılar
+  {
+    id: '21',
+    name: 'Ev Yapımı Sütlaç',
+    cookName: 'Ayşe Hanım',
+    rating: 4.9,
+    price: 16,
+    distance: '1.2 km',
+    category: 'Tatlı/Kek',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '18-25 Ocak',
+    currentStock: 12,
+    dailyStock: 15,
+    maxDeliveryDistance: 1.5,
+  },
+  {
+    id: '22',
+    name: 'Profiterol',
+    cookName: 'Zehra Hanım',
+    rating: 4.8,
+    price: 32,
+    distance: '2.5 km',
+    category: 'Tatlı/Kek',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '19-26 Ocak',
+    currentStock: 8,
+    dailyStock: 10,
+    maxDeliveryDistance: 3,
+  },
+  {
+    id: '23',
+    name: 'Ev Yapımı Kek',
+    cookName: 'Fatma Teyze',
+    rating: 4.7,
+    price: 24,
+    distance: '1.9 km',
+    category: 'Tatlı/Kek',
+    hasPickup: true,
+    hasDelivery: true,
+    availableDates: '20-27 Ocak',
+    currentStock: 6,
+    dailyStock: 8,
+    maxDeliveryDistance: 2,
+  },
 ];
 
 export const Home: React.FC = () => {
@@ -203,9 +388,10 @@ export const Home: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
+  const { getTotalItems } = useCart();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Tümü');
+  const [selectedCategory, setSelectedCategory] = useState('Ana Yemek');
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
   const [scrollY, setScrollY] = useState(0);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
@@ -217,6 +403,8 @@ export const Home: React.FC = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const { addToCart } = useCart();
   const { sendLowStockNotification } = useNotifications();
 
@@ -253,6 +441,11 @@ export const Home: React.FC = () => {
           dailyStock: 15,
           rating: 4.8,
           reviewCount: 24,
+          distance: '2.5 km',
+          maxDeliveryDistance: 3,
+          hasPickup: true,
+          hasDelivery: true,
+          availableDates: '15-20 Ocak',
           createdAt: new Date(),
           updatedAt: new Date()
         },
@@ -273,6 +466,11 @@ export const Home: React.FC = () => {
           dailyStock: 12,
           rating: 4.5,
           reviewCount: 18,
+          distance: '1.8 km',
+          maxDeliveryDistance: 2,
+          hasPickup: true,
+          hasDelivery: true,
+          availableDates: '16-22 Ocak',
           createdAt: new Date(),
           updatedAt: new Date()
         },
@@ -293,6 +491,11 @@ export const Home: React.FC = () => {
           dailyStock: 10,
           rating: 4.7,
           reviewCount: 31,
+          distance: '3.2 km',
+          maxDeliveryDistance: 4,
+          hasPickup: true,
+          hasDelivery: true,
+          availableDates: '17-24 Ocak',
           createdAt: new Date(),
           updatedAt: new Date()
         }
@@ -398,31 +601,53 @@ export const Home: React.FC = () => {
   };
 
   const handleAddToCart = async (foodId: string, quantity: number) => {
-    const food = firebaseFoods.find(f => f.id === foodId);
+    // Check both Firebase foods and mock foods
+    const firebaseFood = firebaseFoods.find(f => f.id === foodId);
+    const mockFood = MOCK_FOODS.find(f => f.id === foodId);
+    const food = firebaseFood || mockFood;
+    
     if (food && quantity > 0) {
-      // Check current stock
-      const currentStock = food.currentStock ?? 0;
+      // Get current stock (from foodStocks state or original stock)
+      const currentStock = foodStocks[foodId] ?? food.currentStock ?? 0;
+      
       if (currentStock >= quantity) {
         try {
-          // Update stock in Firebase with low stock notification
-          await foodService.updateFoodStock(foodId, currentStock - quantity, sendLowStockNotification);
+          // Update local stock state immediately for UI feedback
+          const newStock = currentStock - quantity;
+          setFoodStocks(prev => ({
+            ...prev,
+            [foodId]: newStock
+          }));
+          
+          // If it's a Firebase food, update in Firebase too
+          if (firebaseFood) {
+            await foodService.updateFoodStock(foodId, newStock, sendLowStockNotification);
+          }
           
           addToCart({
             id: food.id!,
             name: food.name,
             cookName: food.cookName,
             price: food.price,
-            imageUrl: food.imageUrl,
-            currentStock: currentStock - quantity,
+            imageUrl: food.imageUrl || undefined,
+            currentStock: newStock,
             dailyStock: food.dailyStock || 0,
           }, quantity);
           
-          console.log(`Added ${quantity} of ${food.name} to cart. Remaining stock: ${currentStock - quantity}`);
+          console.log(`Added ${quantity} of ${food.name} to cart. Remaining stock: ${newStock}`);
           
-          // Reload Firebase data to reflect stock changes
-          loadFirebaseFoods();
+          // Send low stock notification if needed
+          if (newStock <= 2) {
+            sendLowStockNotification(food.name, newStock);
+          }
+          
         } catch (error) {
           console.error('Error updating stock:', error);
+          // Revert local stock change on error
+          setFoodStocks(prev => ({
+            ...prev,
+            [foodId]: currentStock
+          }));
           Alert.alert('Hata', 'Stok güncellenirken bir hata oluştu.');
         }
       } else {
@@ -465,7 +690,7 @@ export const Home: React.FC = () => {
     }
   };
 
-  // Get autocomplete suggestions
+  // Get enhanced autocomplete suggestions
   const getSuggestions = async (query: string) => {
     if (query.length < 2) {
       setSuggestions([]);
@@ -473,18 +698,202 @@ export const Home: React.FC = () => {
     }
 
     try {
+      // Get suggestions from search service
       const autocompleteSuggestions = await searchService.getAutocompleteSuggestions(query);
-      setSuggestions(autocompleteSuggestions);
+      
+      // Add local suggestions from current data
+      const localSuggestions = getLocalSuggestions(query);
+      
+      // Combine and deduplicate
+      const allSuggestions = [...new Set([...autocompleteSuggestions, ...localSuggestions])];
+      
+      setSuggestions(allSuggestions.slice(0, 8)); // Limit to 8 suggestions
     } catch (error) {
       console.error('Error getting suggestions:', error);
-      setSuggestions([]);
+      // Fallback to local suggestions only
+      setSuggestions(getLocalSuggestions(query));
     }
+  };
+
+  // Generate local suggestions from current food data
+  const getLocalSuggestions = (query: string) => {
+    const searchTerm = query.toLowerCase().trim();
+    const allFoods = [...firebaseFoods, ...MOCK_FOODS, ...publishedMeals];
+    const suggestions: string[] = [];
+    
+    // Add "bana en yakın" suggestion if query matches
+    if ('bana en yakın'.includes(searchTerm) || 'yakın'.includes(searchTerm) || 'en yakın'.includes(searchTerm)) {
+      suggestions.push('bana en yakın');
+    }
+    
+    allFoods.forEach(food => {
+      // Food name suggestions
+      if (food.name?.toLowerCase().includes(searchTerm) && !suggestions.includes(food.name)) {
+        suggestions.push(food.name);
+      }
+      
+      // Cook name suggestions
+      if (food.cookName?.toLowerCase().includes(searchTerm) && !suggestions.includes(food.cookName)) {
+        suggestions.push(food.cookName);
+      }
+      
+      // Category suggestions
+      if (food.category?.toLowerCase().includes(searchTerm) && !suggestions.includes(food.category)) {
+        suggestions.push(food.category);
+      }
+    });
+    
+    // Add country suggestions
+    if ('türk'.includes(searchTerm) || 'türkiye'.includes(searchTerm)) {
+      suggestions.push('Türk yemeği');
+    }
+    
+    return suggestions.slice(0, 5); // Limit local suggestions
+  };
+
+  // Get user's current location
+  const getUserLocation = async () => {
+    try {
+      setLocationLoading(true);
+      
+      // Request permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Konum İzni', 'Yakınındaki satıcıları görmek için konum izni gerekli.');
+        return null;
+      }
+
+      // Get current position
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      
+      const userCoords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      
+      setUserLocation(userCoords);
+      return userCoords;
+      
+    } catch (error) {
+      console.error('Error getting location:', error);
+      Alert.alert('Konum Hatası', 'Konum alınamadı. Lütfen tekrar deneyin.');
+      return null;
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  // Calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c; // Distance in kilometers
+    return distance;
+  };
+
+  // Sort foods by real distance from user location
+  const sortFoodsByRealDistance = (foods: any[], userCoords: {latitude: number, longitude: number}) => {
+    // Mock seller locations (in real app, this would come from database)
+    const sellerLocations: { [key: string]: {latitude: number, longitude: number} } = {
+      'Ayşe Hanım': { latitude: 41.0082, longitude: 28.9784 }, // Istanbul center
+      'Mehmet Usta': { latitude: 41.0150, longitude: 28.9850 }, // Slightly north
+      'Fatma Teyze': { latitude: 41.0050, longitude: 28.9700 }, // Slightly south
+      'Zehra Hanım': { latitude: 41.0120, longitude: 28.9800 }, // Nearby
+      'Hasan Usta': { latitude: 41.0200, longitude: 28.9900 }, // Further north
+      'Gül Teyze': { latitude: 41.0000, longitude: 28.9650 }, // Southwest
+      'Elif Hanım': { latitude: 41.0180, longitude: 28.9750 }, // Northwest
+    };
+
+    return foods.map(food => {
+      const sellerCoords = sellerLocations[food.cookName];
+      if (sellerCoords) {
+        const distance = calculateDistance(
+          userCoords.latitude, 
+          userCoords.longitude, 
+          sellerCoords.latitude, 
+          sellerCoords.longitude
+        );
+        return {
+          ...food,
+          realDistance: distance,
+          distance: distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`
+        };
+      }
+      return { ...food, realDistance: 999 };
+    }).sort((a, b) => (a.realDistance || 999) - (b.realDistance || 999));
+  };
+
+  // Sort foods by distance (closest first) - fallback method
+  const sortFoodsByDistance = (foods: any[]) => {
+    return foods.sort((a, b) => {
+      // Extract numeric distance from strings like "2.5 km" or "900 m"
+      const getDistanceValue = (distanceStr: string) => {
+        if (!distanceStr) return 999; // Put items without distance at the end
+        
+        const match = distanceStr.match(/(\d+\.?\d*)\s*(km|m)/i);
+        if (!match) return 999;
+        
+        const value = parseFloat(match[1]);
+        const unit = match[2].toLowerCase();
+        
+        // Convert to km for comparison
+        return unit === 'm' ? value / 1000 : value;
+      };
+      
+      const distanceA = getDistanceValue(a.distance || '');
+      const distanceB = getDistanceValue(b.distance || '');
+      
+      return distanceA - distanceB;
+    });
+  };
+
+  // Enhanced search function for food name, country, cook name, and proximity
+  const performLocalSearch = (query: string, foods: any[]) => {
+    if (!query.trim()) return foods;
+    
+    const searchTerm = query.toLowerCase().trim();
+    
+    // Special case: "bana en yakın" search
+    if (searchTerm === 'bana en yakın' || searchTerm === 'yakın' || searchTerm === 'en yakın') {
+      return sortFoodsByDistance([...foods]);
+    }
+    
+    const filteredFoods = foods.filter(food => {
+      // Search in food name
+      const nameMatch = food.name?.toLowerCase().includes(searchTerm);
+      
+      // Search in cook name (usta/aşçı)
+      const cookMatch = food.cookName?.toLowerCase().includes(searchTerm);
+      
+      // Search in country (ülke)
+      const countryMatch = food.country?.toLowerCase().includes(searchTerm) || 
+                          (searchTerm.includes('türk') && food.country === 'Türk') ||
+                          (searchTerm.includes('türkiye') && food.country === 'Türk');
+      
+      // Search in category
+      const categoryMatch = food.category?.toLowerCase().includes(searchTerm);
+      
+      // Search in description if available
+      const descriptionMatch = food.description?.toLowerCase().includes(searchTerm);
+      
+      return nameMatch || cookMatch || countryMatch || categoryMatch || descriptionMatch;
+    });
+    
+    return filteredFoods;
   };
 
   // Filter foods based on selected category, search query, and cook filter (fallback)
   const getFilteredFoods = () => {
-    // If we have search results, use them
-    if (isSearching || searchResults.length > 0 || searchQuery.trim() || Object.keys(searchFilters).length > 0) {
+    // If we have search results from advanced search, use them
+    if (isSearching || (searchResults.length > 0 && Object.keys(searchFilters).length > 0)) {
       return searchResults;
     }
 
@@ -499,6 +908,11 @@ export const Home: React.FC = () => {
     // Then filter by category
     if (selectedCategory !== 'Tümü') {
       foods = foods.filter(food => food.category === selectedCategory);
+    }
+    
+    // Apply local search if there's a search query
+    if (searchQuery.trim()) {
+      foods = performLocalSearch(searchQuery, foods);
     }
     
     return foods;
@@ -561,7 +975,7 @@ export const Home: React.FC = () => {
         onPress={async () => {
           try {
             await signOut();
-            router.replace('/(auth)/sign-in');
+            router.replace('/sign-in');
           } catch (error) {
             console.error('Logout error:', error);
           }
@@ -617,32 +1031,118 @@ export const Home: React.FC = () => {
           <FontAwesome name="home" size={20} color="white" />
         </TouchableOpacity>
         
-        {/* Center Title */}
-        <Text variant="heading" weight="bold" style={styles.topBarTitle}>
-          Cazi
-        </Text>
+        {/* Center Logo */}
+        <View style={styles.logoContainer}>
+          <Text variant="heading" weight="bold" style={styles.topBarTitle}>
+            Cazi
+          </Text>
+          <Text variant="caption" style={styles.logoSlogan}>
+            ev lezzetleri kapında
+          </Text>
+        </View>
         
-        {/* Right Icon - Profile */}
-        <TouchableOpacity 
-          onPress={() => router.push('/(tabs)/profile')}
-          style={styles.rightIcon}
-        >
-          <FontAwesome name="user" size={20} color="white" />
-        </TouchableOpacity>
+        {/* Right Icons - Cart & Profile */}
+        <View style={styles.rightIcons}>
+          <TouchableOpacity
+            onPress={() => router.push('/checkout')}
+            style={styles.cartButton}
+          >
+            <FontAwesome name="shopping-cart" size={18} color="white" />
+            {getTotalItems() > 0 && (
+              <View style={styles.cartBadge}>
+                <Text variant="caption" style={styles.cartBadgeText}>
+                  {getTotalItems()}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            onPress={() => router.push('/(tabs)/profile')}
+            style={styles.rightIcon}
+          >
+            <FontAwesome name="user" size={18} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
       
       {/* Search - Outside ScrollView to avoid VirtualizedList warning */}
       <View style={styles.searchContainer}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={handleSearchChange}
-          onSubmit={handleSearchSubmit}
-          onFilterPress={handleFilterPress}
-          placeholder="Bugün ne yemek istersin?"
-          suggestions={suggestions}
-          onSuggestionPress={handleSuggestionPress}
-          filterCount={getActiveFilterCount()}
-        />
+        <View style={styles.searchRow}>
+          <View style={styles.searchBarContainer}>
+            <SearchBar
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              onSubmit={handleSearchSubmit}
+              onFilterPress={handleFilterPress}
+              placeholder="Bugün ne yemek istersin?"
+              suggestions={suggestions}
+              onSuggestionPress={handleSuggestionPress}
+              filterCount={getActiveFilterCount()}
+            />
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.nearbyButton, { 
+              backgroundColor: locationLoading ? colors.textSecondary : colors.primary,
+              opacity: locationLoading ? 0.7 : 1
+            }]}
+            onPress={async () => {
+              if (locationLoading) return;
+              
+              const userCoords = await getUserLocation();
+              if (userCoords) {
+                setSearchQuery('yakınımda');
+                const allFoods = [...firebaseFoods, ...MOCK_FOODS, ...publishedMeals];
+                const sortedFoods = sortFoodsByRealDistance(allFoods, userCoords);
+                setSearchResults(sortedFoods);
+                setIsSearching(false);
+              }
+            }}
+            disabled={locationLoading}
+          >
+            <Text variant="caption" weight="medium" style={{ color: 'white', fontSize: 11 }}>
+              {locationLoading ? 'konum alınıyor...' : 'yakınımda'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      
+      {/* Categories - Fixed Header */}
+      <View style={styles.categoriesContainer}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesScroll}
+        >
+          {CATEGORIES.map((category) => (
+            <TouchableOpacity
+              key={category}
+              onPress={() => handleCategoryPress(category)}
+              style={[
+                styles.categoryButton,
+                {
+                  backgroundColor: selectedCategory === category 
+                    ? colors.primary 
+                    : 'transparent',
+                },
+              ]}
+            >
+              <Text
+                variant="body"
+                weight="medium"
+                style={{
+                  color: selectedCategory === category 
+                    ? 'white' 
+                    : colors.textSecondary,
+                  fontSize: 15, // Slightly increased from default
+                }}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
       
       <ScrollView 
@@ -671,44 +1171,7 @@ export const Home: React.FC = () => {
           </View>
         )}
 
-
-        {/* Categories */}
-        <View style={styles.categoriesContainer}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoriesScroll}
-          >
-            {CATEGORIES.map((category) => (
-              <TouchableOpacity
-                key={category}
-                onPress={() => handleCategoryPress(category)}
-                style={[
-                  styles.categoryButton,
-                  {
-                    backgroundColor: selectedCategory === category 
-                      ? colors.primary 
-                      : 'transparent',
-                  },
-                ]}
-              >
-                <Text
-                  variant="body"
-                  weight="medium"
-                  style={{
-                    color: selectedCategory === category 
-                      ? 'white' 
-                      : colors.textSecondary,
-                  }}
-                >
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Food List */}
+        {/* Food List - Vertical Layout */}
         <View style={styles.foodListContainer}>
           {loading ? (
             <View style={styles.loadingContainer}>
@@ -727,6 +1190,10 @@ export const Home: React.FC = () => {
                 currentStock={foodStocks[food.id] ?? food.currentStock}
                 onAddToCart={handleAddToCart}
                 maxDeliveryDistance={food.maxDeliveryDistance}
+                allergens={food.allergens}
+                hygieneRating={food.hygieneRating}
+                availableDeliveryOptions={food.availableDeliveryOptions}
+                isGridMode={false}
               />
             ))
           ) : (
@@ -764,7 +1231,7 @@ const styles = StyleSheet.create({
   },
   topBar: {
     paddingTop: 50, // Safe area padding
-    paddingBottom: Spacing.xl, // Increased bottom padding to extend downward
+    paddingBottom: Spacing.xs, // Reduced to xs to push icons to very bottom
     paddingHorizontal: Spacing.md,
     flexDirection: 'row',
     alignItems: 'flex-end', // Align icons to bottom
@@ -772,15 +1239,35 @@ const styles = StyleSheet.create({
     minHeight: 100, // Added minimum height for more space
     position: 'relative',
   },
-  topBarTitle: {
-    fontSize: 24,
-    color: 'white',
-    letterSpacing: 1,
+  logoContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: Spacing.xl,
+    bottom: Spacing.sm, // Reduced from lg to sm for more space
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoSlogan: {
+    fontSize: 12.5, // Increased from 11 to 12.5
+    color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
+    marginTop: 2, // Small positive margin to keep Cazi position unchanged
+    letterSpacing: 0.8,
+    fontStyle: 'italic',
+    fontWeight: '500', // Increased from 'normal' to '500' (medium)
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+  topBarTitle: {
+    fontSize: 24, // Original size
+    color: 'white',
+    letterSpacing: 1, // Original spacing
+    textAlign: 'center',
+    fontWeight: 'bold', // Original weight
+    textShadowColor: 'rgba(0, 0, 0, 0.2)', // Original shadow
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1, // Original radius
   },
   leftIcon: {
     width: 40,
@@ -789,7 +1276,40 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4, // Much closer to bottom edge
+    marginBottom: 0, // No margin - stick to very bottom
+  },
+  rightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: 0, // No margin - stick to very bottom
+  },
+  cartButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: Colors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  cartBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   rightIcon: {
     width: 40,
@@ -798,32 +1318,53 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4, // Much closer to bottom edge
   },
   content: {
     flex: 1,
+    paddingTop: 0, // Remove top padding since categories are now fixed
   },
   searchContainer: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingBottom: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 4,
+    paddingBottom: 2, // Reduced bottom padding to get closer to categories
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs, // Reduced from sm to xs
+  },
+  searchBarContainer: {
+    flex: 1, // Takes remaining space, making SearchBar narrower
+  },
+  nearbyButton: {
+    paddingHorizontal: Spacing.xs, // Reduced padding
+    paddingVertical: 6, // Reduced from 8 to 6
+    borderRadius: 16, // Slightly smaller radius
+    minWidth: 60, // Reduced from 70
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm, // Reduced from md to sm for shorter height
+    paddingHorizontal: Spacing.xs, // Further reduced to xs
+    paddingVertical: 4, // Very minimal vertical padding
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
     marginHorizontal: 0,
-    height: 44, // Fixed shorter height
+    height: 34, // Even more reduced height
   },
   searchIconContainer: {
-    marginRight: Spacing.sm,
+    marginRight: Spacing.xs, // Reduced from sm to xs
     padding: 0,
   },
   searchIcon: {
@@ -868,8 +1409,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   categoriesContainer: {
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2, // Even more reduced vertical padding
+    paddingTop: 0, // No top padding to get closer to search
+    backgroundColor: Colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   categoriesScroll: {
     flexGrow: 0,

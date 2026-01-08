@@ -66,9 +66,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
-    alignItems: 'center',
-    height: 56,
-    paddingHorizontal: Spacing.md,
+    alignItems: 'flex-end', // Changed from center to flex-end (bottom alignment)
+    height: 48, // Reduced from 56 to 48 (8px shorter)
+    paddingHorizontal: Spacing.sm, // Reduced from md to sm
+    paddingBottom: Spacing.xs, // Added bottom padding for buttons
   },
   side: {
     flex: 1,

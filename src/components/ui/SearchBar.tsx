@@ -204,11 +204,11 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 25,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    minHeight: 48,
+    borderRadius: 20, // Reduced border radius for thinner frame
+    borderWidth: 0.8, // Thinner border
+    paddingHorizontal: Spacing.sm, // Reduced horizontal padding for tighter spacing
+    paddingVertical: 3, // Even smaller vertical padding
+    minHeight: 34, // Further reduced height for thinner appearance
   },
   searchIcon: {
     marginRight: Spacing.sm,
@@ -224,9 +224,13 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     position: 'relative',
-    padding: Spacing.sm,
-    borderRadius: 20,
-    marginLeft: Spacing.sm,
+    padding: 2, // Even more reduced padding
+    borderRadius: 6, // Smaller border radius
+    marginLeft: 4, // Reduced margin
+    paddingHorizontal: 2, // Very minimal horizontal padding
+    paddingVertical: 2, // Very minimal vertical padding
+    minWidth: 24, // Smaller minimum width
+    minHeight: 24, // Smaller minimum height
   },
   filterBadge: {
     position: 'absolute',
@@ -268,5 +272,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+
 
 

@@ -4,9 +4,10 @@ import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useAuth } from '../../../context/AuthContext';
 
-// Mock notifications data
-const MOCK_NOTIFICATIONS = [
+// Mock buyer notifications data
+const BUYER_NOTIFICATIONS = [
   {
     id: '1',
     title: 'Siparişin Alındı! 🎉',
@@ -65,9 +66,97 @@ const MOCK_NOTIFICATIONS = [
   },
 ];
 
+// Mock seller notifications data
+const SELLER_NOTIFICATIONS = [
+  {
+    id: '1',
+    title: 'Yeni Sipariş! 🛒',
+    message: 'Ahmet Yılmaz Ev Yapımı Mantı için sipariş verdi.',
+    time: '5 dakika önce',
+    type: 'order',
+    read: false,
+  },
+  {
+    id: '2',
+    title: 'Sipariş Onayı Bekleniyor ⏳',
+    message: 'Zeynep Kaya\'dan gelen sipariş onayınızı bekliyor.',
+    time: '20 dakika önce',
+    type: 'order',
+    read: false,
+  },
+  {
+    id: '3',
+    title: 'Ödeme Alındı 💰',
+    message: 'Karnıyarık siparişi için ödeme başarıyla alındı.',
+    time: '45 dakika önce',
+    type: 'payment',
+    read: true,
+  },
+  {
+    id: '4',
+    title: 'Teslimat Zamanı 🚗',
+    message: 'Can Demir siparişi teslim almaya geliyor.',
+    time: '1 saat önce',
+    type: 'delivery',
+    read: true,
+  },
+  {
+    id: '5',
+    title: 'Yeni Değerlendirme ⭐',
+    message: 'Ayşe Hanım yemeğinize 5 yıldız verdi!',
+    time: '2 saat önce',
+    type: 'review',
+    read: true,
+  },
+  {
+    id: '6',
+    title: 'Stok Azalıyor 📦',
+    message: 'Baklava stokunuz 2 adet kaldı.',
+    time: '3 saat önce',
+    type: 'stock',
+    read: true,
+  },
+  {
+    id: '7',
+    title: 'Günlük Kazanç 📊',
+    message: 'Bugün 5 sipariş ile 245₺ kazandınız.',
+    time: '5 saat önce',
+    type: 'earnings',
+    read: true,
+  },
+];
+
 export const Notifications: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { userData } = useAuth();
+
+  // Determine which notifications to show based on user type
+  const getNotifications = () => {
+    if (userData?.userType === 'seller') {
+      return SELLER_NOTIFICATIONS;
+    } else if (userData?.userType === 'both') {
+      // If user is both buyer and seller, merge and sort by time
+      const combinedNotifications = [...BUYER_NOTIFICATIONS, ...SELLER_NOTIFICATIONS]
+        .sort((a, b) => {
+          // Sort by read status first (unread first), then by time
+          if (a.read !== b.read) {
+            return a.read ? 1 : -1;
+          }
+          // For time sorting, we'll use a simple approach based on the time string
+          const timeA = a.time.includes('dakika') ? parseInt(a.time) : 
+                       a.time.includes('saat') ? parseInt(a.time) * 60 : 999;
+          const timeB = b.time.includes('dakika') ? parseInt(b.time) : 
+                       b.time.includes('saat') ? parseInt(b.time) * 60 : 999;
+          return timeA - timeB;
+        });
+      return combinedNotifications;
+    } else {
+      return BUYER_NOTIFICATIONS;
+    }
+  };
+
+  const notifications = getNotifications();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -77,17 +166,33 @@ export const Notifications: React.FC = () => {
         return '🚗';
       case 'review':
         return '⭐';
+      case 'payment':
+        return '💰';
+      case 'stock':
+        return '📦';
+      case 'earnings':
+        return '📊';
       default:
         return '📱';
     }
   };
 
+  const getTopBarTitle = () => {
+    if (userData?.userType === 'both') {
+      return 'Bildirimler (Alıcı & Satıcı)';
+    } else if (userData?.userType === 'seller') {
+      return 'Bildirimler (Satıcı)';
+    } else {
+      return 'Bildirimler (Alıcı)';
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Bildirimler" />
+      <TopBar title={getTopBarTitle()} />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {MOCK_NOTIFICATIONS.length === 0 ? (
+        {notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text variant="heading" center>
               Bildirim Yok
@@ -98,7 +203,7 @@ export const Notifications: React.FC = () => {
           </View>
         ) : (
           <View style={styles.notificationsContainer}>
-            {MOCK_NOTIFICATIONS.map((notification) => (
+            {notifications.map((notification) => (
               <Card 
                 key={notification.id} 
                 variant="default" 
@@ -126,6 +231,23 @@ export const Notifications: React.FC = () => {
                       >
                         {notification.title}
                       </Text>
+                      {userData?.userType === 'both' && (
+                        <View style={[
+                          styles.userTypeBadge,
+                          {
+                            backgroundColor: SELLER_NOTIFICATIONS.includes(notification) 
+                              ? colors.primary 
+                              : colors.secondary
+                          }
+                        ]}>
+                          <Text variant="caption" style={[
+                            styles.userTypeBadgeText,
+                            { color: 'white' }
+                          ]}>
+                            {SELLER_NOTIFICATIONS.includes(notification) ? 'Satıcı' : 'Alıcı'}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                     <Text variant="caption" color="textSecondary">
                       {notification.time}
@@ -211,7 +333,20 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
+  userTypeBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  userTypeBadgeText: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
 });
+
+
+
 
 
 
