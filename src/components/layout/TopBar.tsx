@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, StyleSheet, StatusBar } from 'react-native';
+import { View, StyleSheet, StatusBar, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { Text } from '../ui/Text';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 interface TopBarProps {
   title?: string;
   leftComponent?: React.ReactNode;
   rightComponent?: React.ReactNode;
   transparent?: boolean;
+  onBack?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -17,10 +19,28 @@ export const TopBar: React.FC<TopBarProps> = ({
   leftComponent,
   rightComponent,
   transparent = false,
+  onBack,
 }) => {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+
+  // Create back button if onBack is provided and no leftComponent exists
+  const renderLeftComponent = () => {
+    if (leftComponent) return leftComponent;
+    if (onBack) {
+      return (
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <FontAwesome name="arrow-left" size={20} color={colors.text} />
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  };
 
   return (
     <>
@@ -40,7 +60,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       >
         <View style={styles.content}>
           <View style={styles.side}>
-            {leftComponent}
+            {renderLeftComponent()}
           </View>
           
           <View style={styles.center}>
@@ -76,6 +96,12 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 2,
+  },
+  backButton: {
+    padding: Spacing.xs,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

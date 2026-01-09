@@ -160,37 +160,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="seller"
         options={{
-          title: 'Satıcı',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon 
-              name="user" 
-              color={color}
-              style={{ fontSize: focused ? 22 : 20 }}
-            />
-          ),
-          tabBarButton: (props) => {
-            const { onPress, ...otherProps } = props;
-            return (
-              <TouchableOpacity
-                {...otherProps}
-                activeOpacity={0.6}
-                style={[props.style, { 
-                  flex: 1, 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  paddingVertical: 8,
-                  paddingHorizontal: 4,
-                }]}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                onPress={() => {
-                  console.log('🔥 Seller tab button pressed!');
-                  router.push('/(seller)/dashboard');
-                }}
-              >
-                {props.children}
-              </TouchableOpacity>
-            );
-          },
+          href: null, // Hide from tab bar
         }}
       />
       {/* Hidden screens - accessible via navigation but not in tabs */}
@@ -232,6 +202,12 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="order-tracking"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="food-detail-simple"
         options={{
           href: null, // Hide from tab bar
         }}

@@ -210,20 +210,29 @@ export const ChatDetail: React.FC = () => {
       {/* Message Input */}
       <View style={[styles.inputContainer, { backgroundColor: colors.background }]}>
         <View style={styles.inputRow}>
-          <Input
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Mesaj yazın..."
-            style={styles.messageInput}
-            containerStyle={styles.inputContainerStyle}
-          />
-          <Button
-            variant="primary"
+          <View style={styles.inputWrapper}>
+            <Input
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Mesaj yazın..."
+              style={styles.messageInput}
+              containerStyle={styles.inputContainerStyle}
+              multiline
+              maxLength={500}
+            />
+          </View>
+          <TouchableOpacity
             onPress={handleSendMessage}
-            style={styles.sendButton}
+            style={[styles.sendButton, { backgroundColor: message.trim() ? colors.primary : colors.border }]}
+            disabled={!message.trim()}
+            activeOpacity={0.7}
           >
-            Gönder
-          </Button>
+            <FontAwesome 
+              name="send" 
+              size={16} 
+              color={message.trim() ? 'white' : colors.textSecondary} 
+            />
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -300,20 +309,39 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
     padding: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: Spacing.sm,
   },
-  messageInput: {
+  inputWrapper: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 20,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    minHeight: 40,
+    maxHeight: 100,
+  },
+  messageInput: {
+    minHeight: 24,
+    maxHeight: 80,
+    paddingVertical: 0,
+    fontSize: 16,
   },
   inputContainerStyle: {
     marginBottom: 0,
+    backgroundColor: 'transparent',
   },
   sendButton: {
-    minWidth: 80,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
   },
 });
 

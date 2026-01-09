@@ -44,6 +44,10 @@ export const SellerProfile: React.FC = () => {
   const [specialties, setSpecialties] = useState(SELLER_DATA.specialties);
   const [newSpecialty, setNewSpecialty] = useState('');
 
+  // Katlanabilir bölümler state'leri
+  const [identityExpanded, setIdentityExpanded] = useState(false);
+  const [bankDetailsExpanded, setBankDetailsExpanded] = useState(false);
+
   // Kimlik ve banka bilgileri state'leri
   const [identityImages, setIdentityImages] = useState({
     front: null as string | null,
@@ -594,37 +598,53 @@ export const SellerProfile: React.FC = () => {
 
         {/* Identity Documents */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-          <View style={styles.identityHeader}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Kimlik Doğrulama
-            </Text>
-            <View style={[
-              styles.verificationStatus,
-              {
-                backgroundColor: identityVerification.status === 'verified' ? colors.success + '20' :
-                               identityVerification.status === 'rejected' ? colors.error + '20' :
-                               colors.warning + '20'
-              }
-            ]}>
-              <Text variant="caption" style={{
-                color: identityVerification.status === 'verified' ? colors.success :
-                       identityVerification.status === 'rejected' ? colors.error :
-                       colors.warning
-              }}>
-                {identityVerification.status === 'verified' ? '✓ Doğrulandı' :
-                 identityVerification.status === 'rejected' ? '✗ Reddedildi' :
-                 '⏳ Beklemede'}
+          <TouchableOpacity
+            onPress={() => setIdentityExpanded(!identityExpanded)}
+            style={styles.collapsibleHeader}
+            activeOpacity={0.7}
+          >
+            <View style={styles.identityHeader}>
+              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+                Kimlik Doğrulama
               </Text>
+              <View style={styles.headerRight}>
+                <View style={[
+                  styles.verificationStatus,
+                  {
+                    backgroundColor: identityVerification.status === 'verified' ? colors.success + '20' :
+                                   identityVerification.status === 'rejected' ? colors.error + '20' :
+                                   colors.warning + '20'
+                  }
+                ]}>
+                  <Text variant="caption" style={{
+                    color: identityVerification.status === 'verified' ? colors.success :
+                           identityVerification.status === 'rejected' ? colors.error :
+                           colors.warning
+                  }}>
+                    {identityVerification.status === 'verified' ? '✓ Doğrulandı' :
+                     identityVerification.status === 'rejected' ? '✗ Reddedildi' :
+                     '⏳ Beklemede'}
+                  </Text>
+                </View>
+                <FontAwesome 
+                  name={identityExpanded ? "chevron-up" : "chevron-down"} 
+                  size={16} 
+                  color={colors.textSecondary}
+                  style={{ marginLeft: 8 }}
+                />
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
           
-          {identityVerification.status === 'rejected' && identityVerification.rejectionReason && (
-            <View style={[styles.rejectionNote, { backgroundColor: colors.error + '10', borderColor: colors.error }]}>
-              <Text variant="caption" color="error">
-                ❌ Red Sebebi: {identityVerification.rejectionReason}
-              </Text>
-            </View>
-          )}
+          {identityExpanded && (
+            <>
+              {identityVerification.status === 'rejected' && identityVerification.rejectionReason && (
+                <View style={[styles.rejectionNote, { backgroundColor: colors.error + '10', borderColor: colors.error }]}>
+                  <Text variant="caption" color="error">
+                    ❌ Red Sebebi: {identityVerification.rejectionReason}
+                  </Text>
+                </View>
+              )}
           
           <View style={styles.identityContainer}>
             {/* Kimlik Ön Yüz */}
@@ -685,26 +705,43 @@ export const SellerProfile: React.FC = () => {
             </View>
           )}
 
-          <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
-            <FontAwesome name="info-circle" size={16} color={colors.warning} />
-            <Text variant="caption" color="warning" style={styles.warningText}>
-              Kimlik belgeleriniz güvenlik amacıyla şifrelenerek saklanır ve sadece doğrulama için kullanılır. 
-              Gerçek adınız kimlik belgenizdeki isimle eşleşmelidir.
-            </Text>
-          </View>
+              <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
+                <FontAwesome name="info-circle" size={16} color={colors.warning} />
+                <Text variant="caption" color="warning" style={styles.warningText}>
+                  Kimlik belgeleriniz güvenlik amacıyla şifrelenerek saklanır ve sadece doğrulama için kullanılır. 
+                  Gerçek adınız kimlik belgenizdeki isimle eşleşmelidir.
+                </Text>
+              </View>
+            </>
+          )}
         </Card>
 
         {/* Bank Details */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Banka Bilgileri
-          </Text>
+          <TouchableOpacity
+            onPress={() => setBankDetailsExpanded(!bankDetailsExpanded)}
+            style={styles.collapsibleHeader}
+            activeOpacity={0.7}
+          >
+            <View style={styles.bankHeader}>
+              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+                Banka Bilgileri
+              </Text>
+              <FontAwesome 
+                name={bankDetailsExpanded ? "chevron-up" : "chevron-down"} 
+                size={16} 
+                color={colors.textSecondary}
+              />
+            </View>
+          </TouchableOpacity>
           
-          {isEditing ? (
-            <View style={styles.formContainer}>
-              <FormField
-                label="Banka Adı"
-                value={bankDetails.bankName}
+          {bankDetailsExpanded && (
+            <>
+              {isEditing ? (
+                <View style={styles.formContainer}>
+                  <FormField
+                    label="Banka Adı"
+                    value={bankDetails.bankName}
                 onChangeText={(text) => setBankDetails(prev => ({ ...prev, bankName: text }))}
                 placeholder="Örn: Türkiye İş Bankası"
               />
@@ -759,8 +796,10 @@ export const SellerProfile: React.FC = () => {
                 <Text variant="body" color="textSecondary" style={styles.emptyStateText}>
                   Banka bilgileri henüz eklenmemiş. Düzenle butonuna tıklayarak ekleyebilirsiniz.
                 </Text>
+                )}
+              </View>
               )}
-            </View>
+            </>
           )}
 
         </Card>
@@ -1140,6 +1179,19 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: Colors.light.primary,
+  },
+  // Katlanabilir bölüm stilleri
+  collapsibleHeader: {
+    marginBottom: Spacing.sm,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bankHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 });
 
