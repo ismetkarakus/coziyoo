@@ -46,23 +46,6 @@ export const TermsAndConditions: React.FC = () => {
       <TopBar 
         title="Terms & Conditions"
         subtitle="UK Food Marketplace"
-        leftComponent={
-          <Button variant="outline" onPress={() => {
-            if (!termsAccepted) {
-              Alert.alert(
-                'Terms & Conditions Required',
-                'You must read and accept the Terms & Conditions before proceeding.',
-                [
-                  { text: 'OK', style: 'default' }
-                ]
-              );
-            } else {
-              router.back();
-            }
-          }}>
-            ← Back
-          </Button>
-        }
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

@@ -30,6 +30,7 @@ export const SellerProfile: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const [isEditing, setIsEditing] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [forceUpdate, setForceUpdate] = useState(0);
   const [formData, setFormData] = useState({
     name: SELLER_DATA.name,
     nickname: '', // Nickname alanı eklendi
@@ -74,6 +75,11 @@ export const SellerProfile: React.FC = () => {
   useEffect(() => {
     loadProfileData();
   }, []);
+
+  // Debug avatar changes
+  useEffect(() => {
+    console.log('Avatar URI changed:', avatarUri);
+  }, [avatarUri]);
 
   const loadProfileData = async () => {
     try {
@@ -175,11 +181,15 @@ export const SellerProfile: React.FC = () => {
     });
 
     if (!result.canceled) {
-      setAvatarUri(result.assets[0].uri);
+      const newAvatarUri = result.assets[0].uri;
+      console.log('New avatar from camera:', newAvatarUri);
+      setAvatarUri(newAvatarUri);
+      setForceUpdate(prev => prev + 1); // Force component re-render
     }
   };
 
   const pickAvatarImage = async () => {
+    console.log('Opening image picker...');
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -187,8 +197,19 @@ export const SellerProfile: React.FC = () => {
       quality: 0.8,
     });
 
-    if (!result.canceled) {
-      setAvatarUri(result.assets[0].uri);
+    console.log('Image picker result:', result);
+
+    if (!result.canceled && result.assets && result.assets[0]) {
+      const newAvatarUri = result.assets[0].uri;
+      console.log('Setting new avatar URI:', newAvatarUri);
+      console.log('Current avatar URI before:', avatarUri);
+      
+      setAvatarUri(newAvatarUri);
+      setForceUpdate(prev => prev + 1); // Force component re-render
+      
+      console.log('Avatar URI set, force update triggered');
+    } else {
+      console.log('Image picker was canceled or no assets');
     }
   };
 
@@ -347,9 +368,12 @@ export const SellerProfile: React.FC = () => {
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
               <Image
-                source={{ uri: avatarUri || SELLER_DATA.avatar }}
+                key={`${avatarUri || 'default'}-${forceUpdate}`} // Force re-render when avatar changes
+                source={avatarUri ? { uri: avatarUri } : { uri: SELLER_DATA.avatar }}
                 style={styles.avatar}
                 defaultSource={{ uri: 'https://via.placeholder.com/100x100/7FAF9A/FFFFFF?text=S' }}
+                onLoad={() => console.log('Avatar loaded:', avatarUri)}
+                onError={(error) => console.log('Avatar error:', error)}
               />
               {isEditing && (
                 <TouchableOpacity 

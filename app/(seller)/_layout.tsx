@@ -63,6 +63,18 @@ export default function SellerLayout() {
           headerShown: false,
         }} 
       />
+      <Stack.Screen 
+        name="manage-meals" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="wallet" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
     </Stack>
   );
 }

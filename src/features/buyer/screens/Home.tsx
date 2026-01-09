@@ -600,7 +600,7 @@ export const Home: React.FC = () => {
     }
   };
 
-  const handleAddToCart = async (foodId: string, quantity: number) => {
+  const handleAddToCart = async (foodId: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => {
     // Check both Firebase foods and mock foods
     const firebaseFood = firebaseFoods.find(f => f.id === foodId);
     const mockFood = MOCK_FOODS.find(f => f.id === foodId);
@@ -624,6 +624,14 @@ export const Home: React.FC = () => {
             await foodService.updateFoodStock(foodId, newStock, sendLowStockNotification);
           }
           
+          // Determine available options
+          const availableOptions: ('pickup' | 'delivery')[] = [];
+          if (food.hasPickup) availableOptions.push('pickup');
+          if (food.hasDelivery) availableOptions.push('delivery');
+          
+          // Set default delivery option if not provided
+          const finalDeliveryOption = deliveryOption || (availableOptions.length === 1 ? availableOptions[0] : undefined);
+          
           addToCart({
             id: food.id!,
             name: food.name,
@@ -632,6 +640,8 @@ export const Home: React.FC = () => {
             imageUrl: food.imageUrl || undefined,
             currentStock: newStock,
             dailyStock: food.dailyStock || 0,
+            deliveryOption: finalDeliveryOption,
+            availableOptions: availableOptions,
           }, quantity);
           
           console.log(`Added ${quantity} of ${food.name} to cart. Remaining stock: ${newStock}`);

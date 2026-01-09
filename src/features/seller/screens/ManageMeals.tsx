@@ -140,10 +140,6 @@ export const ManageMeals: React.FC = () => {
     router.push(`/(seller)/edit-meal?mealData=${mealData}`);
   };
 
-  const handleBackPress = () => {
-    router.back();
-  };
-
   const handleMealPress = (meal: Meal) => {
     // Get seller name from profile (nickname preferred)
     let cookName = 'Satıcı';
@@ -236,10 +232,10 @@ export const ManageMeals: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Yemeklerimi Yönet"
+        title="Yemeklerimi Yönet" 
         leftComponent={
           <TouchableOpacity 
-            onPress={handleBackPress}
+            onPress={() => router.back()}
             style={styles.backButton}
             activeOpacity={0.7}
           >
@@ -342,8 +338,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backButton: {
-    padding: Spacing.sm,
-    marginLeft: -Spacing.sm,
+    padding: Spacing.xs,
+    borderRadius: 8,
   },
   tabContainer: {
     flexDirection: 'row',

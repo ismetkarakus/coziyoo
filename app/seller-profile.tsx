@@ -64,6 +64,7 @@ const getAllFoodsForSeller = (cookName: string) => {
       currentStock: 8,
       dailyStock: 10,
       maxDeliveryDistance: 3,
+      availableDeliveryOptions: ['pickup', 'delivery'],
     },
     {
       id: '9',
@@ -78,6 +79,7 @@ const getAllFoodsForSeller = (cookName: string) => {
       availableDates: '17-24 Ocak',
       currentStock: 7,
       dailyStock: 10,
+      availableDeliveryOptions: ['pickup', 'delivery'],
     },
     {
       id: '15',
@@ -93,6 +95,7 @@ const getAllFoodsForSeller = (cookName: string) => {
       currentStock: 8,
       dailyStock: 10,
       maxDeliveryDistance: 2,
+      availableDeliveryOptions: ['pickup', 'delivery'],
     },
     {
       id: '21',
@@ -108,6 +111,7 @@ const getAllFoodsForSeller = (cookName: string) => {
       currentStock: 12,
       dailyStock: 15,
       maxDeliveryDistance: 1.5,
+      availableDeliveryOptions: ['pickup', 'delivery'],
     },
     // Add more sellers' foods here...
   ];
@@ -120,6 +124,7 @@ export default function SellerProfileScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const params = useLocalSearchParams();
   const { addToCart } = useCart();
+  const [foodStocks, setFoodStocks] = useState<{ [key: string]: number }>({});
   
   const cookName = params.cookName as string;
   const sellerData = SELLER_DATA[cookName];
@@ -134,17 +139,44 @@ export default function SellerProfileScreen() {
     return acc;
   }, {} as { [key: string]: any[] });
 
-  const handleAddToCart = (foodId: string, quantity: number) => {
+  const handleAddToCart = (foodId: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => {
     const food = sellerFoods.find(f => f.id === foodId);
-    if (food) {
-      addToCart({
-        id: food.id,
-        name: food.name,
-        price: food.price,
-        quantity,
-        cookName: food.cookName,
-        imageUrl: '',
-      });
+    if (food && quantity > 0) {
+      // Get current stock (from foodStocks state or original stock)
+      const currentStock = foodStocks[foodId] ?? food.currentStock ?? 0;
+      
+      if (currentStock >= quantity) {
+        // Update local stock state immediately for UI feedback
+        const newStock = currentStock - quantity;
+        setFoodStocks(prev => ({
+          ...prev,
+          [foodId]: newStock
+        }));
+        
+        // Determine available options
+        const availableOptions: ('pickup' | 'delivery')[] = [];
+        if (food.hasPickup) availableOptions.push('pickup');
+        if (food.hasDelivery) availableOptions.push('delivery');
+        
+        // Set default delivery option if not provided
+        const finalDeliveryOption = deliveryOption || (availableOptions.length === 1 ? availableOptions[0] : undefined);
+        
+        addToCart({
+          id: food.id,
+          name: food.name,
+          price: food.price,
+          cookName: food.cookName,
+          imageUrl: '',
+          currentStock: newStock,
+          dailyStock: food.dailyStock,
+          deliveryOption: finalDeliveryOption,
+          availableOptions: availableOptions,
+        }, quantity);
+        
+        console.log(`Added ${quantity} of ${food.name} to cart from seller profile. Remaining stock: ${newStock}`);
+      } else {
+        console.log(`Not enough stock for ${food.name}. Available: ${currentStock}, Requested: ${quantity}`);
+      }
     }
   };
 
@@ -246,6 +278,7 @@ export default function SellerProfileScreen() {
                 <FoodCard
                   key={food.id}
                   {...food}
+                  currentStock={foodStocks[food.id] ?? food.currentStock}
                   onAddToCart={handleAddToCart}
                   isPreview={false}
                 />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Image } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -59,6 +59,14 @@ export const PersonalInfo: React.FC = () => {
   const savePersonalInfo = async () => {
     try {
       await AsyncStorage.setItem('personalInfo', JSON.stringify(formData));
+      
+      // Ana profil sayfası için de avatar'ı kaydet
+      const buyerProfile = {
+        avatarUri: formData.avatar,
+        updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem('buyerProfile', JSON.stringify(buyerProfile));
+      
       setIsEditing(false);
       Alert.alert('Başarılı', 'Kişisel bilgileriniz güncellendi.');
     } catch (error) {
@@ -109,7 +117,11 @@ export const PersonalInfo: React.FC = () => {
             >
               <View style={[styles.avatar, { borderColor: colors.border }]}>
                 {formData.avatar ? (
-                  <Text style={styles.avatarImage}>{formData.avatar.startsWith('http') ? '👤' : '📷'}</Text>
+                  <Image 
+                    source={{ uri: formData.avatar }}
+                    style={styles.avatarImage}
+                    defaultSource={{ uri: 'https://via.placeholder.com/100x100/7FAF9A/FFFFFF?text=A' }}
+                  />
                 ) : (
                   <WebSafeIcon name="user" size={40} color={colors.textSecondary} />
                 )}
@@ -250,7 +262,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   avatarImage: {
-    fontSize: 40,
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
   },
   editBadge: {
     position: 'absolute',

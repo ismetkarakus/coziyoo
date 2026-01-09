@@ -8,6 +8,7 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import * as ImagePicker from 'expo-image-picker';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useAuth } from '../../../context/AuthContext';
 import { foodService } from '../../../services/foodService';
 import { storageService } from '../../../services/storageService';
@@ -689,8 +690,12 @@ export const AddMeal: React.FC = () => {
       <TopBar 
         title="Yemek Ekle" 
         leftComponent={
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text variant="body" style={{ fontSize: 24 }}>←</Text>
+          <TouchableOpacity 
+            onPress={() => router.back()}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <FontAwesome name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />
@@ -1119,6 +1124,10 @@ export const AddMeal: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  backButton: {
+    padding: Spacing.xs,
+    borderRadius: 8,
   },
   keyboardAvoidingView: {
     flex: 1,

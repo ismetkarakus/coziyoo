@@ -32,11 +32,11 @@ const MENU_ITEMS = [
     route: '/(seller)/manage-meals',
   },
   {
-    id: 'orders',
-    title: 'Siparişler',
-    description: 'Gelen siparişleri yönet',
-    icon: '📋',
-    route: '/(seller)/orders',
+    id: 'wallet',
+    title: 'Cüzdanım',
+    description: 'Kazançlar ve para çekme',
+    icon: '💰',
+    route: '/(seller)/wallet',
   },
   {
     id: 'messages',
@@ -171,27 +171,40 @@ export const SellerPanel: React.FC = () => {
             </Text>
           
           <View style={styles.statsGrid}>
-            <Card variant="default" padding="md" style={styles.statCard}>
-              <Text variant="title" weight="bold" color="primary" center>
-                12
-              </Text>
-              <Text variant="caption" center color="textSecondary">
-                Sipariş
-              </Text>
-            </Card>
-            
-            <TouchableOpacity onPress={() => handleMenuPress('/(seller)/earnings')}>
-              <Card variant="default" padding="md" style={styles.statCard}>
-                <Text variant="title" weight="bold" color="success" center>
-                  ₺285
+            <TouchableOpacity onPress={() => handleMenuPress('/(seller)/orders')} style={styles.statCard}>
+              <Card variant="default" padding="sm">
+                <Text variant="title" weight="bold" color="primary" center>
+                  12
                 </Text>
                 <Text variant="caption" center color="textSecondary">
-                  Kazanç
+                  Sipariş
                 </Text>
               </Card>
             </TouchableOpacity>
             
-            <Card variant="default" padding="md" style={styles.statCard}>
+            <TouchableOpacity onPress={() => handleMenuPress('/(seller)/wallet')} style={styles.statCard}>
+              <Card variant="default" padding="sm">
+                <Text variant="title" weight="bold" color="success" center>
+                  ₺425
+                </Text>
+                <Text variant="caption" center color="textSecondary">
+                  Cüzdan
+                </Text>
+              </Card>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => handleMenuPress('/(seller)/messages')} style={styles.statCard}>
+              <Card variant="default" padding="sm">
+                <Text variant="title" weight="bold" color="info" center>
+                  3
+                </Text>
+                <Text variant="caption" center color="textSecondary">
+                  Mesaj
+                </Text>
+              </Card>
+            </TouchableOpacity>
+            
+            <Card variant="default" padding="sm" style={styles.statCard}>
               <Text variant="title" weight="bold" color="warning" center>
                 4.8
               </Text>
@@ -495,19 +508,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statsContainer: {
-    padding: Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingHorizontal: 12,
+    paddingVertical: Spacing.sm,
+    paddingBottom: Spacing.md,
   },
   statsTitle: {
     marginBottom: Spacing.md,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: 6,
   },
   statCard: {
     flex: 1,
     marginBottom: 0,
+    minWidth: 0,
+    maxWidth: '24%', // 4 kutu için eşit dağılım
+  },
+  compactCard: {
+    minHeight: 60, // Daha düşük yükseklik
   },
   userCard: {
     marginHorizontal: Spacing.md,

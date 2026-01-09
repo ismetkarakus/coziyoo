@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -68,6 +69,48 @@ const USER_DATA = {
 export const Profile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [forceUpdate, setForceUpdate] = useState(0);
+
+  // Load profile data on component mount
+  useEffect(() => {
+    loadProfileData();
+  }, []);
+
+  const loadProfileData = async () => {
+    try {
+      // Önce buyerProfile'dan yükle
+      const savedProfile = await AsyncStorage.getItem('buyerProfile');
+      if (savedProfile) {
+        const profileData = JSON.parse(savedProfile);
+        setAvatarUri(profileData.avatarUri || null);
+      } else {
+        // Eğer buyerProfile yoksa personalInfo'dan yükle
+        const personalInfo = await AsyncStorage.getItem('personalInfo');
+        if (personalInfo) {
+          const personalData = JSON.parse(personalInfo);
+          setAvatarUri(personalData.avatar || null);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading buyer profile data:', error);
+    }
+  };
+
+  const saveProfileData = async () => {
+    try {
+      const profileData = {
+        avatarUri,
+        updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem('buyerProfile', JSON.stringify(profileData));
+      console.log('Buyer profile data saved successfully');
+    } catch (error) {
+      console.error('Error saving buyer profile data:', error);
+      throw error;
+    }
+  };
+
 
   const handleItemPress = (itemId: string) => {
     switch (itemId) {
@@ -82,6 +125,9 @@ export const Profile: React.FC = () => {
         break;
       case 'location-settings':
         router.push('/location-settings');
+        break;
+      case 'wallet':
+        router.push('/buyer-wallet');
         break;
       case 'order-history':
         router.push('/order-history');
@@ -140,9 +186,12 @@ export const Profile: React.FC = () => {
           <View style={styles.userInfo}>
             <View style={styles.avatarContainer}>
               <Image 
-                source={{ uri: USER_DATA.avatar }}
+                key={`${avatarUri || 'default'}-${forceUpdate}`}
+                source={avatarUri ? { uri: avatarUri } : { uri: USER_DATA.avatar }}
                 style={styles.avatarImage}
                 defaultSource={{ uri: 'https://via.placeholder.com/150x150/7FAF9A/FFFFFF?text=A' }}
+                onLoad={() => console.log('Buyer avatar loaded:', avatarUri)}
+                onError={(error) => console.log('Buyer avatar error:', error)}
               />
             </View>
             <View style={styles.userDetails}>

@@ -56,7 +56,7 @@ interface FoodCardProps {
   availableDates?: string;
   currentStock?: number;
   dailyStock?: number;
-  onAddToCart?: (id: string, quantity: number) => void;
+  onAddToCart?: (id: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => void;
   maxDeliveryDistance?: number; // Satıcının belirlediği maksimum teslimat mesafesi
   country?: string; // Ülke bilgisi
   category?: string; // Yemek kategorisi
@@ -202,7 +202,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
             }, localQuantity);
             
             // Call parent callback
-            onAddToCart?.(id, localQuantity);
+            onAddToCart?.(id, localQuantity, selectedDeliveryType!);
             
             // Reset local quantity
             setLocalQuantity(0);
