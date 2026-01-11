@@ -59,50 +59,124 @@ export const ManageMeals: React.FC = () => {
       const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
       const expiredMealsJson = await AsyncStorage.getItem('expiredMeals');
       
+      let allMeals: Meal[] = [];
+      
+      // Load published meals from AsyncStorage
       if (publishedMealsJson) {
         const publishedMeals = JSON.parse(publishedMealsJson);
-        
-        // Check for expired meals
-        const currentDate = new Date();
-        const activeMeals: Meal[] = [];
-        const newExpiredMeals: Meal[] = [];
-        
-        publishedMeals.forEach((meal: Meal) => {
-          if (meal.endDate) {
-            const [day, month, year] = meal.endDate.split('/').map(Number);
-            const endDate = new Date(year, month - 1, day);
-            
-            if (endDate < currentDate) {
-              newExpiredMeals.push(meal);
-            } else {
-              activeMeals.push(meal);
-            }
+        allMeals = [...publishedMeals];
+      }
+      
+      // Add MOCK_FOODS for demo purposes (Ayşe Hanım'ın yemekleri)
+      const mockMealsForDemo = [
+        {
+          id: 'mock_1',
+          name: 'Ev Yapımı Mantı',
+          cookName: 'Ayşe Hanım',
+          price: 35,
+          category: 'Ana Yemek',
+          description: 'El açması hamur ile hazırlanmış geleneksel mantı',
+          imageUrl: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=300&fit=crop',
+          availableDates: '15-20 Ocak',
+          currentStock: 8,
+          dailyStock: 10,
+          hasPickup: true,
+          hasDelivery: true,
+          createdAt: new Date().toISOString(),
+          startDate: '15/01/2024',
+          endDate: '20/01/2024',
+        },
+        {
+          id: 'mock_9',
+          name: 'Menemen',
+          cookName: 'Ayşe Hanım',
+          price: 22,
+          category: 'Kahvaltı',
+          description: 'Taze sebzeler ve yumurta ile hazırlanmış menemen',
+          imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
+          availableDates: '17-24 Ocak',
+          currentStock: 7,
+          dailyStock: 10,
+          hasPickup: true,
+          hasDelivery: true,
+          createdAt: new Date().toISOString(),
+          startDate: '17/01/2024',
+          endDate: '24/01/2024',
+        },
+        {
+          id: 'mock_17',
+          name: 'Vejetaryen Köfte',
+          cookName: 'Ayşe Hanım',
+          price: 24,
+          category: 'Vejetaryen',
+          description: 'Mercimek ve sebze karışımı ile hazırlanmış köfte',
+          imageUrl: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=400&h=300&fit=crop',
+          availableDates: '17-24 Ocak',
+          currentStock: 8,
+          dailyStock: 10,
+          hasPickup: true,
+          hasDelivery: true,
+          createdAt: new Date().toISOString(),
+          startDate: '17/01/2024',
+          endDate: '24/01/2024',
+        },
+        {
+          id: 'mock_23',
+          name: 'Ev Yapımı Sütlaç',
+          cookName: 'Ayşe Hanım',
+          price: 16,
+          category: 'Tatlı/Kek',
+          description: 'Geleneksel tarif ile hazırlanmış sütlaç',
+          imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop',
+          availableDates: '18-25 Ocak',
+          currentStock: 12,
+          dailyStock: 15,
+          hasPickup: true,
+          hasDelivery: true,
+          createdAt: new Date().toISOString(),
+          startDate: '18/01/2024',
+          endDate: '25/01/2024',
+        },
+      ];
+      
+      // Add mock meals for demo (in real app, this would be user-specific)
+      allMeals = [...allMeals, ...mockMealsForDemo];
+      
+      // Check for expired meals
+      const currentDate = new Date();
+      const activeMeals: Meal[] = [];
+      const newExpiredMeals: Meal[] = [];
+      
+      allMeals.forEach((meal: Meal) => {
+        if (meal.endDate) {
+          const [day, month, year] = meal.endDate.split('/').map(Number);
+          const endDate = new Date(year, month - 1, day);
+          
+          if (endDate < currentDate) {
+            newExpiredMeals.push(meal);
           } else {
             activeMeals.push(meal);
           }
-        });
-        
-        // Update meals if any expired
-        if (newExpiredMeals.length > 0) {
-          await AsyncStorage.setItem('publishedMeals', JSON.stringify(activeMeals));
-          
-          // Add to expired meals
-          const existingExpired = expiredMealsJson ? JSON.parse(expiredMealsJson) : [];
-          const updatedExpired = [...existingExpired, ...newExpiredMeals];
-          await AsyncStorage.setItem('expiredMeals', JSON.stringify(updatedExpired));
-          
-          setExpiredMeals(updatedExpired);
         } else {
-          setExpiredMeals(expiredMealsJson ? JSON.parse(expiredMealsJson) : []);
+          activeMeals.push(meal);
         }
-        
-        setMeals(activeMeals);
+      });
+      
+      setMeals(activeMeals);
+      
+      // Load existing expired meals and add new ones
+      if (expiredMealsJson) {
+        const existingExpired = JSON.parse(expiredMealsJson);
+        const allExpiredMeals = [...existingExpired, ...newExpiredMeals];
+        setExpiredMeals(allExpiredMeals);
       } else {
-        setMeals([]);
-        setExpiredMeals(expiredMealsJson ? JSON.parse(expiredMealsJson) : []);
+        setExpiredMeals(newExpiredMeals);
       }
+      
     } catch (error) {
       console.error('Error loading meals:', error);
+      setMeals([]);
+      setExpiredMeals([]);
     }
   };
 
