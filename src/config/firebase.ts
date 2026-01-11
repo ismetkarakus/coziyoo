@@ -18,10 +18,10 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
-let db;
-let auth;
-let storage;
+let app: any;
+let db: any;
+let auth: any;
+let storage: any;
 
 const initializeFirebase = async () => {
   try {

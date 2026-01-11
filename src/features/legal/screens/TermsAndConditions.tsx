@@ -82,7 +82,7 @@ export const TermsAndConditions: React.FC = () => {
               • <Text weight="semibold">Local council registration</Text> as a food business
             </Text>
             <Text variant="body" style={styles.bulletPoint}>
-              • <Text weight="semibold">Accurate allergen information</Text> (UK Natasha's Law)
+              • <Text weight="semibold">Accurate allergen information</Text> (Food Safety Regulations)
             </Text>
             <Text variant="body" style={styles.bulletPoint}>
               • <Text weight="semibold">Food hygiene certificates</Text> and ratings

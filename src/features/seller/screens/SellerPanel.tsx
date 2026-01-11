@@ -8,44 +8,74 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
+import { useCountry } from '../../../context/CountryContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 
-const MENU_ITEMS = [
-  {
-    id: 'profile',
-    title: 'Satıcı Profili',
-    description: 'Profil bilgilerini düzenle',
-    icon: '👤',
-    route: '/(seller)/profile',
-  },
-  {
-    id: 'add-meal',
-    title: 'Yemek Ekle',
-    description: 'Yeni yemek menüye ekle',
-    icon: '🍽️',
-    route: '/(seller)/add-meal',
-  },
-  {
-    id: 'manage-meals',
-    title: 'Yemeklerimi Yönet',
-    description: 'Yemekleri düzenle, sil veya güncelle',
-    icon: '📝',
-    route: '/(seller)/manage-meals',
-  },
-  {
-    id: 'wallet',
-    title: 'Cüzdanım',
-    description: 'Kazançlar ve para çekme',
-    icon: '💰',
-    route: '/(seller)/wallet',
-  },
-  {
-    id: 'messages',
-    title: 'Mesajlar',
-    description: 'Müşterilerle mesajlaş',
-    icon: '💬',
-    route: '/(seller)/messages',
-  },
-];
+const getMenuItemsForCountry = (countryCode: string) => {
+  if (countryCode === 'TR') {
+    return [
+      {
+        id: 'profile',
+        title: 'Satıcı Profili',
+        description: 'Profil bilgilerini düzenle',
+        icon: '👤',
+        route: '/(seller)/profile',
+      },
+      {
+        id: 'add-meal',
+        title: 'Yemek Ekle',
+        description: 'Yeni yemek menüye ekle',
+        icon: '🍽️',
+        route: '/(seller)/add-meal',
+      },
+      {
+        id: 'manage-meals',
+        title: 'Yemeklerimi Yönet',
+        description: 'Yemekleri düzenle, sil veya güncelle',
+        icon: '📝',
+        route: '/(seller)/manage-meals',
+      },
+      {
+        id: 'messages',
+        title: 'Mesajlar',
+        description: 'Müşterilerle mesajlaş',
+        icon: '💬',
+        route: '/(seller)/messages',
+      },
+    ];
+  } else {
+    return [
+      {
+        id: 'profile',
+        title: 'Seller Profile',
+        description: 'Edit profile information',
+        icon: '👤',
+        route: '/(seller)/profile',
+      },
+      {
+        id: 'add-meal',
+        title: 'Add Food',
+        description: 'Add new food to menu',
+        icon: '🍽️',
+        route: '/(seller)/add-meal',
+      },
+      {
+        id: 'manage-meals',
+        title: 'Manage Foods',
+        description: 'Edit, delete or update foods',
+        icon: '📝',
+        route: '/(seller)/manage-meals',
+      },
+      {
+        id: 'messages',
+        title: 'Messages',
+        description: 'Chat with customers',
+        icon: '💬',
+        route: '/(seller)/messages',
+      },
+    ];
+  }
+};
 
 // Default seller data
 const DEFAULT_SELLER_DATA = {
@@ -60,6 +90,14 @@ export const SellerPanel: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const [profileData, setProfileData] = useState(DEFAULT_SELLER_DATA);
   const [complianceExpanded, setComplianceExpanded] = useState(false);
+  
+  // Hook'ları önce çağır
+  const { currentCountry, isBusinessComplianceRequired } = useCountry();
+  const { signOut } = useAuth();
+  const { t } = useTranslation();
+  
+  // Ülkeye göre menü öğeleri
+  const menuItems = getMenuItemsForCountry(currentCountry.code);
 
   // UK Compliance Status Check
   const isComplianceComplete = () => {
@@ -78,7 +116,6 @@ export const SellerPanel: React.FC = () => {
   };
 
   const complianceComplete = isComplianceComplete();
-  const { signOut } = useAuth();
 
   // Load profile data when screen comes into focus
   useFocusEffect(
@@ -141,7 +178,7 @@ export const SellerPanel: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Satıcı Paneli" 
+        title={currentCountry.code === 'TR' ? 'Satıcı Paneli' : 'Seller Dashboard'} 
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -240,26 +277,35 @@ export const SellerPanel: React.FC = () => {
           </View>
         </Card>
 
-        {/* UK Compliance Status Card - Collapsible */}
-        <View style={styles.complianceWrapper}>
-          <TouchableOpacity
-            onPress={() => setComplianceExpanded(!complianceExpanded)}
-            activeOpacity={0.7}
-          >
-            <Card variant="default" padding="md" style={styles.complianceCard}>
-              <View style={styles.complianceHeader}>
-                <Text variant="subheading" weight="semibold" style={styles.complianceTitle}>
-                  🇬🇧 UK Food Business Compliance
-                </Text>
+        {/* Business Compliance Status Card - Her Ülke İçin Göster */}
+        {(
+          <View style={styles.complianceWrapper}>
+            <TouchableOpacity
+              onPress={() => setComplianceExpanded(!complianceExpanded)}
+              activeOpacity={0.7}
+            >
+              <Card variant="default" padding="md" style={styles.complianceCard}>
+                <View style={styles.complianceHeader}>
+                  <Text variant="subheading" weight="semibold" style={styles.complianceTitle}>
+                    {currentCountry.code === 'TR' 
+                      ? '🇹🇷 Türkiye Gıda İşletmesi Uygunluğu' 
+                      : '🇬🇧 UK Food Business Compliance'
+                    }
+                  </Text>
                 <View style={styles.complianceHeaderRight}>
                   <Text variant="caption" style={[
                     styles.statusBadge, 
-                    { 
-                      backgroundColor: complianceComplete ? '#28A745' : '#FFC107', 
-                      color: 'white' 
+                    {
+                      backgroundColor: currentCountry.code === 'TR' 
+                        ? (complianceComplete ? '#28A745' : '#17A2B8') // Türkiye: Yeşil/Mavi
+                        : (complianceComplete ? '#28A745' : '#FFC107'), // UK: Yeşil/Sarı
+                      color: 'white'
                     }
                   ]}>
-                    {complianceComplete ? '✅ APPROVED' : '⏳ PENDING'}
+                    {currentCountry.code === 'TR' 
+                      ? (complianceComplete ? '✅ TAMAMLANDI' : '📋 OPSİYONEL')
+                      : (complianceComplete ? '✅ APPROVED' : '⏳ PENDING')
+                    }
                   </Text>
                   <Text variant="body" style={styles.expandIcon}>
                     {complianceExpanded ? '▼' : '▶'}
@@ -276,20 +322,30 @@ export const SellerPanel: React.FC = () => {
               style={styles.complianceItem}
               onPress={(e) => {
                 e?.stopPropagation?.();
-                router.push('/council-registration');
+                if (currentCountry.code === 'TR') {
+                  router.push('/gida-isletme-belgesi');
+                } else {
+                  router.push('/council-registration');
+                }
               }}
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
-                  ✅ Council Registration
+                  {currentCountry.code === 'TR' 
+                    ? '✅ Gıda İşletme Belgesi' 
+                    : '✅ Council Registration'
+                  }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  Edit →
+                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
-                Westminster City Council • SW1A 1AA
+                {currentCountry.code === 'TR' 
+                  ? 'Kadıköy Belediyesi • 34710'
+                  : 'Westminster City Council • SW1A 1AA'
+                }
               </Text>
             </TouchableOpacity>
             
@@ -297,20 +353,30 @@ export const SellerPanel: React.FC = () => {
               style={styles.complianceItem}
               onPress={(e) => {
                 e?.stopPropagation?.();
-                router.push('/hygiene-certificate');
+                if (currentCountry.code === 'TR') {
+                  router.push('/vergi-levhasi');
+                } else {
+                  router.push('/hygiene-certificate');
+                }
               }}
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
-                  ✅ Food Hygiene Certificate
+                  {currentCountry.code === 'TR' 
+                    ? '✅ Vergi Levhası' 
+                    : '✅ Food Hygiene Certificate'
+                  }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  Edit →
+                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
-                Level 2 • Valid until Dec 2025
+                {currentCountry.code === 'TR' 
+                  ? 'Güncel • Geçerli Ara 2025'
+                  : 'Level 2 • Valid until Dec 2025'
+                }
               </Text>
             </TouchableOpacity>
             
@@ -318,20 +384,30 @@ export const SellerPanel: React.FC = () => {
               style={styles.complianceItem}
               onPress={(e) => {
                 e?.stopPropagation?.();
-                router.push('/hygiene-rating');
+                if (currentCountry.code === 'TR') {
+                  router.push('/kvkk-uyumluluk');
+                } else {
+                  router.push('/hygiene-rating');
+                }
               }}
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
-                  🏛️ Hygiene Rating: 5/5
+                  {currentCountry.code === 'TR' 
+                    ? '🏛️ Gıda Güvenliği Eğitimi' 
+                    : '🏛️ Hygiene Rating: 5/5'
+                  }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  Edit →
+                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
-                Last inspection: Nov 2024
+                {currentCountry.code === 'TR' 
+                  ? 'Son eğitim: Kas 2024'
+                  : 'Last inspection: Nov 2024'
+                }
               </Text>
             </TouchableOpacity>
             
@@ -339,20 +415,30 @@ export const SellerPanel: React.FC = () => {
               style={styles.complianceItem}
               onPress={(e) => {
                 e?.stopPropagation?.();
-                router.push('/allergen-declaration');
+                if (currentCountry.code === 'TR') {
+                  router.push('/gida-guvenligi-egitimi');
+                } else {
+                  router.push('/allergen-declaration');
+                }
               }}
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
-                  ⚠️ Allergen Declaration
+                  {currentCountry.code === 'TR' 
+                    ? '✅ KVKK Uyumluluk' 
+                    : '⚠️ Allergen Declaration'
+                  }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  Edit →
+                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
-                All 14 UK allergens covered
+                {currentCountry.code === 'TR' 
+                  ? 'Tüm 14 temel alerjen kapsandı'
+                  : 'All 14 major allergens covered'
+                }
               </Text>
             </TouchableOpacity>
             
@@ -360,20 +446,30 @@ export const SellerPanel: React.FC = () => {
               style={styles.complianceItem}
               onPress={(e) => {
                 e?.stopPropagation?.();
-                router.push('/insurance-details');
+                if (currentCountry.code === 'TR') {
+                  router.push('/is-yeri-sigortasi');
+                } else {
+                  router.push('/insurance-details');
+                }
               }}
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
-                  🛡️ Public Liability Insurance
+                  {currentCountry.code === 'TR' 
+                    ? '🛡️ İş Yeri Sigortası' 
+                    : '🛡️ Public Liability Insurance'
+                  }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  Edit →
+                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
-                £2M coverage • Valid until Jan 2026
+                {currentCountry.code === 'TR' 
+                  ? '2M₺ teminat • Geçerli Oca 2026'
+                  : '£2M coverage • Valid until Jan 2026'
+                }
               </Text>
             </TouchableOpacity>
               
@@ -385,13 +481,17 @@ export const SellerPanel: React.FC = () => {
                   }}
                 >
                   <Text variant="body" color="primary" style={styles.complianceButtonText}>
-                    📄 View Terms & Conditions →
+                    {currentCountry.code === 'TR' 
+                      ? '📄 Şartlar ve Koşulları Görüntüle →' 
+                      : '📄 View Terms & Conditions →'
+                    }
                   </Text>
                 </TouchableOpacity>
               </View>
             </Card>
           )}
         </View>
+        )}
 
         {/* Menu Sections - Separate Cards */}
         <TouchableWithoutFeedback
@@ -402,25 +502,32 @@ export const SellerPanel: React.FC = () => {
           }}
         >
           <View style={styles.menuSectionsContainer}>
-          {MENU_ITEMS.map((item) => (
+          {menuItems.map((item) => (
             <TouchableOpacity
               key={item.id}
               onPress={() => {
-                if (complianceComplete) {
+                // Türkiye'de compliance zorunlu değil, UK'da zorunlu
+                const needsCompliance = isBusinessComplianceRequired;
+                
+                if (!needsCompliance || complianceComplete) {
                   handleMenuPress(item.route);
                 } else {
                   Alert.alert(
-                    'UK Compliance Gerekli',
-                    'Satıcı özelliklerini kullanabilmek için önce UK Food Business Compliance bölümünü tamamlamanız gerekiyor.',
+                    currentCountry.code === 'TR' 
+                      ? 'Gıda İşletmesi Uygunluğu Gerekli'
+                      : 'UK Compliance Gerekli',
+                    currentCountry.code === 'TR'
+                      ? 'Satıcı özelliklerini kullanabilmek için önce Türkiye Gıda İşletmesi Uygunluğu bölümünü tamamlamanız gerekiyor.'
+                      : 'Satıcı özelliklerini kullanabilmek için önce UK Food Business Compliance bölümünü tamamlamanız gerekiyor.',
                     [{ text: 'Tamam' }]
                   );
                 }
               }}
               style={[
-                styles.menuCard, 
-                { 
-                  backgroundColor: complianceComplete ? colors.primary : '#E0E0E0',
-                  opacity: complianceComplete ? 1 : 0.6
+                styles.menuCard,
+                {
+                  backgroundColor: (!isBusinessComplianceRequired || complianceComplete) ? colors.primary : '#E0E0E0',
+                  opacity: (!isBusinessComplianceRequired || complianceComplete) ? 1 : 0.6
                 }
               ]}
               activeOpacity={complianceComplete ? 0.7 : 0.3}
@@ -443,21 +550,24 @@ export const SellerPanel: React.FC = () => {
                   >
                     {item.title}
                   </Text>
-                  <Text 
+                  <Text
                     variant="caption"
                     style={[
                       styles.menuCardDescription,
-                      { color: complianceComplete ? 'rgba(255,255,255,0.8)' : '#CCCCCC' }
+                      { color: (!isBusinessComplianceRequired || complianceComplete) ? 'rgba(255,255,255,0.8)' : '#CCCCCC' }
                     ]}
                   >
-                    {complianceComplete ? item.description : 'UK Compliance gerekli'}
+                    {(!isBusinessComplianceRequired || complianceComplete)
+                      ? item.description 
+                      : (currentCountry.code === 'TR' ? 'Gıda Uygunluğu gerekli' : 'UK Compliance gerekli')
+                    }
                   </Text>
                 </View>
                 <Text style={[
                   styles.menuCardArrow,
-                  { color: complianceComplete ? 'white' : '#999999' }
+                  { color: (!isBusinessComplianceRequired || complianceComplete) ? 'white' : '#999999' }
                 ]}>
-                  {complianceComplete ? '→' : '🔒'}
+                  {(!isBusinessComplianceRequired || complianceComplete) ? '→' : '🔒'}
                 </Text>
               </View>
             </TouchableOpacity>

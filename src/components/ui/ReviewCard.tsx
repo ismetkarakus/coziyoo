@@ -27,9 +27,14 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string | null | undefined) => {
+    if (!date) return 'Tarih bilinmiyor';
+    
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Geçersiz tarih';
+    
     const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    const diffInDays = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60 * 60 * 24));
     
     if (diffInDays === 0) {
       return 'Bugün';

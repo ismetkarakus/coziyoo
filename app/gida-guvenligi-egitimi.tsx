@@ -7,22 +7,19 @@ import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
 import { useCountry } from '../src/context/CountryContext';
 
-export default function CouncilRegistration() {
+export default function GidaGuvenligiEgitimi() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { currentCountry } = useCountry();
   
   const [formData, setFormData] = useState({
-    councilName: currentCountry?.code === 'TR' ? 'Kadıköy Belediyesi' : 'Westminster City Council',
-    postcode: currentCountry?.code === 'TR' ? '34710' : 'SW1A 1AA',
-    businessName: currentCountry?.code === 'TR' ? 'Ev Mutfağı' : 'Home Kitchen',
-    contactName: 'Fatma Teyze',
-    phoneNumber: currentCountry?.code === 'TR' ? '+90 216 348 0000' : '+44 20 7946 0958',
-    email: 'fatma@example.com',
-    businessType: currentCountry?.code === 'TR' ? 'Evde gıda üretimi' : 'Home-based food business',
-    startDate: '2024-01-15',
-    registrationNumber: currentCountry?.code === 'TR' ? 'KDK-GIB-2024-001' : 'WCC-FB-2024-001',
-    isRegistered: true,
+    certificateLevel: currentCountry.code === 'TR' ? 'Temel Seviye' : 'Level 2',
+    issueDate: '2024-01-15',
+    expiryDate: '2026-01-15',
+    certificateNumber: currentCountry.code === 'TR' ? 'GGE-2024-789456' : 'CIEH-FS-2024-789456',
+    holderName: 'Fatma Teyze',
+    institution: currentCountry.code === 'TR' ? 'Tarım ve Orman Bakanlığı' : 'CIEH',
+    hasTraining: true,
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -35,8 +32,8 @@ export default function CouncilRegistration() {
     Alert.alert(
       currentCountry.code === 'TR' ? 'Başarılı' : 'Success',
       currentCountry.code === 'TR' 
-        ? 'Belediye kayıt detayları başarıyla güncellendi.'
-        : 'Council registration details have been updated successfully.',
+        ? 'Gıda güvenliği eğitimi bilgileri başarıyla güncellendi.'
+        : 'Food safety training details have been updated successfully.',
       [{ 
         text: currentCountry.code === 'TR' ? 'Tamam' : 'OK', 
         onPress: () => setIsEditing(false) 
@@ -44,19 +41,19 @@ export default function CouncilRegistration() {
     );
   };
 
-  const openCouncilWebsite = () => {
-    Linking.openURL('https://www.gov.uk/food-business-registration');
-  };
-
-  const openCouncilSearch = () => {
-    Linking.openURL('https://www.gov.uk/find-local-council');
+  const openTrainingWebsite = () => {
+    if (currentCountry.code === 'TR') {
+      Linking.openURL('https://www.tarimorman.gov.tr');
+    } else {
+      Linking.openURL('https://www.cieh.org/training/');
+    }
   };
 
   return (
     <>
       <Stack.Screen 
         options={{
-          title: currentCountry.code === 'TR' ? '🏛️ Gıda İşletme Belgesi' : '🏛️ Council Registration',
+          title: currentCountry.code === 'TR' ? '🏛️ Gıda Güvenliği Eğitimi' : '🏛️ Food Safety Training',
           headerBackVisible: false, // Otomatik geri butonunu gizle
           headerLeft: () => <HeaderBackButton />,
           headerRight: () => (
@@ -79,23 +76,23 @@ export default function CouncilRegistration() {
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              {currentCountry.code === 'TR' ? 'Kayıt Durumu' : 'Registration Status'}
+              {currentCountry.code === 'TR' ? 'Eğitim Durumu' : 'Training Status'}
             </Text>
-            <View style={[styles.statusBadge, { backgroundColor: formData.isRegistered ? '#28A745' : '#FFC107' }]}>
+            <View style={[styles.statusBadge, { backgroundColor: formData.hasTraining ? '#28A745' : '#FFC107' }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
                 {currentCountry.code === 'TR' 
-                  ? (formData.isRegistered ? '✅ KAYITLI' : '⏳ BEKLEMEDE')
-                  : (formData.isRegistered ? '✅ REGISTERED' : '⏳ PENDING')
+                  ? (formData.hasTraining ? '✅ TAMAMLANDI' : '⏳ BEKLEMEDE')
+                  : (formData.hasTraining ? '✅ COMPLETED' : '⏳ PENDING')
                 }
               </Text>
             </View>
           </View>
           
-          {formData.isRegistered && (
+          {formData.hasTraining && (
             <Text variant="body" color="success" style={styles.statusMessage}>
               {currentCountry.code === 'TR' 
-                ? 'Gıda işletmeniz yerel belediyeye başarıyla kaydedilmiştir.'
-                : 'Your food business is successfully registered with your local council.'
+                ? 'Gıda güvenliği eğitiminiz tamamlanmış ve sertifikanız geçerli.'
+                : 'Your food safety training is completed and certificate is valid.'
               }
             </Text>
           )}
@@ -106,111 +103,77 @@ export default function CouncilRegistration() {
           <Text variant="body" weight="semibold" style={styles.actionsTitle}>
             {currentCountry.code === 'TR' ? '📋 Hızlı İşlemler' : '📋 Quick Actions'}
           </Text>
-          <TouchableOpacity style={styles.actionButton} onPress={openCouncilWebsite}>
+          <TouchableOpacity style={styles.actionButton} onPress={openTrainingWebsite}>
             <Text variant="body" color="primary">
               {currentCountry.code === 'TR' 
-                ? '🌐 Yeni Gıda İşletmesi Kaydı →'
-                : '🌐 Register New Food Business →'
-              }
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={openCouncilSearch}>
-            <Text variant="body" color="primary">
-              {currentCountry.code === 'TR' 
-                ? '🔍 Yerel Belediyenizi Bulun →'
-                : '🔍 Find Your Local Council →'
+                ? '🌐 Tarım ve Orman Bakanlığı →'
+                : '🌐 CIEH Training Courses →'
               }
             </Text>
           </TouchableOpacity>
         </Card>
 
-        {/* Registration Details */}
+        {/* Training Details */}
         <Card variant="default" padding="md" style={styles.detailsCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {currentCountry.code === 'TR' ? 'Kayıt Detayları' : 'Registration Details'}
+            {currentCountry.code === 'TR' ? 'Eğitim Detayları' : 'Training Details'}
           </Text>
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Belediye Adı' : 'Council Name'}
-            value={formData.councilName}
-            onChangeText={handleInputChange('councilName')}
+            label={currentCountry.code === 'TR' ? 'Eğitim Seviyesi' : 'Training Level'}
+            value={formData.certificateLevel}
+            onChangeText={handleInputChange('certificateLevel')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'örn. Kadıköy Belediyesi' : 'e.g. Westminster City Council'}
+            placeholder={currentCountry.code === 'TR' ? 'Temel Seviye' : 'Level 2'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Posta Kodu' : 'Postcode'}
-            value={formData.postcode}
-            onChangeText={handleInputChange('postcode')}
+            label={currentCountry.code === 'TR' ? 'Sertifika Numarası' : 'Certificate Number'}
+            value={formData.certificateNumber}
+            onChangeText={handleInputChange('certificateNumber')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? '34710' : 'SW1A 1AA'}
+            placeholder={currentCountry.code === 'TR' ? 'GGE-2024-789456' : 'Certificate number'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'İşletme Adı' : 'Business Name'}
-            value={formData.businessName}
-            onChangeText={handleInputChange('businessName')}
-            editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'İşletme adınız' : 'Your business name'}
-          />
-
-          <FormField
-            label={currentCountry.code === 'TR' ? 'İletişim Adı' : 'Contact Name'}
-            value={formData.contactName}
-            onChangeText={handleInputChange('contactName')}
+            label={currentCountry.code === 'TR' ? 'Sertifika Sahibi' : 'Certificate Holder'}
+            value={formData.holderName}
+            onChangeText={handleInputChange('holderName')}
             editable={isEditing}
             placeholder={currentCountry.code === 'TR' ? 'Tam adınız' : 'Your full name'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Telefon Numarası' : 'Phone Number'}
-            value={formData.phoneNumber}
-            onChangeText={handleInputChange('phoneNumber')}
+            label={currentCountry.code === 'TR' ? 'Eğitim Kurumu' : 'Training Institution'}
+            value={formData.institution}
+            onChangeText={handleInputChange('institution')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? '+90 216 348 0000' : '+44 20 7946 0958'}
+            placeholder={currentCountry.code === 'TR' ? 'Tarım ve Orman Bakanlığı' : 'Training provider'}
           />
 
           <FormField
-            label="Email Address"
-            value={formData.email}
-            onChangeText={handleInputChange('email')}
-            editable={isEditing}
-            placeholder="your.email@example.com"
-          />
-
-          <FormField
-            label={currentCountry.code === 'TR' ? 'İşletme Türü' : 'Business Type'}
-            value={formData.businessType}
-            onChangeText={handleInputChange('businessType')}
-            editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'örn. Evde gıda üretimi' : 'e.g. Home-based food business'}
-          />
-
-          <FormField
-            label={currentCountry.code === 'TR' ? 'İşletme Başlangıç Tarihi' : 'Business Start Date'}
-            value={formData.startDate}
-            onChangeText={handleInputChange('startDate')}
+            label={currentCountry.code === 'TR' ? 'Düzenleme Tarihi' : 'Issue Date'}
+            value={formData.issueDate}
+            onChangeText={handleInputChange('issueDate')}
             editable={isEditing}
             placeholder={currentCountry.code === 'TR' ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
           />
 
-          {formData.isRegistered && (
-              <FormField
-                label={currentCountry.code === 'TR' ? 'Kayıt Numarası' : 'Registration Number'}
-                value={formData.registrationNumber}
-                onChangeText={handleInputChange('registrationNumber')}
-                editable={isEditing}
-                placeholder={currentCountry.code === 'TR' ? 'Belediye kayıt numarası' : 'Council registration number'}
-              />
-          )}
+          <FormField
+            label={currentCountry.code === 'TR' ? 'Geçerlilik Tarihi' : 'Expiry Date'}
+            value={formData.expiryDate}
+            onChangeText={handleInputChange('expiryDate')}
+            editable={isEditing}
+            placeholder={currentCountry.code === 'TR' ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
+          />
 
           <Checkbox
             label={currentCountry.code === 'TR' 
-              ? 'Bu gıda işletmesinin yerel belediyeye kayıtlı olduğunu onaylıyorum'
-              : 'I confirm this food business is registered with the local council'
+              ? 'Gıda güvenliği eğitimimi tamamladım'
+              : 'I have completed food safety training'
             }
-            checked={formData.isRegistered}
-            onPress={() => setFormData(prev => ({ ...prev, isRegistered: !prev.isRegistered }))}
+            checked={formData.hasTraining}
+            onPress={() => setFormData(prev => ({ ...prev, hasTraining: !prev.hasTraining }))}
             disabled={!isEditing}
           />
 
@@ -233,34 +196,31 @@ export default function CouncilRegistration() {
           {currentCountry.code === 'TR' ? (
             <>
               <Text variant="caption" style={styles.legalText}>
-                • Gıda işletmesi faaliyete başlamadan en az 28 gün önce belediyeye kayıt yaptırılmalıdır
+                • Gıda işletmesi sahipleri gıda güvenliği eğitimi almalıdır
               </Text>
               <Text variant="caption" style={styles.legalText}>
-                • Kayıt ücretsizdir ve Gıda Güvenliği Kanunu gereği zorunludur
+                • Eğitim sertifikası düzenli olarak yenilenmelidir
               </Text>
               <Text variant="caption" style={styles.legalText}>
-                • İşletmede yapılan değişiklikler belediyeye bildirilmelidir
+                • Çalışanlar da temel gıda güvenliği eğitimi almalıdır
               </Text>
               <Text variant="caption" style={styles.legalText}>
-                • Kayıt yaptırmamak suç teşkil eder ve para cezası uygulanabilir
-              </Text>
-              <Text variant="caption" style={styles.legalText}>
-                • İşletme hijyen koşulları düzenli olarak denetlenebilir
+                • Eğitim kayıtları denetim sırasında ibraz edilmelidir
               </Text>
             </>
           ) : (
             <>
               <Text variant="caption" style={styles.legalText}>
-                • Registration must be completed at least 28 days before starting your food business
+                • Food business owners must complete food safety training
               </Text>
               <Text variant="caption" style={styles.legalText}>
-                • Registration is free and mandatory under food safety law
+                • Training certificates must be renewed regularly
               </Text>
               <Text variant="caption" style={styles.legalText}>
-                • You must notify the council of any changes to your business
+                • Staff must also receive basic food safety training
               </Text>
               <Text variant="caption" style={styles.legalText}>
-                • Failure to register is a criminal offense with potential fines
+                • Training records must be available during inspections
               </Text>
             </>
           )}
@@ -313,6 +273,7 @@ const styles = StyleSheet.create({
   },
   statusTitle: {
     color: '#2D5A4A',
+    flex: 1,
   },
   statusBadge: {
     paddingHorizontal: Spacing.sm,
@@ -349,13 +310,13 @@ const styles = StyleSheet.create({
   },
   legalCard: {
     marginBottom: Spacing.md,
-    backgroundColor: 'rgba(255, 193, 7, 0.05)',
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 193, 7, 0.3)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   legalTitle: {
     marginBottom: Spacing.sm,
-    color: '#856404',
+    color: '#DC2626',
   },
   legalText: {
     marginBottom: Spacing.xs,

@@ -68,6 +68,12 @@ class FoodService {
     try {
       console.log('🔍 Starting Firebase query...');
       
+      // Firebase henüz initialize olmamışsa boş liste döndür
+      if (!db) {
+        console.log('⚠️ Firebase not initialized yet, returning empty list');
+        return [];
+      }
+      
       // Daha hızlı query - sadece ilk 10 item
       const q = query(
         collection(db, 'foods'),
@@ -76,12 +82,7 @@ class FoodService {
         limit(10) // Sadece 10 item yükle
       );
       
-      const querySnapshot = await Promise.race([
-        getDocs(q),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Firebase query timeout')), 3000) // 3 saniye timeout
-        )
-      ]) as any;
+      const querySnapshot = await getDocs(q);
       
       const foods: Food[] = [];
       
@@ -98,7 +99,8 @@ class FoodService {
       return foods;
     } catch (error) {
       console.error('Yemekler getirilirken hata:', error);
-      throw new Error('Yemekler getirilemedi');
+      console.log('📝 Firebase henüz hazır değil, boş liste döndürülüyor');
+      return [];
     }
   }
 
@@ -206,6 +208,35 @@ class FoodService {
     } catch (error) {
       console.error('Yemek silinirken hata:', error);
       throw new Error('Yemek silinemedi');
+    }
+  }
+
+  // İsocan yemeklerini temizle
+  async clearIsochanFoods(): Promise<void> {
+    try {
+      console.log('🧹 İsocan yemekleri temizleniyor...');
+      
+      if (!db) {
+        console.log('⚠️ Firebase not initialized, skipping cleanup');
+        return;
+      }
+
+      // İsocan'ın yemeklerini bul
+      const q = query(
+        collection(db, 'foods'),
+        where('cookName', '==', 'İsocan')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log(`🔍 ${querySnapshot.size} İsocan yemeği bulundu`);
+      
+      // Tüm İsocan yemeklerini sil
+      const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      
+      console.log('✅ İsocan yemekleri temizlendi');
+    } catch (error) {
+      console.error('❌ İsocan yemekleri temizlenirken hata:', error);
     }
   }
 

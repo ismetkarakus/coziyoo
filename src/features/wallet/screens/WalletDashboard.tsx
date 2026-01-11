@@ -15,6 +15,13 @@ export const WalletDashboard: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [withdrawing, setWithdrawing] = useState(false);
+  const [showBankDetails, setShowBankDetails] = useState(false);
+  
+  // Mock banka bilgileri - gerçek uygulamada AsyncStorage'dan gelecek
+  const bankDetails = {
+    bankName: 'Türkiye İş Bankası',
+    iban: 'TR33 0006 4000 0011 2345 6789 01',
+  };
 
   // Kullanıcı tipini belirle
   const isBuyer = user?.userType === 'buyer';
@@ -274,34 +281,73 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
           )}
         </Card>
 
-        {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
-          {/* Para çekme sadece satıcılar ve hibrit kullanıcılar için */}
-          {(isSeller || isHybrid) && (
-            <Button
-              title="💸 Para Çek"
-              onPress={handleWithdraw}
-              disabled={wallet.availableEarnings <= 0 || withdrawing}
-              style={[styles.actionButton, styles.withdrawButton]}
-            />
-          )}
-          
-          {/* Alıcılar için para yükleme */}
-          {isBuyer && (
-            <Button
-              title="💳 Para Yükle"
-              onPress={() => Alert.alert('Para Yükle', 'Para yükleme özelliği yakında gelecek')}
-              style={[styles.actionButton, styles.withdrawButton]}
-            />
-          )}
-          
+
+        {/* Action Buttons - 4 Buton Yan Yana */}
+        <View style={styles.mainActionsContainer}>
+          {/* Para Çek butonu - Kazançları çek */}
           <Button
-            title="📊 Detaylı Rapor"
-            onPress={() => showDetailedReport()}
+            title="💸 Para Çek
+Kazançları Çek"
+            onPress={() => Alert.alert('Para Çek', 'Para çekme özelliği yakında gelecek')}
+            style={[styles.mainActionButton, styles.cardColorButton]}
+            textStyle={styles.buttonText}
             variant="outline"
-            style={styles.actionButton}
+          />
+          
+          {/* Para Yükle butonu - Bakiye yükle */}
+          <Button
+            title="💳 Para Yükle
+Bakiye Yükle"
+            onPress={() => Alert.alert('Para Yükle', 'Para yükleme özelliği yakında gelecek')}
+            style={[styles.mainActionButton, styles.cardColorButton]}
+            textStyle={styles.whiteButtonText}
+            variant="outline"
+          />
+          
+          {/* Banka Bilgileri butonu - Hesap bilgileri */}
+          <Button
+            title={`🏦 Banka
+Hesap Bilgileri ${showBankDetails ? '▲' : '▼'}`}
+            onPress={() => setShowBankDetails(!showBankDetails)}
+            style={[styles.mainActionButton, styles.cardColorButton]}
+            textStyle={styles.buttonText}
+            variant="outline"
+          />
+          
+          {/* Detaylı Rapor butonu - Gelir gider */}
+          <Button
+            title="📊 Rapor
+Gelir Gider"
+            onPress={() => showDetailedReport()}
+            style={[styles.mainActionButton, styles.cardColorButton]}
+            textStyle={styles.buttonText}
+            variant="outline"
           />
         </View>
+
+        {/* Banka Detayları Dropdown - Sağdaki buton formatında */}
+        {(isSeller || isHybrid) && showBankDetails && (
+          <View style={styles.bankDropdownExternal}>
+            {bankDetails.bankName || bankDetails.iban ? (
+              <View style={styles.bankInfoExternal}>
+                {bankDetails.bankName && (
+                  <Text variant="body" color="textSecondary">
+                    🏦 {bankDetails.bankName}
+                  </Text>
+                )}
+                {bankDetails.iban && (
+                  <Text variant="body" color="textSecondary">
+                    💳 {bankDetails.iban}
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <Text variant="body" color="textSecondary">
+                Banka bilgisi yok
+              </Text>
+            )}
+          </View>
+        )}
 
         {/* Monthly Summary */}
         <Card variant="default" padding="md" style={styles.summaryCard}>
@@ -459,10 +505,12 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   overviewCard: {
+    marginHorizontal: Spacing.md,
     marginBottom: Spacing.lg,
     backgroundColor: Colors.primary + '10',
     borderWidth: 1,
     borderColor: Colors.primary + '30',
+    position: 'relative',
   },
   balanceHeader: {
     flexDirection: 'row',
@@ -514,10 +562,49 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
   },
+  // Yeni ana butonlar için stiller
+  mainActionsContainer: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+    marginHorizontal: Spacing.md,
+  },
+  mainActionButton: {
+    flex: 1,
+    minHeight: 56, // Daha büyük yükseklik
+    paddingVertical: Spacing.md,
+  },
+  // Soldaki buton için özel stil - çok geniş (sol köşe)
+  leftActionButton: {
+    flex: 3, // Çok büyük buton
+    minHeight: 56,
+    paddingVertical: Spacing.md,
+  },
+  // Sağdaki küçük buton için stil
+  rightActionButton: {
+    flex: 1, // Normal buton
+    minHeight: 56,
+    paddingVertical: Spacing.md,
+  },
+  // Hafif açık kömür karası buton stili
+  cardColorButton: {
+    backgroundColor: '#444444', // Hafif açık kömür karası
+    borderColor: '#444444',
+    borderWidth: 1,
+  },
+  // Buton yazı rengi - Beyaz
+  buttonText: {
+    color: '#FFFFFF', // Beyaz yazı (net görünür)
+  },
+  // Para Yükle butonu için özel beyaz yazı
+  whiteButtonText: {
+    color: '#FFFFFF', // Kesin beyaz yazı
+  },
   withdrawButton: {
     backgroundColor: Colors.success,
   },
   summaryCard: {
+    marginHorizontal: Spacing.md,
     marginBottom: Spacing.lg,
   },
   sectionTitle: {
@@ -545,6 +632,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   transactionsCard: {
+    marginHorizontal: Spacing.md,
     marginBottom: Spacing.xl,
   },
   transactionsHeader: {
@@ -583,5 +671,138 @@ const styles = StyleSheet.create({
   },
   transactionInfo: {
     flex: 1,
+  },
+  bankDetailsCompact: {
+    position: 'absolute',
+    bottom: Spacing.sm,
+    left: Spacing.sm,
+    maxWidth: '60%',
+  },
+  bankToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    padding: Spacing.xs,
+    backgroundColor: Colors.background,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
+  bankDropdown: {
+    marginTop: Spacing.xs,
+    padding: Spacing.sm,
+    backgroundColor: Colors.background,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bankInfoCompact: {
+    gap: Spacing.xs,
+  },
+  // Yeni external bank details stilleri - Action Button formatında
+  bankDetailsSection: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  bankDetailsButton: {
+    backgroundColor: Colors.light.surface,
+    borderColor: Colors.light.primary,
+  },
+  bankDropdownExternal: {
+    marginTop: Spacing.sm,
+    padding: Spacing.md,
+    backgroundColor: Colors.light.background,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bankInfoExternal: {
+    gap: Spacing.sm,
+  },
+  // İyileştirilmiş banka detayları stilleri
+  bankDropdownCard: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 2,
+    borderColor: Colors.light.primary + '20',
+    backgroundColor: Colors.light.primary + '05',
+  },
+  bankCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  bankInfoImproved: {
+    gap: Spacing.md,
+  },
+  bankInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  bankInfoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.light.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bankInfoText: {
+    flex: 1,
+    gap: 2,
+  },
+  ibanText: {
+    fontFamily: 'monospace',
+    fontSize: 14,
+  },
+  bankActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.border,
+  },
+  editBankButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: 6,
+    backgroundColor: Colors.light.primary + '10',
+  },
+  noBankInfo: {
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  noBankText: {
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  addBankButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 8,
+    backgroundColor: Colors.light.primary + '10',
+    borderWidth: 1,
+    borderColor: Colors.light.primary + '30',
   },
 });

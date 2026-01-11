@@ -3,7 +3,8 @@ import { View, StyleSheet, Modal, ScrollView } from 'react-native';
 import { Text, Button } from './';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
-import { UK_ALLERGENS, AllergenId } from '../../constants/allergens';
+import { UK_ALLERGENS, TR_ALLERGENS, AllergenId } from '../../constants/allergens';
+import { useCountry } from '../../context/CountryContext';
 
 interface AllergenWarningModalProps {
   visible: boolean;
@@ -22,9 +23,13 @@ export const AllergenWarningModal: React.FC<AllergenWarningModalProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { currentCountry } = useCountry();
 
+  // Ülkeye göre alerjen listesi
+  const allergenList = currentCountry.code === 'TR' ? TR_ALLERGENS : UK_ALLERGENS;
+  
   const allergenDetails = allergens.map(id => 
-    UK_ALLERGENS.find(allergen => allergen.id === id)
+    allergenList.find(allergen => allergen.id === id)
   ).filter(Boolean);
 
   return (
@@ -98,7 +103,10 @@ export const AllergenWarningModal: React.FC<AllergenWarningModalProps> = ({
 
             <View style={styles.legalNote}>
               <Text variant="caption" color="textSecondary" style={styles.legalText}>
-                This platform acts as a marketplace only. The seller is fully responsible for food safety, allergen accuracy, and compliance with UK food regulations.
+                {currentCountry.code === 'TR'
+                  ? 'Bu platform yalnızca bir pazar yeri olarak hizmet verir. Satıcı, gıda güvenliği, alerjen doğruluğu ve Türkiye gıda mevzuatına uygunluktan tamamen sorumludur.'
+                  : 'This platform acts as a marketplace only. The seller is fully responsible for food safety, allergen accuracy, and compliance with food regulations.'
+                }
               </Text>
             </View>
           </ScrollView>

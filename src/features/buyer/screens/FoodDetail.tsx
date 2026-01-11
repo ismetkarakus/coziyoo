@@ -187,21 +187,14 @@ export const FoodDetail: React.FC = () => {
       totalOrders: 245,
       responseTime: '~15 dk'
     });
-    return;
-    
-    // AsyncStorage yavaş olduğu için geçici olarak kapatıldı
-    /*
     try {
-      const savedProfile = await AsyncStorage.getItem('sellerProfile');
-      if (savedProfile) {
-        const profile = JSON.parse(savedProfile);
-        console.log('Loaded seller profile in FoodDetail:', profile);
-        setSellerProfile(profile);
-      }
+      // İsocan verilerini temizle
+      await AsyncStorage.removeItem('sellerProfile');
+      console.log('🧹 Seller profile cleared (İsocan data removed)');
+      setSellerProfile(null);
     } catch (error) {
-      console.error('Error loading seller profile:', error);
+      console.error('Error clearing seller profile:', error);
     }
-    */
   };
 
   // Load reviews and stats

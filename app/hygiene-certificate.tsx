@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, Image } from 'react-native';
-import { router } from 'expo-router';
-import { Text, Card, Button, FormField, Checkbox } from '../src/components/ui';
-import { TopBar } from '../src/components/layout/TopBar';
+import { router, Stack } from 'expo-router';
+import { Text, Card, Button, FormField, Checkbox, HeaderBackButton } from '../src/components/ui';
+// TopBar kaldırıldı - Expo Router header kullanılacak
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
+import { useCountry } from '../src/context/CountryContext';
 
 export default function HygieneCertificate() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { currentCountry } = useCountry();
   
   const [formData, setFormData] = useState({
     certificateLevel: 'Level 2',
@@ -75,22 +77,26 @@ export default function HygieneCertificate() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar
-        title="📜 Food Hygiene Certificate"
-        leftComponent={
-          <TouchableOpacity onPress={() => router.push('/(seller)/dashboard')} style={styles.sellerButton}>
-            <Text variant="body" color="text" style={styles.sellerText}>
-              Seller <Text style={styles.sellerIcon}>●</Text>
-            </Text>
-          </TouchableOpacity>
-        }
-        rightComponent={
-          <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
-            <Text variant="body" color="primary">{isEditing ? 'Cancel' : 'Edit'}</Text>
-          </TouchableOpacity>
-        }
+    <>
+      <Stack.Screen 
+        options={{
+          title: currentCountry.code === 'TR' ? '📜 Vergi Levhası' : '📜 Food Hygiene Certificate',
+          headerBackVisible: false, // Otomatik geri butonunu gizle
+          headerLeft: () => <HeaderBackButton />,
+          headerRight: () => (
+            <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
+              <Text variant="body" color="primary">
+                {currentCountry.code === 'TR' 
+                  ? (isEditing ? 'İptal' : 'Düzenle')
+                  : (isEditing ? 'Cancel' : 'Edit')
+                }
+              </Text>
+            </TouchableOpacity>
+          ),
+        }} 
       />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header actions kaldırıldı - artık Stack.Screen'de */}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Status Card */}
@@ -251,6 +257,7 @@ export default function HygieneCertificate() {
         <View style={styles.bottomSpace} />
       </ScrollView>
     </View>
+    </>
   );
 }
 

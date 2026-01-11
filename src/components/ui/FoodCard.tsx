@@ -61,8 +61,8 @@ interface FoodCardProps {
   country?: string; // Ülke bilgisi
   category?: string; // Yemek kategorisi
   isPreview?: boolean; // Önizleme modunda local resimlere izin ver
-  allergens?: AllergenId[]; // UK allergen bilgileri
-  hygieneRating?: string; // UK Food Hygiene Rating (0-5 or 'Pending')
+  allergens?: AllergenId[]; // Alerjen bilgileri
+  hygieneRating?: string; // Hijyen puanı (0-5 or 'Pending')
   availableDeliveryOptions?: ('pickup' | 'delivery')[];
   isGridMode?: boolean; // Grid düzeni için kompakt mod
 }
@@ -85,8 +85,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   country = 'Türk', // Default olarak Türk
   category, // Yemek kategorisi
   isPreview = false, // Default olarak false
-  allergens, // UK allergen bilgileri
-  hygieneRating, // UK Food Hygiene Rating
+  allergens, // Alerjen bilgileri
+  hygieneRating, // Hijyen puanı
   availableDeliveryOptions, // Mevcut teslimat seçenekleri
   isGridMode = false, // Grid modu
 }) => {
@@ -152,7 +152,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
   const handleAddToCart = () => {
     if (localQuantity > 0) {
-      // UK Compliance: Show allergen warning before adding to cart
+      // Alerjen uyarısı: Sepete eklemeden önce alerjen uyarısı göster
       if (allergens && allergens.length > 0) {
         setShowAllergenModal(true);
       } else {
@@ -390,7 +390,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
       </Card>
       
-      {/* UK Compliance: Allergen Warning Modal */}
+      {/* Alerjen Uyarı Modalı */}
       <AllergenWarningModal
         visible={showAllergenModal}
         onClose={handleAllergenCancel}

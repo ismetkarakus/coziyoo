@@ -10,6 +10,7 @@ import { CartProvider } from '@/src/context/CartContext';
 import { AuthProvider } from '@/src/context/AuthContext';
 import { NotificationProvider } from '@/src/context/NotificationContext';
 import { WalletProvider } from '@/src/context/WalletContext';
+import { CountryProvider } from '@/src/context/CountryContext';
 import { AuthGuard } from '@/src/components/auth/AuthGuard';
 
 export {
@@ -53,11 +54,12 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <AuthGuard>
-          <WalletProvider>
-            <CartProvider>
+    <CountryProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <AuthGuard>
+            <WalletProvider>
+              <CartProvider>
             <Stack screenOptions={{ gestureEnabled: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -84,11 +86,13 @@ function RootLayoutNav() {
         <Stack.Screen name="hygiene-rating" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="checkout" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="wallet" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="country-selection" options={{ headerShown: false }} />
             </Stack>
-            </CartProvider>
-          </WalletProvider>
-        </AuthGuard>
-      </NotificationProvider>
-    </AuthProvider>
+              </CartProvider>
+            </WalletProvider>
+          </AuthGuard>
+        </NotificationProvider>
+      </AuthProvider>
+    </CountryProvider>
   );
 }

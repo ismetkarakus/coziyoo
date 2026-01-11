@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
-import { router } from 'expo-router';
-import { Text, Card, Button, Checkbox } from '../src/components/ui';
-import { TopBar } from '../src/components/layout/TopBar';
+import { router, Stack } from 'expo-router';
+import { Text, Card, Button, Checkbox, HeaderBackButton } from '../src/components/ui';
+// TopBar kaldırıldı - Expo Router header kullanılacak
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
-import { UK_ALLERGENS, AllergenId } from '../src/constants/allergens';
+import { UK_ALLERGENS, TR_ALLERGENS, AllergenId } from '../src/constants/allergens';
+import { useCountry } from '../src/context/CountryContext';
 
 export default function AllergenDeclaration() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { currentCountry } = useCountry();
+  
+  // Ülkeye göre alerjen listesi
+  const allergens = currentCountry.code === 'TR' ? TR_ALLERGENS : UK_ALLERGENS;
   
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenId[]>([
     'cereals', 'eggs', 'milk', 'nuts'
@@ -32,9 +37,11 @@ export default function AllergenDeclaration() {
 
   const handleSave = () => {
     Alert.alert(
-      'Success',
-      'Allergen declaration has been updated successfully.',
-      [{ text: 'OK', onPress: () => setIsEditing(false) }]
+      currentCountry.code === 'TR' ? 'Başarılı' : 'Success',
+      currentCountry.code === 'TR' 
+        ? 'Alerjen beyanı başarıyla güncellendi.'
+        : 'Allergen declaration has been updated successfully.',
+      [{ text: currentCountry.code === 'TR' ? 'Tamam' : 'OK', onPress: () => setIsEditing(false) }]
     );
   };
 
@@ -47,41 +54,54 @@ export default function AllergenDeclaration() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar
-        title="⚠️ Allergen Declaration"
-        leftComponent={
-          <TouchableOpacity onPress={() => router.push('/(seller)/dashboard')} style={styles.sellerButton}>
-            <Text variant="body" color="text" style={styles.sellerText}>
-              Seller <Text style={styles.sellerIcon}>●</Text>
-            </Text>
-          </TouchableOpacity>
-        }
-        rightComponent={
-          <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
-            <Text variant="body" color="primary">{isEditing ? 'Cancel' : 'Edit'}</Text>
-          </TouchableOpacity>
-        }
+    <>
+      <Stack.Screen 
+        options={{
+          title: currentCountry.code === 'TR' ? '⚠️ Alerjen Beyanı' : '⚠️ Allergen Declaration',
+          headerBackVisible: false, // Otomatik geri butonunu gizle
+          headerLeft: () => <HeaderBackButton />,
+          headerRight: () => (
+            <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
+              <Text variant="body" color="primary">
+                {currentCountry.code === 'TR' 
+                  ? (isEditing ? 'İptal' : 'Düzenle')
+                  : (isEditing ? 'Cancel' : 'Edit')
+                }
+              </Text>
+            </TouchableOpacity>
+          ),
+        }} 
       />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header actions kaldırıldı - artık Stack.Screen'de */}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Status Card */}
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              Allergen Compliance Status
+              {currentCountry.code === 'TR' ? 'Alerjen Uyumluluk Durumu' : 'Allergen Compliance Status'}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: allAllergensDeclared ? '#28A745' : '#FFC107' }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
-                {allAllergensDeclared ? '✅ COMPLIANT' : '⚠️ REVIEW NEEDED'}
+                {currentCountry.code === 'TR' 
+                  ? (allAllergensDeclared ? '✅ UYUMLU' : '⚠️ İNCELEME GEREKLİ')
+                  : (allAllergensDeclared ? '✅ COMPLIANT' : '⚠️ REVIEW NEEDED')
+                }
               </Text>
             </View>
           </View>
           
           <Text variant="body" style={[styles.statusMessage, { color: allAllergensDeclared ? '#28A745' : '#856404' }]}>
-            {allAllergensDeclared 
-              ? 'All 14 UK allergens have been reviewed and declared for your products.'
-              : 'Please review and declare all relevant allergens for your food products.'
+            {currentCountry.code === 'TR' 
+              ? (allAllergensDeclared 
+                  ? 'Tüm 14 temel alerjen gözden geçirildi ve ürünleriniz için beyan edildi.'
+                  : 'Lütfen gıda ürünleriniz için ilgili tüm alerjenleri gözden geçirin ve beyan edin.'
+                )
+              : (allAllergensDeclared 
+                  ? 'All 14 major allergens have been reviewed and declared for your products.'
+                  : 'Please review and declare all relevant allergens for your food products.'
+                )
             }
           </Text>
         </Card>
@@ -89,29 +109,45 @@ export default function AllergenDeclaration() {
         {/* Quick Actions */}
         <Card variant="default" padding="md" style={styles.actionsCard}>
           <Text variant="body" weight="semibold" style={styles.actionsTitle}>
-            📋 Legal Information
+            {currentCountry.code === 'TR' ? '📋 Yasal Bilgiler' : '📋 Legal Information'}
           </Text>
-          <TouchableOpacity style={styles.actionButton} onPress={openNatashasLaw}>
-            <Text variant="body" color="primary">⚖️ Natasha's Law (PPDS) →</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={openAllergenGuidance}>
-            <Text variant="body" color="primary">📖 FSA Allergen Guidance →</Text>
-          </TouchableOpacity>
+          {currentCountry.code === 'TR' ? (
+            <>
+              <TouchableOpacity style={styles.actionButton} onPress={() => {}}>
+                <Text variant="body" color="primary">⚖️ Gıda Güvenliği Kanunu →</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={() => {}}>
+                <Text variant="body" color="primary">📖 Tarım Bakanlığı Alerjen Rehberi →</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.actionButton} onPress={openNatashasLaw}>
+                <Text variant="body" color="primary">⚖️ Natasha's Law (PPDS) →</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={openAllergenGuidance}>
+                <Text variant="body" color="primary">📖 FSA Allergen Guidance →</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </Card>
 
         {/* Current Selection Summary */}
         <Card variant="default" padding="md" style={styles.summaryCard}>
           <Text variant="body" weight="semibold" style={styles.summaryTitle}>
-            📊 Your Allergen Declaration Summary
+            {currentCountry.code === 'TR' ? '📊 Alerjen Beyan Özeti' : '📊 Your Allergen Declaration Summary'}
           </Text>
           <Text variant="caption" color="textSecondary" style={styles.summarySubtitle}>
-            Selected allergens that may be present in your food products:
+            {currentCountry.code === 'TR' 
+              ? 'Gıda ürünlerinizde bulunabilecek seçili alerjenler:'
+              : 'Selected allergens that may be present in your food products:'
+            }
           </Text>
           
           {selectedAllergens.length > 0 ? (
             <View style={styles.selectedAllergensContainer}>
               {selectedAllergens.map(allergenId => {
-                const allergen = UK_ALLERGENS.find(a => a.id === allergenId);
+                const allergen = allergens.find(a => a.id === allergenId);
                 return allergen ? (
                   <View key={allergenId} style={styles.selectedAllergenTag}>
                     <Text variant="caption" style={styles.selectedAllergenText}>
@@ -123,7 +159,7 @@ export default function AllergenDeclaration() {
             </View>
           ) : (
             <Text variant="body" color="textSecondary" style={styles.noAllergensText}>
-              No allergens currently declared
+              {currentCountry.code === 'TR' ? 'Şu anda beyan edilmiş alerjen yok' : 'No allergens currently declared'}
             </Text>
           )}
         </Card>
@@ -131,14 +167,17 @@ export default function AllergenDeclaration() {
         {/* Allergen Checklist */}
         <Card variant="default" padding="md" style={styles.allergenCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            🇬🇧 UK's 14 Major Allergens
+            {currentCountry.code === 'TR' ? '🇹🇷 Türkiye\'nin 14 Temel Alerjeni' : '🇬🇧 14 Major Allergens'}
           </Text>
           <Text variant="caption" color="textSecondary" style={styles.sectionSubtitle}>
-            Select all allergens that may be present in your food products (including cross-contamination):
+            {currentCountry.code === 'TR' 
+              ? 'Gıda ürünlerinizde bulunabilecek tüm alerjenleri seçin (çapraz bulaşma dahil):'
+              : 'Select all allergens that may be present in your food products (including cross-contamination):'
+            }
           </Text>
 
           <View style={styles.allergenList}>
-            {UK_ALLERGENS.map((allergen) => (
+            {allergens.map((allergen) => (
               <TouchableOpacity
                 key={allergen.id}
                 style={[
@@ -165,12 +204,18 @@ export default function AllergenDeclaration() {
           </View>
 
           <Checkbox
-            label="I confirm that I have reviewed all 14 UK allergens and declared those relevant to my products"
+            label={currentCountry.code === 'TR' 
+              ? 'Tüm 14 temel alerjeni gözden geçirdiğimi ve ürünlerimle ilgili olanları beyan ettiğimi onaylıyorum'
+              : 'I confirm that I have reviewed all 14 major allergens and declared those relevant to my products'
+            }
             checked={allAllergensDeclared}
             onPress={() => setAllAllergensDeclared(!allAllergensDeclared)}
             disabled={!isEditing}
             required
-            helperText="This declaration is required under Natasha's Law"
+            helperText={currentCountry.code === 'TR' 
+              ? 'Bu beyan Gıda Güvenliği Kanunu gereği zorunludur'
+              : 'This declaration is required under Natasha\'s Law'
+            }
           />
 
           {isEditing && (
@@ -179,7 +224,7 @@ export default function AllergenDeclaration() {
               onPress={handleSave}
               style={styles.saveButton}
             >
-              💾 Save Allergen Declaration
+              {currentCountry.code === 'TR' ? '💾 Alerjen Beyanını Kaydet' : '💾 Save Allergen Declaration'}
             </Button>
           )}
         </Card>
@@ -187,28 +232,51 @@ export default function AllergenDeclaration() {
         {/* Legal Warning */}
         <Card variant="default" padding="md" style={styles.warningCard}>
           <Text variant="body" weight="semibold" style={styles.warningTitle}>
-            ⚖️ Legal Requirements
+            {currentCountry.code === 'TR' ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
           </Text>
-          <Text variant="caption" style={styles.warningText}>
-            • Under Natasha's Law, you must provide allergen information for prepacked food
-          </Text>
-          <Text variant="caption" style={styles.warningText}>
-            • Failure to declare allergens can result in serious health consequences and legal action
-          </Text>
-          <Text variant="caption" style={styles.warningText}>
-            • Consider cross-contamination in your kitchen when declaring allergens
-          </Text>
-          <Text variant="caption" style={styles.warningText}>
-            • When in doubt, declare the allergen to protect your customers
-          </Text>
-          <Text variant="caption" style={styles.warningText}>
-            • Keep records of your allergen assessments and ingredient suppliers
-          </Text>
+          {currentCountry.code === 'TR' ? (
+            <>
+              <Text variant="caption" style={styles.warningText}>
+                • Gıda Güvenliği Kanunu gereği, paketli gıdalar için alerjen bilgisi sağlamalısınız
+              </Text>
+              <Text variant="caption" style={styles.warningText}>
+                • Alerjen beyan etmemek ciddi sağlık sonuçları ve yasal işlem doğurabilir
+              </Text>
+              <Text variant="caption" style={styles.warningText}>
+                • Alerjen beyanı yaparken mutfağınızdaki çapraz bulaşmayı göz önünde bulundurun
+              </Text>
+              <Text variant="caption" style={styles.warningText}>
+                • Şüphe halinde, müşterilerinizi korumak için alerjeni beyan edin
+              </Text>
+              <Text variant="caption" style={styles.warningText}>
+                • Alerjen değerlendirmelerinizin ve tedarikçi kayıtlarınızın belgelerini saklayın
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text variant="caption" style={styles.warningText}>
+                • Under Natasha's Law, you must provide allergen information for prepacked food
+              </Text>
+              <Text variant="caption" style={styles.warningText}>
+                • Failure to declare allergens can result in serious health consequences and legal action
+              </Text>
+              <Text variant="caption" style={styles.warningText}>
+                • Consider cross-contamination in your kitchen when declaring allergens
+              </Text>
+              <Text variant="caption" style={styles.warningText}>
+                • When in doubt, declare the allergen to protect your customers
+              </Text>
+              <Text variant="caption" style={styles.warningText}>
+                • Keep records of your allergen assessments and ingredient suppliers
+              </Text>
+            </>
+          )}
         </Card>
 
         <View style={styles.bottomSpace} />
       </ScrollView>
     </View>
+    </>
   );
 }
 

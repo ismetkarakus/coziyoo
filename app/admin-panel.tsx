@@ -233,7 +233,7 @@ export default function AdminPanel() {
           • Hygiene rating declared (0-5 or inspection pending)
         </Text>
         <Text variant="caption" style={styles.ruleItem}>
-          • All 14 UK allergens must be declared
+          • All 14 major allergens must be declared
         </Text>
         <Text variant="caption" style={styles.ruleItem}>
           • Legal responsibility acceptance required

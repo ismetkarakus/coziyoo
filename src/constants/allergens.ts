@@ -86,6 +86,94 @@ export const UK_ALLERGENS = [
   },
 ] as const;
 
+// Türkiye'nin 14 Temel Alerjeni (Gıda Güvenliği Kanunu)
+export const TR_ALLERGENS = [
+  {
+    id: 'cereals',
+    name: 'Gluten İçeren Tahıllar',
+    description: 'Buğday, çavdar, arpa, yulaf, spelt, kamut',
+    icon: '🌾',
+  },
+  {
+    id: 'crustaceans',
+    name: 'Kabuklu Deniz Ürünleri',
+    description: 'Karides, yengeç, ıstakoz, kerevit',
+    icon: '🦐',
+  },
+  {
+    id: 'eggs',
+    name: 'Yumurta',
+    description: 'Tüm yumurta ürünleri',
+    icon: '🥚',
+  },
+  {
+    id: 'fish',
+    name: 'Balık',
+    description: 'Tüm balık ve balık ürünleri',
+    icon: '🐟',
+  },
+  {
+    id: 'peanuts',
+    name: 'Yer Fıstığı',
+    description: 'Yer fıstığı ve ürünleri',
+    icon: '🥜',
+  },
+  {
+    id: 'soybeans',
+    name: 'Soya',
+    description: 'Soya ve soya ürünleri',
+    icon: '🫘',
+  },
+  {
+    id: 'milk',
+    name: 'Süt',
+    description: 'Laktoz dahil süt ürünleri',
+    icon: '🥛',
+  },
+  {
+    id: 'nuts',
+    name: 'Sert Kabuklu Meyveler',
+    description: 'Badem, fındık, ceviz, kaju, pekan, antep fıstığı, Brezilya fıstığı, makadamya',
+    icon: '🌰',
+  },
+  {
+    id: 'celery',
+    name: 'Kereviz',
+    description: 'Kereviz ve kereviz kökü',
+    icon: '🥬',
+  },
+  {
+    id: 'mustard',
+    name: 'Hardal',
+    description: 'Hardal tohumu ve ürünleri',
+    icon: '🌿',
+  },
+  {
+    id: 'sesame',
+    name: 'Susam',
+    description: 'Susam tohumu ve ürünleri',
+    icon: '🌱',
+  },
+  {
+    id: 'sulphites',
+    name: 'Kükürt Dioksit ve Sülfitler',
+    description: 'Şarap, kurutulmuş meyve vb. koruyucular',
+    icon: '🧪',
+  },
+  {
+    id: 'lupin',
+    name: 'Acı Bakla',
+    description: 'Acı bakla ve unu',
+    icon: '🫛',
+  },
+  {
+    id: 'molluscs',
+    name: 'Yumuşakçalar',
+    description: 'Midye, istiridye, salyangoz, kalamar',
+    icon: '🦪',
+  },
+] as const;
+
 export type AllergenId = typeof UK_ALLERGENS[number]['id'];
 
 export const getAllergenById = (id: AllergenId) => {

@@ -12,6 +12,8 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCart } from '../../../context/CartContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useNotifications } from '../../../context/NotificationContext';
+import { useCountry } from '../../../context/CountryContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { foodService, Food } from '../../../services/foodService';
 import { searchService, SearchFilters } from '../../../services/searchService';
 import { seedSampleData, checkExistingData } from '../../../utils/seedData';
@@ -24,17 +26,36 @@ const USER_DATA = {
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
 };
 
-const CATEGORIES = [
-  'Ana Yemek',
-  'Çorba',
-  'Meze',
-  'Salata',
-  'Kahvaltı',
-  'Tatlı/Kek',
-  'İçecekler',
-  'Vejetaryen',
-  'Gluten Free',
-];
+// Kategoriler artık çeviri sisteminden gelecek
+const getCategoriesForCountry = (countryCode: string) => {
+  if (countryCode === 'TR') {
+    return [
+      'Tümü',
+      'Ana Yemek',
+      'Çorba', 
+      'Meze',
+      'Salata',
+      'Kahvaltı',
+      'Tatlı/Kek',
+      'İçecekler',
+      'Vejetaryen',
+      'Gluten Free',
+    ];
+  } else {
+    return [
+      'All',
+      'Main Dish',
+      'Soup',
+      'Appetizer', 
+      'Salad',
+      'Breakfast',
+      'Dessert/Cake',
+      'Drinks',
+      'Vegetarian',
+      'Gluten Free',
+    ];
+  }
+};
 
 const MOCK_FOODS = [
   // Ana Yemek
@@ -213,7 +234,7 @@ const MOCK_FOODS = [
   },
   // Meze
   {
-    id: '13',
+    id: '14',
     name: 'Karışık Meze Tabağı',
     cookName: 'Elif Hanım',
     rating: 4.7,
@@ -228,7 +249,7 @@ const MOCK_FOODS = [
     maxDeliveryDistance: 2.5,
   },
   {
-    id: '14',
+    id: '15',
     name: 'Acılı Ezme',
     cookName: 'Hasan Usta',
     rating: 4.5,
@@ -244,7 +265,7 @@ const MOCK_FOODS = [
   },
   // Vejetaryen
   {
-    id: '15',
+    id: '17',
     name: 'Vejetaryen Köfte',
     cookName: 'Ayşe Hanım',
     rating: 4.6,
@@ -259,7 +280,7 @@ const MOCK_FOODS = [
     maxDeliveryDistance: 2,
   },
   {
-    id: '16',
+    id: '18',
     name: 'Sebze Güveç',
     cookName: 'Zehra Hanım',
     rating: 4.8,
@@ -275,7 +296,7 @@ const MOCK_FOODS = [
   },
   // Gluten Free
   {
-    id: '17',
+    id: '19',
     name: 'Glutensiz Ekmek',
     cookName: 'Fatma Teyze',
     rating: 4.4,
@@ -290,7 +311,7 @@ const MOCK_FOODS = [
     maxDeliveryDistance: 1.5,
   },
   {
-    id: '18',
+    id: '20',
     name: 'Glutensiz Kurabiye',
     cookName: 'Gül Teyze',
     rating: 4.7,
@@ -306,7 +327,7 @@ const MOCK_FOODS = [
   },
   // İçecekler
   {
-    id: '19',
+    id: '21',
     name: 'Ev Yapımı Ayran',
     cookName: 'Mehmet Usta',
     rating: 4.3,
@@ -321,7 +342,7 @@ const MOCK_FOODS = [
     maxDeliveryDistance: 1,
   },
   {
-    id: '20',
+    id: '22',
     name: 'Taze Sıkılmış Portakal Suyu',
     cookName: 'Elif Hanım',
     rating: 4.6,
@@ -337,7 +358,7 @@ const MOCK_FOODS = [
   },
   // Tatlılar
   {
-    id: '21',
+    id: '23',
     name: 'Ev Yapımı Sütlaç',
     cookName: 'Ayşe Hanım',
     rating: 4.9,
@@ -352,7 +373,7 @@ const MOCK_FOODS = [
     maxDeliveryDistance: 1.5,
   },
   {
-    id: '22',
+    id: '26',
     name: 'Profiterol',
     cookName: 'Zehra Hanım',
     rating: 4.8,
@@ -367,7 +388,7 @@ const MOCK_FOODS = [
     maxDeliveryDistance: 3,
   },
   {
-    id: '23',
+    id: '27',
     name: 'Ev Yapımı Kek',
     cookName: 'Fatma Teyze',
     rating: 4.7,
@@ -387,17 +408,22 @@ export const Home: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
+  const { currentCountry, formatCurrency } = useCountry();
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const { getTotalItems } = useCart();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Ana Yemek');
+  const [selectedCategory, setSelectedCategory] = useState('Tümü');
+  
+  // Ülkeye göre kategoriler
+  const categories = getCategoriesForCountry(currentCountry.code);
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
   const [scrollY, setScrollY] = useState(0);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
   const [cookFilter, setCookFilter] = useState<string>('');
   const [firebaseFoods, setFirebaseFoods] = useState<Food[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -411,105 +437,16 @@ export const Home: React.FC = () => {
 
   // Load Firebase foods
   useEffect(() => {
-    // Hızlı yükleme için kısa delay
-    setTimeout(() => {
-      loadFirebaseFoods();
-    }, 100);
+    // Firebase yüklemeyi skip et, sadece MOCK_FOODS kullan
+    console.log('🍽️ Using MOCK_FOODS only, skipping Firebase');
+    setLoading(false);
   }, []);
 
   const loadFirebaseFoods = async () => {
-    try {
-      setLoading(true);
-      console.log('⚡ Loading foods (FAST MODE - using mock data)...');
-      
-      // HIZLI ÇÖZÜM: Mock data kullan
-      const mockFoods = [
-        {
-          id: 'mock1',
-          name: 'Ev Yapımı Mantı',
-          description: 'Geleneksel el açması mantı, yoğurt ve tereyağlı sos ile',
-          price: 45,
-          cookName: 'Ayşe Hanım',
-          cookId: 'cook1',
-          category: 'Ana Yemek',
-          imageUrl: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
-          ingredients: ['Un', 'Et', 'Soğan', 'Yoğurt'],
-          preparationTime: 60,
-          servingSize: 4,
-          isAvailable: true,
-          currentStock: 10,
-          dailyStock: 15,
-          rating: 4.8,
-          reviewCount: 24,
-          distance: '2.5 km',
-          maxDeliveryDistance: 3,
-          hasPickup: true,
-          hasDelivery: true,
-          availableDates: '15-20 Ocak',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 'mock2',
-          name: 'Mercimek Çorbası',
-          description: 'Taze sebzelerle hazırlanmış nefis mercimek çorbası',
-          price: 15,
-          cookName: 'Mehmet Usta',
-          cookId: 'cook2',
-          category: 'Çorba',
-          imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=280&fit=crop',
-          ingredients: ['Mercimek', 'Havuç', 'Soğan', 'Baharat'],
-          preparationTime: 30,
-          servingSize: 2,
-          isAvailable: true,
-          currentStock: 8,
-          dailyStock: 12,
-          rating: 4.5,
-          reviewCount: 18,
-          distance: '1.8 km',
-          maxDeliveryDistance: 2,
-          hasPickup: true,
-          hasDelivery: true,
-          availableDates: '16-22 Ocak',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 'mock3',
-          name: 'Köfte ve Pilav',
-          description: 'Ev yapımı köfte ve tereyağlı pilav',
-          price: 35,
-          cookName: 'Fatma Teyze',
-          cookId: 'cook3',
-          category: 'Ana Yemek',
-          imageUrl: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=320&h=280&fit=crop',
-          ingredients: ['Kıyma', 'Pirinç', 'Soğan', 'Baharat'],
-          preparationTime: 45,
-          servingSize: 3,
-          isAvailable: true,
-          currentStock: 6,
-          dailyStock: 10,
-          rating: 4.7,
-          reviewCount: 31,
-          distance: '3.2 km',
-          maxDeliveryDistance: 4,
-          hasPickup: true,
-          hasDelivery: true,
-          availableDates: '17-24 Ocak',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
-      
-      setFirebaseFoods(mockFoods);
-      console.log('✅ Mock foods loaded instantly:', mockFoods.length);
-      
-    } catch (error) {
-      console.error('❌ Error:', error);
-      setFirebaseFoods([]);
-    } finally {
-      setLoading(false);
-    }
+    // Firebase yükleme devre dışı - sadece MOCK_FOODS kullan
+    console.log('🍽️ Firebase loading disabled, using MOCK_FOODS only');
+    setFirebaseFoods([]);
+    setLoading(false);
   };
 
   // Handle cook filter from params
@@ -601,14 +538,18 @@ export const Home: React.FC = () => {
   };
 
   const handleAddToCart = async (foodId: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => {
-    // Check both Firebase foods and mock foods
-    const firebaseFood = firebaseFoods.find(f => f.id === foodId);
-    const mockFood = MOCK_FOODS.find(f => f.id === foodId);
-    const food = firebaseFood || mockFood;
+    // ID prefix'ini temizle ve orijinal ID'yi bul
+    const originalId = foodId.replace(/^(firebase_|mock_|published_)/, '');
+    
+    // Check all food sources with original ID
+    const firebaseFood = firebaseFoods.find(f => f.id === originalId);
+    const mockFood = MOCK_FOODS.find(f => f.id === originalId);
+    const publishedFood = publishedMeals.find(f => f.id === originalId);
+    const food = firebaseFood || mockFood || publishedFood;
     
     if (food && quantity > 0) {
       // Get current stock (from foodStocks state or original stock)
-      const currentStock = foodStocks[foodId] ?? food.currentStock ?? 0;
+      const currentStock = foodStocks[originalId] ?? food.currentStock ?? 0;
       
       if (currentStock >= quantity) {
         try {
@@ -616,7 +557,7 @@ export const Home: React.FC = () => {
           const newStock = currentStock - quantity;
           setFoodStocks(prev => ({
             ...prev,
-            [foodId]: newStock
+            [originalId]: newStock
           }));
           
           // If it's a Firebase food, update in Firebase too
@@ -656,7 +597,7 @@ export const Home: React.FC = () => {
           // Revert local stock change on error
           setFoodStocks(prev => ({
             ...prev,
-            [foodId]: currentStock
+            [originalId]: currentStock
           }));
           Alert.alert('Hata', 'Stok güncellenirken bir hata oluştu.');
         }
@@ -728,7 +669,11 @@ export const Home: React.FC = () => {
   // Generate local suggestions from current food data
   const getLocalSuggestions = (query: string) => {
     const searchTerm = query.toLowerCase().trim();
-    const allFoods = [...firebaseFoods, ...MOCK_FOODS, ...publishedMeals];
+    const allFoods = [
+      ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
+      ...MOCK_FOODS.map(food => ({ ...food, id: `mock_${food.id}` })),
+      ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
+    ];
     const suggestions: string[] = [];
     
     // Add "bana en yakın" suggestion if query matches
@@ -907,8 +852,12 @@ export const Home: React.FC = () => {
       return searchResults;
     }
 
-    // Otherwise use local filtering
-    let foods = [...firebaseFoods, ...MOCK_FOODS, ...publishedMeals];
+    // Otherwise use local filtering - unique ID'ler için prefix ekle
+    let foods = [
+      ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
+      ...MOCK_FOODS.map(food => ({ ...food, id: `mock_${food.id}` })),
+      ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
+    ];
     
     // First filter by cook if specified
     if (cookFilter.trim()) {
@@ -1043,31 +992,22 @@ export const Home: React.FC = () => {
         
         {/* Center Logo */}
         <View style={styles.logoContainer}>
-          <Text variant="heading" weight="bold" style={styles.topBarTitle}>
-            Cazi
-          </Text>
+          <View style={styles.titleRow}>
+            <Text variant="heading" weight="bold" style={styles.topBarTitle}>
+              Cazi
+            </Text>
+            <Text style={styles.countryFlag}>
+              {currentCountry.code === 'TR' ? '🇹🇷' : '🇬🇧'}
+            </Text>
+          </View>
           <Text variant="caption" style={styles.logoSlogan}>
-            ev lezzetleri kapında
+            {currentCountry.code === 'TR' ? 'ev lezzetleri kapında' : 'home flavors at your door'}
           </Text>
         </View>
         
-        {/* Right Icons - Cart & Profile */}
+        {/* Right Icons - Profile Only */}
         <View style={styles.rightIcons}>
           <TouchableOpacity
-            onPress={() => router.push('/checkout')}
-            style={styles.cartButton}
-          >
-            <FontAwesome name="shopping-cart" size={18} color="white" />
-            {getTotalItems() > 0 && (
-              <View style={styles.cartBadge}>
-                <Text variant="caption" style={styles.cartBadgeText}>
-                  {getTotalItems()}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
             onPress={() => router.push('/(tabs)/profile')}
             style={styles.rightIcon}
           >
@@ -1085,7 +1025,7 @@ export const Home: React.FC = () => {
               onChangeText={handleSearchChange}
               onSubmit={handleSearchSubmit}
               onFilterPress={handleFilterPress}
-              placeholder="Bugün ne yemek istersin?"
+              placeholder={t('searchPlaceholder')}
               suggestions={suggestions}
               onSuggestionPress={handleSuggestionPress}
               filterCount={getActiveFilterCount()}
@@ -1103,7 +1043,11 @@ export const Home: React.FC = () => {
               const userCoords = await getUserLocation();
               if (userCoords) {
                 setSearchQuery('yakınımda');
-                const allFoods = [...firebaseFoods, ...MOCK_FOODS, ...publishedMeals];
+                const allFoods = [
+                  ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
+                  ...MOCK_FOODS.map(food => ({ ...food, id: `mock_${food.id}` })),
+                  ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
+                ];
                 const sortedFoods = sortFoodsByRealDistance(allFoods, userCoords);
                 setSearchResults(sortedFoods);
                 setIsSearching(false);
@@ -1112,7 +1056,7 @@ export const Home: React.FC = () => {
             disabled={locationLoading}
           >
             <Text variant="caption" weight="medium" style={{ color: 'white', fontSize: 11 }}>
-              {locationLoading ? 'konum alınıyor...' : 'yakınımda'}
+              {locationLoading ? t('locationLoading') : t('nearMe')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -1125,7 +1069,7 @@ export const Home: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           style={styles.categoriesScroll}
         >
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <TouchableOpacity
               key={category}
               onPress={() => handleCategoryPress(category)}
@@ -1197,7 +1141,7 @@ export const Home: React.FC = () => {
               <FoodCard
                 key={food.id}
                 {...food}
-                currentStock={foodStocks[food.id] ?? food.currentStock}
+                currentStock={foodStocks[food.id.replace(/^(firebase_|mock_|published_)/, '')] ?? food.currentStock}
                 onAddToCart={handleAddToCart}
                 maxDeliveryDistance={food.maxDeliveryDistance}
                 allergens={food.allergens}
@@ -1256,6 +1200,14 @@ const styles = StyleSheet.create({
     bottom: Spacing.sm, // Reduced from lg to sm for more space
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  countryFlag: {
+    fontSize: 16,
   },
   logoSlogan: {
     fontSize: 12.5, // Increased from 11 to 12.5

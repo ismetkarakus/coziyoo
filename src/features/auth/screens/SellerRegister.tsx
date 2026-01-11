@@ -5,10 +5,12 @@ import { Text, Button, Checkbox } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useCountry } from '../../../context/CountryContext';
 
 export const SellerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { currentCountry } = useCountry();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -52,7 +54,12 @@ export const SellerRegister: React.FC = () => {
     }
     
     if (!ukCompliance.allergenDeclaration) {
-      Alert.alert('Food Safety Requirement', 'You must declare allergen information for all food products.');
+      Alert.alert(
+        currentCountry.code === 'TR' ? 'Gıda Güvenliği Gereksinimi' : 'Food Safety Requirement',
+        currentCountry.code === 'TR' 
+          ? 'Tüm gıda ürünleri için alerjen bilgilerini beyan etmelisiniz.'
+          : 'You must declare allergen information for all food products.'
+      );
       return;
     }
     
@@ -189,7 +196,10 @@ export const SellerRegister: React.FC = () => {
                   onPress={() => Linking.openURL('https://www.food.gov.uk/business-guidance/allergen-guidance-for-food-businesses')}
                 >
                   <Text variant="caption" color="primary" style={styles.linkText}>
-                    ⚠️ UK Allergen Requirements (Natasha's Law) →
+                    {currentCountry.code === 'TR' 
+                      ? '⚠️ Türkiye Alerjen Gereksinimleri (Gıda Güvenliği Kanunu) →'
+                      : '⚠️ Allergen Requirements →'
+                    }
                   </Text>
                 </TouchableOpacity>
                 
@@ -263,7 +273,12 @@ export const SellerRegister: React.FC = () => {
               <Checkbox
                 label={
                   <View style={styles.checkboxLabelContainer}>
-                    <Text variant="body">I will provide accurate allergen information for all products</Text>
+                    <Text variant="body">
+                      {currentCountry.code === 'TR' 
+                        ? 'Tüm ürünler için doğru alerjen bilgisi sağlayacağım'
+                        : 'I will provide accurate allergen information for all products'
+                      }
+                    </Text>
                     <TouchableOpacity 
                       onPress={() => Linking.openURL('https://www.food.gov.uk/business-guidance/allergen-guidance-for-food-businesses')}
                       style={styles.inlineLinkButton}
@@ -277,7 +292,10 @@ export const SellerRegister: React.FC = () => {
                 checked={ukCompliance.allergenDeclaration}
                 onPress={() => setUkCompliance(prev => ({ ...prev, allergenDeclaration: !prev.allergenDeclaration }))}
                 required
-                helperText="Required by UK Natasha's Law - covers all 14 major allergens"
+                helperText={currentCountry.code === 'TR' 
+                  ? 'Gıda Güvenliği Kanunu gereği zorunlu - tüm 14 temel alerjeni kapsar'
+                  : 'Required by food safety regulations - covers all 14 major allergens'
+                }
               />
               
               <Checkbox
