@@ -1,13 +1,13 @@
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   User,
   updateProfile,
   sendPasswordResetEmail
-} from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+} from './backend/auth';
+import { doc, setDoc, getDoc } from './backend/firestore';
+import { auth, db } from './backend/config';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -62,7 +62,7 @@ class AuthService {
     email: string, 
     password: string, 
     displayName: string, 
-    userType: 'buyer' | 'seller'
+    userType: 'buyer' | 'seller' | 'both'
   ): Promise<User> {
     try {
       // Firebase Auth'da kullanıcı oluştur

@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Text, FoodCard, SearchBar, FilterModal, NetworkStatus } from '../../../components/ui';
+import { Text, FoodCard, SearchBar, FilterModal } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -17,7 +17,6 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { foodService, Food } from '../../../services/foodService';
 import { searchService, SearchFilters } from '../../../services/searchService';
 import { seedSampleData, checkExistingData } from '../../../utils/seedData';
-import { FirebaseUtils } from '../../../utils/firebaseUtils';
 import { AllergenId } from '../../../constants/allergens';
 
 // Mock data
@@ -521,22 +520,6 @@ export const Home: React.FC = () => {
     }, [])
   );
 
-  // Firebase bağlantısını reset et
-  const handleResetFirebase = async () => {
-    try {
-      console.log('🔄 Resetting Firebase connection...');
-      await FirebaseUtils.resetConnection();
-      
-      // Verileri yeniden yükle
-      await loadFirebaseFoods();
-      
-      Alert.alert('✅ Başarılı', 'Firebase bağlantısı sıfırlandı ve veriler yeniden yüklendi!');
-    } catch (error) {
-      console.error('❌ Reset failed:', error);
-      Alert.alert('❌ Hata', 'Firebase sıfırlama başarısız oldu.');
-    }
-  };
-
   const handleAddToCart = async (foodId: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => {
     // ID prefix'ini temizle ve orijinal ID'yi bul
     const originalId = foodId.replace(/^(firebase_|mock_|published_)/, '');
@@ -927,42 +910,6 @@ export const Home: React.FC = () => {
     router.push('/(tabs)/profile');
   };
 
-  const renderTopBarRight = () => (
-    <View style={styles.topBarRight}>
-      {/* Logout Button (Test) */}
-      <TouchableOpacity 
-        onPress={async () => {
-          try {
-            await signOut();
-            router.replace('/sign-in');
-          } catch (error) {
-            console.error('Logout error:', error);
-          }
-        }} 
-        style={styles.logoutButton}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <FontAwesome name="sign-out" size={18} color={colors.background} />
-      </TouchableOpacity>
-      
-      {/* Firebase Reset Button */}
-      <TouchableOpacity 
-        onPress={handleResetFirebase} 
-        style={styles.resetButton}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <FontAwesome name="refresh" size={18} color={colors.background} />
-      </TouchableOpacity>
-      
-      <TouchableOpacity onPress={handleProfilePress} style={styles.profileIconContainer}>
-        <Image 
-          source={{ uri: USER_DATA.avatar }}
-          style={styles.profileAvatar}
-          defaultSource={{ uri: 'https://via.placeholder.com/40x40/7FAF9A/FFFFFF?text=A' }}
-        />
-      </TouchableOpacity>
-    </View>
-  );
 
 
   return (
@@ -971,9 +918,8 @@ export const Home: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
-      <NetworkStatus />
       {/* TopBar */}
-      <View style={[styles.topBar, { 
+      <View style={[styles.topBar, {
         backgroundColor: colors.primary,
         opacity: topBarOpacity,
       }]}>

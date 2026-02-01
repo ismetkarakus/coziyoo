@@ -1,12 +1,12 @@
-import { 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
   deleteObject,
   uploadBytesResumable,
   getMetadata
-} from 'firebase/storage';
-import { storage } from '../config/firebase';
+} from './backend/storage';
+import { storage } from './backend/config';
 import * as ImagePicker from 'expo-image-picker';
 
 export interface UploadProgress {

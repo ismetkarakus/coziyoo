@@ -7,18 +7,18 @@ Coziyoo is an Expo + React Native app using expo-router for navigation and Fireb
 - Runtime: Expo (React Native 0.81) with expo-router
 - UI: React, React Native, custom UI kit under `src/components/ui`
 - State: React Context providers (`Auth`, `Cart`, `Wallet`, `Country`, `Notification`)
-- Backend: Firebase (Auth, Firestore, Storage)
+- Backend: Mock Adapters (Pending Supabase)
 - Notifications: Expo Notifications (local + push token retrieval)
-- Build/Deploy: Expo export for web; Firebase hosting rules included
+- Build/Deploy: Expo export for web
 
 ## 3) High-Level Architecture
 - `app/` = route definitions and screen composition (expo-router).
 - `src/features/` = feature-specific screens used by routes.
 - `src/components/` = reusable UI + layout + auth guard.
-- `src/services/` = Firebase and app domain services (auth, food, chat, storage, reviews, notifications, payments).
+- `src/services/` = App domain services (auth, food, chat, storage, reviews, notifications, payments).
+- `src/services/backend/` = Temporary backend adapters (Auth, DB, Storage).
 - `src/context/` = global state and side-effects (auth, cart, wallet, notification, country).
 - `src/theme/` = spacing/colors/typography tokens.
-- `src/config/` = Firebase config (native + web).
 
 ## 4) App Startup Workflow
 1) `app/_layout.tsx` loads fonts and keeps the splash screen until ready.
@@ -38,13 +38,13 @@ Coziyoo is an Expo + React Native app using expo-router for navigation and Fireb
 - `ROUTES.md` documents the overall map.
 
 ## 6) Authentication Workflow (Key Flow)
-- Firebase initialized in `src/config/firebase.ts` (with AsyncStorage persistence on mobile).
-- `AuthProvider` listens to `onAuthStateChanged`:
+- Auth is handled by mock adapter in `src/services/backend/auth.ts`.
+- `AuthProvider` listens to `onAuthStateChanged` (mocked):
   - Sets a fast fallback `userData` to keep UI responsive.
   - Tries cache (`AsyncStorage`) for `user_{uid}`.
-  - Refreshes from Firestore via `getUserDataSafe`.
+  - Refreshes from backend via `getUserDataSafe`.
   - Auto-redirects to seller or buyer entry point.
-- `AuthService` handles sign-in, sign-up, password reset, and mock fallbacks on offline/timeout.
+- `AuthService` handles sign-in, sign-up, password reset using mock implementation.
 
 ## 7) Core Domain Flows
 ### Buyer Flow

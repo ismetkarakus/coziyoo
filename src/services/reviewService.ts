@@ -1,19 +1,19 @@
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  getDocs, 
-  getDoc, 
-  updateDoc, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  doc,
+  addDoc,
+  getDocs,
+  getDoc,
+  updateDoc,
+  query,
+  where,
+  orderBy,
   limit,
   Timestamp,
   runTransaction,
   increment
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
+} from './backend/firestore';
+import { db } from './backend/config';
 
 export interface Review {
   id?: string;

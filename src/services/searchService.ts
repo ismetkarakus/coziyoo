@@ -1,14 +1,14 @@
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  query,
+  where,
+  orderBy,
   limit,
   getDocs,
   startAt,
   endAt
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
+} from './backend/firestore';
+import { db } from './backend/config';
 import { Food } from './foodService';
 
 export interface SearchFilters {

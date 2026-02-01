@@ -1,19 +1,19 @@
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  getDocs, 
-  getDoc, 
-  updateDoc, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  doc,
+  addDoc,
+  getDocs,
+  getDoc,
+  updateDoc,
+  query,
+  where,
+  orderBy,
   limit,
   onSnapshot,
   Timestamp,
   serverTimestamp
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
+} from './backend/firestore';
+import { db } from './backend/config';
 
 export interface ChatMessage {
   id?: string;

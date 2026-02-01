@@ -7,7 +7,7 @@ Personal working notes for future tasks in this repo.
 - App is Expo + React Native using expo-router.
 - Routes live in `app/` (route files are screens).
 - Feature screens and components are under `src/features` and `src/components`.
-- Backend mocks are in `src/services/backend`.
+- Firebase integration is in `src/config` and `src/services`.
 
 ## Start/Run
 - `npm run start` for Expo dev server
@@ -20,20 +20,19 @@ Personal working notes for future tasks in this repo.
 - Seller vs buyer flow depends on `userType` and `sellerEnabled`.
 
 ## Data + Services
-- Backend is currently MOCKED in `src/services/backend/*`.
-- Collections (mocked): `users`, `foods`, `orders`, `reviews`, `chats`, `messages`.
+- Firestore collections used: `users`, `foods`, `orders`, `reviews`, `chats`, `messages`.
 - CRUD is through service classes in `src/services/*`.
-- Storage uploads are in `src/services/storageService.ts` (returns placeholder URLs).
+- Storage uploads are in `src/services/storageService.ts`.
 - Payments are mock-only in `src/services/paymentService.ts`.
 
 ## Where to Change Things
 - Add or update screens in `app/` and `src/features/*/screens/`.
 - Update UI components in `src/components/ui/`.
 - Adjust theme tokens in `src/theme/`.
-- Backend logic: `src/services/backend/`.
+- Update Firebase config in `src/config/firebase.ts` and `src/config/firebaseWeb.ts`.
 
 ## Debugging
-- Migration info: see `Documents/FirebaseRemovalPlan.md`.
+- Auth setup: see `FIREBASE_AUTH_SETUP.md` and `DEBUG_AUTH.md`.
 - Cache reset: see `CLEAR_CACHE.md`.
 - Routes overview: see `ROUTES.md`.
 

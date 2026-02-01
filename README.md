@@ -9,7 +9,7 @@ Coziyoo is a home-cooked food marketplace app built with Expo + React Native. It
 
 ## Tech stack
 - Expo + React Native (expo-router)
-- Firebase Auth / Firestore / Storage
+- Backend pending (Mock adapters in place for Supabase migration)
 - Expo Notifications (client-side/local)
 
 ## Requirements
@@ -33,19 +33,17 @@ npm run android
 npm run web
 ```
 
-## Firebase setup
-Firebase configuration is currently hardcoded for web and native:
-- `src/config/firebase.ts`
-- `src/config/firebaseWeb.ts`
+## Backend setup
+The project currently uses temporary in-memory mocks (`src/services/backend/`) in preparation for Supabase integration.
+Firebase SDKs and config have been removed.
 
-If auth fails in dev, follow:
-- `FIREBASE_AUTH_SETUP.md`
-- `DEBUG_AUTH.md`
+- Data is mock-only and resets on app reload (unless cached in AsyncStorage).
+- Auth allows any email/password (mock logic).
 
 ## Useful docs
 - Routes: `ROUTES.md`
 - Cache reset: `CLEAR_CACHE.md`
-- Firebase guide: `FIREBASE_GUIDE.md`
+- Migration Plan: `Documents/FirebaseRemovalPlan.md`
 
 ## Notes
 - Payment service is a demo/mock implementation.

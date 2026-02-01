@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import { User, onAuthStateChanged } from '../services/backend/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Added import
-import { auth } from '../config/firebase';
+import { auth } from '../services/backend/config';
 import { authService, UserData, getUserDataSafe } from '../services/authService'; // Added getUserDataSafe
 import { router } from 'expo-router'; // Added router import
 
