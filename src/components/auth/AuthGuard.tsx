@@ -11,8 +11,12 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, userData, loading, profileLoading } = useAuth();
   const segments = useSegments();
+  const group = segments[0];
+  
+  // ✅ Çok akıllı bekleme - cache varsa hiç bekleme
+  const shouldWait = loading && !userData;
 
   useEffect(() => {
     console.log('🔐 AuthGuard Check:', {

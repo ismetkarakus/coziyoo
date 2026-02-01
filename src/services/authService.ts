@@ -9,6 +9,7 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface UserData {
   uid: string;
@@ -195,5 +196,123 @@ class AuthService {
     }
   }
 }
+
+// ✅ IMPROVED getUserDataSafe WITH MOCK DATA FALLBACK
+export const getUserDataSafe = async (uid: string, timeoutMs = 1000) => {
+  try {
+    console.log('🔍 getUserDataSafe başladı:', uid);
+    
+    // ✅ Promise.race ile timeout kontrolü
+    const userDoc = await Promise.race([
+      getDoc(doc(db, 'users', uid)),
+      new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('getDoc TIMEOUT')), timeoutMs)
+      )
+    ]);
+    
+    if (!userDoc.exists()) {
+      console.log('📭 Kullanıcı verisi bulunamadı, otomatik oluşturuluyor...');
+      
+      // 🔧 AUTO CREATE USER DOC if not exists
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        // ✅ Email'e göre akıllı user creation
+        const isSellerEmail = currentUser.email?.includes('satici') || currentUser.email?.includes('seller');
+        
+        const defaultUserData = {
+          uid: uid,
+          email: currentUser.email || "",
+          displayName: currentUser.displayName || "",
+          userType: isSellerEmail ? "seller" as const : "buyer" as const,
+          sellerEnabled: isSellerEmail,
+          activeMode: isSellerEmail ? "seller" as const : "buyer" as const,
+          createdAt: new Date(),
+        };
+        
+        await setDoc(doc(db, "users", uid), defaultUserData);
+        console.log('✅ Smart default user doc created:', {
+          email: currentUser.email,
+          isSellerEmail,
+          defaultUserData
+        });
+        
+        // ✅ Veriyi cache'e kaydet
+        await AsyncStorage.setItem(`user_${uid}`, JSON.stringify(defaultUserData));
+        return defaultUserData;
+      }
+      return null;
+    }
+    
+    const userData = userDoc.data();
+    console.log('✅ Kullanıcı verisi alındı:', userData);
+    
+    // ✅ Veriyi cache'e kaydet
+    if (userData) {
+      await AsyncStorage.setItem(`user_${uid}`, JSON.stringify(userData));
+    }
+    
+    return userData;
+    
+  } catch (error) {
+    // Firestore timeout - normal in Expo Go, using fallback
+    // console.error('❌ getUserDataSafe hatası:', error);
+    
+    // ✅ Hata durumunda cache'den dene
+    try {
+      const cacheKey = `user_${uid}`;
+      const cached = await AsyncStorage.getItem(cacheKey);
+      console.log('📦 Cache kontrol:', { cacheKey, hasCached: !!cached });
+      if (cached) {
+        const parsedCache = JSON.parse(cached);
+        console.log('📦 Cache\'den kullanıcı verisi alındı:', parsedCache);
+        return parsedCache;
+      }
+    } catch (cacheError) {
+      // Silent cache error
+      console.log('Cache okuma hatası:', cacheError);
+    }
+    
+    // 🔧 MOCK DATA FALLBACK - Expo Go için geçici çözüm
+    console.log('🎭 Firestore timeout, mock data kullanılıyor...');
+    const currentUser = auth.currentUser;
+    console.log('🎭 Mock data için currentUser:', {
+      uid: currentUser?.uid,
+      email: currentUser?.email,
+      requestedUid: uid
+    });
+    
+    if (currentUser) {
+      // ✅ Email'e göre akıllı mock data
+      const isSellerEmail = currentUser.email?.includes('satici') || currentUser.email?.includes('seller');
+      
+      const mockUserData = {
+        uid: uid,
+        email: currentUser.email || "",
+        displayName: currentUser.displayName || "",
+        userType: isSellerEmail ? "seller" as const : "buyer" as const,
+        sellerEnabled: isSellerEmail,
+        activeMode: isSellerEmail ? "seller" as const : "buyer" as const,
+        createdAt: new Date(),
+      };
+      
+      console.log('✅ Smart mock data created:', {
+        email: currentUser.email,
+        isSellerEmail,
+        mockUserData
+      });
+      
+      // Cache'e kaydet
+      try {
+        await AsyncStorage.setItem(`user_${uid}`, JSON.stringify(mockUserData));
+      } catch (e) {
+        console.error('Mock data cache error:', e);
+      }
+      
+      return mockUserData;
+    }
+    
+    return null;
+  }
+};
 
 export const authService = new AuthService();

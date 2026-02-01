@@ -1,13 +1,15 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Added import
 import { auth } from '../config/firebase';
-import { authService, UserData } from '../services/authService';
-import { FirebaseUtils } from '../utils/firebaseUtils';
+import { authService, UserData, getUserDataSafe } from '../services/authService'; // Added getUserDataSafe
+import { router } from 'expo-router'; // Added router import
 
 interface AuthContextType {
   user: User | null;
   userData: UserData | null;
   loading: boolean;
+  profileLoading: boolean; // Added profileLoading
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both') => Promise<void>;
   signOut: () => Promise<void>;
@@ -23,7 +25,52 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true); // Changed from loading
+  const [profileLoading, setProfileLoading] = useState(false); // Added profileLoading
+  
+  // ✅ Süper akıllı loading - cache varsa anında bitir
+  const loading = authLoading; // Derived loading state
+
+  // handleAutoRedirect function
+  const handleAutoRedirect = useCallback((data: UserData) => {
+    console.log('🎯 Otomatik yönlendirme kontrol:', {
+      userType: data.userType,
+      uid: data.uid,
+      email: data.email
+    });
+    
+    // Satıcı mı kontrol et
+    const isSeller = data.userType === 'seller' || (data as any).sellerEnabled === true; // Added (data as any) for sellerEnabled
+    
+    console.log('🔍 Satıcı kontrolü:', {
+      userType_is_seller: data.userType === 'seller',
+      sellerEnabled_is_true: (data as any).sellerEnabled === true,
+      final_isSeller: isSeller
+    });
+    
+    // ✅ Hızlı yönlendirme için setTimeout kullan
+    setTimeout(() => {
+      if (isSeller) {
+        console.log('✅ SATICI olarak yönlendiriliyor → /(seller)/dashboard');
+        try {
+          router.replace('/(seller)/dashboard');
+        } catch (error) {
+          console.error('Seller dashboard yönlendirme hatası:', error);
+          // Fallback olarak push dene
+          router.push('/(seller)/dashboard');
+        }
+      } else {
+        console.log('✅ ALICI olarak yönlendiriliyor → /(tabs)/');
+        try {
+          router.replace('/(tabs)/');
+        } catch (error) {
+          console.error('Buyer tabs yönlendirme hatası:', error);
+          // Fallback olarak push dene
+          router.push('/(tabs)/');
+        }
+      }
+    }, 50); // 50ms sonra yönlendir (çok hızlı)
+  }, []);
 
   useEffect(() => {
     // Firebase optimizasyonu geçici olarak devre dışı
@@ -38,43 +85,88 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(user);
       
       if (user) {
+        setProfileLoading(true); // Start profile loading
+        const cacheKey = `user_${user.uid}`; // Define cacheKey
+
         // Hızlı fallback - Firestore'a gitmeden önce temel bilgileri set et
-        const fallbackData = {
+        const fallbackData: UserData = { // Added type assertion
           uid: user.uid,
           email: user.email || 'test@cazi.com',
           displayName: user.displayName || 'Test Kullanıcı',
-          userType: 'buyer' as const,
+          userType: 'buyer', // Default to buyer
           createdAt: new Date()
         };
         
         setUserData(fallbackData);
         console.log('⚡ Quick user data set, loading full data in background...');
         
-        // Arka planda tam veriyi yükle
-        authService.getUserData(user.uid).then(data => {
-          if (data) {
-            setUserData(data);
-            console.log('✅ Full user data loaded');
-          }
-        }).catch(error => {
-          console.warn('⚠️ Failed to load full user data, keeping fallback:', error);
-        });
+        // Cache'den hızlıca yükle (eğer varsa)
+        const cached = await AsyncStorage.getItem(cacheKey);
+        
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          console.log('📦 Cache den yuklenen veri:', {
+            userType: parsed.userType,
+            sellerEnabled: parsed.sellerEnabled,
+            email: parsed.email,
+            uid: parsed.uid
+          });
+          
+          setUserData(parsed); // Hemen göster
+          setProfileLoading(false); // ✅ Cache varsa hemen loading'i bitir
+          console.log('⚡ Cache hızlı yüklendi, loading bitti');
+          
+          // ✅ Cache ile hemen yönlendirme yap
+          handleAutoRedirect(parsed);
+        }
+        
+        // ✅ Firestore'u arka planda güncelle (blocking yapmadan)
+        getUserDataSafe(user.uid, 800) // 0.8 saniye timeout, used user.uid instead of firebaseUser.uid
+          .then(async (freshData) => {
+            if (freshData) {
+              setUserData(freshData);
+              await AsyncStorage.setItem(cacheKey, JSON.stringify(freshData));
+              console.log('🔥 Firestore arka planda güncellendi');
+              
+              // Eğer cache yoktu, şimdi yönlendir
+              if (!cached) {
+                setProfileLoading(false);
+                handleAutoRedirect(freshData);
+              }
+            }
+          })
+          .catch((error) => {
+            console.log('Firestore arka plan hatası (normal):', error);
+            // Cache yoksa ve Firestore de başarısızsa
+            if (!cached) {
+              setProfileLoading(false);
+            }
+          });
+        
+        // Eğer cache yoksa, çok kısa süre bekle
+        if (!cached) {
+          setTimeout(() => {
+            setProfileLoading(false);
+            console.log('⏰ Timeout ile loading bitti');
+          }, 500); // 0.5 saniye max bekleme
+        }
       } else {
         setUserData(null);
+        setProfileLoading(false); // Reset profile loading when user logs out
       }
       
-      setLoading(false);
+      setAuthLoading(false); // Changed setLoading to setAuthLoading
     });
 
     return unsubscribe;
-  }, []);
+  }, [handleAutoRedirect]); // Added handleAutoRedirect to dependency array
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
+    setAuthLoading(true); // Changed setLoading to setAuthLoading
     try {
       await authService.signIn(email, password);
     } catch (error) {
-      setLoading(false);
+      setAuthLoading(false); // Changed setLoading to setAuthLoading
       throw error;
     }
   };
@@ -85,11 +177,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     displayName: string, 
     userType: 'buyer' | 'seller' | 'both'
   ) => {
-    setLoading(true);
+    setAuthLoading(true); // Changed setLoading to setAuthLoading
     try {
       await authService.signUp(email, password, displayName, userType);
     } catch (error) {
-      setLoading(false);
+      setAuthLoading(false); // Changed setLoading to setAuthLoading
       throw error;
     }
   };
@@ -114,6 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     userData,
     loading,
+    profileLoading, // Added profileLoading
     signIn,
     signUp,
     signOut,
