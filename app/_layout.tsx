@@ -12,6 +12,7 @@ import { NotificationProvider } from '@/src/context/NotificationContext';
 import { WalletProvider } from '@/src/context/WalletContext';
 import { CountryProvider } from '@/src/context/CountryContext';
 import { AuthGuard } from '@/src/components/auth/AuthGuard';
+import { initDatabase } from '@/src/api/utils/db';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -33,6 +34,10 @@ export default function RootLayout() {
   });
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  useEffect(() => {
+    initDatabase();
+  }, []);
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);

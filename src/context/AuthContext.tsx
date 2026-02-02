@@ -1,15 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { User, onAuthStateChanged } from '../services/backend/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Added import
-import { auth } from '../services/backend/config';
-import { authService, UserData, getUserDataSafe } from '../services/authService'; // Added getUserDataSafe
-import { router } from 'expo-router'; // Added router import
+import { authService, UserData, User } from '../services/authService';
+import { router } from 'expo-router';
 
 interface AuthContextType {
   user: User | null;
   userData: UserData | null;
   loading: boolean;
-  profileLoading: boolean; // Added profileLoading
+  profileLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both') => Promise<void>;
   signOut: () => Promise<void>;
@@ -18,195 +15,89 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [authLoading, setAuthLoading] = useState(true); // Changed from loading
-  const [profileLoading, setProfileLoading] = useState(false); // Added profileLoading
-  
-  // ✅ Süper akıllı loading - cache varsa anında bitir
-  const loading = authLoading; // Derived loading state
+  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
-  // handleAutoRedirect function
   const handleAutoRedirect = useCallback((data: UserData) => {
-    console.log('🎯 Otomatik yönlendirme kontrol:', {
-      userType: data.userType,
-      uid: data.uid,
-      email: data.email
-    });
+    const isSeller = data.userType === 'seller' || (data as any).sellerEnabled === true;
     
-    // Satıcı mı kontrol et
-    const isSeller = data.userType === 'seller' || (data as any).sellerEnabled === true; // Added (data as any) for sellerEnabled
-    
-    console.log('🔍 Satıcı kontrolü:', {
-      userType_is_seller: data.userType === 'seller',
-      sellerEnabled_is_true: (data as any).sellerEnabled === true,
-      final_isSeller: isSeller
-    });
-    
-    // ✅ Hızlı yönlendirme için setTimeout kullan
     setTimeout(() => {
       if (isSeller) {
-        console.log('✅ SATICI olarak yönlendiriliyor → /(seller)/dashboard');
-        try {
-          router.replace('/(seller)/dashboard');
-        } catch (error) {
-          console.error('Seller dashboard yönlendirme hatası:', error);
-          // Fallback olarak push dene
-          router.push('/(seller)/dashboard');
-        }
+        router.replace('/(seller)/dashboard' as any);
       } else {
-        console.log('✅ ALICI olarak yönlendiriliyor → /(tabs)/');
-        try {
-          router.replace('/(tabs)/');
-        } catch (error) {
-          console.error('Buyer tabs yönlendirme hatası:', error);
-          // Fallback olarak push dene
-          router.push('/(tabs)/');
-        }
+        router.replace('/(tabs)' as any);
       }
-    }, 50); // 50ms sonra yönlendir (çok hızlı)
+    }, 50);
   }, []);
 
-  useEffect(() => {
-    // Firebase optimizasyonu geçici olarak devre dışı
-    console.log('⚡ Skipping Firebase optimization for speed');
-
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('🔐 Auth state changed:', {
-        user: user ? `${user.email} (${user.uid})` : 'No user',
-        emailVerified: user?.emailVerified,
-        isAnonymous: user?.isAnonymous
-      });
-      setUser(user);
-      
-      if (user) {
-        setProfileLoading(true); // Start profile loading
-        const cacheKey = `user_${user.uid}`; // Define cacheKey
-
-        // Hızlı fallback - Firestore'a gitmeden önce temel bilgileri set et
-        const fallbackData: UserData = { // Added type assertion
-          uid: user.uid,
-          email: user.email || 'test@cazi.com',
-          displayName: user.displayName || 'Test Kullanıcı',
-          userType: 'buyer', // Default to buyer
-          createdAt: new Date()
-        };
-        
-        setUserData(fallbackData);
-        console.log('⚡ Quick user data set, loading full data in background...');
-        
-        // Cache'den hızlıca yükle (eğer varsa)
-        const cached = await AsyncStorage.getItem(cacheKey);
-        
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          console.log('📦 Cache den yuklenen veri:', {
-            userType: parsed.userType,
-            sellerEnabled: parsed.sellerEnabled,
-            email: parsed.email,
-            uid: parsed.uid
-          });
-          
-          setUserData(parsed); // Hemen göster
-          setProfileLoading(false); // ✅ Cache varsa hemen loading'i bitir
-          console.log('⚡ Cache hızlı yüklendi, loading bitti');
-          
-          // ✅ Cache ile hemen yönlendirme yap
-          handleAutoRedirect(parsed);
-        }
-        
-        // ✅ Firestore'u arka planda güncelle (blocking yapmadan)
-        getUserDataSafe(user.uid, 800) // 0.8 saniye timeout, used user.uid instead of firebaseUser.uid
-          .then(async (freshData) => {
-            if (freshData) {
-              setUserData(freshData);
-              await AsyncStorage.setItem(cacheKey, JSON.stringify(freshData));
-              console.log('🔥 Firestore arka planda güncellendi');
-              
-              // Eğer cache yoktu, şimdi yönlendir
-              if (!cached) {
-                setProfileLoading(false);
-                handleAutoRedirect(freshData);
-              }
-            }
-          })
-          .catch((error) => {
-            console.log('Firestore arka plan hatası (normal):', error);
-            // Cache yoksa ve Firestore de başarısızsa
-            if (!cached) {
-              setProfileLoading(false);
-            }
-          });
-        
-        // Eğer cache yoksa, çok kısa süre bekle
-        if (!cached) {
-          setTimeout(() => {
-            setProfileLoading(false);
-            console.log('⏰ Timeout ile loading bitti');
-          }, 500); // 0.5 saniye max bekleme
-        }
-      } else {
-        setUserData(null);
-        setProfileLoading(false); // Reset profile loading when user logs out
+  const refreshUserData = useCallback(async (uid: string) => {
+      setProfileLoading(true);
+      try {
+          const data = await authService.getUserData(uid);
+          if (data) {
+              setUserData(data);
+              handleAutoRedirect(data);
+          }
+      } catch (error) {
+          console.error('Refresh user data error:', error);
+      } finally {
+          setProfileLoading(false);
       }
-      
-      setAuthLoading(false); // Changed setLoading to setAuthLoading
-    });
+  }, [handleAutoRedirect]);
 
-    return unsubscribe;
-  }, [handleAutoRedirect]); // Added handleAutoRedirect to dependency array
+  useEffect(() => {
+    const initAuth = async () => {
+      const storedUser = await authService.loadStoredUser();
+      if (storedUser) {
+        setUser(storedUser);
+        await refreshUserData(storedUser.uid);
+      }
+      setLoading(false);
+    };
+    initAuth();
+  }, [refreshUserData]);
 
   const signIn = async (email: string, password: string) => {
-    setAuthLoading(true); // Changed setLoading to setAuthLoading
+    setLoading(true);
     try {
-      await authService.signIn(email, password);
-    } catch (error) {
-      setAuthLoading(false); // Changed setLoading to setAuthLoading
-      throw error;
+      const user = await authService.signIn(email, password);
+      setUser(user);
+      await refreshUserData(user.uid);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signUp = async (
-    email: string, 
-    password: string, 
-    displayName: string, 
-    userType: 'buyer' | 'seller' | 'both'
-  ) => {
-    setAuthLoading(true); // Changed setLoading to setAuthLoading
+  const signUp = async (email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both') => {
+    setLoading(true);
     try {
-      await authService.signUp(email, password, displayName, userType);
-    } catch (error) {
-      setAuthLoading(false); // Changed setLoading to setAuthLoading
-      throw error;
+      const user = await authService.signUp(email, password, displayName, userType);
+      setUser(user);
+      await refreshUserData(user.uid);
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
-    try {
-      await authService.signOut();
-    } catch (error) {
-      throw error;
-    }
+    await authService.signOut();
+    setUser(null);
+    setUserData(null);
+    router.replace('/(auth)/sign-in');
   };
 
   const resetPassword = async (email: string) => {
-    try {
-      await authService.resetPassword(email);
-    } catch (error) {
-      throw error;
-    }
+    await authService.resetPassword(email);
   };
 
-  const value: AuthContextType = {
+  const value = {
     user,
     userData,
     loading,
-    profileLoading, // Added profileLoading
+    profileLoading,
     signIn,
     signUp,
     signOut,
@@ -220,11 +111,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
-

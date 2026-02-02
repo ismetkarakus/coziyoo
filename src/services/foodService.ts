@@ -1,19 +1,4 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  getDocs,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  Timestamp,
-  onSnapshot
-} from './backend/firestore';
-import { db } from './backend/config';
+import { apiClient } from '../api/apiClient';
 
 export interface Food {
   id?: string;
@@ -51,12 +36,14 @@ class FoodService {
   // Yemek ekleme (Satıcı)
   async addFood(foodData: Omit<Food, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
-      const docRef = await addDoc(collection(db, 'foods'), {
-        ...foodData,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+      const response = await apiClient.post('/foods', {
+          ...foodData,
+          id: `food_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          rating: 0,
+          reviewCount: 0
       });
-      return docRef.id;
+      if (response.status !== 201) throw new Error(response.error);
+      return response.data.id;
     } catch (error) {
       console.error('Yemek eklenirken hata:', error);
       throw new Error('Yemek eklenemedi');
@@ -66,40 +53,16 @@ class FoodService {
   // Tüm yemekleri getirme
   async getAllFoods(): Promise<Food[]> {
     try {
-      console.log('🔍 Starting Firebase query...');
+      const response = await apiClient.get<any[]>('/foods');
+      if (response.status !== 200) return [];
       
-      // Firebase henüz initialize olmamışsa boş liste döndür
-      if (!db) {
-        console.log('⚠️ Firebase not initialized yet, returning empty list');
-        return [];
-      }
-      
-      // Daha hızlı query - sadece ilk 10 item
-      const q = query(
-        collection(db, 'foods'),
-        where('isAvailable', '==', true),
-        orderBy('createdAt', 'desc'),
-        limit(10) // Sadece 10 item yükle
-      );
-      
-      const querySnapshot = await getDocs(q);
-      
-      const foods: Food[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        foods.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate()
-        } as Food);
-      });
-      
-      return foods;
+      return response.data.map(item => ({
+          ...item,
+          createdAt: new Date(item.createdAt),
+          updatedAt: new Date(item.updatedAt)
+      }));
     } catch (error) {
       console.error('Yemekler getirilirken hata:', error);
-      console.log('📝 Firebase henüz hazır değil, boş liste döndürülüyor');
       return [];
     }
   }
@@ -107,26 +70,17 @@ class FoodService {
   // Belirli bir satıcının yemeklerini getirme
   async getFoodsBySeller(sellerId: string): Promise<Food[]> {
     try {
-      const q = query(
-        collection(db, 'foods'),
-        where('cookId', '==', sellerId),
-        orderBy('createdAt', 'desc')
-      );
+      // For now we use the general list and filter, or we could add a route /foods/seller/:id
+      const response = await apiClient.get<any[]>('/foods');
+      if (response.status !== 200) return [];
       
-      const querySnapshot = await getDocs(q);
-      const foods: Food[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        foods.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate()
-        } as Food);
-      });
-      
-      return foods;
+      return response.data
+        .filter(item => item.cookId === sellerId)
+        .map(item => ({
+          ...item,
+          createdAt: new Date(item.createdAt),
+          updatedAt: new Date(item.updatedAt)
+      }));
     } catch (error) {
       console.error('Satıcı yemekleri getirilirken hata:', error);
       throw new Error('Satıcı yemekleri getirilemedi');
@@ -136,27 +90,16 @@ class FoodService {
   // Kategoriye göre yemekleri getirme
   async getFoodsByCategory(category: string): Promise<Food[]> {
     try {
-      const q = query(
-        collection(db, 'foods'),
-        where('category', '==', category),
-        where('isAvailable', '==', true),
-        orderBy('createdAt', 'desc')
-      );
+      const response = await apiClient.get<any[]>('/foods');
+      if (response.status !== 200) return [];
       
-      const querySnapshot = await getDocs(q);
-      const foods: Food[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        foods.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate()
-        } as Food);
-      });
-      
-      return foods;
+      return response.data
+        .filter(item => item.category === category && item.isAvailable)
+        .map(item => ({
+          ...item,
+          createdAt: new Date(item.createdAt),
+          updatedAt: new Date(item.updatedAt)
+      }));
     } catch (error) {
       console.error('Kategori yemekleri getirilirken hata:', error);
       throw new Error('Kategori yemekleri getirilemedi');
@@ -166,88 +109,31 @@ class FoodService {
   // Tek bir yemek getirme
   async getFoodById(foodId: string): Promise<Food | null> {
     try {
-      const docRef = doc(db, 'foods', foodId);
-      const docSnap = await getDoc(docRef);
+      const response = await apiClient.get(`/foods/${foodId}`);
+      if (response.status !== 200) return null;
       
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        return {
-          id: docSnap.id,
-          ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate()
-        } as Food;
-      }
-      
-      return null;
+      return {
+          ...response.data,
+          createdAt: new Date(response.data.createdAt),
+          updatedAt: new Date(response.data.updatedAt)
+      };
     } catch (error) {
       console.error('Yemek getirilirken hata:', error);
       throw new Error('Yemek getirilemedi');
     }
   }
 
-  // Yemek güncelleme
-  async updateFood(foodId: string, updates: Partial<Food>): Promise<void> {
-    try {
-      const docRef = doc(db, 'foods', foodId);
-      await updateDoc(docRef, {
-        ...updates,
-        updatedAt: Timestamp.now()
-      });
-    } catch (error) {
-      console.error('Yemek güncellenirken hata:', error);
-      throw new Error('Yemek güncellenemedi');
-    }
-  }
-
-  // Yemek silme
-  async deleteFood(foodId: string): Promise<void> {
-    try {
-      const docRef = doc(db, 'foods', foodId);
-      await deleteDoc(docRef);
-    } catch (error) {
-      console.error('Yemek silinirken hata:', error);
-      throw new Error('Yemek silinemedi');
-    }
-  }
-
-  // İsocan yemeklerini temizle
-  async clearIsochanFoods(): Promise<void> {
-    try {
-      console.log('🧹 İsocan yemekleri temizleniyor...');
-      
-      if (!db) {
-        console.log('⚠️ Firebase not initialized, skipping cleanup');
-        return;
-      }
-
-      // İsocan'ın yemeklerini bul
-      const q = query(
-        collection(db, 'foods'),
-        where('cookName', '==', 'İsocan')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      console.log(`🔍 ${querySnapshot.size} İsocan yemeği bulundu`);
-      
-      // Tüm İsocan yemeklerini sil
-      const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(deletePromises);
-      
-      console.log('✅ İsocan yemekleri temizlendi');
-    } catch (error) {
-      console.error('❌ İsocan yemekleri temizlenirken hata:', error);
-    }
-  }
-
   // Sipariş oluşturma
   async createOrder(orderData: Omit<Order, 'id' | 'orderDate'>): Promise<string> {
     try {
-      const docRef = await addDoc(collection(db, 'orders'), {
+      const id = `order_${Date.now()}`;
+      const response = await apiClient.post('/orders', {
         ...orderData,
-        orderDate: Timestamp.now()
+        id,
+        orderDate: new Date().toISOString()
       });
-      return docRef.id;
+      if (response.status !== 201) throw new Error(response.error);
+      return response.data.id;
     } catch (error) {
       console.error('Sipariş oluşturulurken hata:', error);
       throw new Error('Sipariş oluşturulamadı');
@@ -257,26 +143,14 @@ class FoodService {
   // Kullanıcının siparişlerini getirme
   async getUserOrders(userId: string): Promise<Order[]> {
     try {
-      const q = query(
-        collection(db, 'orders'),
-        where('buyerId', '==', userId),
-        orderBy('orderDate', 'desc')
-      );
+      const response = await apiClient.get('/orders', { userId, type: 'buyer' });
+      if (response.status !== 200) return [];
       
-      const querySnapshot = await getDocs(q);
-      const orders: Order[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        orders.push({
-          id: doc.id,
-          ...data,
-          orderDate: data.orderDate.toDate(),
-          estimatedDeliveryTime: data.estimatedDeliveryTime?.toDate()
-        } as Order);
-      });
-      
-      return orders;
+      return response.data.map((item: any) => ({
+          ...item,
+          orderDate: new Date(item.orderDate),
+          estimatedDeliveryTime: item.estimatedDeliveryTime ? new Date(item.estimatedDeliveryTime) : undefined
+      }));
     } catch (error) {
       console.error('Siparişler getirilirken hata:', error);
       throw new Error('Siparişler getirilemedi');
@@ -286,26 +160,14 @@ class FoodService {
   // Satıcının siparişlerini getirme
   async getSellerOrders(sellerId: string): Promise<Order[]> {
     try {
-      const q = query(
-        collection(db, 'orders'),
-        where('sellerId', '==', sellerId),
-        orderBy('orderDate', 'desc')
-      );
+      const response = await apiClient.get('/orders', { userId: sellerId, type: 'seller' });
+      if (response.status !== 200) return [];
       
-      const querySnapshot = await getDocs(q);
-      const orders: Order[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        orders.push({
-          id: doc.id,
-          ...data,
-          orderDate: data.orderDate.toDate(),
-          estimatedDeliveryTime: data.estimatedDeliveryTime?.toDate()
-        } as Order);
-      });
-      
-      return orders;
+      return response.data.map((item: any) => ({
+          ...item,
+          orderDate: new Date(item.orderDate),
+          estimatedDeliveryTime: item.estimatedDeliveryTime ? new Date(item.estimatedDeliveryTime) : undefined
+      }));
     } catch (error) {
       console.error('Satıcı siparişleri getirilirken hata:', error);
       throw new Error('Satıcı siparişleri getirilemedi');
@@ -313,140 +175,25 @@ class FoodService {
   }
 
   // Sipariş durumu güncelleme
-  async updateOrderStatus(orderId: string, status: Order['status'], notificationCallback?: (orderId: string, status: string, buyerName: string, foodName: string) => Promise<void>): Promise<void> {
+  async updateOrderStatus(orderId: string, status: Order['status']): Promise<void> {
     try {
-      const docRef = doc(db, 'orders', orderId);
-      await updateDoc(docRef, { status });
-
-      // Send notification if callback is provided
-      if (notificationCallback) {
-        // Get order details for notification
-        const orderDoc = await getDoc(docRef);
-        if (orderDoc.exists()) {
-          const orderData = orderDoc.data();
-          await notificationCallback(orderId, status, orderData.buyerName || 'Müşteri', orderData.foodName || 'Yemek');
-        }
-      }
+      const response = await apiClient.put(`/orders/${orderId}/status`, { status });
+      if (response.status !== 200) throw new Error(response.error);
     } catch (error) {
       console.error('Sipariş durumu güncellenirken hata:', error);
       throw new Error('Sipariş durumu güncellenemedi');
     }
   }
 
-  // Stok güncelleme
-  async updateFoodStock(foodId: string, newStock: number, lowStockCallback?: (foodName: string, currentStock: number) => Promise<void>): Promise<void> {
-    try {
-      const docRef = doc(db, 'foods', foodId);
-      await updateDoc(docRef, { 
-        currentStock: newStock,
-        updatedAt: Timestamp.now()
-      });
-
-      // Send low stock notification if stock is low (less than 3) and callback is provided
-      if (lowStockCallback && newStock > 0 && newStock <= 3) {
-        const foodDoc = await getDoc(docRef);
-        if (foodDoc.exists()) {
-          const foodData = foodDoc.data();
-          await lowStockCallback(foodData.name || 'Yemek', newStock);
-        }
-      }
-    } catch (error) {
-      console.error('Stok güncellenirken hata:', error);
-      throw new Error('Stok güncellenemedi');
-    }
-  }
-
-  // Stok azaltma (sipariş verildiğinde)
-  async decreaseStock(foodId: string, quantity: number): Promise<boolean> {
-    try {
-      const foodRef = doc(db, 'foods', foodId);
-      const foodSnap = await getDoc(foodRef);
-      
-      if (!foodSnap.exists()) {
-        throw new Error('Yemek bulunamadı');
-      }
-
-      const currentStock = foodSnap.data().currentStock || 0;
-      
-      if (currentStock < quantity) {
-        return false; // Yetersiz stok
-      }
-
-      await updateDoc(foodRef, {
-        currentStock: currentStock - quantity,
-        updatedAt: Timestamp.now()
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Stok azaltılırken hata:', error);
-      throw new Error('Stok azaltılamadı');
-    }
-  }
-
-  // Stok artırma (sipariş iptal edildiğinde)
-  async increaseStock(foodId: string, quantity: number): Promise<void> {
-    try {
-      const foodRef = doc(db, 'foods', foodId);
-      const foodSnap = await getDoc(foodRef);
-      
-      if (!foodSnap.exists()) {
-        throw new Error('Yemek bulunamadı');
-      }
-
-      const currentStock = foodSnap.data().currentStock || 0;
-
-      await updateDoc(foodRef, {
-        currentStock: currentStock + quantity,
-        updatedAt: Timestamp.now()
-      });
-    } catch (error) {
-      console.error('Stok artırılırken hata:', error);
-      throw new Error('Stok artırılamadı');
-    }
-  }
-
-  // Gerçek zamanlı yemek dinleyicisi
+  // Real-time listeners (Mocked for now with immediate call)
   subscribeToFoods(callback: (foods: Food[]) => void): () => void {
-    const q = query(
-      collection(db, 'foods'),
-      where('isAvailable', '==', true),
-      orderBy('createdAt', 'desc')
-    );
-
-    return onSnapshot(q, (querySnapshot) => {
-      const foods: Food[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        foods.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate()
-        } as Food);
-      });
-      callback(foods);
-    });
+    this.getAllFoods().then(callback);
+    return () => {};
   }
 
-  // Belirli bir yemek için gerçek zamanlı dinleyici
   subscribeToFood(foodId: string, callback: (food: Food | null) => void): () => void {
-    const docRef = doc(db, 'foods', foodId);
-
-    return onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const food: Food = {
-          id: docSnap.id,
-          ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate()
-        } as Food;
-        callback(food);
-      } else {
-        callback(null);
-      }
-    });
+    this.getFoodById(foodId).then(callback);
+    return () => {};
   }
 }
 
