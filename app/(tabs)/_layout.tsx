@@ -1,11 +1,12 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import { Tabs, router } from 'expo-router';
 import { Colors } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useCart } from '@/src/context/CartContext';
 import { WebSafeIcon } from '@/src/components/ui/WebSafeIcon';
+import { useAuth } from '@/src/context/AuthContext';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -28,6 +29,19 @@ export default function TabLayout() {
   const colors = Colors[colorScheme ?? 'light'];
   const { getTotalItems } = useCart();
   const cartItemCount = getTotalItems();
+  const { userData } = useAuth();
+  const isSeller =
+    userData?.userType === 'seller' ||
+    userData?.userType === 'both' ||
+    (userData as any)?.sellerEnabled === true;
+
+  const handleProfilePress = (onPress?: () => void) => {
+    if (isSeller) {
+      router.push('/(seller)/dashboard' as any);
+      return;
+    }
+    onPress?.();
+  };
 
   return (
     <Tabs
@@ -116,6 +130,55 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'C',
+          tabBarLabel: () => null,
+          tabBarButton: (props) => {
+            const { onPress, ...rest } = props;
+            return (
+              <TouchableOpacity
+                {...rest}
+                onPress={() => handleProfilePress(onPress)}
+                activeOpacity={0.85}
+                style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
+                accessibilityRole="button"
+                accessibilityLabel="Profile shortcut"
+              >
+                <View
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
+                    backgroundColor: colors.primary,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 2,
+                    borderColor: colors.card,
+                    shadowColor: colors.text,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 6,
+                    elevation: 8,
+                    transform: [{ translateY: -10 }],
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.card,
+                      fontSize: 22,
+                      fontWeight: '700',
+                    }}
+                  >
+                    C
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          },
+        }}
+      />
+      <Tabs.Screen
         name="messages"
         options={{
           title: 'Mesajlar',
@@ -166,12 +229,6 @@ export default function TabLayout() {
       {/* Hidden screens - accessible via navigation but not in tabs */}
       <Tabs.Screen
         name="orders"
-        options={{
-          href: null, // Hide from tab bar
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
         options={{
           href: null, // Hide from tab bar
         }}

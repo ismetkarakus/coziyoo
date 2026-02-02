@@ -164,7 +164,7 @@ export const SellerPanel: React.FC = () => {
           onPress: async () => {
             try {
               await signOut();
-              // AuthGuard will automatically redirect to sign-in
+              router.replace('/(auth)/sign-in');
             } catch (error) {
               console.error('Sign out error:', error);
               Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
@@ -794,4 +794,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-

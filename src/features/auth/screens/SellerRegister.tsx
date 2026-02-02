@@ -6,11 +6,13 @@ import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCountry } from '../../../context/CountryContext';
+import { useAuth } from '../../../context/AuthContext';
 
 export const SellerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { currentCountry } = useCountry();
+  const { signUp, loading } = useAuth();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -46,7 +48,12 @@ export const SellerRegister: React.FC = () => {
     setDeliveryOptions(prev => ({ ...prev, [option]: !prev[option] }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!formData.fullName || !formData.email || !formData.password || !formData.phone || !formData.kitchenLocation) {
+      Alert.alert('Missing Information', 'Please fill in all required fields.');
+      return;
+    }
+
     // Validate UK Compliance requirements
     if (!ukCompliance.councilRegistered) {
       Alert.alert('UK Legal Requirement', 'You must be registered with your local council to sell food in the UK.');
@@ -78,12 +85,12 @@ export const SellerRegister: React.FC = () => {
       return;
     }
     
-    // Mock registration - navigate to seller panel
-    Alert.alert(
-      'Registration Submitted',
-      'Your seller application has been submitted for review. You will be notified once approved.',
-      [{ text: 'OK', onPress: () => router.replace('/(seller)/dashboard') }]
-    );
+    try {
+      await signUp(formData.email, formData.password, formData.fullName, 'seller');
+      // Kayıt başarılı - AuthContext otomatik olarak yönlendirecek
+    } catch (error: any) {
+      Alert.alert('Registration Error', error.message);
+    }
   };
 
   return (
@@ -372,6 +379,7 @@ export const SellerRegister: React.FC = () => {
               variant="primary" 
               fullWidth 
               onPress={handleSubmit}
+              loading={loading}
               style={styles.submitButton}
             >
               Satıcı Olarak Devam Et
@@ -503,8 +511,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
-
 
 
 

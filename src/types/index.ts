@@ -127,6 +127,7 @@ export type TabsParamList = {
   index: undefined;
   explore: undefined;
   cart: undefined;
+  messages: undefined;
   notifications: undefined;
   profile: undefined;
 };
@@ -143,8 +144,6 @@ export type SellerStackParamList = {
   orders: undefined;
   analytics: undefined;
 };
-
-
 
 
 

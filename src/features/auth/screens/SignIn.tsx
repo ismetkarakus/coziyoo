@@ -30,7 +30,6 @@ export const SignIn: React.FC = () => {
     try {
       await signIn(formData.email, formData.password);
       // Giriş başarılı - AuthContext otomatik olarak yönlendirecek
-      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Giriş Hatası', error.message);
     }
@@ -156,7 +155,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-
 
 
 

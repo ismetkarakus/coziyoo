@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
@@ -33,7 +32,6 @@ export const BuyerRegister: React.FC = () => {
     try {
       await signUp(formData.email, formData.password, formData.fullName, 'buyer');
       // Kayıt başarılı - AuthContext otomatik olarak yönlendirecek
-      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Kayıt Hatası', error.message);
     }
@@ -141,7 +139,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
 
 
 

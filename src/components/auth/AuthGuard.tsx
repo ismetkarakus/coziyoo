@@ -41,10 +41,19 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       return;
     }
 
-    // Kullanıcı varsa ve auth'daysa tabs'a git
+    // Kullanıcı varsa ve auth'daysa role göre yönlendir
     if (user && inAuthGroup) {
-      console.log('✅ User logged in, redirecting to tabs');
-      router.replace('/(tabs)');
+      if (!userData) {
+        console.log('⏳ Waiting for user profile data before redirect...');
+        return;
+      }
+
+      const isSeller =
+        userData.userType === 'seller' ||
+        userData.userType === 'both' ||
+        (userData as any).sellerEnabled === true;
+      console.log('✅ User logged in, redirecting by role', { isSeller });
+      router.replace(isSeller ? '/(seller)/dashboard' : '/(tabs)');
       return;
     }
 
@@ -53,7 +62,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     } else if (!user && inAuthGroup) {
       console.log('👤 No user but in auth section - OK');
     }
-  }, [user, loading, segments]);
+  }, [user, userData, loading, segments]);
 
   // Loading state
   if (loading) {
@@ -106,4 +115,3 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.background,
   },
 });
-

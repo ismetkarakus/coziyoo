@@ -21,32 +21,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  const handleAutoRedirect = useCallback((data: UserData) => {
-    const isSeller = data.userType === 'seller' || (data as any).sellerEnabled === true;
-    
-    setTimeout(() => {
-      if (isSeller) {
-        router.replace('/(seller)/dashboard' as any);
-      } else {
-        router.replace('/(tabs)' as any);
-      }
-    }, 50);
-  }, []);
-
   const refreshUserData = useCallback(async (uid: string) => {
       setProfileLoading(true);
       try {
           const data = await authService.getUserData(uid);
           if (data) {
               setUserData(data);
-              handleAutoRedirect(data);
           }
       } catch (error) {
           console.error('Refresh user data error:', error);
       } finally {
           setProfileLoading(false);
       }
-  }, [handleAutoRedirect]);
+  }, []);
 
   useEffect(() => {
     const initAuth = async () => {

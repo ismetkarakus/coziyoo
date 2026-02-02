@@ -923,19 +923,6 @@ export const Home: React.FC = () => {
         backgroundColor: colors.primary,
         opacity: topBarOpacity,
       }]}>
-        {/* Left Icon - Home/Seller */}
-        <TouchableOpacity 
-          onPress={() => {
-            console.log('TopBar left button pressed - going to seller dashboard');
-            router.push('/(seller)/dashboard');
-          }}
-          style={styles.leftIcon}
-          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          activeOpacity={0.7}
-        >
-          <FontAwesome name="home" size={20} color="white" />
-        </TouchableOpacity>
-        
         {/* Center Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.titleRow}>
@@ -951,15 +938,7 @@ export const Home: React.FC = () => {
           </Text>
         </View>
         
-        {/* Right Icons - Profile Only */}
-        <View style={styles.rightIcons}>
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/profile')}
-            style={styles.rightIcon}
-          >
-            <FontAwesome name="user" size={18} color="white" />
-          </TouchableOpacity>
-        </View>
+        {/* Right Icons removed */}
       </View>
       
       {/* Search - Outside ScrollView to avoid VirtualizedList warning */}
@@ -1373,4 +1352,3 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-
