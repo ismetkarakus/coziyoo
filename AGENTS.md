@@ -2,11 +2,6 @@
 
 > Personal working notes for AI coding agents. This file contains essential information about the project architecture, conventions, and development workflows.
 
-## Quick Orientation
-- App is Expo + React Native using expo-router.
-- Routes live in `app/` (route files are screens).
-- Feature screens and components are under `src/features` and `src/components`.
-
 ---
 
 ## Project Overview
