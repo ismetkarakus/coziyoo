@@ -164,7 +164,6 @@ export const SellerPanel: React.FC = () => {
           onPress: async () => {
             try {
               await signOut();
-              router.replace('/(auth)/sign-in');
             } catch (error) {
               console.error('Sign out error:', error);
               Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');

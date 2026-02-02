@@ -6,6 +6,7 @@ import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useAuth } from '../../../context/AuthContext';
 
 const PROFILE_SECTIONS = [
   {
@@ -69,6 +70,7 @@ const USER_DATA = {
 export const Profile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { signOut } = useAuth();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
 
@@ -164,8 +166,13 @@ export const Profile: React.FC = () => {
         {
           text: 'Çıkış Yap',
           style: 'destructive',
-          onPress: () => {
-            router.replace('/sign-in');
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error) {
+              console.error('Sign out error:', error);
+              Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
+            }
           },
         },
       ]
@@ -331,4 +338,3 @@ const styles = StyleSheet.create({
     height: Spacing.xl,
   },
 });
-

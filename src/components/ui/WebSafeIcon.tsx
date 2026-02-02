@@ -8,6 +8,7 @@ const webIconMap: { [key: string]: string } = {
   'home': '🏠',        // Ana sayfa için
   'store': '🏪',       // Satıcı sayfası için
   'dashboard': '📊',   // Dashboard için alternatif
+  'th-large': '▦',
   'arrow-left': '←',
   'arrow-right': '→',
   'chevron-left': '‹',
@@ -27,6 +28,8 @@ const webIconMap: { [key: string]: string } = {
   'bell': '🔔',
   'bell-o': '🔔',
   'envelope': '✉️',
+  'envelope-o': '✉️',
+  'bullhorn': '📣',
   'phone': '📞',
   
   // Actions

@@ -17,6 +17,11 @@ export const SignIn: React.FC = () => {
     password: '',
   });
 
+  const testCredentials = {
+    buyer: { email: 'buyer@test.com', password: 'Test1234!' },
+    seller: { email: 'seller@test.com', password: 'Test1234!' },
+  };
+
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -41,6 +46,17 @@ export const SignIn: React.FC = () => {
 
   const handleSignUp = () => {
     router.push('/(auth)/user-type-selection');
+  };
+
+  const handleTestLogin = async (role: 'buyer' | 'seller') => {
+    const creds = testCredentials[role];
+    setFormData({ email: creds.email, password: creds.password });
+    try {
+      await signIn(creds.email, creds.password);
+      // AuthGuard will route based on role
+    } catch (error: any) {
+      Alert.alert('Giriş Hatası', error.message);
+    }
   };
 
   return (
@@ -94,6 +110,23 @@ export const SignIn: React.FC = () => {
             >
               Şifremi Unuttum
             </Button>
+
+            <View style={styles.testButtonsRow}>
+              <Button
+                variant="outline"
+                onPress={() => handleTestLogin('buyer')}
+                style={styles.testButton}
+              >
+                Buyer
+              </Button>
+              <Button
+                variant="outline"
+                onPress={() => handleTestLogin('seller')}
+                style={styles.testButton}
+              >
+                Seller
+              </Button>
+            </View>
           </View>
 
           <View style={styles.footer}>
@@ -148,6 +181,14 @@ const styles = StyleSheet.create({
   forgotButton: {
     marginBottom: Spacing.lg,
   },
+  testButtonsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  testButton: {
+    flex: 1,
+  },
   footer: {
     alignItems: 'center',
   },
@@ -155,6 +196,5 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-
 
 

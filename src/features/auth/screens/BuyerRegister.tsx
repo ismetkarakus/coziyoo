@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, Button } from '../../../components/ui';
+import { Text, Button, Checkbox } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -18,9 +18,32 @@ export const BuyerRegister: React.FC = () => {
     password: '',
     location: '',
   });
+  const [autoFillEnabled, setAutoFillEnabled] = useState(false);
+
+  const testBuyerData = {
+    fullName: 'Test Buyer',
+    phone: '0555 111 22 33',
+    email: 'buyer@test.com',
+    password: 'Test1234!',
+    location: 'Kadıköy, İstanbul',
+  };
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAutoFillToggle = () => {
+    setAutoFillEnabled(prev => {
+      const next = !prev;
+      setFormData(next ? testBuyerData : {
+        fullName: '',
+        phone: '',
+        email: '',
+        password: '',
+        location: '',
+      });
+      return next;
+    });
   };
 
   const handleSubmit = async () => {
@@ -51,6 +74,12 @@ export const BuyerRegister: React.FC = () => {
           </View>
 
           <View style={styles.form}>
+            <Checkbox
+              label="Otomatik test bilgileriyle doldur"
+              checked={autoFillEnabled}
+              onPress={handleAutoFillToggle}
+            />
+
             <FormField
               label="Ad Soyad"
               value={formData.fullName}
@@ -139,7 +168,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
 
 
 

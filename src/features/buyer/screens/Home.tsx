@@ -1073,6 +1073,7 @@ export const Home: React.FC = () => {
                 hygieneRating={food.hygieneRating}
                 availableDeliveryOptions={food.availableDeliveryOptions}
                 isGridMode={false}
+                showAvailableDates={true}
               />
             ))
           ) : (
@@ -1297,8 +1298,8 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     paddingHorizontal: Spacing.xs,
-    paddingVertical: 2, // Even more reduced vertical padding
-    paddingTop: 0, // No top padding to get closer to search
+    paddingVertical: Spacing.sm, // Increased vertical padding for better visibility
+    paddingTop: Spacing.xs,
     backgroundColor: Colors.background,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
@@ -1307,16 +1308,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    minHeight: 56,
   },
   categoriesScroll: {
     flexGrow: 0,
   },
   categoryButton: {
-    paddingHorizontal: Spacing.sm, // Further reduced for even tighter frame
-    paddingVertical: Spacing.xs, // Further reduced for compact height
-    borderRadius: 18, // Smaller radius for tighter look
-    marginRight: 4, // Minimal gap - even closer than Spacing.xs
-    minWidth: 50, // Further reduced minimum width
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 18,
+    marginRight: Spacing.xs,
+    minWidth: 60,
     alignItems: 'center',
   },
   foodListContainer: {

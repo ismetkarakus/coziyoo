@@ -65,6 +65,7 @@ interface FoodCardProps {
   hygieneRating?: string; // Hijyen puanı (0-5 or 'Pending')
   availableDeliveryOptions?: ('pickup' | 'delivery')[];
   isGridMode?: boolean; // Grid düzeni için kompakt mod
+  showAvailableDates?: boolean; // Ana sayfada tarih gösterimi için
 }
 
 export const FoodCard: React.FC<FoodCardProps> = ({
@@ -89,6 +90,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   hygieneRating, // Hijyen puanı
   availableDeliveryOptions, // Mevcut teslimat seçenekleri
   isGridMode = false, // Grid modu
+  showAvailableDates = false,
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -289,7 +291,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           </View>
         </View>
         <Text variant="caption" color="textSecondary" style={{ fontSize: 11, marginLeft: 8 }}>
-          • {maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance}
+          • {showAvailableDates ? (availableDates || 'Tarih belirtilmemiş') : (maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance)}
         </Text>
       </View>
 

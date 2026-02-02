@@ -23,6 +23,17 @@ export const SellerRegister: React.FC = () => {
     postcode: '',
     councilName: '',
   });
+  const [autoFillEnabled, setAutoFillEnabled] = useState(false);
+
+  const testSellerData = {
+    fullName: 'Test Seller',
+    phone: '0555 222 33 44',
+    email: 'seller@test.com',
+    password: 'Test1234!',
+    kitchenLocation: 'Şişli, İstanbul',
+    postcode: 'SW1A 1AA',
+    councilName: 'Westminster City Council',
+  };
 
   const [deliveryOptions, setDeliveryOptions] = useState({
     pickup: false,
@@ -46,6 +57,40 @@ export const SellerRegister: React.FC = () => {
 
   const toggleDeliveryOption = (option: keyof typeof deliveryOptions) => {
     setDeliveryOptions(prev => ({ ...prev, [option]: !prev[option] }));
+  };
+
+  const handleAutoFillToggle = () => {
+    setAutoFillEnabled(prev => {
+      const next = !prev;
+      setFormData(next ? testSellerData : {
+        fullName: '',
+        phone: '',
+        email: '',
+        password: '',
+        kitchenLocation: '',
+        postcode: '',
+        councilName: '',
+      });
+      setDeliveryOptions(next ? { pickup: true, delivery: false } : { pickup: false, delivery: false });
+      setUkCompliance(next ? {
+        councilRegistered: true,
+        foodHygieneCertificate: true,
+        hygieneRating: '5',
+        allergenDeclaration: true,
+        legalResponsibility: true,
+        insuranceOptional: false,
+        termsAccepted: true,
+      } : {
+        councilRegistered: false,
+        foodHygieneCertificate: false,
+        hygieneRating: '',
+        allergenDeclaration: false,
+        legalResponsibility: false,
+        insuranceOptional: false,
+        termsAccepted: false,
+      });
+      return next;
+    });
   };
 
   const handleSubmit = async () => {
@@ -107,6 +152,12 @@ export const SellerRegister: React.FC = () => {
           </View>
 
           <View style={styles.form}>
+            <Checkbox
+              label="Otomatik test bilgileriyle doldur"
+              checked={autoFillEnabled}
+              onPress={handleAutoFillToggle}
+            />
+
             <FormField
               label="Ad Soyad"
               value={formData.fullName}
@@ -511,7 +562,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
 
 
 

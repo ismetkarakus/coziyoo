@@ -35,12 +35,42 @@ export default function TabLayout() {
     userData?.userType === 'both' ||
     (userData as any)?.sellerEnabled === true;
 
-  const handleProfilePress = (onPress?: () => void) => {
+  const handleProfilePress = () => {
     if (isSeller) {
       router.push('/(seller)/dashboard' as any);
       return;
     }
-    onPress?.();
+    router.push('/(tabs)/profile' as any);
+  };
+
+  const renderCompactTabButton = (props: any, onPressOverride?: () => void) => {
+    const {
+      onPress,
+      onLongPress,
+      accessibilityState,
+      accessibilityLabel,
+      testID,
+      style,
+      children,
+    } = props;
+
+    return (
+      <View style={[style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
+        <TouchableOpacity
+          onPress={onPressOverride || onPress}
+          onLongPress={onLongPress}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          accessibilityState={accessibilityState}
+          testID={testID}
+          activeOpacity={0.7}
+          hitSlop={{ top: 0, bottom: 0, left: 0, right: 0 }}
+          style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 16 }}
+        >
+          {children}
+        </TouchableOpacity>
+      </View>
+    );
   };
 
   return (
@@ -86,18 +116,13 @@ export default function TabLayout() {
           title: 'Ana Sayfa',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "home" : "home"} 
+              name={focused ? "th-large" : "th-large"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
             />
           ),
           tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              activeOpacity={0.7}
-              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            />
+            renderCompactTabButton(props)
           ),
         }}
       />
@@ -120,12 +145,7 @@ export default function TabLayout() {
             />
           ),
           tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              activeOpacity={0.7}
-              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            />
+            renderCompactTabButton(props)
           ),
         }}
       />
@@ -135,45 +155,44 @@ export default function TabLayout() {
           title: 'C',
           tabBarLabel: () => null,
           tabBarButton: (props) => {
-            const { onPress, ...rest } = props;
-            return (
-              <TouchableOpacity
-                {...rest}
-                onPress={() => handleProfilePress(onPress)}
-                activeOpacity={0.85}
-                style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
-                accessibilityRole="button"
-                accessibilityLabel="Profile shortcut"
+            const content = (
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: colors.primary,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 2,
+                  borderColor: colors.card,
+                  shadowColor: colors.text,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 6,
+                  elevation: 8,
+                  transform: [{ translateY: -10 }],
+                }}
               >
-                <View
+                <Text
                   style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 28,
-                    backgroundColor: colors.primary,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 2,
-                    borderColor: colors.card,
-                    shadowColor: colors.text,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 6,
-                    elevation: 8,
-                    transform: [{ translateY: -10 }],
+                    color: colors.card,
+                    fontSize: 22,
+                    fontWeight: '700',
                   }}
                 >
-                  <Text
-                    style={{
-                      color: colors.card,
-                      fontSize: 22,
-                      fontWeight: '700',
-                    }}
-                  >
-                    C
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                  C
+                </Text>
+              </View>
+            );
+
+            return renderCompactTabButton(
+              {
+                ...props,
+                children: content,
+                accessibilityLabel: 'Profile shortcut',
+              },
+              handleProfilePress
             );
           },
         }}
@@ -184,18 +203,13 @@ export default function TabLayout() {
           title: 'Mesajlar',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "comments" : "comments-o"} 
+              name={focused ? "envelope" : "envelope-o"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
                   />
           ),
           tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              activeOpacity={0.7}
-              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            />
+            renderCompactTabButton(props)
           ),
         }}
       />
@@ -205,18 +219,13 @@ export default function TabLayout() {
           title: 'Bildirimler',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "bell" : "bell-o"} 
+              name={focused ? "bullhorn" : "bullhorn"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
             />
           ),
           tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              activeOpacity={0.7}
-              style={[props.style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            />
+            renderCompactTabButton(props)
           ),
         }}
       />
