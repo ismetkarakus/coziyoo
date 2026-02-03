@@ -151,8 +151,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }, 500); // 0.5 saniye max bekleme
         }
       } else {
-        setUserData(null);
-        setProfileLoading(false); // Reset profile loading when user logs out
+        const mockSession = await authService.getMockSession();
+        if (mockSession) {
+          setUser(mockSession.user);
+          setUserData(mockSession.userData);
+          setProfileLoading(false);
+          handleAutoRedirect(mockSession.userData);
+        } else {
+          setUserData(null);
+          setProfileLoading(false); // Reset profile loading when user logs out
+        }
       }
       
       setAuthLoading(false); // Changed setLoading to setAuthLoading
@@ -166,6 +174,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authService.signIn(email, password);
     } catch (error) {
+      const mockSession = await authService.signInWithMockCredentials(email, password);
+      if (mockSession) {
+        setUser(mockSession.user);
+        setUserData(mockSession.userData);
+        setProfileLoading(false);
+        setAuthLoading(false);
+        handleAutoRedirect(mockSession.userData);
+        return;
+      }
       setAuthLoading(false); // Changed setLoading to setAuthLoading
       throw error;
     }
@@ -189,6 +206,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signOut = async () => {
     try {
       await authService.signOut();
+      setUser(null);
+      setUserData(null);
     } catch (error) {
       throw error;
     }
@@ -227,4 +246,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

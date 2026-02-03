@@ -19,6 +19,39 @@ export interface UserData {
   createdAt: Date;
 }
 
+interface MockAccount {
+  uid: string;
+  email: string;
+  password: string;
+  displayName: string;
+  userType: 'buyer' | 'seller' | 'both';
+}
+
+interface MockSession {
+  uid: string;
+  email: string;
+  displayName: string;
+  userType: 'buyer' | 'seller' | 'both';
+}
+
+const MOCK_SESSION_KEY = 'mock_session';
+const MOCK_ACCOUNTS: MockAccount[] = [
+  {
+    uid: 'mock_buyer_1',
+    email: 'test@cazi.com',
+    password: '123456',
+    displayName: 'Test Kullanıcı',
+    userType: 'buyer',
+  },
+  {
+    uid: 'mock_seller_1',
+    email: 'satici@cazi.com',
+    password: '123456',
+    displayName: 'Test Satıcı',
+    userType: 'seller',
+  },
+];
+
 class AuthService {
   // Kullanıcı girişi
   async signIn(email: string, password: string): Promise<User> {
@@ -57,6 +90,34 @@ class AuthService {
     }
   }
 
+  async signInWithMockCredentials(email: string, password: string): Promise<{ user: User; userData: UserData } | null> {
+    const match = this.getMockAccount(email, password);
+    if (!match) {
+      return null;
+    }
+
+    const userData: UserData = {
+      uid: match.uid,
+      email: match.email,
+      displayName: match.displayName,
+      userType: match.userType,
+      createdAt: new Date(),
+    };
+
+    const session: MockSession = {
+      uid: match.uid,
+      email: match.email,
+      displayName: match.displayName,
+      userType: match.userType,
+    };
+
+    await AsyncStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(session));
+    await AsyncStorage.setItem(`user_${match.uid}`, JSON.stringify(userData));
+
+    const user = this.buildMockUser(match);
+    return { user, userData };
+  }
+
   // Kullanıcı kaydı
   async signUp(
     email: string, 
@@ -92,6 +153,7 @@ class AuthService {
   // Çıkış yap
   async signOut(): Promise<void> {
     try {
+      await this.clearMockSession();
       await firebaseSignOut(auth);
     } catch (error: any) {
       throw new Error('Çıkış yapılırken bir hata oluştu');
@@ -165,6 +227,44 @@ class AuthService {
     };
   }
 
+  async getMockSession(): Promise<{ user: User; userData: UserData } | null> {
+    try {
+      const raw = await AsyncStorage.getItem(MOCK_SESSION_KEY);
+      if (!raw) {
+        return null;
+      }
+      const session = JSON.parse(raw) as MockSession;
+      const userData: UserData = {
+        uid: session.uid,
+        email: session.email,
+        displayName: session.displayName,
+        userType: session.userType,
+        createdAt: new Date(),
+      };
+
+      const user = this.buildMockUser({
+        uid: session.uid,
+        email: session.email,
+        password: '',
+        displayName: session.displayName,
+        userType: session.userType,
+      });
+
+      return { user, userData };
+    } catch (error) {
+      console.warn('Mock session load failed:', error);
+      return null;
+    }
+  }
+
+  async clearMockSession(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(MOCK_SESSION_KEY);
+    } catch (error) {
+      console.warn('Mock session clear failed:', error);
+    }
+  }
+
   // Mevcut kullanıcı
   getCurrentUser(): User | null {
     return auth.currentUser;
@@ -194,6 +294,52 @@ class AuthService {
       default:
         return `❌ Beklenmeyen hata: ${errorCode}\n\n💡 Çözüm: Uygulamayı yeniden başlatın veya geliştirici ile iletişime geçin.`;
     }
+  }
+
+  private getMockAccount(email: string, password: string): MockAccount | null {
+    const normalizedEmail = email.trim().toLowerCase();
+    const match = MOCK_ACCOUNTS.find(
+      account => account.email.toLowerCase() === normalizedEmail && account.password === password
+    );
+    return match ?? null;
+  }
+
+  private buildMockUser(account: MockAccount): User {
+    const now = new Date();
+    const mockUser = {
+      uid: account.uid,
+      email: account.email,
+      displayName: account.displayName,
+      photoURL: null,
+      phoneNumber: null,
+      emailVerified: true,
+      isAnonymous: false,
+      metadata: {
+        creationTime: now.toISOString(),
+        lastSignInTime: now.toISOString(),
+      },
+      providerData: [],
+      refreshToken: 'mock_refresh_token',
+      tenantId: null,
+      delete: async () => {},
+      getIdToken: async () => 'mock_id_token',
+      getIdTokenResult: async () => ({
+        token: 'mock_id_token',
+        expirationTime: now.toISOString(),
+        authTime: now.toISOString(),
+        issuedAtTime: now.toISOString(),
+        signInProvider: 'password',
+        claims: {},
+      }),
+      reload: async () => {},
+      toJSON: () => ({
+        uid: account.uid,
+        email: account.email,
+        displayName: account.displayName,
+      }),
+    };
+
+    return mockUser as unknown as User;
   }
 }
 

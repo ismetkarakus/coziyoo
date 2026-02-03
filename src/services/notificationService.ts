@@ -1,14 +1,19 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import type * as ExpoNotifications from 'expo-notifications';
+
+const isWeb = Platform.OS === 'web';
+const Notifications: typeof ExpoNotifications | null = isWeb ? null : require('expo-notifications');
 
 // Configure notification behavior
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (Notifications) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export interface NotificationData {
   title: string;
@@ -23,6 +28,11 @@ class NotificationService {
   // Initialize notification service
   async initialize() {
     try {
+      if (!Notifications) {
+        console.warn('Notifications are not supported on web');
+        return false;
+      }
+
       // Request permissions
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
@@ -31,14 +41,12 @@ class NotificationService {
       }
 
       // Get Expo push token (works with Expo)
-      if (Platform.OS !== 'web') {
-        const token = (await Notifications.getExpoPushTokenAsync()).data;
-        this.expoPushToken = token;
-        console.log('Expo Push Token:', token);
-        
-        // For Expo projects, we use Expo push token instead of FCM
-        this.fcmToken = token;
-      }
+      const token = (await Notifications.getExpoPushTokenAsync()).data;
+      this.expoPushToken = token;
+      console.log('Expo Push Token:', token);
+
+      // For Expo projects, we use Expo push token instead of FCM
+      this.fcmToken = token;
 
       return true;
     } catch (error) {
@@ -58,6 +66,11 @@ class NotificationService {
   // Send local notification
   async sendLocalNotification(notification: NotificationData) {
     try {
+      if (!Notifications) {
+        console.warn('Local notifications are not supported on web');
+        return;
+      }
+
       await Notifications.scheduleNotificationAsync({
         content: {
           title: notification.title,
@@ -73,6 +86,10 @@ class NotificationService {
 
   // Handle foreground messages (Expo notifications)
   setupForegroundHandler() {
+    if (!Notifications) {
+      return { remove: () => {} };
+    }
+
     return Notifications.addNotificationReceivedListener(notification => {
       console.log('Foreground notification received:', notification);
       // Notification is automatically shown by Expo
@@ -81,6 +98,10 @@ class NotificationService {
 
   // Handle background messages (Expo notifications)
   setupBackgroundHandler() {
+    if (!Notifications) {
+      return { remove: () => {} };
+    }
+
     return Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Background notification response:', response);
       // Handle notification tap
