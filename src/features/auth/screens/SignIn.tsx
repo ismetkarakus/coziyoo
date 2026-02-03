@@ -69,6 +69,9 @@ export const SignIn: React.FC = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={styles.header}>
+            <Text variant="title" center style={styles.appTitle}>
+              {t('authWelcome.title')}
+            </Text>
             <Text variant="heading" center style={styles.title}>
               {t('authSignIn.title')}
             </Text>
@@ -100,7 +103,7 @@ export const SignIn: React.FC = () => {
             <Button 
               variant="primary"
               fullWidth
-              onPress={handleSignIn}
+              onPress={() => handleSignIn()}
               loading={loading}
               style={styles.signInButton}
             >
@@ -163,18 +166,27 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: Spacing.lg,
-    paddingTop: Spacing['3xl'],
+    paddingTop: 120,
   },
   header: {
     alignItems: 'center',
     marginBottom: Spacing['2xl'],
   },
+  appTitle: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    color: Colors.light.primary,
+    marginBottom: Spacing.xl,
+  },
   title: {
+    fontSize: 28,
     marginBottom: Spacing.sm,
   },
   subtitle: {
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 28,
+    fontSize: 18,
+    marginTop: Spacing.md,
   },
   form: {
     marginBottom: Spacing['2xl'],

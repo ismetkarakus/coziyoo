@@ -383,13 +383,13 @@ export const PersonalInfo: React.FC = () => {
               </Text>
             </TouchableOpacity>
 
-            {(showCards || formData.cards.length > 0) && (
+            {(showCards || (formData.cards && formData.cards.length > 0)) && (
               <View style={styles.cardList}>
                 <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
                   {t('personalInfoScreen.cardSectionTitle')}
                 </Text>
 
-                {formData.cards.map((card, index) => (
+                {formData.cards?.map((card, index) => (
                   <View key={`card-${index}`} style={styles.cardItem}>
                     <Text variant="body" color="textSecondary" style={styles.cardItemTitle}>
                       {t('personalInfoScreen.cardItem', { number: index + 1 })}
@@ -536,6 +536,13 @@ const styles = StyleSheet.create({
   },
   formSection: {
     padding: Spacing.md,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  inputHalf: {
+    flex: 1,
   },
   sectionTitle: {
     marginBottom: Spacing.md,

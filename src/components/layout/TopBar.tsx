@@ -65,7 +65,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             {renderLeftComponent()}
           </View>
           
-          <View style={styles.center}>
+          <View style={styles.centerContainer}>
             {title && (
               <Text variant="heading" weight="bold" center style={[{ fontSize: 20 }, titleStyle]}>
                 {title}
@@ -95,9 +95,15 @@ const styles = StyleSheet.create({
   },
   side: {
     flex: 1,
+    zIndex: 1,
   },
-  center: {
-    flex: 2,
+  centerContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: Spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backButton: {
     padding: Spacing.xs,

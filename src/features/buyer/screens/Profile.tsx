@@ -154,7 +154,10 @@ export const Profile: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title={t('profileScreen.title')} titleStyle={{ fontSize: 24 }} />
+      <TopBar
+        title={t('profileScreen.title')}
+        titleStyle={{ fontSize: 24, color: colors.primary }}
+      />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* User Info */}
