@@ -8,6 +8,7 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface PersonalInfoData {
   name: string;
@@ -21,6 +22,7 @@ interface PersonalInfoData {
 export const PersonalInfo: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<PersonalInfoData>({
     name: '',
@@ -41,17 +43,17 @@ export const PersonalInfo: React.FC = () => {
       if (data) {
         setFormData(JSON.parse(data));
       } else {
-        // Default data
-        setFormData({
-          name: 'Ahmet Yılmaz',
-          email: 'ahmet@example.com',
-          phone: '+90 555 123 4567',
-          birthDate: '15/03/1990',
-          gender: 'Erkek',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-        });
-      }
-    } catch (error) {
+      // Default data
+      setFormData({
+        name: 'Ahmet Yılmaz',
+        email: 'ahmet@example.com',
+        phone: '+90 555 123 4567',
+        birthDate: '15/03/1990',
+        gender: 'Erkek',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+      });
+    }
+  } catch (error) {
       console.error('Error loading personal info:', error);
     }
   };
@@ -68,10 +70,10 @@ export const PersonalInfo: React.FC = () => {
       await AsyncStorage.setItem('buyerProfile', JSON.stringify(buyerProfile));
       
       setIsEditing(false);
-      Alert.alert('Başarılı', 'Kişisel bilgileriniz güncellendi.');
+      Alert.alert(t('personalInfoScreen.alerts.successTitle'), t('personalInfoScreen.alerts.successMessage'));
     } catch (error) {
       console.error('Error saving personal info:', error);
-      Alert.alert('Hata', 'Bilgiler kaydedilirken bir sorun oluştu.');
+      Alert.alert(t('personalInfoScreen.alerts.errorTitle'), t('personalInfoScreen.alerts.errorMessage'));
     }
   };
 
@@ -91,7 +93,7 @@ export const PersonalInfo: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Kişisel Bilgiler"
+        title={t('personalInfoScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
             <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
@@ -100,7 +102,7 @@ export const PersonalInfo: React.FC = () => {
         rightComponent={
           <TouchableOpacity onPress={() => isEditing ? savePersonalInfo() : setIsEditing(true)}>
             <Text variant="body" color="primary" weight="medium">
-              {isEditing ? 'Kaydet' : 'Düzenle'}
+              {isEditing ? t('personalInfoScreen.save') : t('personalInfoScreen.edit')}
             </Text>
           </TouchableOpacity>
         }
@@ -133,7 +135,7 @@ export const PersonalInfo: React.FC = () => {
               )}
             </TouchableOpacity>
             <Text variant="body" color="textSecondary" style={styles.avatarHint}>
-              {isEditing ? 'Fotoğrafı değiştirmek için dokunun' : 'Profil Fotoğrafı'}
+              {isEditing ? t('personalInfoScreen.avatarEditHint') : t('personalInfoScreen.avatarLabel')}
             </Text>
           </View>
         </Card>
@@ -142,11 +144,13 @@ export const PersonalInfo: React.FC = () => {
         <Card style={styles.formCard}>
           <View style={styles.formSection}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Temel Bilgiler
+              {t('personalInfoScreen.sectionTitle')}
             </Text>
             
             <View style={styles.inputGroup}>
-              <Text variant="body" color="textSecondary" style={styles.label}>Ad Soyad</Text>
+              <Text variant="body" color="textSecondary" style={styles.label}>
+                {t('personalInfoScreen.labels.name')}
+              </Text>
               <TextInput
                 style={[styles.input, { 
                   backgroundColor: isEditing ? colors.surface : colors.background,
@@ -156,13 +160,15 @@ export const PersonalInfo: React.FC = () => {
                 value={formData.name}
                 onChangeText={(text) => setFormData({ ...formData, name: text })}
                 editable={isEditing}
-                placeholder="Adınızı ve soyadınızı girin"
+                placeholder={t('personalInfoScreen.placeholders.name')}
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text variant="body" color="textSecondary" style={styles.label}>E-posta</Text>
+              <Text variant="body" color="textSecondary" style={styles.label}>
+                {t('personalInfoScreen.labels.email')}
+              </Text>
               <TextInput
                 style={[styles.input, { 
                   backgroundColor: isEditing ? colors.surface : colors.background,
@@ -172,14 +178,16 @@ export const PersonalInfo: React.FC = () => {
                 value={formData.email}
                 onChangeText={(text) => setFormData({ ...formData, email: text })}
                 editable={isEditing}
-                placeholder="E-posta adresinizi girin"
+                placeholder={t('personalInfoScreen.placeholders.email')}
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text variant="body" color="textSecondary" style={styles.label}>Telefon</Text>
+              <Text variant="body" color="textSecondary" style={styles.label}>
+                {t('personalInfoScreen.labels.phone')}
+              </Text>
               <TextInput
                 style={[styles.input, { 
                   backgroundColor: isEditing ? colors.surface : colors.background,
@@ -189,14 +197,16 @@ export const PersonalInfo: React.FC = () => {
                 value={formData.phone}
                 onChangeText={(text) => setFormData({ ...formData, phone: text })}
                 editable={isEditing}
-                placeholder="Telefon numaranızı girin"
+                placeholder={t('personalInfoScreen.placeholders.phone')}
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text variant="body" color="textSecondary" style={styles.label}>Doğum Tarihi</Text>
+              <Text variant="body" color="textSecondary" style={styles.label}>
+                {t('personalInfoScreen.labels.birthDate')}
+              </Text>
               <TextInput
                 style={[styles.input, { 
                   backgroundColor: isEditing ? colors.surface : colors.background,
@@ -206,13 +216,15 @@ export const PersonalInfo: React.FC = () => {
                 value={formData.birthDate}
                 onChangeText={(text) => setFormData({ ...formData, birthDate: text })}
                 editable={isEditing}
-                placeholder="GG/AA/YYYY"
+                placeholder={t('personalInfoScreen.placeholders.birthDate')}
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text variant="body" color="textSecondary" style={styles.label}>Cinsiyet</Text>
+              <Text variant="body" color="textSecondary" style={styles.label}>
+                {t('personalInfoScreen.labels.gender')}
+              </Text>
               <TextInput
                 style={[styles.input, { 
                   backgroundColor: isEditing ? colors.surface : colors.background,
@@ -222,7 +234,7 @@ export const PersonalInfo: React.FC = () => {
                 value={formData.gender}
                 onChangeText={(text) => setFormData({ ...formData, gender: text })}
                 editable={isEditing}
-                placeholder="Cinsiyet"
+                placeholder={t('personalInfoScreen.placeholders.gender')}
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -301,7 +313,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
 
 
 

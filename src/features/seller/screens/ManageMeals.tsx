@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 
@@ -29,6 +30,7 @@ interface Meal {
 export const ManageMeals: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [expiredMeals, setExpiredMeals] = useState<Meal[]>([]);
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
@@ -71,13 +73,13 @@ export const ManageMeals: React.FC = () => {
       const mockMealsForDemo = [
         {
           id: 'mock_1',
-          name: 'Ev Yapımı Mantı',
-          cookName: 'Ayşe Hanım',
+          name: t('manageMealsScreen.mock.mantiName'),
+          cookName: t('manageMealsScreen.mock.cookName'),
           price: 35,
-          category: 'Ana Yemek',
-          description: 'El açması hamur ile hazırlanmış geleneksel mantı',
+          category: t('manageMealsScreen.mock.mainDishCategory'),
+          description: t('manageMealsScreen.mock.mantiDesc'),
           imageUrl: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=300&fit=crop',
-          availableDates: '15-20 Ocak',
+          availableDates: t('manageMealsScreen.mock.mantiDates'),
           currentStock: 8,
           dailyStock: 10,
           hasPickup: true,
@@ -88,13 +90,13 @@ export const ManageMeals: React.FC = () => {
         },
         {
           id: 'mock_9',
-          name: 'Menemen',
-          cookName: 'Ayşe Hanım',
+          name: t('manageMealsScreen.mock.menemenName'),
+          cookName: t('manageMealsScreen.mock.cookName'),
           price: 22,
-          category: 'Kahvaltı',
-          description: 'Taze sebzeler ve yumurta ile hazırlanmış menemen',
+          category: t('manageMealsScreen.mock.breakfastCategory'),
+          description: t('manageMealsScreen.mock.menemenDesc'),
           imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
-          availableDates: '17-24 Ocak',
+          availableDates: t('manageMealsScreen.mock.menemenDates'),
           currentStock: 7,
           dailyStock: 10,
           hasPickup: true,
@@ -105,13 +107,13 @@ export const ManageMeals: React.FC = () => {
         },
         {
           id: 'mock_17',
-          name: 'Vejetaryen Köfte',
-          cookName: 'Ayşe Hanım',
+          name: t('manageMealsScreen.mock.veggieKofteName'),
+          cookName: t('manageMealsScreen.mock.cookName'),
           price: 24,
-          category: 'Vejetaryen',
-          description: 'Mercimek ve sebze karışımı ile hazırlanmış köfte',
+          category: t('manageMealsScreen.mock.vegetarianCategory'),
+          description: t('manageMealsScreen.mock.veggieKofteDesc'),
           imageUrl: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=400&h=300&fit=crop',
-          availableDates: '17-24 Ocak',
+          availableDates: t('manageMealsScreen.mock.veggieKofteDates'),
           currentStock: 8,
           dailyStock: 10,
           hasPickup: true,
@@ -122,13 +124,13 @@ export const ManageMeals: React.FC = () => {
         },
         {
           id: 'mock_23',
-          name: 'Ev Yapımı Sütlaç',
-          cookName: 'Ayşe Hanım',
+          name: t('manageMealsScreen.mock.sutlacName'),
+          cookName: t('manageMealsScreen.mock.cookName'),
           price: 16,
-          category: 'Tatlı/Kek',
-          description: 'Geleneksel tarif ile hazırlanmış sütlaç',
+          category: t('manageMealsScreen.mock.dessertCategory'),
+          description: t('manageMealsScreen.mock.sutlacDesc'),
           imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop',
-          availableDates: '18-25 Ocak',
+          availableDates: t('manageMealsScreen.mock.sutlacDates'),
           currentStock: 12,
           dailyStock: 15,
           hasPickup: true,
@@ -182,12 +184,12 @@ export const ManageMeals: React.FC = () => {
 
   const handleDeleteMeal = (mealId: string) => {
     Alert.alert(
-      'Yemeği Sil',
-      'Bu yemeği silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+      t('manageMealsScreen.alerts.deleteTitle'),
+      t('manageMealsScreen.alerts.deleteMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('manageMealsScreen.alerts.cancel'), style: 'cancel' },
         {
-          text: 'Sil',
+          text: t('manageMealsScreen.alerts.confirmDelete'),
           style: 'destructive',
           onPress: () => deleteMeal(mealId),
         },
@@ -201,10 +203,10 @@ export const ManageMeals: React.FC = () => {
       setMeals(updatedMeals);
       await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
       
-      Alert.alert('Başarılı', 'Yemek başarıyla silindi.');
+      Alert.alert(t('manageMealsScreen.alerts.successTitle'), t('manageMealsScreen.alerts.successMessage'));
     } catch (error) {
       console.error('Error deleting meal:', error);
-      Alert.alert('Hata', 'Yemek silinirken bir hata oluştu.');
+      Alert.alert(t('manageMealsScreen.alerts.errorTitle'), t('manageMealsScreen.alerts.errorMessage'));
     }
   };
 
@@ -218,7 +220,7 @@ export const ManageMeals: React.FC = () => {
     // Get seller name from profile (nickname preferred)
     let cookName = 'Satıcı';
     if (sellerProfile && sellerProfile.formData) {
-      cookName = sellerProfile.formData.nickname || sellerProfile.formData.name || 'Satıcı';
+      cookName = sellerProfile.formData.nickname || sellerProfile.formData.name || t('manageMealsScreen.fallbackCookName');
     }
 
     // Navigate to food detail page
@@ -254,7 +256,7 @@ export const ManageMeals: React.FC = () => {
             {meal.category} • {meal.availableDates}
           </Text>
           <Text variant="caption" color="textSecondary">
-            Stok: {meal.currentStock}/{meal.dailyStock}
+            {t('manageMealsScreen.stockLabel')} {meal.currentStock}/{meal.dailyStock}
           </Text>
         </View>
         
@@ -285,17 +287,23 @@ export const ManageMeals: React.FC = () => {
       <View style={styles.mealTags}>
         {meal.hasPickup && (
           <View style={[styles.tag, { backgroundColor: colors.success + '20' }]}>
-            <Text variant="caption" style={{ color: colors.success }}>Pickup</Text>
+            <Text variant="caption" style={{ color: colors.success }}>
+              {t('manageMealsScreen.tags.pickup')}
+            </Text>
           </View>
         )}
         {meal.hasDelivery && (
           <View style={[styles.tag, { backgroundColor: colors.primary + '20' }]}>
-            <Text variant="caption" style={{ color: colors.primary }}>Delivery</Text>
+            <Text variant="caption" style={{ color: colors.primary }}>
+              {t('manageMealsScreen.tags.delivery')}
+            </Text>
           </View>
         )}
         {isExpired && (
           <View style={[styles.tag, { backgroundColor: colors.error + '20' }]}>
-            <Text variant="caption" style={{ color: colors.error }}>Süresi Dolmuş</Text>
+            <Text variant="caption" style={{ color: colors.error }}>
+              {t('manageMealsScreen.tags.expired')}
+            </Text>
           </View>
         )}
       </View>
@@ -306,7 +314,7 @@ export const ManageMeals: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Yemeklerimi Yönet" 
+        title={t('manageMealsScreen.title')} 
         leftComponent={
           <TouchableOpacity 
             onPress={() => router.back()}
@@ -337,7 +345,7 @@ export const ManageMeals: React.FC = () => {
               color: activeTab === 'active' ? 'white' : colors.textSecondary,
             }}
           >
-            Aktif Yemekler ({meals.length})
+            {t('manageMealsScreen.tabs.active', { count: meals.length })}
           </Text>
         </TouchableOpacity>
         
@@ -358,7 +366,7 @@ export const ManageMeals: React.FC = () => {
               color: activeTab === 'expired' ? 'white' : colors.textSecondary,
             }}
           >
-            Eski Yemekler ({expiredMeals.length})
+            {t('manageMealsScreen.tabs.expired', { count: expiredMeals.length })}
           </Text>
         </TouchableOpacity>
       </View>
@@ -371,17 +379,17 @@ export const ManageMeals: React.FC = () => {
             <View style={styles.emptyState}>
               <FontAwesome name="cutlery" size={48} color={colors.textSecondary} />
               <Text variant="subheading" weight="semibold" color="textSecondary" style={styles.emptyTitle}>
-                Henüz yemek eklenmemiş
+                {t('manageMealsScreen.emptyActiveTitle')}
               </Text>
               <Text variant="body" color="textSecondary" style={styles.emptyDescription}>
-                Yemek Ekle butonuna tıklayarak ilk yemeğinizi ekleyin.
+                {t('manageMealsScreen.emptyActiveDesc')}
               </Text>
               <Button
                 variant="primary"
                 onPress={() => router.push('/(seller)/add-meal')}
                 style={styles.addMealButton}
               >
-                Yemek Ekle
+                {t('manageMealsScreen.addMeal')}
               </Button>
             </View>
           )
@@ -392,10 +400,10 @@ export const ManageMeals: React.FC = () => {
             <View style={styles.emptyState}>
               <FontAwesome name="clock-o" size={48} color={colors.textSecondary} />
               <Text variant="subheading" weight="semibold" color="textSecondary" style={styles.emptyTitle}>
-                Eski yemek bulunmuyor
+                {t('manageMealsScreen.emptyExpiredTitle')}
               </Text>
               <Text variant="body" color="textSecondary" style={styles.emptyDescription}>
-                Tarihi geçen yemekler burada görünecek.
+                {t('manageMealsScreen.emptyExpiredDesc')}
               </Text>
             </View>
           )

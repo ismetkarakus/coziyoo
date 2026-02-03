@@ -3,12 +3,14 @@ import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 
 export const OrderConfirmation: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const handleBackToHome = () => {
     router.replace('/(tabs)');
@@ -20,7 +22,7 @@ export const OrderConfirmation: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Sipariş Onayı" />
+      <TopBar title={t('orderConfirmationScreen.title')} />
       
       <View style={styles.content}>
         <View style={styles.iconContainer}>
@@ -28,19 +30,19 @@ export const OrderConfirmation: React.FC = () => {
         </View>
         
         <Text variant="title" center style={styles.title}>
-          Siparişin Alındı!
+          {t('orderConfirmationScreen.headline')}
         </Text>
         
         <Text variant="body" center color="textSecondary" style={styles.description}>
-          Siparişin satıcıya iletildi. Durum güncellemeleri ve mesajlar bildirim olarak gönderilecektir.
+          {t('orderConfirmationScreen.description')}
         </Text>
         
         <View style={styles.orderInfo}>
           <Text variant="subheading" weight="semibold" center style={styles.orderNumber}>
-            Sipariş No: #12345
+            {t('orderConfirmationScreen.orderNo')}
           </Text>
           <Text variant="caption" center color="textSecondary">
-            Tahmini hazırlık süresi: 30-45 dakika
+            {t('orderConfirmationScreen.eta')}
           </Text>
         </View>
         
@@ -51,7 +53,7 @@ export const OrderConfirmation: React.FC = () => {
             onPress={handleBackToHome}
             style={styles.button}
           >
-            Ana Sayfaya Dön
+            {t('orderConfirmationScreen.backHome')}
           </Button>
           
           <Button
@@ -59,7 +61,7 @@ export const OrderConfirmation: React.FC = () => {
             fullWidth
             onPress={handleViewOrders}
           >
-            Sipariş Durumunu Takip Et
+            {t('orderConfirmationScreen.track')}
           </Button>
         </View>
       </View>
@@ -106,7 +108,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
 });
-
 
 
 

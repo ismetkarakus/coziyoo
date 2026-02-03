@@ -5,131 +5,131 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
-
-// Mock buyer notifications data
-const BUYER_NOTIFICATIONS = [
-  {
-    id: '1',
-    title: 'Siparişin Alındı! 🎉',
-    message: 'Ev Yapımı Mantı siparişin Ayşe Hanım tarafından alındı.',
-    time: '2 dakika önce',
-    type: 'order',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Satıcı Onayladı ✅',
-    message: 'Siparişin onaylandı ve hazırlanmaya başlandı.',
-    time: '15 dakika önce',
-    type: 'order',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Hazırlanıyor 👨‍🍳',
-    message: 'Yemeğin hazırlanıyor. Tahmini süre: 20 dakika.',
-    time: '25 dakika önce',
-    type: 'order',
-    read: true,
-  },
-  {
-    id: '4',
-    title: 'Hazır! 🍽️',
-    message: 'Yemeğin hazır. Gel al için bekliyor.',
-    time: '1 saat önce',
-    type: 'order',
-    read: true,
-  },
-  {
-    id: '5',
-    title: 'Yolda 🚗',
-    message: 'Siparişin teslimat için yola çıktı.',
-    time: '2 saat önce',
-    type: 'delivery',
-    read: true,
-  },
-  {
-    id: '6',
-    title: 'Teslim Edildi ✨',
-    message: 'Siparişin başarıyla teslim edildi. Afiyet olsun!',
-    time: '3 saat önce',
-    type: 'delivery',
-    read: true,
-  },
-  {
-    id: '7',
-    title: 'Yemeği Puanla ⭐',
-    message: 'Ev Yapımı Mantı deneyimini puanlamayı unutma.',
-    time: '4 saat önce',
-    type: 'review',
-    read: true,
-  },
-];
-
-// Mock seller notifications data
-const SELLER_NOTIFICATIONS = [
-  {
-    id: '1',
-    title: 'Yeni Sipariş! 🛒',
-    message: 'Ahmet Yılmaz Ev Yapımı Mantı için sipariş verdi.',
-    time: '5 dakika önce',
-    type: 'order',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Sipariş Onayı Bekleniyor ⏳',
-    message: 'Zeynep Kaya\'dan gelen sipariş onayınızı bekliyor.',
-    time: '20 dakika önce',
-    type: 'order',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Ödeme Alındı 💰',
-    message: 'Karnıyarık siparişi için ödeme başarıyla alındı.',
-    time: '45 dakika önce',
-    type: 'payment',
-    read: true,
-  },
-  {
-    id: '4',
-    title: 'Teslimat Zamanı 🚗',
-    message: 'Can Demir siparişi teslim almaya geliyor.',
-    time: '1 saat önce',
-    type: 'delivery',
-    read: true,
-  },
-  {
-    id: '5',
-    title: 'Yeni Değerlendirme ⭐',
-    message: 'Ayşe Hanım yemeğinize 5 yıldız verdi!',
-    time: '2 saat önce',
-    type: 'review',
-    read: true,
-  },
-  {
-    id: '6',
-    title: 'Stok Azalıyor 📦',
-    message: 'Baklava stokunuz 2 adet kaldı.',
-    time: '3 saat önce',
-    type: 'stock',
-    read: true,
-  },
-  {
-    id: '7',
-    title: 'Günlük Kazanç 📊',
-    message: 'Bugün 5 sipariş ile 245₺ kazandınız.',
-    time: '5 saat önce',
-    type: 'earnings',
-    read: true,
-  },
-];
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const Notifications: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { userData } = useAuth();
+  const { t } = useTranslation();
+
+  const BUYER_NOTIFICATIONS = [
+    {
+      id: '1',
+      title: t('notificationsScreen.buyer.n1Title'),
+      message: t('notificationsScreen.buyer.n1Message'),
+      time: t('notificationsScreen.buyer.n1Time'),
+      type: 'order',
+      read: false,
+    },
+    {
+      id: '2',
+      title: t('notificationsScreen.buyer.n2Title'),
+      message: t('notificationsScreen.buyer.n2Message'),
+      time: t('notificationsScreen.buyer.n2Time'),
+      type: 'order',
+      read: false,
+    },
+    {
+      id: '3',
+      title: t('notificationsScreen.buyer.n3Title'),
+      message: t('notificationsScreen.buyer.n3Message'),
+      time: t('notificationsScreen.buyer.n3Time'),
+      type: 'order',
+      read: true,
+    },
+    {
+      id: '4',
+      title: t('notificationsScreen.buyer.n4Title'),
+      message: t('notificationsScreen.buyer.n4Message'),
+      time: t('notificationsScreen.buyer.n4Time'),
+      type: 'order',
+      read: true,
+    },
+    {
+      id: '5',
+      title: t('notificationsScreen.buyer.n5Title'),
+      message: t('notificationsScreen.buyer.n5Message'),
+      time: t('notificationsScreen.buyer.n5Time'),
+      type: 'delivery',
+      read: true,
+    },
+    {
+      id: '6',
+      title: t('notificationsScreen.buyer.n6Title'),
+      message: t('notificationsScreen.buyer.n6Message'),
+      time: t('notificationsScreen.buyer.n6Time'),
+      type: 'delivery',
+      read: true,
+    },
+    {
+      id: '7',
+      title: t('notificationsScreen.buyer.n7Title'),
+      message: t('notificationsScreen.buyer.n7Message'),
+      time: t('notificationsScreen.buyer.n7Time'),
+      type: 'review',
+      read: true,
+    },
+  ];
+
+  const SELLER_NOTIFICATIONS = [
+    {
+      id: '1',
+      title: t('notificationsScreen.seller.n1Title'),
+      message: t('notificationsScreen.seller.n1Message'),
+      time: t('notificationsScreen.seller.n1Time'),
+      type: 'order',
+      read: false,
+    },
+    {
+      id: '2',
+      title: t('notificationsScreen.seller.n2Title'),
+      message: t('notificationsScreen.seller.n2Message'),
+      time: t('notificationsScreen.seller.n2Time'),
+      type: 'order',
+      read: false,
+    },
+    {
+      id: '3',
+      title: t('notificationsScreen.seller.n3Title'),
+      message: t('notificationsScreen.seller.n3Message'),
+      time: t('notificationsScreen.seller.n3Time'),
+      type: 'payment',
+      read: true,
+    },
+    {
+      id: '4',
+      title: t('notificationsScreen.seller.n4Title'),
+      message: t('notificationsScreen.seller.n4Message'),
+      time: t('notificationsScreen.seller.n4Time'),
+      type: 'delivery',
+      read: true,
+    },
+    {
+      id: '5',
+      title: t('notificationsScreen.seller.n5Title'),
+      message: t('notificationsScreen.seller.n5Message'),
+      time: t('notificationsScreen.seller.n5Time'),
+      type: 'review',
+      read: true,
+    },
+    {
+      id: '6',
+      title: t('notificationsScreen.seller.n6Title'),
+      message: t('notificationsScreen.seller.n6Message'),
+      time: t('notificationsScreen.seller.n6Time'),
+      type: 'stock',
+      read: true,
+    },
+    {
+      id: '7',
+      title: t('notificationsScreen.seller.n7Title'),
+      message: t('notificationsScreen.seller.n7Message'),
+      time: t('notificationsScreen.seller.n7Time'),
+      type: 'earnings',
+      read: true,
+    },
+  ];
 
   // Determine which notifications to show based on user type
   const getNotifications = () => {
@@ -179,11 +179,11 @@ export const Notifications: React.FC = () => {
 
   const getTopBarTitle = () => {
     if (userData?.userType === 'both') {
-      return 'Bildirimler (Alıcı & Satıcı)';
+      return t('notificationsScreen.titleBoth');
     } else if (userData?.userType === 'seller') {
-      return 'Bildirimler (Satıcı)';
+      return t('notificationsScreen.titleSeller');
     } else {
-      return 'Bildirimler (Alıcı)';
+      return t('notificationsScreen.titleBuyer');
     }
   };
 
@@ -195,10 +195,10 @@ export const Notifications: React.FC = () => {
         {notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text variant="heading" center>
-              Bildirim Yok
+              {t('notificationsScreen.emptyTitle')}
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.emptyText}>
-              Henüz hiç bildirimin yok.
+              {t('notificationsScreen.emptyDesc')}
             </Text>
           </View>
         ) : (
@@ -244,7 +244,7 @@ export const Notifications: React.FC = () => {
                             styles.userTypeBadgeText,
                             { color: 'white' }
                           ]}>
-                            {SELLER_NOTIFICATIONS.includes(notification) ? 'Satıcı' : 'Alıcı'}
+                            {SELLER_NOTIFICATIONS.includes(notification) ? t('notificationsScreen.badgeSeller') : t('notificationsScreen.badgeBuyer')}
                           </Text>
                         </View>
                       )}
@@ -344,7 +344,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-
 
 
 

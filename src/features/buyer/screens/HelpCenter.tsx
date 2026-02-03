@@ -6,56 +6,61 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const HelpCenter: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const faqItems = [
     {
-      question: 'Nasıl sipariş verebilirim?',
-      answer: 'Ana sayfadan istediğiniz yemeği seçin, miktarını belirleyin ve sepete ekleyin. Sepetten siparişinizi tamamlayabilirsiniz.',
+      question: t('helpCenterScreen.faq.q1'),
+      answer: t('helpCenterScreen.faq.a1'),
     },
     {
-      question: 'Ödeme yöntemleri nelerdir?',
-      answer: 'Kredi kartı, banka kartı ve kapıda ödeme seçeneklerini kullanabilirsiniz.',
+      question: t('helpCenterScreen.faq.q2'),
+      answer: t('helpCenterScreen.faq.a2'),
     },
     {
-      question: 'Siparişimi nasıl takip edebilirim?',
-      answer: 'Siparişlerim bölümünden aktif siparişlerinizi takip edebilirsiniz.',
+      question: t('helpCenterScreen.faq.q3'),
+      answer: t('helpCenterScreen.faq.a3'),
     },
     {
-      question: 'İptal ve iade koşulları nelerdir?',
-      answer: 'Sipariş hazırlanmaya başlamadan önce iptal edebilirsiniz. Sorunlu siparişler için müşteri hizmetleri ile iletişime geçin.',
+      question: t('helpCenterScreen.faq.q4'),
+      answer: t('helpCenterScreen.faq.a4'),
     },
     {
-      question: 'Teslimat süresi ne kadar?',
-      answer: 'Ortalama teslimat süresi 30-45 dakikadır. Bu süre yoğunluğa göre değişebilir.',
+      question: t('helpCenterScreen.faq.q5'),
+      answer: t('helpCenterScreen.faq.a5'),
     },
   ];
 
   const contactOptions = [
     {
-      title: 'Canlı Destek',
-      description: 'Anında yardım alın',
+      title: t('helpCenterScreen.contactOptions.liveChat'),
+      description: t('helpCenterScreen.contactOptions.liveChatDesc'),
       icon: '💬',
-      action: () => Alert.alert('Yakında', 'Canlı destek özelliği yakında gelecek.'),
+      action: () => Alert.alert(
+        t('helpCenterScreen.contactOptions.liveChatAlertTitle'),
+        t('helpCenterScreen.contactOptions.liveChatAlertMessage')
+      ),
     },
     {
-      title: 'E-posta Gönder',
+      title: t('helpCenterScreen.contactOptions.email'),
       description: 'destek@cazi.com',
       icon: '✉️',
       action: () => Linking.openURL('mailto:destek@cazi.com'),
     },
     {
-      title: 'Telefon',
+      title: t('helpCenterScreen.contactOptions.phone'),
       description: '0850 123 45 67',
       icon: '📞',
       action: () => Linking.openURL('tel:08501234567'),
     },
     {
-      title: 'WhatsApp',
-      description: 'Hızlı destek için',
+      title: t('helpCenterScreen.contactOptions.whatsapp'),
+      description: t('helpCenterScreen.contactOptions.whatsappDesc'),
       icon: '📱',
       action: () => Linking.openURL('https://wa.me/905551234567'),
     },
@@ -64,7 +69,7 @@ export const HelpCenter: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Yardım Merkezi"
+        title={t('helpCenterScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
             <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
@@ -76,7 +81,7 @@ export const HelpCenter: React.FC = () => {
         {/* FAQ Section */}
         <Card style={styles.sectionCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            Sık Sorulan Sorular
+            {t('helpCenterScreen.sections.faq')}
           </Text>
           
           {faqItems.map((item, index) => (
@@ -102,7 +107,7 @@ export const HelpCenter: React.FC = () => {
         {/* Contact Options */}
         <Card style={styles.sectionCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            İletişim Seçenekleri
+            {t('helpCenterScreen.sections.contact')}
           </Text>
           
           {contactOptions.map((option, index) => (
@@ -134,7 +139,7 @@ export const HelpCenter: React.FC = () => {
         {/* Quick Actions */}
         <Card style={styles.sectionCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            Hızlı İşlemler
+            {t('helpCenterScreen.sections.quick')}
           </Text>
           
           <TouchableOpacity
@@ -145,10 +150,10 @@ export const HelpCenter: React.FC = () => {
               <Text style={styles.quickActionIcon}>📋</Text>
               <View style={styles.quickActionText}>
                 <Text variant="body" weight="medium">
-                  Siparişlerim
+                  {t('helpCenterScreen.quickActions.orders')}
                 </Text>
                 <Text variant="caption" color="textSecondary">
-                  Geçmiş siparişlerinizi görüntüleyin
+                  {t('helpCenterScreen.quickActions.ordersDesc')}
                 </Text>
               </View>
               <WebSafeIcon name="chevron-right" size={16} color={colors.textSecondary} />
@@ -165,10 +170,10 @@ export const HelpCenter: React.FC = () => {
               <Text style={styles.quickActionIcon}>👤</Text>
               <View style={styles.quickActionText}>
                 <Text variant="body" weight="medium">
-                  Hesap Bilgileri
+                  {t('helpCenterScreen.quickActions.account')}
                 </Text>
                 <Text variant="caption" color="textSecondary">
-                  Kişisel bilgilerinizi güncelleyin
+                  {t('helpCenterScreen.quickActions.accountDesc')}
                 </Text>
               </View>
               <WebSafeIcon name="chevron-right" size={16} color={colors.textSecondary} />

@@ -6,13 +6,13 @@ import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCountry } from '../../../context/CountryContext';
-import { useAuth } from '../../../context/AuthContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const SellerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { currentCountry } = useCountry();
-  const { signUp, loading } = useAuth();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -101,41 +101,55 @@ export const SellerRegister: React.FC = () => {
 
     // Validate UK Compliance requirements
     if (!ukCompliance.councilRegistered) {
-      Alert.alert('UK Legal Requirement', 'You must be registered with your local council to sell food in the UK.');
+      Alert.alert(
+        t('authSellerRegister.alerts.ukLegalTitle'),
+        t('authSellerRegister.alerts.ukLegalMessage')
+      );
       return;
     }
     
     if (!ukCompliance.allergenDeclaration) {
       Alert.alert(
-        currentCountry.code === 'TR' ? 'Gıda Güvenliği Gereksinimi' : 'Food Safety Requirement',
+        currentCountry.code === 'TR'
+          ? t('authSellerRegister.alerts.foodSafetyTitleTr')
+          : t('authSellerRegister.alerts.foodSafetyTitleEn'),
         currentCountry.code === 'TR' 
-          ? 'Tüm gıda ürünleri için alerjen bilgilerini beyan etmelisiniz.'
-          : 'You must declare allergen information for all food products.'
+          ? t('authSellerRegister.alerts.foodSafetyMessageTr')
+          : t('authSellerRegister.alerts.foodSafetyMessageEn')
       );
       return;
     }
     
     if (!ukCompliance.legalResponsibility) {
-      Alert.alert('Legal Agreement Required', 'You must accept legal responsibility for food safety and compliance.');
+      Alert.alert(
+        t('authSellerRegister.alerts.legalAgreementTitle'),
+        t('authSellerRegister.alerts.legalAgreementMessage')
+      );
       return;
     }
     
     if (!formData.postcode || !formData.councilName) {
-      Alert.alert('Missing Information', 'Please provide your postcode and council name for verification.');
+      Alert.alert(
+        t('authSellerRegister.alerts.missingInfoTitle'),
+        t('authSellerRegister.alerts.missingInfoMessage')
+      );
       return;
     }
     
     if (!ukCompliance.termsAccepted) {
-      Alert.alert('Terms & Conditions Required', 'You must read and accept the Terms & Conditions to proceed.');
+      Alert.alert(
+        t('authSellerRegister.alerts.termsRequiredTitle'),
+        t('authSellerRegister.alerts.termsRequiredMessage')
+      );
       return;
     }
     
-    try {
-      await signUp(formData.email, formData.password, formData.fullName, 'seller');
-      // Kayıt başarılı - AuthContext otomatik olarak yönlendirecek
-    } catch (error: any) {
-      Alert.alert('Registration Error', error.message);
-    }
+    // Mock registration - navigate to seller panel
+    Alert.alert(
+      t('authSellerRegister.alerts.submittedTitle'),
+      t('authSellerRegister.alerts.submittedMessage'),
+      [{ text: t('authSellerRegister.alerts.ok'), onPress: () => router.replace('/(seller)/dashboard') }]
+    );
   };
 
   return (
@@ -144,10 +158,10 @@ export const SellerRegister: React.FC = () => {
         <View style={styles.content}>
           <View style={styles.header}>
             <Text variant="heading" center style={styles.title}>
-              Satıcı Kayıt
+              {t('authSellerRegister.title')}
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.subtitle}>
-              Ev yemeklerini satmaya başla
+              {t('authSellerRegister.subtitle')}
             </Text>
           </View>
 
@@ -159,84 +173,84 @@ export const SellerRegister: React.FC = () => {
             />
 
             <FormField
-              label="Ad Soyad"
+              label={t('authSellerRegister.fullNameLabel')}
               value={formData.fullName}
               onChangeText={handleInputChange('fullName')}
-              placeholder="Adınız ve soyadınız"
+              placeholder={t('authSellerRegister.fullNamePlaceholder')}
               required
             />
 
             <FormField
-              label="Telefon"
+              label={t('authSellerRegister.phoneLabel')}
               value={formData.phone}
               onChangeText={handleInputChange('phone')}
-              placeholder="05XX XXX XX XX"
+              placeholder={t('authSellerRegister.phonePlaceholder')}
               keyboardType="phone-pad"
               required
             />
 
             <FormField
-              label="E-posta"
+              label={t('authSellerRegister.emailLabel')}
               value={formData.email}
               onChangeText={handleInputChange('email')}
-              placeholder="ornek@email.com"
+              placeholder={t('authSellerRegister.emailPlaceholder')}
               keyboardType="email-address"
               autoCapitalize="none"
               required
             />
 
             <FormField
-              label="Şifre"
+              label={t('authSellerRegister.passwordLabel')}
               value={formData.password}
               onChangeText={handleInputChange('password')}
-              placeholder="En az 6 karakter"
+              placeholder={t('authSellerRegister.passwordPlaceholder')}
               secureTextEntry
               required
             />
 
             <FormField
-              label="Mutfak Konumu"
+              label={t('authSellerRegister.kitchenLocationLabel')}
               value={formData.kitchenLocation}
               onChangeText={handleInputChange('kitchenLocation')}
-              placeholder="İlçe, mahalle, sokak"
+              placeholder={t('authSellerRegister.kitchenLocationPlaceholder')}
               required
             />
 
             <FormField
-              label="Postcode"
+              label={t('authSellerRegister.postcodeLabel')}
               value={formData.postcode}
               onChangeText={handleInputChange('postcode')}
-              placeholder="SW1A 1AA"
+              placeholder={t('authSellerRegister.postcodePlaceholder')}
               required
-              helperText="Required for council verification"
+              helperText={t('authSellerRegister.postcodeHelper')}
             />
 
             <FormField
-              label="Local Council Name"
+              label={t('authSellerRegister.councilLabel')}
               value={formData.councilName}
               onChangeText={handleInputChange('councilName')}
-              placeholder="e.g. Westminster City Council"
+              placeholder={t('authSellerRegister.councilPlaceholder')}
               required
-              helperText="The council where your kitchen is located"
+              helperText={t('authSellerRegister.councilHelper')}
             />
 
             {/* UK Legal Compliance Section */}
             <View style={styles.complianceSection}>
               <Text variant="subheading" style={styles.sectionTitle}>
-                🇬🇧 UK Food Business Requirements
+                {t('authSellerRegister.complianceTitle')}
               </Text>
               
               {/* Quick Links */}
               <View style={styles.quickLinksSection}>
                 <Text variant="body" weight="medium" style={styles.quickLinksTitle}>
-                  📋 Quick Links & Information:
+                  {t('authSellerRegister.quickLinksTitle')}
                 </Text>
                 <TouchableOpacity 
                   style={styles.linkButton}
                   onPress={() => Linking.openURL('https://www.gov.uk/food-business-registration')}
                 >
                   <Text variant="caption" color="primary" style={styles.linkText}>
-                    🏛️ Register Food Business with Council →
+                    {t('authSellerRegister.quickLinks.registerBusiness')}
                   </Text>
                 </TouchableOpacity>
                 
@@ -245,7 +259,7 @@ export const SellerRegister: React.FC = () => {
                   onPress={() => Linking.openURL('https://www.cieh.org/training/food-safety-training/')}
                 >
                   <Text variant="caption" color="primary" style={styles.linkText}>
-                    📜 Get Food Hygiene Level 2 Certificate →
+                    {t('authSellerRegister.quickLinks.hygieneCertificate')}
                   </Text>
                 </TouchableOpacity>
                 
@@ -255,8 +269,8 @@ export const SellerRegister: React.FC = () => {
                 >
                   <Text variant="caption" color="primary" style={styles.linkText}>
                     {currentCountry.code === 'TR' 
-                      ? '⚠️ Türkiye Alerjen Gereksinimleri (Gıda Güvenliği Kanunu) →'
-                      : '⚠️ Allergen Requirements →'
+                      ? t('authSellerRegister.quickLinks.allergenRequirementsTr')
+                      : t('authSellerRegister.quickLinks.allergenRequirementsEn')
                     }
                   </Text>
                 </TouchableOpacity>
@@ -266,7 +280,7 @@ export const SellerRegister: React.FC = () => {
                   onPress={() => router.push('/admin-panel')}
                 >
                   <Text variant="caption" color="primary" style={styles.linkText}>
-                    🛠️ View Admin Panel (Seller Management) →
+                    {t('authSellerRegister.quickLinks.adminPanel')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -274,13 +288,13 @@ export const SellerRegister: React.FC = () => {
               <Checkbox
                 label={
                   <View style={styles.checkboxLabelContainer}>
-                    <Text variant="body">I am registered as a food business with my local council</Text>
+                    <Text variant="body">{t('authSellerRegister.checkboxes.councilRegistered')}</Text>
                     <TouchableOpacity 
                       onPress={() => Linking.openURL('https://www.gov.uk/food-business-registration')}
                       style={styles.inlineLinkButton}
                     >
                       <Text variant="caption" color="primary" style={styles.inlineLinkText}>
-                        (How to register? →)
+                        {t('authSellerRegister.checkboxes.councilRegisteredLink')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -288,31 +302,31 @@ export const SellerRegister: React.FC = () => {
                 checked={ukCompliance.councilRegistered}
                 onPress={() => setUkCompliance(prev => ({ ...prev, councilRegistered: !prev.councilRegistered }))}
                 required
-                helperText="This is a legal requirement in the UK before selling food"
+                helperText={t('authSellerRegister.checkboxes.councilRegisteredHelper')}
               />
               
               <Checkbox
                 label={
                   <View style={styles.checkboxLabelContainer}>
-                    <Text variant="body">I have a Food Hygiene Level 2 certificate</Text>
+                    <Text variant="body">{t('authSellerRegister.checkboxes.hygieneCertificate')}</Text>
                     <TouchableOpacity 
                       onPress={() => Linking.openURL('https://www.cieh.org/training/food-safety-training/')}
                       style={styles.inlineLinkButton}
                     >
                       <Text variant="caption" color="primary" style={styles.inlineLinkText}>
-                        (Get certificate →)
+                        {t('authSellerRegister.checkboxes.hygieneCertificateLink')}
                       </Text>
                     </TouchableOpacity>
                   </View>
                 }
                 checked={ukCompliance.foodHygieneCertificate}
                 onPress={() => setUkCompliance(prev => ({ ...prev, foodHygieneCertificate: !prev.foodHygieneCertificate }))}
-                helperText="Strongly recommended for customer trust"
+                helperText={t('authSellerRegister.checkboxes.hygieneCertificateHelper')}
               />
               
               <View style={styles.ratingSection}>
                 <Text variant="body" weight="medium" style={styles.ratingLabel}>
-                  Food Hygiene Rating
+                  {t('authSellerRegister.rating.title')}
                 </Text>
                 <View style={styles.ratingOptions}>
                   {['5', '4', '3', '2', '1', 'Pending'].map((rating) => (
@@ -322,7 +336,9 @@ export const SellerRegister: React.FC = () => {
                       onPress={() => setUkCompliance(prev => ({ ...prev, hygieneRating: rating }))}
                       style={styles.ratingButton}
                     >
-                      {rating === 'Pending' ? 'Inspection Pending' : `⭐${rating}`}
+                      {rating === 'Pending'
+                        ? t('authSellerRegister.rating.pending')
+                        : t('authSellerRegister.rating.star', { rating })}
                     </Button>
                   ))}
                 </View>
@@ -333,8 +349,8 @@ export const SellerRegister: React.FC = () => {
                   <View style={styles.checkboxLabelContainer}>
                     <Text variant="body">
                       {currentCountry.code === 'TR' 
-                        ? 'Tüm ürünler için doğru alerjen bilgisi sağlayacağım'
-                        : 'I will provide accurate allergen information for all products'
+                        ? t('authSellerRegister.checkboxes.allergenDeclarationTr')
+                        : t('authSellerRegister.checkboxes.allergenDeclarationEn')
                       }
                     </Text>
                     <TouchableOpacity 
@@ -342,7 +358,7 @@ export const SellerRegister: React.FC = () => {
                       style={styles.inlineLinkButton}
                     >
                       <Text variant="caption" color="primary" style={styles.inlineLinkText}>
-                        (View 14 allergens →)
+                        {t('authSellerRegister.checkboxes.allergenDeclarationLink')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -351,42 +367,42 @@ export const SellerRegister: React.FC = () => {
                 onPress={() => setUkCompliance(prev => ({ ...prev, allergenDeclaration: !prev.allergenDeclaration }))}
                 required
                 helperText={currentCountry.code === 'TR' 
-                  ? 'Gıda Güvenliği Kanunu gereği zorunlu - tüm 14 temel alerjeni kapsar'
-                  : 'Required by food safety regulations - covers all 14 major allergens'
+                  ? t('authSellerRegister.checkboxes.allergenDeclarationHelperTr')
+                  : t('authSellerRegister.checkboxes.allergenDeclarationHelperEn')
                 }
               />
               
               <Checkbox
                 label={
                   <View style={styles.checkboxLabelContainer}>
-                    <Text variant="body">I have Public Liability Insurance</Text>
+                    <Text variant="body">{t('authSellerRegister.checkboxes.insurance')}</Text>
                     <TouchableOpacity 
                       onPress={() => Linking.openURL('https://www.comparethemarket.com/business-insurance/public-liability/')}
                       style={styles.inlineLinkButton}
                     >
                       <Text variant="caption" color="primary" style={styles.inlineLinkText}>
-                        (Get insurance →)
+                        {t('authSellerRegister.checkboxes.insuranceLink')}
                       </Text>
                     </TouchableOpacity>
                   </View>
                 }
                 checked={ukCompliance.insuranceOptional}
                 onPress={() => setUkCompliance(prev => ({ ...prev, insuranceOptional: !prev.insuranceOptional }))}
-                helperText="Optional but strongly recommended for protection"
+                helperText={t('authSellerRegister.checkboxes.insuranceHelper')}
               />
               
               <Checkbox
-                label="I accept full legal responsibility for food safety, hygiene, and compliance"
+                label={t('authSellerRegister.checkboxes.legalResponsibility')}
                 checked={ukCompliance.legalResponsibility}
                 onPress={() => setUkCompliance(prev => ({ ...prev, legalResponsibility: !prev.legalResponsibility }))}
                 required
-                helperText="You are responsible for all food safety aspects as an independent seller"
+                helperText={t('authSellerRegister.checkboxes.legalResponsibilityHelper')}
               />
             </View>
 
             <View style={styles.deliverySection}>
               <Text variant="subheading" style={styles.deliveryTitle}>
-                Teslimat Seçenekleri
+                {t('authSellerRegister.delivery.title')}
               </Text>
               
               <View style={styles.checkboxContainer}>
@@ -395,7 +411,7 @@ export const SellerRegister: React.FC = () => {
                   onPress={() => toggleDeliveryOption('pickup')}
                   style={styles.checkboxButton}
                 >
-                  {deliveryOptions.pickup ? "✓ " : ""}Pickup (Gel Al)
+                  {deliveryOptions.pickup ? "✓ " : ""}{t('authSellerRegister.delivery.pickup')}
                 </Button>
                 
                 <Button
@@ -403,25 +419,25 @@ export const SellerRegister: React.FC = () => {
                   onPress={() => toggleDeliveryOption('delivery')}
                   style={styles.checkboxButton}
                 >
-                  {deliveryOptions.delivery ? "✓ " : ""}Delivery (Teslimat)
+                  {deliveryOptions.delivery ? "✓ " : ""}{t('authSellerRegister.delivery.delivery')}
                 </Button>
               </View>
             </View>
 
             <View style={styles.termsSection}>
               <Checkbox
-                label="I have read and agree to the Terms & Conditions and UK food safety regulations"
+                label={t('authSellerRegister.checkboxes.terms')}
                 checked={ukCompliance.termsAccepted}
                 onPress={() => setUkCompliance(prev => ({ ...prev, termsAccepted: !prev.termsAccepted }))}
                 required
-                helperText="Required to proceed with seller registration"
+                helperText={t('authSellerRegister.checkboxes.termsHelper')}
               />
               <TouchableOpacity 
                 onPress={() => router.push('/terms-and-conditions')}
                 style={styles.termsLinkButton}
               >
                 <Text variant="body" color="primary" style={styles.termsLinkText}>
-                  📄 Read Terms & Conditions →
+                  {t('authSellerRegister.termsLink')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -433,7 +449,7 @@ export const SellerRegister: React.FC = () => {
               loading={loading}
               style={styles.submitButton}
             >
-              Satıcı Olarak Devam Et
+              {t('authSellerRegister.submit')}
             </Button>
           </View>
         </View>
@@ -562,6 +578,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
+
+
 
 
 

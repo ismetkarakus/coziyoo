@@ -6,10 +6,12 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const Contact: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     subject: '',
     message: '',
@@ -17,25 +19,25 @@ export const Contact: React.FC = () => {
 
   const contactInfo = [
     {
-      title: 'Adres',
+      title: t('contactScreen.info.address'),
       value: 'Kadıköy Mah. Bağdat Cad. No:123\nKadıköy/İstanbul',
       icon: '📍',
       action: () => Linking.openURL('https://maps.google.com/?q=Kadıköy,İstanbul'),
     },
     {
-      title: 'Telefon',
+      title: t('contactScreen.info.phone'),
       value: '0850 123 45 67',
       icon: '📞',
       action: () => Linking.openURL('tel:08501234567'),
     },
     {
-      title: 'E-posta',
+      title: t('contactScreen.info.email'),
       value: 'info@cazi.com',
       icon: '✉️',
       action: () => Linking.openURL('mailto:info@cazi.com'),
     },
     {
-      title: 'Çalışma Saatleri',
+      title: t('contactScreen.info.hours'),
       value: 'Pazartesi - Pazar\n09:00 - 22:00',
       icon: '🕘',
       action: null,
@@ -44,22 +46,22 @@ export const Contact: React.FC = () => {
 
   const socialMedia = [
     {
-      name: 'Instagram',
+      name: t('contactScreen.social.instagram'),
       icon: '📷',
       action: () => Linking.openURL('https://instagram.com/cazi'),
     },
     {
-      name: 'Twitter',
+      name: t('contactScreen.social.twitter'),
       icon: '🐦',
       action: () => Linking.openURL('https://twitter.com/cazi'),
     },
     {
-      name: 'Facebook',
+      name: t('contactScreen.social.facebook'),
       icon: '📘',
       action: () => Linking.openURL('https://facebook.com/cazi'),
     },
     {
-      name: 'WhatsApp',
+      name: t('contactScreen.social.whatsapp'),
       icon: '📱',
       action: () => Linking.openURL('https://wa.me/905551234567'),
     },
@@ -67,21 +69,21 @@ export const Contact: React.FC = () => {
 
   const handleSendMessage = () => {
     if (!formData.subject.trim() || !formData.message.trim()) {
-      Alert.alert('Hata', 'Lütfen konu ve mesaj alanlarını doldurun.');
+      Alert.alert(t('contactScreen.alerts.errorTitle'), t('contactScreen.alerts.errorMessage'));
       return;
     }
 
     Alert.alert(
-      'Mesaj Gönderildi',
-      'Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.',
-      [{ text: 'Tamam', onPress: () => router.back() }]
+      t('contactScreen.alerts.successTitle'),
+      t('contactScreen.alerts.successMessage'),
+      [{ text: t('contactScreen.alerts.ok'), onPress: () => router.back() }]
     );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="İletişim"
+        title={t('contactScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
             <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
@@ -93,11 +95,13 @@ export const Contact: React.FC = () => {
         {/* Contact Form */}
         <Card style={styles.formCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            Bize Mesaj Gönderin
+            {t('contactScreen.sections.form')}
           </Text>
           
           <View style={styles.inputGroup}>
-            <Text variant="body" color="textSecondary" style={styles.label}>Konu</Text>
+            <Text variant="body" color="textSecondary" style={styles.label}>
+              {t('contactScreen.form.subjectLabel')}
+            </Text>
             <TextInput
               style={[styles.input, { 
                 backgroundColor: colors.surface,
@@ -106,13 +110,15 @@ export const Contact: React.FC = () => {
               }]}
               value={formData.subject}
               onChangeText={(text) => setFormData({ ...formData, subject: text })}
-              placeholder="Mesajınızın konusunu girin"
+              placeholder={t('contactScreen.form.subjectPlaceholder')}
               placeholderTextColor={colors.textSecondary}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text variant="body" color="textSecondary" style={styles.label}>Mesaj</Text>
+            <Text variant="body" color="textSecondary" style={styles.label}>
+              {t('contactScreen.form.messageLabel')}
+            </Text>
             <TextInput
               style={[styles.textArea, { 
                 backgroundColor: colors.surface,
@@ -121,7 +127,7 @@ export const Contact: React.FC = () => {
               }]}
               value={formData.message}
               onChangeText={(text) => setFormData({ ...formData, message: text })}
-              placeholder="Mesajınızı buraya yazın..."
+              placeholder={t('contactScreen.form.messagePlaceholder')}
               placeholderTextColor={colors.textSecondary}
               multiline
               numberOfLines={5}
@@ -134,7 +140,7 @@ export const Contact: React.FC = () => {
             onPress={handleSendMessage}
           >
             <Text variant="body" weight="medium" style={{ color: 'white' }}>
-              Mesaj Gönder
+              {t('contactScreen.form.send')}
             </Text>
           </TouchableOpacity>
         </Card>
@@ -142,7 +148,7 @@ export const Contact: React.FC = () => {
         {/* Contact Information */}
         <Card style={styles.infoCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            İletişim Bilgileri
+            {t('contactScreen.sections.info')}
           </Text>
           
           {contactInfo.map((info, index) => (
@@ -171,7 +177,7 @@ export const Contact: React.FC = () => {
         {/* Social Media */}
         <Card style={styles.socialCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            Sosyal Medya
+            {t('contactScreen.sections.social')}
           </Text>
           
           <View style={styles.socialGrid}>
@@ -281,7 +287,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
 
 
 

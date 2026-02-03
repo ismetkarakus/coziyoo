@@ -6,43 +6,46 @@ import * as ImagePicker from 'expo-image-picker';
 import { Text, Button, Card, Input } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
+import { translations } from '../../../i18n/translations';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-// Mock Seller Data
-const SELLER_DATA = {
-  name: 'Ayşe Hanım',
-  email: 'ayse@example.com',
-  phone: '+90 532 123 45 67',
-  location: 'Kadıköy, İstanbul',
-  address: 'Moda Caddesi No: 123, Kadıköy/İstanbul',
-  avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-  description: 'Ev yemekleri konusunda 15 yıllık deneyimim var. Geleneksel Türk mutfağının lezzetlerini sizlerle paylaşmaktan mutluluk duyuyorum.',
-  specialties: ['Türk Mutfağı', 'Ev Yemekleri', 'Hamur İşleri', 'Çorbalar'],
-  rating: 4.8,
-  totalOrders: 156,
-  joinDate: 'Ocak 2023',
-};
-
 export const SellerProfile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
+  const sellerData = {
+    name: t('sellerProfileScreen.mock.name'),
+    email: t('sellerProfileScreen.mock.email'),
+    phone: t('sellerProfileScreen.mock.phone'),
+    location: t('sellerProfileScreen.mock.location'),
+    address: t('sellerProfileScreen.mock.address'),
+    avatar: t('sellerProfileScreen.mock.avatar'),
+    description: t('sellerProfileScreen.mock.description'),
+    specialties:
+      (translations[currentLanguage]?.sellerProfileScreen?.mock?.specialties ??
+        translations.tr.sellerProfileScreen.mock.specialties) as string[],
+    rating: 4.8,
+    totalOrders: 156,
+    joinDate: t('sellerProfileScreen.mock.joinDate'),
+  };
   const [isEditing, setIsEditing] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [formData, setFormData] = useState({
-    name: SELLER_DATA.name,
+    name: sellerData.name,
     nickname: '', // Nickname alanı eklendi
-    email: SELLER_DATA.email,
-    phone: SELLER_DATA.phone,
-    location: SELLER_DATA.location,
-    address: SELLER_DATA.address,
-    description: SELLER_DATA.description,
+    email: sellerData.email,
+    phone: sellerData.phone,
+    location: sellerData.location,
+    address: sellerData.address,
+    description: sellerData.description,
   });
 
   // Uzmanlık alanları state'i
-  const [specialties, setSpecialties] = useState(SELLER_DATA.specialties);
+  const [specialties, setSpecialties] = useState(sellerData.specialties);
   const [newSpecialty, setNewSpecialty] = useState('');
 
   // Katlanabilir bölümler state'leri
@@ -88,7 +91,7 @@ export const SellerProfile: React.FC = () => {
         const profileData = JSON.parse(savedProfile);
         setFormData(profileData.formData || formData);
         setAvatarUri(profileData.avatarUri || null);
-        setSpecialties(profileData.specialties || SELLER_DATA.specialties);
+        setSpecialties(profileData.specialties || sellerData.specialties);
         setBankDetails(profileData.bankDetails || bankDetails);
         setIdentityImages(profileData.identityImages || identityImages);
         setIdentityVerification(profileData.identityVerification || identityVerification);
@@ -126,15 +129,15 @@ export const SellerProfile: React.FC = () => {
     try {
       await saveProfileData();
       Alert.alert(
-        'Profil Güncellendi',
-        'Profil bilgileriniz başarıyla güncellendi.',
-        [{ text: 'Tamam', onPress: () => setIsEditing(false) }]
+        t('sellerProfileScreen.alerts.profileUpdatedTitle'),
+        t('sellerProfileScreen.alerts.profileUpdatedMessage'),
+        [{ text: t('sellerProfileScreen.alerts.ok'), onPress: () => setIsEditing(false) }]
       );
     } catch (error) {
       Alert.alert(
-        'Hata',
-        'Profil bilgileri kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.',
-        [{ text: 'Tamam' }]
+        t('sellerProfileScreen.alerts.errorTitle'),
+        t('sellerProfileScreen.alerts.profileSaveError'),
+        [{ text: t('sellerProfileScreen.alerts.ok') }]
       );
     }
   };
@@ -150,17 +153,17 @@ export const SellerProfile: React.FC = () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+      Alert.alert(t('sellerProfileScreen.alerts.permissionTitle'), t('sellerProfileScreen.alerts.galleryPermission'));
       return;
     }
 
     Alert.alert(
-      'Profil Fotoğrafı',
-      'Nasıl eklemek istiyorsunuz?',
+      t('sellerProfileScreen.alerts.profilePhotoTitle'),
+      t('sellerProfileScreen.alerts.profilePhotoMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Kameradan Çek', onPress: () => takeAvatarPhoto() },
-        { text: 'Galeriden Seç', onPress: () => pickAvatarImage() },
+        { text: t('sellerProfileScreen.alerts.cancel'), style: 'cancel' },
+        { text: t('sellerProfileScreen.alerts.takePhoto'), onPress: () => takeAvatarPhoto() },
+        { text: t('sellerProfileScreen.alerts.pickFromGallery'), onPress: () => pickAvatarImage() },
       ]
     );
   };
@@ -169,7 +172,7 @@ export const SellerProfile: React.FC = () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+      Alert.alert(t('sellerProfileScreen.alerts.permissionTitle'), t('sellerProfileScreen.alerts.cameraPermission'));
       return;
     }
 
@@ -218,17 +221,17 @@ export const SellerProfile: React.FC = () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+      Alert.alert(t('sellerProfileScreen.alerts.permissionTitle'), t('sellerProfileScreen.alerts.galleryPermission'));
       return;
     }
 
     Alert.alert(
-      'Kimlik Belgesi Fotoğrafı',
-      'Nasıl eklemek istiyorsunuz?',
+      t('sellerProfileScreen.alerts.identityPhotoTitle'),
+      t('sellerProfileScreen.alerts.identityPhotoMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Kameradan Çek', onPress: () => takeIdentityPhoto(side) },
-        { text: 'Galeriden Seç', onPress: () => pickIdentityImage(side) },
+        { text: t('sellerProfileScreen.alerts.cancel'), style: 'cancel' },
+        { text: t('sellerProfileScreen.alerts.takePhoto'), onPress: () => takeIdentityPhoto(side) },
+        { text: t('sellerProfileScreen.alerts.pickFromGallery'), onPress: () => pickIdentityImage(side) },
       ]
     );
   };
@@ -237,7 +240,7 @@ export const SellerProfile: React.FC = () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+      Alert.alert(t('sellerProfileScreen.alerts.permissionTitle'), t('sellerProfileScreen.alerts.cameraPermission'));
       return;
     }
 
@@ -289,22 +292,22 @@ export const SellerProfile: React.FC = () => {
   // Kimlik doğrulama gönderme
   const handleSubmitIdentityVerification = () => {
     if (!formData.name.trim()) {
-      Alert.alert('Hata', 'Lütfen gerçek ad soyad bilginizi girin.');
+      Alert.alert(t('sellerProfileScreen.alerts.errorTitle'), t('sellerProfileScreen.alerts.realNameRequired'));
       return;
     }
 
     if (!identityImages.front || !identityImages.back) {
-      Alert.alert('Hata', 'Lütfen kimlik belgenizin ön ve arka yüzünü ekleyin.');
+      Alert.alert(t('sellerProfileScreen.alerts.errorTitle'), t('sellerProfileScreen.alerts.identityImagesRequired'));
       return;
     }
 
     Alert.alert(
-      'Kimlik Doğrulama Gönder',
-      'Kimlik doğrulama talebiniz gönderilsin mi? Bu işlem sonrası belgeleriniz incelenecek.',
+      t('sellerProfileScreen.alerts.submitIdentityTitle'),
+      t('sellerProfileScreen.alerts.submitIdentityMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('sellerProfileScreen.alerts.cancel'), style: 'cancel' },
         {
-          text: 'Gönder',
+          text: t('sellerProfileScreen.alerts.submit'),
           onPress: () => submitIdentityVerification(),
         },
       ]
@@ -321,9 +324,9 @@ export const SellerProfile: React.FC = () => {
     });
 
     Alert.alert(
-      'Başarılı',
-      'Kimlik doğrulama talebiniz gönderildi. 24-48 saat içinde sonuçlandırılacak.',
-      [{ text: 'Tamam' }]
+      t('sellerProfileScreen.alerts.successTitle'),
+      t('sellerProfileScreen.alerts.identitySubmitted'),
+      [{ text: t('sellerProfileScreen.alerts.ok') }]
     );
   };
 
@@ -334,7 +337,7 @@ export const SellerProfile: React.FC = () => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <TopBar 
-        title="Satıcı Profili"
+        title={t('sellerProfileScreen.title')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -369,7 +372,7 @@ export const SellerProfile: React.FC = () => {
             <View style={styles.avatarContainer}>
               <Image
                 key={`${avatarUri || 'default'}-${forceUpdate}`} // Force re-render when avatar changes
-                source={avatarUri ? { uri: avatarUri } : { uri: SELLER_DATA.avatar }}
+                source={avatarUri ? { uri: avatarUri } : { uri: sellerData.avatar }}
                 style={styles.avatar}
                 defaultSource={{ uri: 'https://via.placeholder.com/100x100/7FAF9A/FFFFFF?text=S' }}
                 onLoad={() => console.log('Avatar loaded:', avatarUri)}
@@ -397,21 +400,21 @@ export const SellerProfile: React.FC = () => {
               )}
               
               <Text variant="caption" color="textSecondary">
-                {SELLER_DATA.joinDate} tarihinden beri üye
+                {t('sellerProfileScreen.joinedSince', { date: sellerData.joinDate })}
               </Text>
               
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <Text variant="subheading" weight="bold" color="primary">
-                    ⭐ {SELLER_DATA.rating}
+                    ⭐ {sellerData.rating}
                   </Text>
-                  <Text variant="caption" color="textSecondary">Puan</Text>
+                  <Text variant="caption" color="textSecondary">{t('sellerProfileScreen.stats.rating')}</Text>
                 </View>
                 <View style={styles.statItem}>
                   <Text variant="subheading" weight="bold" color="primary">
-                    {SELLER_DATA.totalOrders}
+                    {sellerData.totalOrders}
                   </Text>
-                  <Text variant="caption" color="textSecondary">Sipariş</Text>
+                  <Text variant="caption" color="textSecondary">{t('sellerProfileScreen.stats.orders')}</Text>
                 </View>
               </View>
             </View>
@@ -421,37 +424,37 @@ export const SellerProfile: React.FC = () => {
         {/* Contact Information */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            İletişim Bilgileri
+            {t('sellerProfileScreen.sections.contact')}
           </Text>
           
           {isEditing ? (
             <View style={styles.formContainer}>
               <FormField
-                label="Nickname"
+                label={t('sellerProfileScreen.fields.nickname')}
                 value={formData.nickname}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, nickname: text }))}
-                placeholder="Kullanıcı adınızı girin"
+                placeholder={t('sellerProfileScreen.placeholders.nickname')}
               />
               
               <FormField
-                label="Ad Soyad"
+                label={t('sellerProfileScreen.fields.fullName')}
                 value={formData.name}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-                placeholder="Adınızı ve soyadınızı girin"
+                placeholder={t('sellerProfileScreen.placeholders.fullName')}
               />
               
               <FormField
-                label="E-posta"
+                label={t('sellerProfileScreen.fields.email')}
                 value={formData.email}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-                placeholder="E-posta adresinizi girin"
+                placeholder={t('sellerProfileScreen.placeholders.email')}
                 keyboardType="email-address"
               />
               <FormField
-                label="Telefon"
+                label={t('sellerProfileScreen.fields.phone')}
                 value={formData.phone}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
-                placeholder="Telefon numaranızı girin"
+                placeholder={t('sellerProfileScreen.placeholders.phone')}
                 keyboardType="phone-pad"
               />
             </View>
@@ -462,7 +465,7 @@ export const SellerProfile: React.FC = () => {
                 <Text variant="body" style={styles.infoText}>
                   {formData.name}
                   {identityVerification.status === 'verified' && (
-                    <Text style={styles.verifiedBadge}> ✓ Doğrulandı</Text>
+                    <Text style={styles.verifiedBadge}> ✓ {t('sellerProfileScreen.identity.status.verified')}</Text>
                   )}
                 </Text>
               </View>
@@ -481,22 +484,22 @@ export const SellerProfile: React.FC = () => {
         {/* Location Information */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Konum Bilgileri
+            {t('sellerProfileScreen.sections.location')}
           </Text>
           
           {isEditing ? (
             <View style={styles.formContainer}>
               <FormField
-                label="Şehir/İlçe"
+                label={t('sellerProfileScreen.fields.city')}
                 value={formData.location}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, location: text }))}
-                placeholder="Şehir ve ilçe bilginizi girin"
+                placeholder={t('sellerProfileScreen.placeholders.city')}
               />
               <FormField
-                label="Adres"
+                label={t('sellerProfileScreen.fields.address')}
                 value={formData.address}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, address: text }))}
-                placeholder="Detaylı adres bilginizi girin"
+                placeholder={t('sellerProfileScreen.placeholders.address')}
                 multiline
                 numberOfLines={3}
               />
@@ -518,16 +521,16 @@ export const SellerProfile: React.FC = () => {
         {/* About Section */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Hakkımda
+            {t('sellerProfileScreen.sections.about')}
           </Text>
           
           {isEditing ? (
             <View style={styles.aboutEditContainer}>
               <FormField
-                label="Açıklama"
+                label={t('sellerProfileScreen.fields.about')}
                 value={formData.description}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
-                placeholder="Kendinizi ve mutfak deneyiminizi tanıtın"
+                placeholder={t('sellerProfileScreen.placeholders.about')}
                 multiline
                 numberOfLines={3}
                 style={styles.aboutTextArea}
@@ -537,7 +540,7 @@ export const SellerProfile: React.FC = () => {
               {/* Uzmanlık Alanları Düzenleme */}
               <View style={styles.specialtiesEditSection}>
                 <Text variant="body" weight="medium" style={styles.specialtiesEditTitle}>
-                  Uzmanlık Alanları
+                  {t('sellerProfileScreen.sections.specialties')}
                 </Text>
                 
                 {/* Mevcut Uzmanlık Alanları - 3 Sütun Düzeni */}
@@ -560,14 +563,14 @@ export const SellerProfile: React.FC = () => {
                 {/* Yeni Uzmanlık Alanı Ekleme */}
                 <View style={styles.addSpecialtyContainer}>
                   <Text variant="body" weight="medium" style={styles.addSpecialtyLabel}>
-                    Yeni Kategori Ekle
+                    {t('sellerProfileScreen.labels.addSpecialty')}
                   </Text>
                   <View style={styles.addSpecialtyInputContainer}>
                     <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
                       <Input
                         value={newSpecialty}
                         onChangeText={setNewSpecialty}
-                        placeholder="Örn: İtalyan Mutfağı, Vegan Yemekler, Gluten-Free Tarifler"
+                        placeholder={t('sellerProfileScreen.placeholders.specialty')}
                         style={styles.addSpecialtyInput}
                         onSubmitEditing={handleAddSpecialty}
                         multiline={true}
@@ -600,9 +603,9 @@ export const SellerProfile: React.FC = () => {
               {/* Uzmanlık Alanları Görüntüleme */}
               {specialties.length > 0 && (
                 <View style={styles.specialtiesViewSection}>
-                  <Text variant="body" weight="medium" style={styles.specialtiesViewTitle}>
-                    Uzmanlık Alanları
-                  </Text>
+                <Text variant="body" weight="medium" style={styles.specialtiesViewTitle}>
+                  {t('sellerProfileScreen.sections.specialties')}
+                </Text>
                   <View style={styles.specialtiesViewGrid}>
                     {specialties.map((specialty, index) => (
                       <View key={index} style={styles.specialtyViewPlainItem}>
@@ -629,7 +632,7 @@ export const SellerProfile: React.FC = () => {
           >
             <View style={styles.identityHeader}>
               <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                Kimlik Doğrulama
+                {t('sellerProfileScreen.sections.identity')}
               </Text>
               <View style={styles.headerRight}>
                 <View style={[
@@ -645,9 +648,11 @@ export const SellerProfile: React.FC = () => {
                            identityVerification.status === 'rejected' ? colors.error :
                            colors.warning
                   }}>
-                    {identityVerification.status === 'verified' ? '✓ Doğrulandı' :
-                     identityVerification.status === 'rejected' ? '✗ Reddedildi' :
-                     '⏳ Beklemede'}
+                    {identityVerification.status === 'verified'
+                      ? `✓ ${t('sellerProfileScreen.identity.status.verified')}`
+                      : identityVerification.status === 'rejected'
+                      ? `✗ ${t('sellerProfileScreen.identity.status.rejected')}`
+                      : `⏳ ${t('sellerProfileScreen.identity.status.pending')}`}
                   </Text>
                 </View>
                 <FontAwesome 
@@ -665,7 +670,7 @@ export const SellerProfile: React.FC = () => {
               {identityVerification.status === 'rejected' && identityVerification.rejectionReason && (
                 <View style={[styles.rejectionNote, { backgroundColor: colors.error + '10', borderColor: colors.error }]}>
                   <Text variant="caption" color="error">
-                    ❌ Red Sebebi: {identityVerification.rejectionReason}
+                    {t('sellerProfileScreen.identity.rejectionReason', { reason: identityVerification.rejectionReason })}
                   </Text>
                 </View>
               )}
@@ -674,7 +679,7 @@ export const SellerProfile: React.FC = () => {
             {/* Kimlik Ön Yüz */}
             <View style={styles.identitySection}>
               <Text variant="body" weight="medium" style={styles.identityLabel}>
-                Kimlik Ön Yüzü
+                {t('sellerProfileScreen.identity.frontLabel')}
               </Text>
               <TouchableOpacity
                 style={[styles.identityImageContainer, { borderColor: colors.border }]}
@@ -686,7 +691,7 @@ export const SellerProfile: React.FC = () => {
                   <View style={styles.identityPlaceholder}>
                     <FontAwesome name="id-card" size={40} color={colors.textSecondary} />
                     <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
-                      Kimlik ön yüzü ekle
+                      {t('sellerProfileScreen.identity.addFront')}
                     </Text>
                   </View>
                 )}
@@ -696,7 +701,7 @@ export const SellerProfile: React.FC = () => {
             {/* Kimlik Arka Yüz */}
             <View style={styles.identitySection}>
               <Text variant="body" weight="medium" style={styles.identityLabel}>
-                Kimlik Arka Yüzü
+                {t('sellerProfileScreen.identity.backLabel')}
               </Text>
               <TouchableOpacity
                 style={[styles.identityImageContainer, { borderColor: colors.border }]}
@@ -708,7 +713,7 @@ export const SellerProfile: React.FC = () => {
                   <View style={styles.identityPlaceholder}>
                     <FontAwesome name="id-card-o" size={40} color={colors.textSecondary} />
                     <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
-                      Kimlik arka yüzü ekle
+                      {t('sellerProfileScreen.identity.addBack')}
                     </Text>
                   </View>
                 )}
@@ -724,7 +729,7 @@ export const SellerProfile: React.FC = () => {
                 onPress={handleSubmitIdentityVerification}
                 style={styles.submitButton}
               >
-                Kimlik Doğrulama Gönder
+                {t('sellerProfileScreen.identity.submit')}
               </Button>
             </View>
           )}
@@ -732,8 +737,7 @@ export const SellerProfile: React.FC = () => {
               <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
                 <FontAwesome name="info-circle" size={16} color={colors.warning} />
                 <Text variant="caption" color="warning" style={styles.warningText}>
-                  Kimlik belgeleriniz güvenlik amacıyla şifrelenerek saklanır ve sadece doğrulama için kullanılır. 
-                  Gerçek adınız kimlik belgenizdeki isimle eşleşmelidir.
+                  {t('sellerProfileScreen.identity.warning')}
                 </Text>
               </View>
             </>
@@ -749,7 +753,7 @@ export const SellerProfile: React.FC = () => {
           >
             <View style={styles.bankHeader}>
               <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                Banka Bilgileri
+                {t('sellerProfileScreen.sections.bank')}
               </Text>
               <FontAwesome 
                 name={bankDetailsExpanded ? "chevron-up" : "chevron-down"} 
@@ -764,29 +768,29 @@ export const SellerProfile: React.FC = () => {
               {isEditing ? (
                 <View style={styles.formContainer}>
                   <FormField
-                    label="Banka Adı"
+                    label={t('sellerProfileScreen.fields.bankName')}
                     value={bankDetails.bankName}
                 onChangeText={(text) => setBankDetails(prev => ({ ...prev, bankName: text }))}
-                placeholder="Örn: Türkiye İş Bankası"
+                placeholder={t('sellerProfileScreen.placeholders.bankName')}
               />
               <FormField
-                label="Hesap Sahibi Adı"
+                label={t('sellerProfileScreen.fields.accountHolder')}
                 value={bankDetails.accountHolderName}
                 onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountHolderName: text }))}
-                placeholder="Hesap sahibinin tam adı"
+                placeholder={t('sellerProfileScreen.placeholders.accountHolder')}
               />
               <FormField
-                label="IBAN"
+                label={t('sellerProfileScreen.fields.iban')}
                 value={bankDetails.iban}
                 onChangeText={(text) => setBankDetails(prev => ({ ...prev, iban: text }))}
-                placeholder="TR00 0000 0000 0000 0000 0000 00"
+                placeholder={t('sellerProfileScreen.placeholders.iban')}
                 maxLength={32}
               />
               <FormField
-                label="Hesap Numarası"
+                label={t('sellerProfileScreen.fields.accountNumber')}
                 value={bankDetails.accountNumber}
                 onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountNumber: text }))}
-                placeholder="Hesap numaranız"
+                placeholder={t('sellerProfileScreen.placeholders.accountNumber')}
                 keyboardType="numeric"
               />
             </View>
@@ -818,7 +822,7 @@ export const SellerProfile: React.FC = () => {
               ) : null}
               {!bankDetails.bankName && !bankDetails.accountHolderName && !bankDetails.iban && !bankDetails.accountNumber && (
                 <Text variant="body" color="textSecondary" style={styles.emptyStateText}>
-                  Banka bilgileri henüz eklenmemiş. Düzenle butonuna tıklayarak ekleyebilirsiniz.
+                  {t('sellerProfileScreen.bankEmpty')}
                 </Text>
                 )}
               </View>
@@ -836,14 +840,14 @@ export const SellerProfile: React.FC = () => {
               onPress={handleCancel}
               style={styles.cancelButton}
             >
-              İptal
+              {t('sellerProfileScreen.actions.cancel')}
             </Button>
             <Button
               variant="primary"
               onPress={handleSave}
               style={styles.saveButton}
             >
-              Kaydet
+              {t('sellerProfileScreen.actions.save')}
             </Button>
           </View>
         )}
@@ -1218,7 +1222,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
-
-
-

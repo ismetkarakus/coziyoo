@@ -6,11 +6,13 @@ import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export default function FoodDetailSimple() {
   const params = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const foodName = params.name as string || 'Ev Yapımı Mantı';
   const cookName = params.cookName as string || 'Ayşe Hanım';
@@ -45,7 +47,7 @@ export default function FoodDetailSimple() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Yemek Detayı"
+        title={t('foodDetailSimpleScreen.title')}
         showBackButton={true}
         onBackPress={handleBackPress}
       />
@@ -66,7 +68,7 @@ export default function FoodDetailSimple() {
             </Text>
             <View style={styles.priceCorner}>
               <Text variant="subheading" weight="bold" color="primary">
-                ₺25 <Text variant="caption" color="textSecondary">/ porsiyon</Text>
+                ₺25 <Text variant="caption" color="textSecondary">{t('foodDetailSimpleScreen.portion')}</Text>
               </Text>
             </View>
           </View>
@@ -86,7 +88,7 @@ export default function FoodDetailSimple() {
                   {cookName}
                 </Text>
                 <Text variant="caption" color="textSecondary">
-                  Satıcı • Kadıköy, İstanbul
+                  {t('foodDetailSimpleScreen.sellerMeta')}
                 </Text>
               </View>
               {/* Yıldız Değerlendirme - Sağ Üst Köşe */}
@@ -103,65 +105,57 @@ export default function FoodDetailSimple() {
             style={[styles.favoriteButton, { backgroundColor: colors.surface }]}
             onPress={() => {
               // Favorilere ekle
-              alert('Favorilere eklendi! ❤️');
+              alert(t('foodDetailSimpleScreen.addFavoriteToast'));
             }}
           >
-            <Text variant="body" color="primary">❤️ Favoriye Ekle</Text>
+            <Text variant="body" color="primary">{t('foodDetailSimpleScreen.addFavorite')}</Text>
           </TouchableOpacity>
           
           {/* İçindekiler/Baharatlar/Tarif */}
           <View style={styles.ingredientsSection}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              İçindekiler / Baharatlar / Tarif
+              {t('foodDetailSimpleScreen.ingredientsTitle')}
             </Text>
             <Text variant="body" style={styles.ingredientsText}>
-              • Un, yumurta, su, tuz (hamur için)
-              • Kıyma, soğan, maydanoz (iç için)
-              • Yoğurt, sarımsak, tereyağı (sos için)
-              • Kırmızı biber, nane, karabiber
+              {t('foodDetailSimpleScreen.ingredients')}
             </Text>
           </View>
 
           {/* Tarif */}
           <View style={styles.aboutSection}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Tarif
+              {t('foodDetailSimpleScreen.recipeTitle')}
             </Text>
             <Text variant="body" style={styles.description}>
-              Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, 
-              özel baharatlarla tatlandırılmış ev yapımı {foodName}. Taze malzemeler 
-              kullanılarak özenle hazırlanmıştır.
+              {t('foodDetailSimpleScreen.recipe', { food: foodName })}
             </Text>
           </View>
 
           {/* Hakkımda - Satıcı Hakkında */}
           <View style={styles.aboutSellerSection}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Hakkımda
+              {t('foodDetailSimpleScreen.aboutSellerTitle')}
             </Text>
             <Text variant="body" style={styles.description}>
-              15 yıldır ev yemekleri yapıyorum. Özellikle mantı, börek ve geleneksel 
-              Türk mutfağının lezzetlerinde uzmanım. Her yemekte annemin tariflerini 
-              kullanarak, aile sıcaklığını sofranıza taşıyorum. Hijyen ve kalite 
-              benim için en önemli öncelikler.
+              {t('foodDetailSimpleScreen.aboutSeller')}
             </Text>
           </View>
           
           {/* Reviews Section */}
           <View style={styles.reviewsSection}>
             <Text variant="subheading" weight="semibold" style={styles.reviewsTitle}>
-              ⭐ Değerlendirmeler (24)
+              {t('foodDetailSimpleScreen.reviewsTitle')}
             </Text>
             <View style={styles.reviewItem}>
-              <Text variant="body" weight="medium">Ahmet K.</Text>
+              <Text variant="body" weight="medium">{t('foodDetailSimpleScreen.review1Name')}</Text>
               <Text variant="caption" color="textSecondary">
-                "Çok lezzetli ve taze. Kesinlikle tavsiye ederim!" ⭐⭐⭐⭐⭐
+                {t('foodDetailSimpleScreen.review1Text')}
               </Text>
             </View>
             <View style={styles.reviewItem}>
-              <Text variant="body" weight="medium">Zeynep M.</Text>
+              <Text variant="body" weight="medium">{t('foodDetailSimpleScreen.review2Name')}</Text>
               <Text variant="caption" color="textSecondary">
-                "Güzel bir deneyimdi, tekrar sipariş vereceğim." ⭐⭐⭐⭐
+                {t('foodDetailSimpleScreen.review2Text')}
               </Text>
             </View>
           </View>

@@ -7,6 +7,7 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface FavoriteItem {
   id: string;
@@ -21,6 +22,7 @@ interface FavoriteItem {
 export const Favorites: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
   useEffect(() => {
@@ -75,7 +77,7 @@ export const Favorites: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Favorilerim"
+        title={t('favoritesScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
             <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
@@ -134,10 +136,10 @@ export const Favorites: React.FC = () => {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyEmoji}>💔</Text>
             <Text variant="subheading" weight="medium" style={styles.emptyTitle}>
-              Henüz favori yemek yok
+              {t('favoritesScreen.emptyTitle')}
             </Text>
             <Text variant="body" color="textSecondary" style={styles.emptyText}>
-              Beğendiğiniz yemekleri favorilere ekleyerek buradan kolayca ulaşabilirsiniz.
+              {t('favoritesScreen.emptyDesc')}
             </Text>
           </View>
         )}
@@ -217,5 +219,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
 

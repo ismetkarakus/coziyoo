@@ -6,33 +6,35 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const About: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const appInfo = [
-    { label: 'Versiyon', value: '1.0.0' },
-    { label: 'Son Güncelleme', value: '7 Ocak 2026' },
-    { label: 'Geliştirici', value: 'Cazi Team' },
-    { label: 'Platform', value: 'iOS & Android' },
+    { label: t('aboutScreen.appInfo.version'), value: '1.0.0' },
+    { label: t('aboutScreen.appInfo.lastUpdate'), value: '7 Ocak 2026' },
+    { label: t('aboutScreen.appInfo.developer'), value: 'Cazi Team' },
+    { label: t('aboutScreen.appInfo.platform'), value: 'iOS & Android' },
   ];
 
   const legalLinks = [
     {
-      title: 'Kullanım Koşulları',
+      title: t('aboutScreen.legalLinks.terms'),
       onPress: () => Linking.openURL('https://cazi.com/terms'),
     },
     {
-      title: 'Gizlilik Politikası',
+      title: t('aboutScreen.legalLinks.privacy'),
       onPress: () => Linking.openURL('https://cazi.com/privacy'),
     },
     {
-      title: 'Çerez Politikası',
+      title: t('aboutScreen.legalLinks.cookies'),
       onPress: () => Linking.openURL('https://cazi.com/cookies'),
     },
     {
-      title: 'KVKK Aydınlatma Metni',
+      title: t('aboutScreen.legalLinks.kvkk'),
       onPress: () => Linking.openURL('https://cazi.com/kvkk'),
     },
   ];
@@ -40,30 +42,30 @@ export const About: React.FC = () => {
   const features = [
     {
       icon: '🍽️',
-      title: 'Ev Yemekleri',
-      description: 'Yerel aşçılardan taze ve lezzetli ev yemekleri',
+      title: t('aboutScreen.features.homeMealsTitle'),
+      description: t('aboutScreen.features.homeMealsDesc'),
     },
     {
       icon: '🚚',
-      title: 'Hızlı Teslimat',
-      description: 'Siparişiniz ortalama 30-45 dakikada kapınızda',
+      title: t('aboutScreen.features.fastDeliveryTitle'),
+      description: t('aboutScreen.features.fastDeliveryDesc'),
     },
     {
       icon: '💳',
-      title: 'Güvenli Ödeme',
-      description: 'Kredi kartı ve kapıda ödeme seçenekleri',
+      title: t('aboutScreen.features.securePaymentTitle'),
+      description: t('aboutScreen.features.securePaymentDesc'),
     },
     {
       icon: '⭐',
-      title: 'Kalite Garantisi',
-      description: 'Tüm aşçılarımız titizlikle seçilmiştir',
+      title: t('aboutScreen.features.qualityTitle'),
+      description: t('aboutScreen.features.qualityDesc'),
     },
   ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Hakkında"
+        title={t('aboutScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
             <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
@@ -80,9 +82,7 @@ export const About: React.FC = () => {
               Cazi
             </Text>
             <Text variant="body" color="textSecondary" style={styles.appDescription}>
-              Ev yemeklerinin lezzetini kapınıza getiren platform. 
-              Yerel aşçılardan taze, sağlıklı ve lezzetli yemekleri 
-              kolayca sipariş edin.
+              {t('aboutScreen.heroDescription')}
             </Text>
           </View>
         </Card>
@@ -90,7 +90,7 @@ export const About: React.FC = () => {
         {/* Features */}
         <Card style={styles.featuresCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            Özellikler
+            {t('aboutScreen.sections.features')}
           </Text>
           
           {features.map((feature, index) => (
@@ -111,7 +111,7 @@ export const About: React.FC = () => {
         {/* App Information */}
         <Card style={styles.infoCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            Uygulama Bilgileri
+            {t('aboutScreen.sections.appInfo')}
           </Text>
           
           {appInfo.map((info, index) => (
@@ -129,7 +129,7 @@ export const About: React.FC = () => {
         {/* Legal Links */}
         <Card style={styles.legalCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            Yasal Belgeler
+            {t('aboutScreen.sections.legal')}
           </Text>
           
           {legalLinks.map((link, index) => (
@@ -149,7 +149,7 @@ export const About: React.FC = () => {
         {/* Contact & Support */}
         <Card style={styles.supportCard}>
           <Text variant="subheading" weight="bold" style={styles.sectionTitle}>
-            Destek & İletişim
+            {t('aboutScreen.sections.support')}
           </Text>
           
           <TouchableOpacity
@@ -159,10 +159,10 @@ export const About: React.FC = () => {
             <Text style={styles.supportIcon}>❓</Text>
             <View style={styles.supportText}>
               <Text variant="body" weight="medium">
-                Yardım Merkezi
+                {t('aboutScreen.support.helpTitle')}
               </Text>
               <Text variant="caption" color="textSecondary">
-                Sık sorulan sorular ve destek
+                {t('aboutScreen.support.helpDesc')}
               </Text>
             </View>
             <WebSafeIcon name="chevron-right" size={16} color={colors.textSecondary} />
@@ -175,10 +175,10 @@ export const About: React.FC = () => {
             <Text style={styles.supportIcon}>📞</Text>
             <View style={styles.supportText}>
               <Text variant="body" weight="medium">
-                İletişim
+                {t('aboutScreen.support.contactTitle')}
               </Text>
               <Text variant="caption" color="textSecondary">
-                Bizimle iletişime geçin
+                {t('aboutScreen.support.contactDesc')}
               </Text>
             </View>
             <WebSafeIcon name="chevron-right" size={16} color={colors.textSecondary} />
@@ -188,10 +188,10 @@ export const About: React.FC = () => {
         {/* Copyright */}
         <View style={styles.copyright}>
           <Text variant="caption" color="textSecondary" style={styles.copyrightText}>
-            © 2026 Cazi. Tüm hakları saklıdır.
+            {t('aboutScreen.copyright.line1')}
           </Text>
           <Text variant="caption" color="textSecondary" style={styles.copyrightText}>
-            Made with ❤️ in Turkey
+            {t('aboutScreen.copyright.line2')}
           </Text>
         </View>
       </ScrollView>
@@ -293,7 +293,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
 });
-
 
 
 

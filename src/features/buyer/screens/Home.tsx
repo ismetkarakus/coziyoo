@@ -433,6 +433,13 @@ export const Home: React.FC = () => {
   const { addToCart } = useCart();
   const { sendLowStockNotification } = useNotifications();
 
+  const nearbyTerms = [
+    t('homeScreen.nearbyQuery'),
+    t('homeScreen.nearbyAlt1'),
+    t('homeScreen.nearbyAlt2'),
+    t('homeScreen.nearbyAlt3'),
+  ];
+
 
   // Load Firebase foods
   useEffect(() => {
@@ -520,6 +527,22 @@ export const Home: React.FC = () => {
     }, [])
   );
 
+  // Firebase bağlantısını reset et
+  const handleResetFirebase = async () => {
+    try {
+      console.log('🔄 Resetting Firebase connection...');
+      await FirebaseUtils.resetConnection();
+      
+      // Verileri yeniden yükle
+      await loadFirebaseFoods();
+      
+      Alert.alert(t('homeScreen.alerts.firebaseResetSuccessTitle'), t('homeScreen.alerts.firebaseResetSuccessMessage'));
+    } catch (error) {
+      console.error('❌ Reset failed:', error);
+      Alert.alert(t('homeScreen.alerts.firebaseResetErrorTitle'), t('homeScreen.alerts.firebaseResetErrorMessage'));
+    }
+  };
+
   const handleAddToCart = async (foodId: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => {
     // ID prefix'ini temizle ve orijinal ID'yi bul
     const originalId = foodId.replace(/^(firebase_|mock_|published_)/, '');
@@ -582,10 +605,10 @@ export const Home: React.FC = () => {
             ...prev,
             [originalId]: currentStock
           }));
-          Alert.alert('Hata', 'Stok güncellenirken bir hata oluştu.');
+          Alert.alert(t('homeScreen.alerts.stockUpdateErrorTitle'), t('homeScreen.alerts.stockUpdateErrorMessage'));
         }
       } else {
-        Alert.alert('Stok Yetersiz', `Yeterli stok yok! Sadece ${currentStock} adet kaldı.`);
+        Alert.alert(t('homeScreen.alerts.stockInsufficientTitle'), t('homeScreen.alerts.stockInsufficientMessage', { count: currentStock }));
       }
     }
   };
@@ -618,7 +641,7 @@ export const Home: React.FC = () => {
       setSearchResults(result.foods);
     } catch (error) {
       console.error('Search error:', error);
-      Alert.alert('Hata', 'Arama yapılırken bir hata oluştu.');
+      Alert.alert(t('homeScreen.alerts.searchErrorTitle'), t('homeScreen.alerts.searchErrorMessage'));
     } finally {
       setIsSearching(false);
     }
@@ -659,9 +682,9 @@ export const Home: React.FC = () => {
     ];
     const suggestions: string[] = [];
     
-    // Add "bana en yakın" suggestion if query matches
-    if ('bana en yakın'.includes(searchTerm) || 'yakın'.includes(searchTerm) || 'en yakın'.includes(searchTerm)) {
-      suggestions.push('bana en yakın');
+    // Add nearby suggestion if query matches
+    if (nearbyTerms.some(term => term.includes(searchTerm))) {
+      suggestions.push(t('homeScreen.nearbyAlt1'));
     }
     
     allFoods.forEach(food => {
@@ -683,7 +706,7 @@ export const Home: React.FC = () => {
     
     // Add country suggestions
     if ('türk'.includes(searchTerm) || 'türkiye'.includes(searchTerm)) {
-      suggestions.push('Türk yemeği');
+      suggestions.push(t('homeScreen.turkishFood'));
     }
     
     return suggestions.slice(0, 5); // Limit local suggestions
@@ -697,7 +720,7 @@ export const Home: React.FC = () => {
       // Request permission
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Konum İzni', 'Yakınındaki satıcıları görmek için konum izni gerekli.');
+        Alert.alert(t('homeScreen.alerts.locationPermissionTitle'), t('homeScreen.alerts.locationPermissionMessage'));
         return null;
       }
 
@@ -716,7 +739,7 @@ export const Home: React.FC = () => {
       
     } catch (error) {
       console.error('Error getting location:', error);
-      Alert.alert('Konum Hatası', 'Konum alınamadı. Lütfen tekrar deneyin.');
+      Alert.alert(t('homeScreen.alerts.locationErrorTitle'), t('homeScreen.alerts.locationErrorMessage'));
       return null;
     } finally {
       setLocationLoading(false);
@@ -799,8 +822,8 @@ export const Home: React.FC = () => {
     
     const searchTerm = query.toLowerCase().trim();
     
-    // Special case: "bana en yakın" search
-    if (searchTerm === 'bana en yakın' || searchTerm === 'yakın' || searchTerm === 'en yakın') {
+    // Special case: nearby search
+    if (nearbyTerms.includes(searchTerm)) {
       return sortFoodsByDistance([...foods]);
     }
     
@@ -934,7 +957,7 @@ export const Home: React.FC = () => {
             </Text>
           </View>
           <Text variant="caption" style={styles.logoSlogan}>
-            {currentCountry.code === 'TR' ? 'ev lezzetleri kapında' : 'home flavors at your door'}
+            {t('homeScreen.slogan')}
           </Text>
         </View>
         
@@ -967,7 +990,7 @@ export const Home: React.FC = () => {
               
               const userCoords = await getUserLocation();
               if (userCoords) {
-                setSearchQuery('yakınımda');
+                setSearchQuery(t('homeScreen.nearbyQuery'));
                 const allFoods = [
                   ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
                   ...MOCK_FOODS.map(food => ({ ...food, id: `mock_${food.id}` })),
@@ -1035,7 +1058,7 @@ export const Home: React.FC = () => {
           <View style={[styles.cookFilterContainer, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}>
             <FontAwesome name="user-circle" size={16} color={colors.primary} />
             <Text variant="body" style={{ color: colors.primary, flex: 1 }}>
-              {cookFilter}'ın yemekleri gösteriliyor
+              {t('homeScreen.cookFilter', { cook: cookFilter })}
             </Text>
             <TouchableOpacity
               onPress={() => {
@@ -1055,10 +1078,10 @@ export const Home: React.FC = () => {
           {loading ? (
             <View style={styles.loadingContainer}>
               <Text variant="body" color="textSecondary" style={styles.loadingText}>
-                ⚡ Hızlı yükleme modunda...
+                {t('homeScreen.loadingFast')}
               </Text>
               <Text variant="caption" color="textSecondary" style={{ marginTop: 8, textAlign: 'center' }}>
-                Mock veriler kullanılıyor
+                {t('homeScreen.loadingMock')}
               </Text>
             </View>
           ) : filteredFoods.length > 0 ? (
@@ -1080,13 +1103,13 @@ export const Home: React.FC = () => {
             <View style={styles.emptyContainer}>
               <Text variant="body" color="textSecondary" style={styles.emptyText}>
                 {searchQuery.trim() 
-                  ? `"${searchQuery}" için sonuç bulunamadı.` 
-                  : 'Bu kategoride henüz yemek bulunmuyor.'
+                  ? t('homeScreen.emptySearch', { query: searchQuery })
+                  : t('homeScreen.emptyCategory')
                 }
               </Text>
               {searchQuery.trim() && (
                 <Text variant="caption" color="textSecondary" style={styles.emptySubText}>
-                  Farklı anahtar kelimeler deneyin veya kategori seçimini değiştirin.
+                  {t('homeScreen.emptySub')}
                 </Text>
               )}
             </View>

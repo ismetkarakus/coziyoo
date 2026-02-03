@@ -5,11 +5,13 @@ import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const BuyerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { signUp, loading } = useAuth();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -48,7 +50,7 @@ export const BuyerRegister: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!formData.fullName || !formData.email || !formData.password || !formData.phone || !formData.location) {
-      Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
+      Alert.alert(t('authBuyerRegister.errorTitle'), t('authBuyerRegister.errorMessage'));
       return;
     }
 
@@ -56,7 +58,7 @@ export const BuyerRegister: React.FC = () => {
       await signUp(formData.email, formData.password, formData.fullName, 'buyer');
       // Kayıt başarılı - AuthContext otomatik olarak yönlendirecek
     } catch (error: any) {
-      Alert.alert('Kayıt Hatası', error.message);
+      Alert.alert(t('authBuyerRegister.registerErrorTitle'), error.message);
     }
   };
 
@@ -66,10 +68,10 @@ export const BuyerRegister: React.FC = () => {
         <View style={styles.content}>
           <View style={styles.header}>
             <Text variant="heading" center style={styles.title}>
-              Kayıt Ol
+              {t('authBuyerRegister.title')}
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.subtitle}>
-              Hesabını oluştur ve lezzetli yemekleri keşfet
+              {t('authBuyerRegister.subtitle')}
             </Text>
           </View>
 
@@ -81,47 +83,47 @@ export const BuyerRegister: React.FC = () => {
             />
 
             <FormField
-              label="Ad Soyad"
+              label={t('authBuyerRegister.fullNameLabel')}
               value={formData.fullName}
               onChangeText={handleInputChange('fullName')}
-              placeholder="Adınız ve soyadınız"
+              placeholder={t('authBuyerRegister.fullNamePlaceholder')}
               required
             />
 
             <FormField
-              label="Telefon"
+              label={t('authBuyerRegister.phoneLabel')}
               value={formData.phone}
               onChangeText={handleInputChange('phone')}
-              placeholder="05XX XXX XX XX"
+              placeholder={t('authBuyerRegister.phonePlaceholder')}
               keyboardType="phone-pad"
               required
             />
 
             <FormField
-              label="E-posta"
+              label={t('authBuyerRegister.emailLabel')}
               value={formData.email}
               onChangeText={handleInputChange('email')}
-              placeholder="ornek@email.com"
+              placeholder={t('authBuyerRegister.emailPlaceholder')}
               keyboardType="email-address"
               autoCapitalize="none"
               required
             />
 
             <FormField
-              label="Şifre"
+              label={t('authBuyerRegister.passwordLabel')}
               value={formData.password}
               onChangeText={handleInputChange('password')}
-              placeholder="En az 6 karakter"
+              placeholder={t('authBuyerRegister.passwordPlaceholder')}
               secureTextEntry
               required
             />
 
             <FormField
-              label="Konumunu Seç"
+              label={t('authBuyerRegister.locationLabel')}
               value={formData.location}
               onChangeText={handleInputChange('location')}
-              placeholder="İlçe, mahalle"
-              helperText="Konum bilgisi, sana en yakın ev yemeklerini göstermek için kullanılır."
+              placeholder={t('authBuyerRegister.locationPlaceholder')}
+              helperText={t('authBuyerRegister.locationHelper')}
               required
             />
 
@@ -132,7 +134,7 @@ export const BuyerRegister: React.FC = () => {
               loading={loading}
               style={styles.submitButton}
             >
-              Devam Et
+              {t('authBuyerRegister.submit')}
             </Button>
           </View>
         </View>
@@ -168,6 +170,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
+
 
 
 

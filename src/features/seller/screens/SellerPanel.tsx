@@ -11,71 +11,36 @@ import { useAuth } from '../../../context/AuthContext';
 import { useCountry } from '../../../context/CountryContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 
-const getMenuItemsForCountry = (countryCode: string) => {
-  if (countryCode === 'TR') {
-    return [
-      {
-        id: 'profile',
-        title: 'Satıcı Profili',
-        description: 'Profil bilgilerini düzenle',
-        icon: '👤',
-        route: '/(seller)/profile',
-      },
-      {
-        id: 'add-meal',
-        title: 'Yemek Ekle',
-        description: 'Yeni yemek menüye ekle',
-        icon: '🍽️',
-        route: '/(seller)/add-meal',
-      },
-      {
-        id: 'manage-meals',
-        title: 'Yemeklerimi Yönet',
-        description: 'Yemekleri düzenle, sil veya güncelle',
-        icon: '📝',
-        route: '/(seller)/manage-meals',
-      },
-      {
-        id: 'messages',
-        title: 'Mesajlar',
-        description: 'Müşterilerle mesajlaş',
-        icon: '💬',
-        route: '/(seller)/messages',
-      },
-    ];
-  } else {
-    return [
-      {
-        id: 'profile',
-        title: 'Seller Profile',
-        description: 'Edit profile information',
-        icon: '👤',
-        route: '/(seller)/profile',
-      },
-      {
-        id: 'add-meal',
-        title: 'Add Food',
-        description: 'Add new food to menu',
-        icon: '🍽️',
-        route: '/(seller)/add-meal',
-      },
-      {
-        id: 'manage-meals',
-        title: 'Manage Foods',
-        description: 'Edit, delete or update foods',
-        icon: '📝',
-        route: '/(seller)/manage-meals',
-      },
-      {
-        id: 'messages',
-        title: 'Messages',
-        description: 'Chat with customers',
-        icon: '💬',
-        route: '/(seller)/messages',
-      },
-    ];
-  }
-};
+const getMenuItems = (t: (key: string) => string) => ([
+  {
+    id: 'profile',
+    title: t('sellerPanel.menu.profile.title'),
+    description: t('sellerPanel.menu.profile.description'),
+    icon: '👤',
+    route: '/(seller)/profile',
+  },
+  {
+    id: 'add-meal',
+    title: t('sellerPanel.menu.addFood.title'),
+    description: t('sellerPanel.menu.addFood.description'),
+    icon: '🍽️',
+    route: '/(seller)/add-meal',
+  },
+  {
+    id: 'manage-meals',
+    title: t('sellerPanel.menu.manageFoods.title'),
+    description: t('sellerPanel.menu.manageFoods.description'),
+    icon: '📝',
+    route: '/(seller)/manage-meals',
+  },
+  {
+    id: 'messages',
+    title: t('sellerPanel.menu.messages.title'),
+    description: t('sellerPanel.menu.messages.description'),
+    icon: '💬',
+    route: '/(seller)/messages',
+  },
+]);
 
 // Default seller data
 const DEFAULT_SELLER_DATA = {
@@ -97,7 +62,7 @@ export const SellerPanel: React.FC = () => {
   const { t } = useTranslation();
   
   // Ülkeye göre menü öğeleri
-  const menuItems = getMenuItemsForCountry(currentCountry.code);
+  const menuItems = getMenuItems(t);
 
   // UK Compliance Status Check
   const isComplianceComplete = () => {
@@ -154,19 +119,19 @@ export const SellerPanel: React.FC = () => {
 
   const handleSignOut = () => {
     Alert.alert(
-      'Çıkış Yap',
-      'Hesabınızdan çıkmak istediğinizden emin misiniz?',
+      t('sellerPanel.alerts.signOutTitle'),
+      t('sellerPanel.alerts.signOutMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('profileScreen.alerts.signOutCancel'), style: 'cancel' },
         {
-          text: 'Çıkış Yap',
+          text: t('profileScreen.alerts.signOutConfirm'),
           style: 'destructive',
           onPress: async () => {
             try {
               await signOut();
             } catch (error) {
               console.error('Sign out error:', error);
-              Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
+              Alert.alert(t('error'), t('sellerPanel.alerts.signOutError'));
             }
           },
         },
@@ -177,7 +142,7 @@ export const SellerPanel: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title={currentCountry.code === 'TR' ? 'Satıcı Paneli' : 'Seller Dashboard'} 
+        title={t('seller.panel')} 
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -203,7 +168,7 @@ export const SellerPanel: React.FC = () => {
         >
           <View style={styles.statsContainer}>
             <Text variant="subheading" weight="semibold" style={styles.statsTitle}>
-              Bu Hafta
+              {t('sellerPanel.stats.week')}
             </Text>
           
           <View style={styles.statsGrid}>
@@ -213,7 +178,7 @@ export const SellerPanel: React.FC = () => {
                   12
                 </Text>
                 <Text variant="caption" center color="textSecondary">
-                  Sipariş
+                  {t('sellerPanel.stats.orders')}
                 </Text>
               </Card>
             </TouchableOpacity>
@@ -224,7 +189,7 @@ export const SellerPanel: React.FC = () => {
                   ₺425
                 </Text>
                 <Text variant="caption" center color="textSecondary">
-                  Cüzdan
+                  {t('sellerPanel.stats.wallet')}
                 </Text>
               </Card>
             </TouchableOpacity>
@@ -235,7 +200,7 @@ export const SellerPanel: React.FC = () => {
                   3
                 </Text>
                 <Text variant="caption" center color="textSecondary">
-                  Mesaj
+                  {t('sellerPanel.stats.messages')}
                 </Text>
               </Card>
             </TouchableOpacity>
@@ -245,7 +210,7 @@ export const SellerPanel: React.FC = () => {
                 4.8
               </Text>
               <Text variant="caption" center color="textSecondary">
-                Puan
+                {t('sellerPanel.stats.rating')}
               </Text>
             </Card>
           </View>
@@ -270,7 +235,7 @@ export const SellerPanel: React.FC = () => {
                 {profileData.email}
               </Text>
               <Text variant="caption" color="textSecondary">
-                Satıcı • {profileData.location}
+                {t('sellerPanel.user.role')} • {profileData.location}
               </Text>
             </View>
           </View>
@@ -287,8 +252,8 @@ export const SellerPanel: React.FC = () => {
                 <View style={styles.complianceHeader}>
                   <Text variant="subheading" weight="semibold" style={styles.complianceTitle}>
                     {currentCountry.code === 'TR' 
-                      ? '🇹🇷 Türkiye Gıda İşletmesi Uygunluğu' 
-                      : '🇬🇧 UK Food Business Compliance'
+                      ? t('sellerPanel.compliance.tr.title')
+                      : t('sellerPanel.compliance.uk.title')
                     }
                   </Text>
                 <View style={styles.complianceHeaderRight}>
@@ -302,8 +267,8 @@ export const SellerPanel: React.FC = () => {
                     }
                   ]}>
                     {currentCountry.code === 'TR' 
-                      ? (complianceComplete ? '✅ TAMAMLANDI' : '📋 OPSİYONEL')
-                      : (complianceComplete ? '✅ APPROVED' : '⏳ PENDING')
+                      ? (complianceComplete ? t('sellerPanel.compliance.tr.statusComplete') : t('sellerPanel.compliance.tr.statusOptional'))
+                      : (complianceComplete ? t('sellerPanel.compliance.uk.statusComplete') : t('sellerPanel.compliance.uk.statusOptional'))
                     }
                   </Text>
                   <Text variant="body" style={styles.expandIcon}>
@@ -332,18 +297,18 @@ export const SellerPanel: React.FC = () => {
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
                   {currentCountry.code === 'TR' 
-                    ? '✅ Gıda İşletme Belgesi' 
-                    : '✅ Council Registration'
+                    ? t('sellerPanel.compliance.tr.license')
+                    : t('sellerPanel.compliance.uk.license')
                   }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
+                  {t('sellerPanel.compliance.edit')}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
                 {currentCountry.code === 'TR' 
-                  ? 'Kadıköy Belediyesi • 34710'
-                  : 'Westminster City Council • SW1A 1AA'
+                  ? t('sellerPanel.compliance.tr.licenseSub')
+                  : t('sellerPanel.compliance.uk.licenseSub')
                 }
               </Text>
             </TouchableOpacity>
@@ -363,18 +328,18 @@ export const SellerPanel: React.FC = () => {
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
                   {currentCountry.code === 'TR' 
-                    ? '✅ Vergi Levhası' 
-                    : '✅ Food Hygiene Certificate'
+                    ? t('sellerPanel.compliance.tr.tax')
+                    : t('sellerPanel.compliance.uk.tax')
                   }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
+                  {t('sellerPanel.compliance.edit')}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
                 {currentCountry.code === 'TR' 
-                  ? 'Güncel • Geçerli Ara 2025'
-                  : 'Level 2 • Valid until Dec 2025'
+                  ? t('sellerPanel.compliance.tr.taxSub')
+                  : t('sellerPanel.compliance.uk.taxSub')
                 }
               </Text>
             </TouchableOpacity>
@@ -394,18 +359,18 @@ export const SellerPanel: React.FC = () => {
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
                   {currentCountry.code === 'TR' 
-                    ? '🏛️ Gıda Güvenliği Eğitimi' 
-                    : '🏛️ Hygiene Rating: 5/5'
+                    ? t('sellerPanel.compliance.tr.training')
+                    : t('sellerPanel.compliance.uk.training')
                   }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
+                  {t('sellerPanel.compliance.edit')}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
                 {currentCountry.code === 'TR' 
-                  ? 'Son eğitim: Kas 2024'
-                  : 'Last inspection: Nov 2024'
+                  ? t('sellerPanel.compliance.tr.trainingSub')
+                  : t('sellerPanel.compliance.uk.trainingSub')
                 }
               </Text>
             </TouchableOpacity>
@@ -425,18 +390,18 @@ export const SellerPanel: React.FC = () => {
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
                   {currentCountry.code === 'TR' 
-                    ? '✅ KVKK Uyumluluk' 
-                    : '⚠️ Allergen Declaration'
+                    ? t('sellerPanel.compliance.tr.kvkk')
+                    : t('sellerPanel.compliance.uk.kvkk')
                   }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
+                  {t('sellerPanel.compliance.edit')}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
                 {currentCountry.code === 'TR' 
-                  ? 'Tüm 14 temel alerjen kapsandı'
-                  : 'All 14 major allergens covered'
+                  ? t('sellerPanel.compliance.tr.kvkkSub')
+                  : t('sellerPanel.compliance.uk.kvkkSub')
                 }
               </Text>
             </TouchableOpacity>
@@ -456,18 +421,18 @@ export const SellerPanel: React.FC = () => {
               <View style={styles.complianceItemContent}>
                 <Text variant="body" style={styles.complianceLabel}>
                   {currentCountry.code === 'TR' 
-                    ? '🛡️ İş Yeri Sigortası' 
-                    : '🛡️ Public Liability Insurance'
+                    ? t('sellerPanel.compliance.tr.insurance')
+                    : t('sellerPanel.compliance.uk.insurance')
                   }
                 </Text>
                 <Text variant="caption" color="primary" style={styles.editLink}>
-                  {currentCountry.code === 'TR' ? 'Düzenle →' : 'Edit →'}
+                  {t('sellerPanel.compliance.edit')}
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
                 {currentCountry.code === 'TR' 
-                  ? '2M₺ teminat • Geçerli Oca 2026'
-                  : '£2M coverage • Valid until Jan 2026'
+                  ? t('sellerPanel.compliance.tr.insuranceSub')
+                  : t('sellerPanel.compliance.uk.insuranceSub')
                 }
               </Text>
             </TouchableOpacity>
@@ -481,8 +446,8 @@ export const SellerPanel: React.FC = () => {
                 >
                   <Text variant="body" color="primary" style={styles.complianceButtonText}>
                     {currentCountry.code === 'TR' 
-                      ? '📄 Şartlar ve Koşulları Görüntüle →' 
-                      : '📄 View Terms & Conditions →'
+                      ? t('sellerPanel.compliance.tr.terms')
+                      : t('sellerPanel.compliance.uk.terms')
                     }
                   </Text>
                 </TouchableOpacity>
@@ -513,12 +478,12 @@ export const SellerPanel: React.FC = () => {
                 } else {
                   Alert.alert(
                     currentCountry.code === 'TR' 
-                      ? 'Gıda İşletmesi Uygunluğu Gerekli'
-                      : 'UK Compliance Gerekli',
+                      ? t('sellerPanel.alerts.complianceTitleTr')
+                      : t('sellerPanel.alerts.complianceTitleUk'),
                     currentCountry.code === 'TR'
-                      ? 'Satıcı özelliklerini kullanabilmek için önce Türkiye Gıda İşletmesi Uygunluğu bölümünü tamamlamanız gerekiyor.'
-                      : 'Satıcı özelliklerini kullanabilmek için önce UK Food Business Compliance bölümünü tamamlamanız gerekiyor.',
-                    [{ text: 'Tamam' }]
+                      ? t('sellerPanel.alerts.complianceMessageTr')
+                      : t('sellerPanel.alerts.complianceMessageUk'),
+                    [{ text: t('sellerPanel.alerts.ok') }]
                   );
                 }
               }}
@@ -558,7 +523,7 @@ export const SellerPanel: React.FC = () => {
                   >
                     {(!isBusinessComplianceRequired || complianceComplete)
                       ? item.description 
-                      : (currentCountry.code === 'TR' ? 'Gıda Uygunluğu gerekli' : 'UK Compliance gerekli')
+                      : t('sellerPanel.menu.complianceLocked')
                     }
                   </Text>
                 </View>
@@ -589,7 +554,7 @@ export const SellerPanel: React.FC = () => {
               activeOpacity={0.7}
             >
               <Text variant="body" weight="semibold" style={{ color: 'white' }}>
-                🚪 Çıkış Yap
+                {t('sellerPanel.signOutButton')}
               </Text>
             </TouchableOpacity>
           </View>

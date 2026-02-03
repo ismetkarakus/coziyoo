@@ -7,11 +7,13 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
 import { chatService, Chat } from '../../../services/chatService';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const ChatList: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
+  const { t } = useTranslation();
   
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ export const ChatList: React.FC = () => {
       setChats(userChats);
     } catch (error) {
       console.error('Error loading chats:', error);
-      Alert.alert('Hata', 'Sohbetler yüklenirken bir hata oluştu.');
+      Alert.alert(t('chatListScreen.loadErrorTitle'), t('chatListScreen.loadErrorMessage'));
     } finally {
       setLoading(false);
     }
@@ -79,10 +81,10 @@ export const ChatList: React.FC = () => {
         💬
       </Text>
       <Text variant="subheading" style={{ color: colors.text, marginTop: Spacing.md }}>
-        Henüz sohbet yok
+        {t('chatListScreen.emptyTitle')}
       </Text>
       <Text variant="body" style={{ color: colors.textSecondary, textAlign: 'center', marginTop: Spacing.sm }}>
-        Satıcılarla iletişim kurmak için sipariş verin veya mesaj gönderin
+        {t('chatListScreen.emptyDesc')}
       </Text>
     </View>
   );
@@ -90,10 +92,10 @@ export const ChatList: React.FC = () => {
   if (!user) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <TopBar title="Sohbetler" />
+        <TopBar title={t('chatListScreen.title')} />
         <View style={styles.emptyContainer}>
           <Text variant="body" color="textSecondary">
-            Sohbetleri görüntülemek için giriş yapın
+            {t('chatListScreen.loginRequired')}
           </Text>
         </View>
       </View>
@@ -102,7 +104,7 @@ export const ChatList: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Sohbetler" />
+      <TopBar title={t('chatListScreen.title')} />
       
       <FlatList
         data={chats}
@@ -137,7 +139,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
 
 
 

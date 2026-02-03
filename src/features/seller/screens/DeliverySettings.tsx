@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Button, Card } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -34,16 +35,41 @@ const DEFAULT_SETTINGS: DeliverySettingsData = {
     start: '09:00',
     end: '22:00',
   },
-  workingDays: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
+  workingDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
 };
 
-const DAYS_OF_WEEK = [
-  'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'
-];
+type DayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+
+const DAYS_OF_WEEK: DayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+const DAY_ALIASES: Record<string, DayKey> = {
+  Pazartesi: 'mon',
+  Salı: 'tue',
+  Çarşamba: 'wed',
+  Perşembe: 'thu',
+  Cuma: 'fri',
+  Cumartesi: 'sat',
+  Pazar: 'sun',
+  Monday: 'mon',
+  Tuesday: 'tue',
+  Wednesday: 'wed',
+  Thursday: 'thu',
+  Friday: 'fri',
+  Saturday: 'sat',
+  Sunday: 'sun',
+  Mon: 'mon',
+  Tue: 'tue',
+  Wed: 'wed',
+  Thu: 'thu',
+  Fri: 'fri',
+  Sat: 'sat',
+  Sun: 'sun',
+};
 
 export const DeliverySettings: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<DeliverySettingsData>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,7 +82,12 @@ export const DeliverySettings: React.FC = () => {
       const savedSettings = await AsyncStorage.getItem('deliverySettings');
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings);
-        setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
+        const normalizedDays = Array.isArray(parsedSettings.workingDays)
+          ? parsedSettings.workingDays
+              .map((day: string) => DAY_ALIASES[day] || day)
+              .filter((day: string) => DAYS_OF_WEEK.includes(day as DayKey))
+          : DEFAULT_SETTINGS.workingDays;
+        setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings, workingDays: normalizedDays });
       }
     } catch (error) {
       console.error('Error loading delivery settings:', error);
@@ -68,16 +99,16 @@ export const DeliverySettings: React.FC = () => {
       setIsLoading(true);
       await AsyncStorage.setItem('deliverySettings', JSON.stringify(settings));
       Alert.alert(
-        'Başarılı',
-        'Teslimat ayarlarınız kaydedildi.',
-        [{ text: 'Tamam' }]
+        t('deliverySettingsScreen.alerts.successTitle'),
+        t('deliverySettingsScreen.alerts.successMessage'),
+        [{ text: t('deliverySettingsScreen.alerts.ok') }]
       );
     } catch (error) {
       console.error('Error saving delivery settings:', error);
       Alert.alert(
-        'Hata',
-        'Ayarlar kaydedilirken bir hata oluştu.',
-        [{ text: 'Tamam' }]
+        t('deliverySettingsScreen.alerts.errorTitle'),
+        t('deliverySettingsScreen.alerts.errorMessage'),
+        [{ text: t('deliverySettingsScreen.alerts.ok') }]
       );
     } finally {
       setIsLoading(false);
@@ -97,7 +128,7 @@ export const DeliverySettings: React.FC = () => {
     }
   };
 
-  const toggleWorkingDay = (day: string) => {
+  const toggleWorkingDay = (day: DayKey) => {
     setSettings(prev => ({
       ...prev,
       workingDays: prev.workingDays.includes(day)
@@ -113,7 +144,7 @@ export const DeliverySettings: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Teslimat Ayarları"
+        title={t('deliverySettingsScreen.title')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -133,7 +164,7 @@ export const DeliverySettings: React.FC = () => {
         {/* Teslimat Seçenekleri */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Teslimat Seçenekleri
+            {t('deliverySettingsScreen.sections.options')}
           </Text>
           
           <View style={styles.optionsContainer}>
@@ -154,7 +185,7 @@ export const DeliverySettings: React.FC = () => {
                   color: settings.hasPickup ? 'white' : colors.text,
                 }}
               >
-                🏪 Gel Al (Pickup)
+                {t('deliverySettingsScreen.options.pickup')}
               </Text>
             </TouchableOpacity>
 
@@ -175,7 +206,7 @@ export const DeliverySettings: React.FC = () => {
                   color: settings.hasDelivery ? 'white' : colors.text,
                 }}
               >
-                🚗 Teslimat (Delivery)
+                {t('deliverySettingsScreen.options.delivery')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -185,39 +216,39 @@ export const DeliverySettings: React.FC = () => {
         {settings.hasDelivery && (
           <Card variant="default" padding="md" style={styles.sectionCard}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Teslimat Detayları
+              {t('deliverySettingsScreen.sections.details')}
             </Text>
             
             <View style={styles.formContainer}>
               <FormField
-                label="Maksimum Teslimat Mesafesi (km)"
+                label={t('deliverySettingsScreen.fields.maxDistance')}
                 value={settings.maxDeliveryDistance.toString()}
                 onChangeText={(text) => updateSetting('maxDeliveryDistance', parseInt(text) || 0)}
-                placeholder="5"
+                placeholder={t('deliverySettingsScreen.placeholders.maxDistance')}
                 keyboardType="numeric"
               />
               
               <FormField
-                label="Teslimat Ücreti (₺)"
+                label={t('deliverySettingsScreen.fields.deliveryFee')}
                 value={settings.deliveryFee.toString()}
                 onChangeText={(text) => updateSetting('deliveryFee', parseFloat(text) || 0)}
-                placeholder="10"
+                placeholder={t('deliverySettingsScreen.placeholders.deliveryFee')}
                 keyboardType="numeric"
               />
               
               <FormField
-                label="Ücretsiz Teslimat Minimum Tutarı (₺)"
+                label={t('deliverySettingsScreen.fields.freeThreshold')}
                 value={settings.freeDeliveryThreshold.toString()}
                 onChangeText={(text) => updateSetting('freeDeliveryThreshold', parseFloat(text) || 0)}
-                placeholder="100"
+                placeholder={t('deliverySettingsScreen.placeholders.freeThreshold')}
                 keyboardType="numeric"
               />
               
               <FormField
-                label="Tahmini Teslimat Süresi (dakika)"
+                label={t('deliverySettingsScreen.fields.estimatedTime')}
                 value={settings.estimatedDeliveryTime.toString()}
                 onChangeText={(text) => updateSetting('estimatedDeliveryTime', parseInt(text) || 0)}
-                placeholder="30"
+                placeholder={t('deliverySettingsScreen.placeholders.estimatedTime')}
                 keyboardType="numeric"
               />
             </View>
@@ -227,24 +258,24 @@ export const DeliverySettings: React.FC = () => {
         {/* Çalışma Saatleri */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Çalışma Saatleri
+            {t('deliverySettingsScreen.sections.hours')}
           </Text>
           
           <View style={styles.timeContainer}>
             <View style={styles.timeField}>
               <FormField
-                label="Başlangıç Saati"
+                label={t('deliverySettingsScreen.fields.startTime')}
                 value={settings.workingHours.start}
                 onChangeText={(text) => updateSetting('workingHours', { ...settings.workingHours, start: text })}
-                placeholder="09:00"
+                placeholder={t('deliverySettingsScreen.placeholders.startTime')}
               />
             </View>
             <View style={styles.timeField}>
               <FormField
-                label="Bitiş Saati"
+                label={t('deliverySettingsScreen.fields.endTime')}
                 value={settings.workingHours.end}
                 onChangeText={(text) => updateSetting('workingHours', { ...settings.workingHours, end: text })}
-                placeholder="22:00"
+                placeholder={t('deliverySettingsScreen.placeholders.endTime')}
               />
             </View>
           </View>
@@ -253,7 +284,7 @@ export const DeliverySettings: React.FC = () => {
         {/* Çalışma Günleri */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Çalışma Günleri
+            {t('deliverySettingsScreen.sections.days')}
           </Text>
           
           <View style={styles.daysContainer}>
@@ -276,7 +307,7 @@ export const DeliverySettings: React.FC = () => {
                     color: settings.workingDays.includes(day) ? 'white' : colors.text,
                   }}
                 >
-                  {day.substring(0, 3)}
+                  {t(`deliverySettingsScreen.daysShort.${day}`)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -291,7 +322,7 @@ export const DeliverySettings: React.FC = () => {
             disabled={isLoading}
             style={styles.saveButton}
           >
-            {isLoading ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
+            {isLoading ? t('deliverySettingsScreen.saving') : t('deliverySettingsScreen.save')}
           </Button>
         </View>
 
@@ -368,7 +399,6 @@ const styles = StyleSheet.create({
     height: Spacing.xl,
   },
 });
-
 
 
 

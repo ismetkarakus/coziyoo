@@ -7,6 +7,7 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useNotifications } from '../../../context/NotificationContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface NotificationPreferences {
   orderUpdates: boolean;
@@ -30,6 +31,7 @@ export const NotificationSettings: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { isInitialized, expoPushToken, fcmToken } = useNotifications();
+  const { t } = useTranslation();
   
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
   const [loading, setLoading] = useState(true);
@@ -57,7 +59,10 @@ export const NotificationSettings: React.FC = () => {
       setPreferences(newPreferences);
     } catch (error) {
       console.error('Error saving notification preferences:', error);
-      Alert.alert('Hata', 'Ayarlar kaydedilirken bir hata oluştu.');
+      Alert.alert(
+        t('notificationSettingsScreen.alerts.saveErrorTitle'),
+        t('notificationSettingsScreen.alerts.saveErrorMessage')
+      );
     }
   };
 
@@ -68,14 +73,17 @@ export const NotificationSettings: React.FC = () => {
 
   const handleTestNotification = async () => {
     if (!isInitialized) {
-      Alert.alert('Bildirim Servisi', 'Bildirim servisi henüz hazır değil.');
+      Alert.alert(
+        t('notificationSettingsScreen.alerts.serviceTitle'),
+        t('notificationSettingsScreen.alerts.serviceNotReady')
+      );
       return;
     }
 
     Alert.alert(
-      'Test Bildirimi',
-      'Test bildirimi gönderildi! Birkaç saniye içinde görmelisiniz.',
-      [{ text: 'Tamam' }]
+      t('notificationSettingsScreen.test.alertTitle'),
+      t('notificationSettingsScreen.test.alertMessage'),
+      [{ text: t('notificationSettingsScreen.alerts.ok') }]
     );
 
     // Send a test notification
@@ -85,15 +93,18 @@ export const NotificationSettings: React.FC = () => {
 
   const copyToken = (token: string | null, type: string) => {
     if (!token) {
-      Alert.alert('Token Yok', `${type} token henüz oluşturulmadı.`);
+      Alert.alert(
+        t('notificationSettingsScreen.alerts.tokenMissingTitle'),
+        t('notificationSettingsScreen.alerts.tokenMissingMessage', { type })
+      );
       return;
     }
     
     // In a real app, you would copy to clipboard
     Alert.alert(
-      `${type} Token`,
-      `Token: ${token.substring(0, 50)}...`,
-      [{ text: 'Tamam' }]
+      t('notificationSettingsScreen.alerts.tokenTitle', { type }),
+      t('notificationSettingsScreen.alerts.tokenValue', { value: token.substring(0, 50) }),
+      [{ text: t('notificationSettingsScreen.alerts.ok') }]
     );
   };
 
@@ -101,11 +112,13 @@ export const NotificationSettings: React.FC = () => {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <TopBar 
-          title="Bildirim Ayarları"
+          title={t('notificationSettingsScreen.title')}
           onBack={() => router.back()}
         />
         <View style={styles.loadingContainer}>
-          <Text variant="body" color="textSecondary">Yükleniyor...</Text>
+          <Text variant="body" color="textSecondary">
+            {t('notificationSettingsScreen.loading')}
+          </Text>
         </View>
       </View>
     );
@@ -114,7 +127,7 @@ export const NotificationSettings: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Bildirim Ayarları"
+        title={t('notificationSettingsScreen.title')}
         onBack={() => router.back()}
       />
 
@@ -122,14 +135,16 @@ export const NotificationSettings: React.FC = () => {
         {/* Notification Types */}
         <Card style={styles.section}>
           <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-            Bildirim Türleri
+            {t('notificationSettingsScreen.sections.types')}
           </Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text variant="body" weight="medium">Sipariş Güncellemeleri</Text>
+              <Text variant="body" weight="medium">
+                {t('notificationSettingsScreen.types.orderUpdates')}
+              </Text>
               <Text variant="caption" color="textSecondary">
-                Sipariş durumu değişikliklerinde bildirim al
+                {t('notificationSettingsScreen.types.orderUpdatesDesc')}
               </Text>
             </View>
             <Switch
@@ -142,9 +157,11 @@ export const NotificationSettings: React.FC = () => {
 
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text variant="body" weight="medium">Yeni Mesajlar</Text>
+              <Text variant="body" weight="medium">
+                {t('notificationSettingsScreen.types.newMessages')}
+              </Text>
               <Text variant="caption" color="textSecondary">
-                Satıcılardan gelen mesajlarda bildirim al
+                {t('notificationSettingsScreen.types.newMessagesDesc')}
               </Text>
             </View>
             <Switch
@@ -157,9 +174,11 @@ export const NotificationSettings: React.FC = () => {
 
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text variant="body" weight="medium">Düşük Stok Uyarıları</Text>
+              <Text variant="body" weight="medium">
+                {t('notificationSettingsScreen.types.lowStock')}
+              </Text>
               <Text variant="caption" color="textSecondary">
-                Favori yemeklerin stoku azaldığında bildirim al
+                {t('notificationSettingsScreen.types.lowStockDesc')}
               </Text>
             </View>
             <Switch
@@ -172,9 +191,11 @@ export const NotificationSettings: React.FC = () => {
 
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text variant="body" weight="medium">Promosyonlar</Text>
+              <Text variant="body" weight="medium">
+                {t('notificationSettingsScreen.types.promotions')}
+              </Text>
               <Text variant="caption" color="textSecondary">
-                İndirimler ve özel teklifler hakkında bildirim al
+                {t('notificationSettingsScreen.types.promotionsDesc')}
               </Text>
             </View>
             <Switch
@@ -189,14 +210,16 @@ export const NotificationSettings: React.FC = () => {
         {/* Notification Behavior */}
         <Card style={styles.section}>
           <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-            Bildirim Davranışı
+            {t('notificationSettingsScreen.sections.behavior')}
           </Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text variant="body" weight="medium">Ses</Text>
+              <Text variant="body" weight="medium">
+                {t('notificationSettingsScreen.behavior.sound')}
+              </Text>
               <Text variant="caption" color="textSecondary">
-                Bildirimler geldiğinde ses çal
+                {t('notificationSettingsScreen.behavior.soundDesc')}
               </Text>
             </View>
             <Switch
@@ -209,9 +232,11 @@ export const NotificationSettings: React.FC = () => {
 
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text variant="body" weight="medium">Titreşim</Text>
+              <Text variant="body" weight="medium">
+                {t('notificationSettingsScreen.behavior.vibration')}
+              </Text>
               <Text variant="caption" color="textSecondary">
-                Bildirimler geldiğinde telefonu titret
+                {t('notificationSettingsScreen.behavior.vibrationDesc')}
               </Text>
             </View>
             <Switch
@@ -226,42 +251,44 @@ export const NotificationSettings: React.FC = () => {
         {/* System Status */}
         <Card style={styles.section}>
           <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-            Sistem Durumu
+            {t('notificationSettingsScreen.sections.system')}
           </Text>
           
           <View style={styles.statusItem}>
-            <Text variant="body" weight="medium">Bildirim Servisi</Text>
+            <Text variant="body" weight="medium">
+              {t('notificationSettingsScreen.system.service')}
+            </Text>
             <Text 
               variant="caption" 
               color={isInitialized ? "success" : "error"}
               weight="medium"
             >
-              {isInitialized ? 'Aktif' : 'Pasif'}
+              {isInitialized ? t('notificationSettingsScreen.system.active') : t('notificationSettingsScreen.system.inactive')}
             </Text>
           </View>
 
           {expoPushToken && (
             <View style={styles.statusItem}>
-              <Text variant="body" weight="medium">Expo Push Token</Text>
+              <Text variant="body" weight="medium">{t('notificationSettingsScreen.system.expoToken')}</Text>
               <Button
                 variant="outline"
                 size="small"
                 onPress={() => copyToken(expoPushToken, 'Expo')}
               >
-                Token Göster
+                {t('notificationSettingsScreen.system.showToken')}
               </Button>
             </View>
           )}
 
           {fcmToken && (
             <View style={styles.statusItem}>
-              <Text variant="body" weight="medium">FCM Token</Text>
+              <Text variant="body" weight="medium">{t('notificationSettingsScreen.system.fcmToken')}</Text>
               <Button
                 variant="outline"
                 size="small"
                 onPress={() => copyToken(fcmToken, 'FCM')}
               >
-                Token Göster
+                {t('notificationSettingsScreen.system.showToken')}
               </Button>
             </View>
           )}
@@ -270,19 +297,19 @@ export const NotificationSettings: React.FC = () => {
         {/* Test Notification */}
         <Card style={styles.section}>
           <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-            Test
+            {t('notificationSettingsScreen.sections.test')}
           </Text>
           
           <Text variant="body" color="textSecondary" style={styles.testDescription}>
-            Bildirim ayarlarınızın çalışıp çalışmadığını test edin.
+            {t('notificationSettingsScreen.test.description')}
           </Text>
           
           <Button
             variant="outline"
             onPress={handleTestNotification}
             disabled={!isInitialized}
-          >
-            Test Bildirimi Gönder
+        >
+            {t('notificationSettingsScreen.test.send')}
           </Button>
         </Card>
       </ScrollView>

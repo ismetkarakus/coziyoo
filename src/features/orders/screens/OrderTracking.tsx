@@ -1,61 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Text, Button, Card } from '../../../components/ui';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Card, Text, Button } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-
-// Mock tracking data
-const TRACKING_STEPS = [
-  {
-    id: 1,
-    title: 'Sipariş Alındı',
-    description: 'Siparişiniz başarıyla alındı ve onaylandı',
-    time: '14:30',
-    completed: true,
-    active: false,
-  },
-  {
-    id: 2,
-    title: 'Hazırlanıyor',
-    description: 'Yemeğiniz aşçı tarafından hazırlanıyor',
-    time: '14:45',
-    completed: true,
-    active: true,
-  },
-  {
-    id: 3,
-    title: 'Hazır',
-    description: 'Yemeğiniz hazır, teslim alınabilir',
-    time: '15:15',
-    completed: false,
-    active: false,
-  },
-  {
-    id: 4,
-    title: 'Teslim Edildi',
-    description: 'Siparişiniz başarıyla teslim edildi',
-    time: '',
-    completed: false,
-    active: false,
-  },
-];
 
 export const OrderTracking: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
-  const [estimatedTime, setEstimatedTime] = useState('25 dk');
+  const [estimatedTime, setEstimatedTime] = useState(t('orderTrackingScreen.estimatedDefault'));
+
+  const orderNumberParam = Array.isArray(params.orderNumber)
+    ? params.orderNumber[0]
+    : params.orderNumber;
+  const cookNameParam = Array.isArray(params.cookName)
+    ? params.cookName[0]
+    : params.cookName;
+
+  // Mock tracking data
+  const trackingSteps = [
+    {
+      id: 1,
+      title: t('orderTrackingScreen.steps.received.title'),
+      description: t('orderTrackingScreen.steps.received.desc'),
+      time: t('orderTrackingScreen.steps.received.time'),
+      completed: true,
+      active: false,
+    },
+    {
+      id: 2,
+      title: t('orderTrackingScreen.steps.preparing.title'),
+      description: t('orderTrackingScreen.steps.preparing.desc'),
+      time: t('orderTrackingScreen.steps.preparing.time'),
+      completed: true,
+      active: true,
+    },
+    {
+      id: 3,
+      title: t('orderTrackingScreen.steps.ready.title'),
+      description: t('orderTrackingScreen.steps.ready.desc'),
+      time: t('orderTrackingScreen.steps.ready.time'),
+      completed: false,
+      active: false,
+    },
+    {
+      id: 4,
+      title: t('orderTrackingScreen.steps.delivered.title'),
+      description: t('orderTrackingScreen.steps.delivered.desc'),
+      time: t('orderTrackingScreen.steps.delivered.time'),
+      completed: false,
+      active: false,
+    },
+  ];
 
   // Mock order data
   const orderData = {
-    orderNumber: params.orderNumber || '#ORD-2024-001',
-    cookName: params.cookName || 'Ayşe Hanım',
+    orderNumber: orderNumberParam || t('orderTrackingScreen.fallbackOrderNumber'),
+    cookName: cookNameParam || t('orderTrackingScreen.fallbackCookName'),
     items: [
-      { name: 'Ev Yapımı Mantı', quantity: 2, price: 35 },
-      { name: 'Mercimek Çorbası', quantity: 1, price: 15 },
+      { name: t('orderTrackingScreen.mockItems.manti'), quantity: 2, price: 35 },
+      { name: t('orderTrackingScreen.mockItems.lentilSoup'), quantity: 1, price: 15 },
     ],
     total: 85,
     deliveryType: 'pickup',
@@ -65,7 +74,7 @@ export const OrderTracking: React.FC = () => {
     // Simulate real-time updates
     const interval = setInterval(() => {
       const minutes = Math.max(0, parseInt(estimatedTime) - 1);
-      setEstimatedTime(`${minutes} dk`);
+      setEstimatedTime(t('orderTrackingScreen.estimatedMinutes', { minutes }));
     }, 60000); // Update every minute
 
     return () => clearInterval(interval);
@@ -97,7 +106,7 @@ export const OrderTracking: React.FC = () => {
         <View style={[styles.stepIcon, { backgroundColor: getStepColor(step) }]}>
           <Text style={styles.stepIconText}>{getStepIcon(step)}</Text>
         </View>
-        {index < TRACKING_STEPS.length - 1 && (
+        {index < trackingSteps.length - 1 && (
           <View style={[styles.stepLine, { 
             backgroundColor: step.completed ? getStepColor(step) : colors.border 
           }]} />
@@ -129,7 +138,7 @@ export const OrderTracking: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Sipariş Takip" 
+        title={t('orderTrackingScreen.title')} 
         leftComponent={
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <FontAwesome name="arrow-left" size={20} color={colors.text} />
@@ -159,7 +168,7 @@ export const OrderTracking: React.FC = () => {
           
           <View style={styles.orderTotal}>
             <Text variant="body" weight="semibold">
-              Toplam: ₺{orderData.total.toFixed(2)}
+              {t('orderTrackingScreen.total')} ₺{orderData.total.toFixed(2)}
             </Text>
           </View>
         </Card>
@@ -170,10 +179,10 @@ export const OrderTracking: React.FC = () => {
             <Text style={styles.timeIcon}>⏰</Text>
             <View style={styles.timeText}>
               <Text variant="subheading" weight="semibold">
-                Tahmini Süre
+                {t('orderTrackingScreen.estimatedTitle')}
               </Text>
               <Text variant="body" color="primary" weight="bold">
-                {estimatedTime} kaldı
+                {t('orderTrackingScreen.estimatedSuffix', { time: estimatedTime })}
               </Text>
             </View>
           </View>
@@ -182,26 +191,26 @@ export const OrderTracking: React.FC = () => {
         {/* Tracking Steps */}
         <Card variant="default" padding="md" style={styles.trackingCard}>
           <Text variant="subheading" weight="semibold" style={styles.trackingTitle}>
-            Sipariş Durumu
+            {t('orderTrackingScreen.statusTitle')}
           </Text>
           
           <View style={styles.trackingSteps}>
-            {TRACKING_STEPS.map((step, index) => renderTrackingStep(step, index))}
+            {trackingSteps.map((step, index) => renderTrackingStep(step, index))}
           </View>
         </Card>
 
         {/* Contact Info */}
         <Card variant="default" padding="md" style={styles.contactCard}>
           <Text variant="subheading" weight="semibold" style={styles.contactTitle}>
-            İletişim
+            {t('orderTrackingScreen.contactTitle')}
           </Text>
           
           <View style={styles.contactButtons}>
             <Button variant="outline" style={styles.contactButton}>
-              📞 Aşçıyı Ara
+              {t('orderTrackingScreen.callCook')}
             </Button>
             <Button variant="outline" style={styles.contactButton}>
-              💬 Mesaj Gönder
+              {t('orderTrackingScreen.sendMessage')}
             </Button>
           </View>
         </Card>

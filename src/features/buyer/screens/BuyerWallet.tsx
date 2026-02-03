@@ -6,10 +6,12 @@ import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const BuyerWallet: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [balance, setBalance] = useState(75.50); // Mock balance
 
   const formatCurrency = (amount: number) => `₺${amount.toFixed(2)}`;
@@ -20,37 +22,39 @@ export const BuyerWallet: React.FC = () => {
 
   const handleAddMoney = () => {
     Alert.alert(
-      'Para Yükle',
-      'Cüzdanınıza para yüklemek için ödeme yöntemi seçin:',
+      t('buyerWalletScreen.addMoneySheet.title'),
+      t('buyerWalletScreen.addMoneySheet.message'),
       [
-        { text: 'İptal', style: 'cancel' },
-        { text: '💳 Kredi Kartı', onPress: () => showAddMoneyForm('card') },
-        { text: '🏦 Banka Transferi', onPress: () => showAddMoneyForm('bank') },
+        { text: t('buyerWalletScreen.addMoneySheet.cancel'), style: 'cancel' },
+        { text: t('buyerWalletScreen.addMoneySheet.card'), onPress: () => showAddMoneyForm('card') },
+        { text: t('buyerWalletScreen.addMoneySheet.bank'), onPress: () => showAddMoneyForm('bank') },
       ]
     );
   };
 
   const showAddMoneyForm = (method: string) => {
     Alert.prompt(
-      'Para Yükle',
-      `${method === 'card' ? 'Kredi kartı ile' : 'Banka transferi ile'} ne kadar para yüklemek istiyorsunuz?`,
+      t('buyerWalletScreen.addMoneySheet.promptTitle'),
+      method === 'card'
+        ? t('buyerWalletScreen.addMoneySheet.promptMessageCard')
+        : t('buyerWalletScreen.addMoneySheet.promptMessageBank'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('buyerWalletScreen.addMoneySheet.cancel'), style: 'cancel' },
         {
-          text: 'Yükle',
+          text: t('buyerWalletScreen.addMoneySheet.load'),
           onPress: (amount) => {
             if (!amount) return;
             
             const addAmount = parseFloat(amount);
             if (isNaN(addAmount) || addAmount <= 0) {
-              Alert.alert('Hata', 'Geçerli bir tutar girin');
+              Alert.alert(t('buyerWalletScreen.amountErrorTitle'), t('buyerWalletScreen.amountErrorMessage'));
               return;
             }
             
             setBalance(prev => prev + addAmount);
             Alert.alert(
-              'Para Yüklendi',
-              `${formatCurrency(addAmount)} cüzdanınıza eklendi.\nYeni bakiye: ${formatCurrency(balance + addAmount)}`
+              t('buyerWalletScreen.addSuccessTitle'),
+              t('buyerWalletScreen.addSuccessMessage', { amount: formatCurrency(addAmount), balance: formatCurrency(balance + addAmount) })
             );
           },
         },
@@ -63,10 +67,10 @@ export const BuyerWallet: React.FC = () => {
 
   const showTransactionHistory = () => {
     const mockTransactions = [
-      { id: 1, description: 'Ev Yapımı Mantı', amount: -25.00, date: 'Bugün 14:30', type: 'spending' },
-      { id: 2, description: 'Para Yükleme', amount: +50.00, date: 'Dün 16:45', type: 'deposit' },
-      { id: 3, description: 'Karnıyarık', amount: -18.00, date: '2 gün önce', type: 'spending' },
-      { id: 4, description: 'Para Yükleme', amount: +100.00, date: '1 hafta önce', type: 'deposit' },
+      { id: 1, description: t('buyerWalletScreen.transactions.foodManti'), amount: -25.00, date: t('buyerWalletScreen.transactions.today'), type: 'spending' },
+      { id: 2, description: t('buyerWalletScreen.transactions.deposit'), amount: +50.00, date: t('buyerWalletScreen.transactions.yesterday'), type: 'deposit' },
+      { id: 3, description: t('buyerWalletScreen.transactions.foodKarniyarik'), amount: -18.00, date: t('buyerWalletScreen.transactions.twoDays'), type: 'spending' },
+      { id: 4, description: t('buyerWalletScreen.transactions.deposit'), amount: +100.00, date: t('buyerWalletScreen.transactions.weekAgo'), type: 'deposit' },
     ];
 
     const transactionList = mockTransactions
@@ -74,16 +78,16 @@ export const BuyerWallet: React.FC = () => {
       .join('\n\n');
 
     Alert.alert(
-      'İşlem Geçmişi',
-      `Son işlemleriniz:\n\n${transactionList}`,
-      [{ text: 'Tamam' }]
+      t('buyerWalletScreen.historyTitle'),
+      t('buyerWalletScreen.historyMessage', { list: transactionList }),
+      [{ text: t('buyerWalletScreen.ok') }]
     );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Cüzdanım" 
+        title={t('buyerWalletScreen.title')} 
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -100,7 +104,7 @@ export const BuyerWallet: React.FC = () => {
         <Card variant="default" padding="lg" style={styles.balanceCard}>
           <View style={styles.balanceHeader}>
             <Text variant="body" weight="medium" style={styles.balanceTitle}>
-              Mevcut Bakiye
+              {t('buyerWalletScreen.balanceTitle')}
             </Text>
             <Text variant="heading" weight="bold" color="primary" style={styles.balanceAmount}>
               {formatCurrency(balance)}
@@ -108,20 +112,20 @@ export const BuyerWallet: React.FC = () => {
           </View>
           
           <Text variant="caption" color="textSecondary" style={styles.balanceNote}>
-            💡 Bu bakiye ile sipariş verebilir ve ödeme yapabilirsiniz
+            {t('buyerWalletScreen.balanceNote')}
           </Text>
         </Card>
 
         {/* Quick Actions */}
         <View style={styles.actionsContainer}>
           <Button
-            title="💳 Para Yükle"
+            title={t('buyerWalletScreen.addMoney')}
             onPress={handleAddMoney}
             style={[styles.actionButton, { backgroundColor: colors.primary }]}
           />
           
           <Button
-            title="📋 İşlem Geçmişi"
+            title={t('buyerWalletScreen.history')}
             onPress={showTransactionHistory}
             variant="outline"
             style={styles.actionButton}
@@ -131,21 +135,21 @@ export const BuyerWallet: React.FC = () => {
         {/* Info Card */}
         <Card variant="default" padding="md" style={styles.infoCard}>
           <Text variant="subheading" weight="semibold" style={styles.infoTitle}>
-            💰 Cüzdan Hakkında
+            {t('buyerWalletScreen.infoTitle')}
           </Text>
           
           <View style={styles.infoList}>
             <Text variant="body" style={styles.infoItem}>
-              • Cüzdanınıza para yükleyerek hızlı ödeme yapabilirsiniz
+              {t('buyerWalletScreen.infoItems.one')}
             </Text>
             <Text variant="body" style={styles.infoItem}>
-              • Kredi kartı veya banka transferi ile para yükleyebilirsiniz
+              {t('buyerWalletScreen.infoItems.two')}
             </Text>
             <Text variant="body" style={styles.infoItem}>
-              • Sipariş verirken önce cüzdan bakiyeniz kullanılır
+              {t('buyerWalletScreen.infoItems.three')}
             </Text>
             <Text variant="body" style={styles.infoItem}>
-              • Yetersiz bakiye durumunda kart ile ödeme yapabilirsiniz
+              {t('buyerWalletScreen.infoItems.four')}
             </Text>
           </View>
         </Card>
@@ -155,11 +159,11 @@ export const BuyerWallet: React.FC = () => {
           <View style={styles.securityHeader}>
             <FontAwesome name="shield" size={20} color={colors.success} />
             <Text variant="body" weight="semibold" color="success" style={styles.securityTitle}>
-              Güvenli Ödeme
+              {t('buyerWalletScreen.securityTitle')}
             </Text>
           </View>
           <Text variant="caption" color="textSecondary">
-            Tüm ödeme işlemleriniz SSL şifreleme ile korunmaktadır. Kart bilgileriniz saklanmaz.
+            {t('buyerWalletScreen.securityDesc')}
           </Text>
         </Card>
       </ScrollView>

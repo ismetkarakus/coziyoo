@@ -6,11 +6,13 @@ import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const SignIn: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { signIn, loading } = useAuth();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -28,7 +30,7 @@ export const SignIn: React.FC = () => {
 
   const handleSignIn = async () => {
     if (!formData.email || !formData.password) {
-      Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
+      Alert.alert(t('authSignIn.errorTitle'), t('authSignIn.errorMessage'));
       return;
     }
 
@@ -36,7 +38,7 @@ export const SignIn: React.FC = () => {
       await signIn(formData.email, formData.password);
       // Giriş başarılı - AuthContext otomatik olarak yönlendirecek
     } catch (error: any) {
-      Alert.alert('Giriş Hatası', error.message);
+      Alert.alert(t('authSignIn.signInErrorTitle'), error.message);
     }
   };
 
@@ -65,29 +67,29 @@ export const SignIn: React.FC = () => {
         <View style={styles.content}>
           <View style={styles.header}>
             <Text variant="heading" center style={styles.title}>
-              Giriş Yap
+              {t('authSignIn.title')}
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.subtitle}>
-              Hesabına giriş yap ve lezzetli yemekleri keşfet
+              {t('authSignIn.subtitle')}
             </Text>
           </View>
 
           <View style={styles.form}>
             <FormField
-              label="E-posta"
+              label={t('authSignIn.emailLabel')}
               value={formData.email}
               onChangeText={handleInputChange('email')}
-              placeholder="ornek@email.com"
+              placeholder={t('authSignIn.emailPlaceholder')}
               keyboardType="email-address"
               autoCapitalize="none"
               required
             />
 
             <FormField
-              label="Şifre"
+              label={t('authSignIn.passwordLabel')}
               value={formData.password}
               onChangeText={handleInputChange('password')}
-              placeholder="Şifrenizi girin"
+              placeholder={t('authSignIn.passwordPlaceholder')}
               secureTextEntry
               required
             />
@@ -99,7 +101,7 @@ export const SignIn: React.FC = () => {
               loading={loading}
               style={styles.signInButton}
             >
-              Giriş Yap
+              {t('authSignIn.signIn')}
             </Button>
 
             <Button 
@@ -108,7 +110,7 @@ export const SignIn: React.FC = () => {
               onPress={handleForgotPassword}
               style={styles.forgotButton}
             >
-              Şifremi Unuttum
+              {t('authSignIn.forgotPassword')}
             </Button>
 
             <View style={styles.testButtonsRow}>
@@ -131,14 +133,14 @@ export const SignIn: React.FC = () => {
 
           <View style={styles.footer}>
             <Text variant="body" center color="textSecondary">
-              Hesabın yok mu?{' '}
+              {t('authSignIn.noAccount')}{' '}
               <Text 
                 variant="body" 
                 color="primary" 
                 onPress={handleSignUp}
                 style={styles.signUpLink}
               >
-                Kayıt Ol
+                {t('authSignIn.signUp')}
               </Text>
             </Text>
           </View>
@@ -196,5 +198,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
+
 
 

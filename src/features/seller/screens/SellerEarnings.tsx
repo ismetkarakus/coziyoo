@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 
@@ -75,7 +76,9 @@ const COMMISSION_RATE = 15; // %15 komisyon
 export const SellerEarnings: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState('week');
+  const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
 
 
   // Komisyon hesaplama
@@ -121,7 +124,7 @@ export const SellerEarnings: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', { 
+    return date.toLocaleDateString(locale, { 
       day: 'numeric', 
       month: 'long', 
       year: 'numeric' 
@@ -138,7 +141,7 @@ export const SellerEarnings: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Kazançlarım"
+        title={t('sellerEarningsScreen.title')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -154,7 +157,7 @@ export const SellerEarnings: React.FC = () => {
         {/* Toplam Özet */}
         <Card variant="default" padding="lg" style={styles.summaryCard}>
           <Text variant="subheading" weight="semibold" style={styles.summaryTitle}>
-            Toplam Kazançlarım
+            {t('sellerEarningsScreen.summaryTitle')}
           </Text>
           
           <View style={styles.summaryCenter}>
@@ -162,20 +165,20 @@ export const SellerEarnings: React.FC = () => {
               ₺{overallTotal.net.toFixed(2)}
             </Text>
             <Text variant="body" color="textSecondary" style={styles.summarySubtext}>
-              {MOCK_SALES_DATA.length} siparişten toplam kazanç
+              {t('sellerEarningsScreen.summarySubtext', { count: MOCK_SALES_DATA.length })}
             </Text>
             
             {/* Komisyon Bilgisi */}
             <View style={styles.commissionInfo}>
               <Text variant="caption" color="textSecondary" style={styles.commissionText}>
-                Brüt Tutar: ₺{overallTotal.total.toFixed(2)}
+                {t('sellerEarningsScreen.grossLabel')} ₺{overallTotal.total.toFixed(2)}
               </Text>
               <Text variant="caption" color="warning" style={styles.commissionText}>
-                Komisyon (%{COMMISSION_RATE}): -₺{overallTotal.commission.toFixed(2)}
+                {t('sellerEarningsScreen.commissionLabel', { rate: COMMISSION_RATE })} -₺{overallTotal.commission.toFixed(2)}
               </Text>
               <View style={styles.divider} />
               <Text variant="body" weight="semibold" color="success" style={styles.commissionText}>
-                Net Kazanç: ₺{overallTotal.net.toFixed(2)}
+                {t('sellerEarningsScreen.netLabel')} ₺{overallTotal.net.toFixed(2)}
               </Text>
             </View>
           </View>
@@ -184,7 +187,7 @@ export const SellerEarnings: React.FC = () => {
         {/* Günlük Satışlar */}
         <View style={styles.dailySalesContainer}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Günlük Satış Detayları
+            {t('sellerEarningsScreen.dailyTitle')}
           </Text>
           
           {Object.entries(groupedSales)
@@ -204,7 +207,7 @@ export const SellerEarnings: React.FC = () => {
                         ₺{dailyTotal.net.toFixed(2)}
                       </Text>
                       <Text variant="caption" color="textSecondary">
-                        {sales.length} sipariş
+                        {t('sellerEarningsScreen.dailyOrderCount', { count: sales.length })}
                       </Text>
                     </View>
                   </View>
@@ -223,7 +226,7 @@ export const SellerEarnings: React.FC = () => {
                         </View>
                         
                         <Text variant="caption" color="textSecondary" style={styles.customerName}>
-                          Müşteri: {sale.customerName}
+                          {t('sellerEarningsScreen.customerLabel')} {sale.customerName}
                         </Text>
                         
                         <View style={styles.itemsList}>

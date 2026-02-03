@@ -7,11 +7,13 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCountry } from '../../../context/CountryContext';
 import { COUNTRIES } from '../../../config/countries';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const CountrySelection: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { setCountry, detectCountry } = useCountry();
+  const { t } = useTranslation();
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [detecting, setDetecting] = useState(false);
 
@@ -29,7 +31,7 @@ export const CountrySelection: React.FC = () => {
 
   const handleContinue = async () => {
     if (!selectedCountry) {
-      Alert.alert('Ülke Seçin', 'Lütfen bir ülke seçin.');
+      Alert.alert(t('onboarding.selectCountryTitle'), t('onboarding.selectCountryMessage'));
       return;
     }
 
@@ -54,7 +56,7 @@ export const CountrySelection: React.FC = () => {
         }, 1000);
       }
     } catch (error) {
-      Alert.alert('Error', 'Could not detect location. Please select manually.');
+      Alert.alert(t('onboarding.detectErrorTitle'), t('onboarding.detectErrorMessage'));
     } finally {
       setDetecting(false);
     }
@@ -79,10 +81,10 @@ export const CountrySelection: React.FC = () => {
           style={styles.logo}
         />
         <Text variant="title" weight="bold" center style={styles.title}>
-          Welcome to Cazi
+          {t('onboarding.title')}
         </Text>
         <Text variant="body" center color="textSecondary" style={styles.subtitle}>
-          Choose your country to get started
+          {t('onboarding.subtitle')}
         </Text>
       </View>
 
@@ -96,12 +98,12 @@ export const CountrySelection: React.FC = () => {
         }]}
       >
         <Text variant="body" color="primary" weight="medium">
-          {detecting ? '🌍 Detecting location...' : '📍 Auto-detect my country'}
+          {detecting ? t('onboarding.detecting') : t('onboarding.autoDetect')}
         </Text>
       </TouchableOpacity>
 
       <Text variant="body" center color="textSecondary" style={styles.orText}>
-        or choose manually
+        {t('onboarding.manualPrompt')}
       </Text>
 
       {/* Country Options */}
@@ -147,7 +149,7 @@ export const CountrySelection: React.FC = () => {
       {/* Continue & Skip Buttons */}
       <View style={styles.footer}>
         <Button
-          title="Continue"
+          title={t('onboarding.continue')}
           onPress={handleContinue}
           disabled={!selectedCountry}
           style={[
@@ -161,7 +163,7 @@ export const CountrySelection: React.FC = () => {
           style={styles.skipButton}
         >
           <Text variant="body" color="textSecondary" center>
-            Skip - Use device language
+            {t('onboarding.skip')}
           </Text>
         </TouchableOpacity>
       </View>
