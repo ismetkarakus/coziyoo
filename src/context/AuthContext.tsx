@@ -36,11 +36,94 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const storedUser = await authService.loadStoredUser();
-      if (storedUser) {
-        setUser(storedUser);
-        await refreshUserData(storedUser.uid);
+    // Firebase optimizasyonu geçici olarak devre dışı
+    console.log('⚡ Skipping Firebase optimization for speed');
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('🔐 Auth state changed:', {
+        user: user ? `${user.email} (${user.uid})` : 'No user',
+        emailVerified: user?.emailVerified,
+        isAnonymous: user?.isAnonymous
+      });
+      setUser(user);
+      
+      if (user) {
+        setProfileLoading(true); // Start profile loading
+        const cacheKey = `user_${user.uid}`; // Define cacheKey
+
+        // Hızlı fallback - Firestore'a gitmeden önce temel bilgileri set et
+        const fallbackData: UserData = { // Added type assertion
+          uid: user.uid,
+          email: user.email || 'test@cazi.com',
+          displayName: user.displayName || 'Test Kullanıcı',
+          userType: 'buyer', // Default to buyer
+          createdAt: new Date()
+        };
+        
+        setUserData(fallbackData);
+        console.log('⚡ Quick user data set, loading full data in background...');
+        
+        // Cache'den hızlıca yükle (eğer varsa)
+        const cached = await AsyncStorage.getItem(cacheKey);
+        
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          console.log('📦 Cache den yuklenen veri:', {
+            userType: parsed.userType,
+            sellerEnabled: parsed.sellerEnabled,
+            email: parsed.email,
+            uid: parsed.uid
+          });
+          
+          setUserData(parsed); // Hemen göster
+          setProfileLoading(false); // ✅ Cache varsa hemen loading'i bitir
+          console.log('⚡ Cache hızlı yüklendi, loading bitti');
+          
+          // ✅ Cache ile hemen yönlendirme yap
+          handleAutoRedirect(parsed);
+        }
+        
+        // ✅ Firestore'u arka planda güncelle (blocking yapmadan)
+        getUserDataSafe(user.uid, 800) // 0.8 saniye timeout, used user.uid instead of firebaseUser.uid
+          .then(async (freshData) => {
+            if (freshData) {
+              setUserData(freshData);
+              await AsyncStorage.setItem(cacheKey, JSON.stringify(freshData));
+              console.log('🔥 Firestore arka planda güncellendi');
+              
+              // Eğer cache yoktu, şimdi yönlendir
+              if (!cached) {
+                setProfileLoading(false);
+                handleAutoRedirect(freshData);
+              }
+            }
+          })
+          .catch((error) => {
+            console.log('Firestore arka plan hatası (normal):', error);
+            // Cache yoksa ve Firestore de başarısızsa
+            if (!cached) {
+              setProfileLoading(false);
+            }
+          });
+        
+        // Eğer cache yoksa, çok kısa süre bekle
+        if (!cached) {
+          setTimeout(() => {
+            setProfileLoading(false);
+            console.log('⏰ Timeout ile loading bitti');
+          }, 500); // 0.5 saniye max bekleme
+        }
+      } else {
+        const mockSession = await authService.getMockSession();
+        if (mockSession) {
+          setUser(mockSession.user);
+          setUserData(mockSession.userData);
+          setProfileLoading(false);
+          handleAutoRedirect(mockSession.userData);
+        } else {
+          setUserData(null);
+          setProfileLoading(false); // Reset profile loading when user logs out
+        }
       }
       setLoading(false);
     };
@@ -50,11 +133,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const user = await authService.signIn(email, password);
-      setUser(user);
-      await refreshUserData(user.uid);
-    } finally {
-      setLoading(false);
+      await authService.signIn(email, password);
+    } catch (error) {
+      const mockSession = await authService.signInWithMockCredentials(email, password);
+      if (mockSession) {
+        setUser(mockSession.user);
+        setUserData(mockSession.userData);
+        setProfileLoading(false);
+        setAuthLoading(false);
+        handleAutoRedirect(mockSession.userData);
+        return;
+      }
+      setAuthLoading(false); // Changed setLoading to setAuthLoading
+      throw error;
     }
   };
 
@@ -70,10 +161,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
-    await authService.signOut();
-    setUser(null);
-    setUserData(null);
-    router.replace('/(auth)/sign-in');
+    try {
+      await authService.signOut();
+      setUser(null);
+      setUserData(null);
+    } catch (error) {
+      throw error;
+    }
   };
 
   const resetPassword = async (email: string) => {

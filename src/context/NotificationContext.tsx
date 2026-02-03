@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { notificationService } from '../services/notificationService';
 import { chatService } from '../services/chatService';
@@ -60,6 +60,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // Handle notification taps
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+
+    const Notifications = require('expo-notifications') as typeof import('expo-notifications');
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
       

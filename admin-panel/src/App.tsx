@@ -9,6 +9,11 @@ import {
   orderBy,
   query,
 } from 'firebase/firestore'
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import Buyers from './pages/Buyers'
+import Sellers from './pages/Sellers'
+import SellerProfile from './pages/SellerProfile'
+import BuyerProfile from './pages/BuyerProfile'
 
 type StatCard = {
   label: string
@@ -52,7 +57,7 @@ const toDateString = (value: unknown) => {
   return '—'
 }
 
-function App() {
+function Dashboard() {
   const [stats, setStats] = useState({
     users: 0,
     foods: 0,
@@ -206,6 +211,38 @@ function App() {
         </div>
       </section>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <div className="shell">
+        <header className="navbar">
+          <div className="brand">
+            <span className="brand-dot" />
+            <div>
+              <p className="brand-title">Cazi Admin</p>
+              <p className="brand-subtitle">Operations</p>
+            </div>
+          </div>
+          <nav className="nav">
+            <Link to="/" className="nav-link">Dashboard</Link>
+            <Link to="/buyers" className="nav-link">Buyers</Link>
+            <Link to="/sellers" className="nav-link">Sellers</Link>
+          </nav>
+        </header>
+        <main className="main">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/buyers" element={<Buyers />} />
+            <Route path="/sellers" element={<Sellers />} />
+            <Route path="/sellers/:id" element={<SellerProfile />} />
+            <Route path="/buyers/:id" element={<BuyerProfile />} />
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
   )
 }
 

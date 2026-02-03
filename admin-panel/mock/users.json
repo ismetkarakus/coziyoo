@@ -1,0 +1,122 @@
+[
+  {
+    "id": "user_buyer_001",
+    "userType": "buyer",
+    "displayName": "Ahmet Yilmaz",
+    "email": "ahmet@example.com",
+    "phone": "+90 532 111 22 33",
+    "country": "TR",
+    "city": "Istanbul",
+    "createdAt": "2026-01-12T09:12:00.000Z",
+    "lastActiveAt": "2026-02-02T18:44:00.000Z",
+    "status": "active",
+    "totalOrders": 8,
+    "totalSpend": 420,
+    "favoriteCategories": ["Ana Yemek", "Tatli"],
+    "address": "Kadikoy, Moda"
+  },
+  {
+    "id": "user_buyer_002",
+    "userType": "buyer",
+    "displayName": "Zeynep Kaya",
+    "email": "zeynep@example.com",
+    "phone": "+90 533 222 33 44",
+    "country": "TR",
+    "city": "Ankara",
+    "createdAt": "2025-11-03T11:30:00.000Z",
+    "lastActiveAt": "2026-02-01T12:05:00.000Z",
+    "status": "active",
+    "totalOrders": 3,
+    "totalSpend": 160,
+    "favoriteCategories": ["Corba"],
+    "address": "Cankaya"
+  },
+  {
+    "id": "user_seller_001",
+    "userType": "seller",
+    "displayName": "Ayse Hanim",
+    "email": "ayse@example.com",
+    "phone": "+90 532 444 55 66",
+    "country": "TR",
+    "city": "Istanbul",
+    "createdAt": "2024-06-15T10:20:00.000Z",
+    "lastActiveAt": "2026-02-02T20:10:00.000Z",
+    "status": "active",
+    "rating": 4.8,
+    "totalOrders": 156,
+    "verified": true,
+    "specialties": ["Turk Mutfagi", "Hamur Isleri"],
+    "sellerEnabled": true,
+    "location": "Kadikoy, Istanbul",
+    "address": "Moda Street No: 123, Kadikoy/Istanbul",
+    "description": "15 years of home cooking experience. Specializes in mantı, börek, and traditional Turkish cuisine.",
+    "bankDetails": {
+      "bankName": "Turkiye Is Bankasi",
+      "accountHolderName": "Ayse Hanim",
+      "iban": "TR00 0000 0000 0000 0000 0000 00",
+      "accountNumber": "1234567890"
+    },
+    "identityImages": {
+      "front": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=250&fit=crop",
+      "back": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=250&fit=crop"
+    },
+    "identityVerification": {
+      "status": "verified",
+      "submittedAt": "2025-12-20T09:00:00.000Z",
+      "verifiedAt": "2025-12-21T09:00:00.000Z",
+      "rejectionReason": null
+    }
+  },
+  {
+    "id": "user_seller_002",
+    "userType": "seller",
+    "displayName": "Can Demir",
+    "email": "can@example.com",
+    "phone": "+90 534 777 88 99",
+    "country": "TR",
+    "city": "Izmir",
+    "createdAt": "2025-02-19T08:00:00.000Z",
+    "lastActiveAt": "2026-01-28T09:30:00.000Z",
+    "status": "pending",
+    "rating": 4.2,
+    "totalOrders": 22,
+    "verified": false,
+    "specialties": ["Kahvalti", "Salata"],
+    "sellerEnabled": false,
+    "location": "Konak, Izmir",
+    "address": "Ataturk Street No: 45, Konak/Izmir",
+    "description": "Focuses on breakfast and healthy salads with local ingredients.",
+    "bankDetails": {
+      "bankName": "",
+      "accountHolderName": "",
+      "iban": "",
+      "accountNumber": ""
+    },
+    "identityImages": {
+      "front": "",
+      "back": ""
+    },
+    "identityVerification": {
+      "status": "pending",
+      "submittedAt": "2026-01-20T12:00:00.000Z",
+      "verifiedAt": null,
+      "rejectionReason": null
+    }
+  },
+  {
+    "id": "user_both_001",
+    "userType": "both",
+    "displayName": "Elif Sezer",
+    "email": "elif@example.com",
+    "phone": "+44 7777 888 999",
+    "country": "UK",
+    "city": "London",
+    "createdAt": "2025-07-05T14:22:00.000Z",
+    "lastActiveAt": "2026-02-03T09:02:00.000Z",
+    "status": "active",
+    "rating": 4.6,
+    "totalOrders": 14,
+    "totalSpend": 260,
+    "verified": true
+  }
+]
