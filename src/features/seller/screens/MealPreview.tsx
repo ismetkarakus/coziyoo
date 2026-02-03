@@ -5,23 +5,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, FoodCard } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 
 export const MealPreview: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
   const { previewData } = useLocalSearchParams();
 
   // Format date range for display (e.g., "1-3 Ocak")
   const formatDateRange = (startDate: string, endDate: string) => {
-    if (!startDate || !endDate) return 'Tarih belirtilmemiş';
+    if (!startDate || !endDate) return t('mealPreviewScreen.unknownDate');
     
     try {
-      const months = [
-        'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-      ];
+      const months =
+        currentLanguage === 'en'
+          ? ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+          : ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
       
       // Parse dates (assuming DD/MM/YYYY format)
       const [startDay, startMonth, startYear] = startDate.split('/').map(Number);
@@ -62,7 +64,7 @@ export const MealPreview: React.FC = () => {
   console.log('MealPreview - Name:', data.name);
 
   // Get seller name from profile
-  const [sellerName, setSellerName] = React.useState('Sizin Adınız');
+  const [sellerName, setSellerName] = React.useState(t('mealPreviewScreen.yourName'));
 
   React.useEffect(() => {
     const loadSellerName = async () => {
@@ -72,7 +74,7 @@ export const MealPreview: React.FC = () => {
           const profile = JSON.parse(savedProfile);
           if (profile.formData) {
             // Nickname varsa onu kullan, yoksa gerçek ismi kullan
-            setSellerName(profile.formData.nickname || profile.formData.name || 'Sizin Adınız');
+            setSellerName(profile.formData.nickname || profile.formData.name || t('mealPreviewScreen.yourName'));
           }
         }
       } catch (error) {
@@ -85,13 +87,15 @@ export const MealPreview: React.FC = () => {
   // Create mock food card data from form data
   const mockFoodData = {
     id: 'preview-' + Date.now(),
-    name: data.name || 'Yemek Adı',
+    name: data.name || t('mealPreviewScreen.defaultMealName'),
     cookName: sellerName,
     rating: 4.8, // Default rating for preview
     price: parseInt(data.price) || 0,
-    distance: data.maxDistance ? `${data.maxDistance} km teslimat` : '0 km teslimat',
-    category: data.category || 'Kategori',
-    country: data.country || 'Türk',
+    distance: data.maxDistance
+      ? t('mealPreviewScreen.distanceDelivery', { distance: data.maxDistance })
+      : t('mealPreviewScreen.distanceZero'),
+    category: data.category || t('mealPreviewScreen.defaultCategory'),
+    country: data.country || t('mealPreviewScreen.defaultCountry'),
     hasPickup: data.hasPickup || false,
     hasDelivery: data.hasDelivery || false,
     availableDates: data.availableDates || formatDateRange(data.startDate, data.endDate),
@@ -104,7 +108,7 @@ export const MealPreview: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Önizleme - Müşteri Görünümü"
+        title={t('mealPreviewScreen.title')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -120,17 +124,17 @@ export const MealPreview: React.FC = () => {
         {/* Info Section */}
         <View style={styles.infoSection}>
           <Text variant="subheading" weight="semibold" style={styles.infoTitle}>
-            👁️ Müşteri Bu Şekilde Görecek
+            {t('mealPreviewScreen.infoTitle')}
           </Text>
           <Text variant="body" color="textSecondary" style={styles.infoText}>
-            Yemeğiniz ana ekranda aşağıdaki gibi görünecek. Beğenmediyseniz geri dönüp düzenleyebilirsiniz.
+            {t('mealPreviewScreen.infoDesc')}
           </Text>
         </View>
 
         {/* Preview Card */}
         <View style={styles.previewSection}>
           <Text variant="body" weight="medium" style={styles.previewLabel}>
-            Ana Ekran Görünümü:
+            {t('mealPreviewScreen.previewLabel')}
           </Text>
           
           <View style={styles.cardContainer}>
@@ -147,68 +151,74 @@ export const MealPreview: React.FC = () => {
         {/* Details Section */}
         <View style={styles.detailsSection}>
           <Text variant="subheading" weight="semibold" style={styles.detailsTitle}>
-            📋 Yemek Detayları
+            {t('mealPreviewScreen.detailsTitle')}
           </Text>
           
           <View style={styles.detailItem}>
-            <Text variant="body" weight="medium">Kategori:</Text>
-            <Text variant="body" color="textSecondary">{data.category || 'Belirtilmemiş'}</Text>
+            <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.category')}</Text>
+            <Text variant="body" color="textSecondary">{data.category || t('mealPreviewScreen.unknown')}</Text>
           </View>
           
           <View style={styles.detailItem}>
-            <Text variant="body" weight="medium">Yemek Adı:</Text>
-            <Text variant="body" color="textSecondary">{data.name || 'Belirtilmemiş'}</Text>
+            <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.name')}</Text>
+            <Text variant="body" color="textSecondary">{data.name || t('mealPreviewScreen.unknown')}</Text>
           </View>
           
           {data.description && (
             <View style={styles.detailItem}>
-              <Text variant="body" weight="medium">Açıklama:</Text>
+              <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.description')}</Text>
               <Text variant="body" color="textSecondary">{data.description}</Text>
             </View>
           )}
           
           <View style={styles.detailItem}>
-            <Text variant="body" weight="medium">Fiyat:</Text>
+            <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.price')}</Text>
             <Text variant="body" color="textSecondary">₺{data.price || '0'}</Text>
           </View>
           
           <View style={styles.detailItem}>
-            <Text variant="body" weight="medium">Günlük Stok:</Text>
-            <Text variant="body" color="textSecondary">{data.dailyStock || '0'} porsiyon</Text>
+            <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.dailyStock')}</Text>
+            <Text variant="body" color="textSecondary">
+              {data.dailyStock || '0'} {t('mealPreviewScreen.labels.portion')}
+            </Text>
           </View>
           
           {data.maxDistance && (
             <View style={styles.detailItem}>
-              <Text variant="body" weight="medium">Teslimat Mesafesi:</Text>
+              <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.deliveryDistance')}</Text>
               <Text variant="body" color="textSecondary">{data.maxDistance} km</Text>
             </View>
           )}
           
           {data.deliveryFee && data.hasDelivery && (
             <View style={styles.detailItem}>
-              <Text variant="body" weight="medium">Teslimat Ücreti:</Text>
+              <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.deliveryFee')}</Text>
               <Text variant="body" color="textSecondary">₺{data.deliveryFee}</Text>
             </View>
           )}
           
           <View style={styles.detailItem}>
-            <Text variant="body" weight="medium">Teslimat Seçenekleri:</Text>
+            <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.deliveryOptions')}</Text>
             <Text variant="body" color="textSecondary">
-              {data.hasPickup && data.hasDelivery ? 'Pickup + Delivery' :
-               data.hasPickup ? 'Sadece Pickup' :
-               data.hasDelivery ? 'Sadece Delivery' : 'Belirtilmemiş'}
+              {data.hasPickup && data.hasDelivery
+                ? t('mealPreviewScreen.deliveryOptions.both')
+                : data.hasPickup
+                ? t('mealPreviewScreen.deliveryOptions.pickup')
+                : data.hasDelivery
+                ? t('mealPreviewScreen.deliveryOptions.delivery')
+                : t('mealPreviewScreen.unknown')}
             </Text>
           </View>
           
           {(data.startDate || data.endDate) && (
             <View style={styles.detailItem}>
-              <Text variant="body" weight="medium">Tarih Aralığı:</Text>
+              <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.dateRange')}</Text>
               <Text variant="body" color="textSecondary">
                 {data.startDate && data.endDate ? 
                   `${data.startDate} - ${data.endDate}` :
-                  data.startDate ? `${data.startDate} tarihinden itibaren` :
-                  data.endDate ? `${data.endDate} tarihine kadar` :
-                  'Belirtilmemiş'}
+                  data.startDate ? t('mealPreviewScreen.dateFrom', { date: data.startDate }) :
+                  data.endDate ? t('mealPreviewScreen.dateTo', { date: data.endDate }) :
+                  t('mealPreviewScreen.unknown')}
               </Text>
             </View>
           )}

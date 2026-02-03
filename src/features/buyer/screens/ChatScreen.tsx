@@ -8,12 +8,14 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
 import { useNotifications } from '../../../context/NotificationContext';
 import { chatService, ChatMessage } from '../../../services/chatService';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const ChatScreen: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
   const { sendMessageNotification } = useNotifications();
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   
   const chatId = params.id as string;
@@ -56,7 +58,7 @@ export const ChatScreen: React.FC = () => {
       setMessages(chatMessages);
     } catch (error) {
       console.error('Error loading messages:', error);
-      Alert.alert('Hata', 'Mesajlar yüklenirken bir hata oluştu.');
+      Alert.alert(t('chatScreen.loadErrorTitle'), t('chatScreen.loadErrorMessage'));
     } finally {
       setLoading(false);
     }
@@ -85,7 +87,7 @@ export const ChatScreen: React.FC = () => {
       
     } catch (error) {
       console.error('Error sending message:', error);
-      Alert.alert('Hata', 'Mesaj gönderilemedi. Lütfen tekrar deneyin.');
+      Alert.alert(t('chatScreen.sendErrorTitle'), t('chatScreen.sendErrorMessage'));
     } finally {
       setSending(false);
     }
@@ -126,10 +128,10 @@ export const ChatScreen: React.FC = () => {
         👋
       </Text>
       <Text variant="subheading" style={{ color: colors.text, marginTop: Spacing.md }}>
-        Sohbet başlıyor
+        {t('chatScreen.emptyTitle')}
       </Text>
       <Text variant="body" style={{ color: colors.textSecondary, textAlign: 'center', marginTop: Spacing.sm }}>
-        {otherUserName} ile ilk mesajınızı gönderin
+        {t('chatScreen.emptyDesc', { name: otherUserName })}
       </Text>
     </View>
   );
@@ -138,12 +140,12 @@ export const ChatScreen: React.FC = () => {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <TopBar 
-          title="Sohbet" 
+          title={t('chatScreen.titleFallback')} 
           onBack={() => router.back()}
         />
         <View style={styles.emptyContainer}>
           <Text variant="body" color="textSecondary">
-            Sohbet bulunamadı
+            {t('chatScreen.notFound')}
           </Text>
         </View>
       </View>
@@ -157,7 +159,7 @@ export const ChatScreen: React.FC = () => {
       keyboardVerticalOffset={0}
     >
       <TopBar 
-        title={otherUserName || 'Sohbet'}
+        title={otherUserName || t('chatScreen.titleFallback')}
         onBack={() => router.back()}
       />
       
@@ -176,7 +178,7 @@ export const ChatScreen: React.FC = () => {
       <ChatInput
         onSend={handleSendMessage}
         disabled={sending}
-        placeholder={`${otherUserName}'e mesaj yazın...`}
+        placeholder={t('chatScreen.placeholder', { name: otherUserName })}
       />
     </KeyboardAvoidingView>
   );
@@ -203,7 +205,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 });
-
 
 
 

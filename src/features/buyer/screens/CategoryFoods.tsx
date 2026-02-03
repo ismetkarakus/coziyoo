@@ -5,6 +5,7 @@ import { Text, FoodCard } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 // Mock data for different categories
 const CATEGORY_FOODS = {
@@ -141,6 +142,7 @@ const CATEGORY_FOODS = {
 export const CategoryFoods: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const categoryName = params.category as string || 'Ana Yemek';
 
@@ -157,7 +159,7 @@ export const CategoryFoods: React.FC = () => {
 
   const renderBackButton = () => (
     <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-      <Text style={styles.backButtonText}>← Geri</Text>
+      <Text style={styles.backButtonText}>{t('categoryFoodsScreen.back')}</Text>
     </TouchableOpacity>
   );
 
@@ -171,10 +173,10 @@ export const CategoryFoods: React.FC = () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerContainer}>
           <Text variant="heading" weight="semibold" style={styles.categoryTitle}>
-            {categoryName} Yemekleri
+            {categoryName} {t('categoryFoodsScreen.titleSuffix')}
           </Text>
           <Text variant="body" color="textSecondary" style={styles.foodCount}>
-            {categoryFoods.length} yemek bulundu
+            {t('categoryFoodsScreen.count', { count: categoryFoods.length })}
           </Text>
         </View>
 
@@ -191,7 +193,7 @@ export const CategoryFoods: React.FC = () => {
           ) : (
             <View style={styles.emptyContainer}>
               <Text variant="body" color="textSecondary" style={styles.emptyText}>
-                Bu kategoride henüz yemek bulunmuyor.
+                {t('categoryFoodsScreen.empty')}
               </Text>
             </View>
           )}

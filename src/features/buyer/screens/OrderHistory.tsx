@@ -6,10 +6,12 @@ import { Text, Button, Card, WebSafeIcon } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const OrderHistory: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<any[]>([]);
 
   // Load orders from AsyncStorage when screen comes into focus
@@ -42,15 +44,19 @@ export const OrderHistory: React.FC = () => {
   };
 
   const handleBuyerApproval = async (orderId: string, action: 'approve' | 'reject') => {
-    const actionText = action === 'approve' ? 'onaylamak' : 'reddetmek';
+    const actionText = action === 'approve'
+      ? t('orderHistoryScreen.approveFlow.approveAction')
+      : t('orderHistoryScreen.approveFlow.rejectAction');
     
     Alert.alert(
-      'Emin misiniz?',
-      `Bu siparişi ${actionText} istediğinizden emin misiniz?`,
+      t('orderHistoryScreen.approveFlow.confirmTitle'),
+      t('orderHistoryScreen.approveFlow.confirmMessage', { action: actionText }),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('orderHistoryScreen.approveFlow.cancel'), style: 'cancel' },
         {
-          text: action === 'approve' ? 'Onayla ve Öde' : 'Reddet',
+          text: action === 'approve'
+            ? t('orderHistoryScreen.approveFlow.approvePay')
+            : t('orderHistoryScreen.approveFlow.reject'),
           style: action === 'approve' ? 'default' : 'destructive',
           onPress: async () => {
             try {
@@ -75,14 +81,17 @@ export const OrderHistory: React.FC = () => {
               }
 
               Alert.alert(
-                'Başarılı',
-                action === 'approve' 
-                  ? 'Sipariş onaylandı ve ödeme tamamlandı!' 
-                  : 'Sipariş reddedildi.'
+                t('orderHistoryScreen.approveFlow.successTitle'),
+                action === 'approve'
+                  ? t('orderHistoryScreen.approveFlow.successApprove')
+                  : t('orderHistoryScreen.approveFlow.successReject')
               );
             } catch (error) {
               console.error('Error updating order:', error);
-              Alert.alert('Hata', 'Sipariş güncellenirken bir hata oluştu.');
+              Alert.alert(
+                t('orderHistoryScreen.approveFlow.errorTitle'),
+                t('orderHistoryScreen.approveFlow.errorMessage')
+              );
             }
           },
         },
@@ -108,13 +117,13 @@ export const OrderHistory: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending_seller_approval':
-        return 'Satıcı Onayı Bekliyor';
+        return t('orderHistoryScreen.statuses.pendingSeller');
       case 'seller_approved':
-        return 'Onaylandı - Ödeme Bekliyor';
+        return t('orderHistoryScreen.statuses.sellerApproved');
       case 'confirmed':
-        return 'Onaylandı ve Ödendi';
+        return t('orderHistoryScreen.statuses.confirmed');
       case 'rejected':
-        return 'Reddedildi';
+        return t('orderHistoryScreen.statuses.rejected');
       default:
         return status;
     }
@@ -130,7 +139,7 @@ export const OrderHistory: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Sipariş Geçmişi"
+        title={t('orderHistoryScreen.title')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -146,10 +155,10 @@ export const OrderHistory: React.FC = () => {
         {orders.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text variant="heading" center>
-              Sipariş Yok
+              {t('orderHistoryScreen.emptyTitle')}
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.emptyText}>
-              Henüz hiç sipariş vermemişsiniz.
+              {t('orderHistoryScreen.emptyDesc')}
             </Text>
           </View>
         ) : (
@@ -158,7 +167,7 @@ export const OrderHistory: React.FC = () => {
             {pendingOrders.length > 0 && (
               <View style={styles.section}>
                 <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                  Bekleyen Siparişler ({pendingOrders.length})
+                  {t('orderHistoryScreen.pendingTitle', { count: pendingOrders.length })}
                 </Text>
                 
                 {pendingOrders.map((order) => (
@@ -176,23 +185,23 @@ export const OrderHistory: React.FC = () => {
 
                     <View style={styles.orderInfo}>
                       <Text variant="body">
-                        <Text weight="medium">Satıcı:</Text> {order.cookName}
+                        <Text weight="medium">{t('orderHistoryScreen.seller')}</Text> {order.cookName}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">Miktar:</Text> {order.quantity} adet
+                        <Text weight="medium">{t('orderHistoryScreen.quantity')}</Text> {order.quantity} {t('orderHistoryScreen.quantityUnit')}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">Toplam:</Text> ₺{order.totalPrice}
+                        <Text weight="medium">{t('orderHistoryScreen.total')}</Text> ₺{order.totalPrice}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">İstenen Tarih:</Text> {order.requestedDate}
+                        <Text weight="medium">{t('orderHistoryScreen.requestedDate')}</Text> {order.requestedDate}
                         {order.requestedTime && ` - ${order.requestedTime}`}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">Teslimat:</Text> {order.deliveryType === 'pickup' ? 'Gel Al' : 'Teslimat'}
+                        <Text weight="medium">{t('orderHistoryScreen.delivery')}</Text> {order.deliveryType === 'pickup' ? t('orderHistoryScreen.pickup') : t('orderHistoryScreen.deliveryOption')}
                       </Text>
                       <Text variant="caption" color="textSecondary">
-                        Sipariş Zamanı: {new Date(order.createdAt).toLocaleString('tr-TR')}
+                        {t('orderHistoryScreen.orderTime')} {new Date(order.createdAt).toLocaleString('tr-TR')}
                       </Text>
                     </View>
 
@@ -203,14 +212,14 @@ export const OrderHistory: React.FC = () => {
                           onPress={() => handleBuyerApproval(order.id, 'reject')}
                           style={[styles.actionButton, { borderColor: colors.error }]}
                         >
-                          <Text color="error">Reddet</Text>
+                          <Text color="error">{t('orderHistoryScreen.approveFlow.reject')}</Text>
                         </Button>
                         <Button
                           variant="primary"
                           onPress={() => handleBuyerApproval(order.id, 'approve')}
                           style={styles.actionButton}
                         >
-                          Onayla ve Öde
+                          {t('orderHistoryScreen.approveFlow.approvePay')}
                         </Button>
                       </View>
                     )}
@@ -223,7 +232,7 @@ export const OrderHistory: React.FC = () => {
             {completedOrders.length > 0 && (
               <View style={styles.section}>
                 <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                  Tamamlanan Siparişler ({completedOrders.length})
+                  {t('orderHistoryScreen.completedTitle', { count: completedOrders.length })}
                 </Text>
                 
                 {completedOrders.map((order) => (
@@ -241,27 +250,27 @@ export const OrderHistory: React.FC = () => {
 
                     <View style={styles.orderInfo}>
                       <Text variant="body">
-                        <Text weight="medium">Satıcı:</Text> {order.cookName}
+                        <Text weight="medium">{t('orderHistoryScreen.seller')}</Text> {order.cookName}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">Miktar:</Text> {order.quantity} adet
+                        <Text weight="medium">{t('orderHistoryScreen.quantity')}</Text> {order.quantity} {t('orderHistoryScreen.quantityUnit')}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">Toplam:</Text> ₺{order.totalPrice}
+                        <Text weight="medium">{t('orderHistoryScreen.total')}</Text> ₺{order.totalPrice}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">İstenen Tarih:</Text> {order.requestedDate}
+                        <Text weight="medium">{t('orderHistoryScreen.requestedDate')}</Text> {order.requestedDate}
                         {order.requestedTime && ` - ${order.requestedTime}`}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">Teslimat:</Text> {order.deliveryType === 'pickup' ? 'Gel Al' : 'Teslimat'}
+                        <Text weight="medium">{t('orderHistoryScreen.delivery')}</Text> {order.deliveryType === 'pickup' ? t('orderHistoryScreen.pickup') : t('orderHistoryScreen.deliveryOption')}
                       </Text>
                       <Text variant="caption" color="textSecondary">
-                        Sipariş Zamanı: {new Date(order.createdAt).toLocaleString('tr-TR')}
+                        {t('orderHistoryScreen.orderTime')} {new Date(order.createdAt).toLocaleString('tr-TR')}
                       </Text>
                       {order.buyerApprovedAt && (
                         <Text variant="caption" color="success">
-                          Ödeme Tarihi: {new Date(order.buyerApprovedAt).toLocaleString('tr-TR')}
+                          {t('orderHistoryScreen.paymentTime')} {new Date(order.buyerApprovedAt).toLocaleString('tr-TR')}
                         </Text>
                       )}
                     </View>

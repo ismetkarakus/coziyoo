@@ -2,61 +2,62 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Text, Card } from '../../../components/ui';
+import { Text, Card, LanguageSwitcher } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
 
-const PROFILE_SECTIONS = [
+const getProfileSections = (t: (key: string) => string) => ([
   {
     id: 'account',
-    title: 'Hesap Bilgileri',
+    title: t('profileScreen.sections.account'),
     items: [
-      { id: 'personal-info', title: 'Kişisel Bilgiler', icon: '👤' },
-      { id: 'change-password', title: 'Şifre Değiştir', icon: '🔒' },
+      { id: 'personal-info', title: t('profileScreen.items.personalInfo'), icon: '👤' },
+      { id: 'change-password', title: t('profileScreen.items.changePassword'), icon: '🔒' },
     ],
   },
   {
     id: 'location',
-    title: 'Konum',
+    title: t('profileScreen.sections.location'),
     items: [
-      { id: 'addresses', title: 'Adreslerim', icon: '📍' },
-      { id: 'location-settings', title: 'Konum Ayarları', icon: '🗺️' },
+      { id: 'addresses', title: t('profileScreen.items.addresses'), icon: '📍' },
+      { id: 'location-settings', title: t('profileScreen.items.locationSettings'), icon: '🗺️' },
     ],
   },
   {
     id: 'wallet',
-    title: 'Cüzdan & Ödemeler',
+    title: t('profileScreen.sections.wallet'),
     items: [
-      { id: 'wallet', title: 'Cüzdanım', icon: '💰' },
+      { id: 'wallet', title: t('profileScreen.items.wallet'), icon: '💰' },
     ],
   },
   {
     id: 'orders',
-    title: 'Siparişler',
+    title: t('profileScreen.sections.orders'),
     items: [
-      { id: 'order-history', title: 'Sipariş Geçmişi', icon: '📋' },
-      { id: 'favorites', title: 'Favorilerim', icon: '❤️' },
+      { id: 'order-history', title: t('profileScreen.items.orderHistory'), icon: '📋' },
+      { id: 'favorites', title: t('profileScreen.items.favorites'), icon: '❤️' },
     ],
   },
   {
     id: 'communication',
-    title: 'İletişim',
+    title: t('profileScreen.sections.communication'),
     items: [
-      { id: 'messages', title: 'Mesajlarım', icon: '💬' },
-      { id: 'notifications', title: 'Bildirim Ayarları', icon: '🔔' },
+      { id: 'messages', title: t('profileScreen.items.messages'), icon: '💬' },
+      { id: 'notifications', title: t('profileScreen.items.notifications'), icon: '🔔' },
     ],
   },
   {
     id: 'support',
-    title: 'Yardım & Destek',
+    title: t('profileScreen.sections.support'),
     items: [
-      { id: 'help', title: 'Yardım Merkezi', icon: '❓' },
-      { id: 'contact', title: 'İletişim', icon: '📞' },
-      { id: 'about', title: 'Hakkında', icon: 'ℹ️' },
+      { id: 'help', title: t('profileScreen.items.help'), icon: '❓' },
+      { id: 'contact', title: t('profileScreen.items.contact'), icon: '📞' },
+      { id: 'about', title: t('profileScreen.items.about'), icon: 'ℹ️' },
     ],
   },
-];
+]);
 
 // Mock user data
 const USER_DATA = {
@@ -69,8 +70,10 @@ const USER_DATA = {
 export const Profile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
+  const profileSections = getProfileSections(t);
 
   // Load profile data on component mount
   useEffect(() => {
@@ -151,18 +154,21 @@ export const Profile: React.FC = () => {
         router.push('/about');
         break;
       default:
-        Alert.alert('Yakında', 'Bu özellik yakında gelecek.');
+        Alert.alert(
+          t('profileScreen.alerts.comingSoonTitle'),
+          t('profileScreen.alerts.comingSoonMessage')
+        );
     }
   };
 
   const handleSignOut = () => {
     Alert.alert(
-      'Çıkış Yap',
-      'Hesabınızdan çıkmak istediğinizden emin misiniz?',
+      t('profileScreen.alerts.signOutTitle'),
+      t('profileScreen.alerts.signOutMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('profileScreen.alerts.signOutCancel'), style: 'cancel' },
         {
-          text: 'Çıkış Yap',
+          text: t('profileScreen.alerts.signOutConfirm'),
           style: 'destructive',
           onPress: () => {
             router.replace('/sign-in');
@@ -176,7 +182,7 @@ export const Profile: React.FC = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar title="" leftComponent={
         <Text variant="heading" weight="bold" color="primary" style={{ fontSize: 24 }}>
-          Profil
+          {t('profileScreen.title')}
         </Text>
       } />
       
@@ -209,7 +215,7 @@ export const Profile: React.FC = () => {
         </Card>
 
         {/* Profile Sections */}
-        {PROFILE_SECTIONS.map((section) => (
+        {profileSections.map((section) => (
           <View key={section.id} style={styles.section}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
               {section.title}
@@ -241,6 +247,16 @@ export const Profile: React.FC = () => {
             </Card>
           </View>
         ))}
+
+        {/* Language */}
+        <View style={styles.section}>
+          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+            {t('profileScreen.sections.language')}
+          </Text>
+          <Card variant="default" padding="md" style={styles.sectionCard}>
+            <LanguageSwitcher />
+          </Card>
+        </View>
 
         {/* Sign Out */}
         <TouchableOpacity
@@ -331,4 +347,3 @@ const styles = StyleSheet.create({
     height: Spacing.xl,
   },
 });
-

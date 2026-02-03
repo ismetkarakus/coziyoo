@@ -3,76 +3,80 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-// Mock seller chat data - satıcı perspektifinden mesajlar
-const MOCK_SELLER_CHATS = [
-  {
-    id: '1',
-    foodName: 'Ev Yapımı Mantı',
-    customerName: 'Ahmet Y.',
-    orderStatus: 'Hazırlanıyor',
-    lastMessage: 'Ne zaman hazır olur?',
-    timestamp: '14:30',
-    unreadCount: 1,
-    orderId: 'ORD-001',
-  },
-  {
-    id: '2',
-    foodName: 'Karnıyarık',
-    customerName: 'Zeynep M.',
-    orderStatus: 'Hazır',
-    lastMessage: 'Teşekkür ederim, geliyorum.',
-    timestamp: '13:45',
-    unreadCount: 0,
-    orderId: 'ORD-002',
-  },
-  {
-    id: '3',
-    foodName: 'Ev Böreği',
-    customerName: 'Can K.',
-    orderStatus: 'Teslim Edildi',
-    lastMessage: 'Çok lezzetliydi, teşekkürler!',
-    timestamp: 'Dün',
-    unreadCount: 0,
-    orderId: 'ORD-003',
-  },
-];
+type SellerChatStatus = 'preparing' | 'ready' | 'onWay' | 'delivered';
 
 export const SellerMessages: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const handleBackPress = () => {
     console.log('Back button pressed from SellerMessages');
     router.back();
   };
 
-  const handleChatPress = (chatId: string, orderId: string, foodName: string, orderStatus: string) => {
-    router.push(`/(tabs)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(orderStatus)}`);
+  const handleChatPress = (chatId: string, orderId: string, foodName: string, status: SellerChatStatus) => {
+    const statusLabel = t(`sellerMessagesScreen.status.${status}`);
+    router.push(`/(tabs)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(statusLabel)}`);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: SellerChatStatus) => {
     switch (status) {
-      case 'Hazırlanıyor':
+      case 'preparing':
         return colors.warning;
-      case 'Hazır':
+      case 'ready':
         return colors.success;
-      case 'Yolda':
+      case 'onWay':
         return colors.info;
-      case 'Teslim Edildi':
+      case 'delivered':
         return colors.textSecondary;
       default:
         return colors.primary;
     }
   };
 
+  const mockChats = [
+    {
+      id: '1',
+      foodName: t('sellerMessagesScreen.mock.c1Food'),
+      customerName: t('sellerMessagesScreen.mock.c1Customer'),
+      orderStatus: 'preparing' as SellerChatStatus,
+      lastMessage: t('sellerMessagesScreen.mock.c1Message'),
+      timestamp: t('sellerMessagesScreen.mock.c1Time'),
+      unreadCount: 1,
+      orderId: t('sellerMessagesScreen.mock.c1OrderId'),
+    },
+    {
+      id: '2',
+      foodName: t('sellerMessagesScreen.mock.c2Food'),
+      customerName: t('sellerMessagesScreen.mock.c2Customer'),
+      orderStatus: 'ready' as SellerChatStatus,
+      lastMessage: t('sellerMessagesScreen.mock.c2Message'),
+      timestamp: t('sellerMessagesScreen.mock.c2Time'),
+      unreadCount: 0,
+      orderId: t('sellerMessagesScreen.mock.c2OrderId'),
+    },
+    {
+      id: '3',
+      foodName: t('sellerMessagesScreen.mock.c3Food'),
+      customerName: t('sellerMessagesScreen.mock.c3Customer'),
+      orderStatus: 'delivered' as SellerChatStatus,
+      lastMessage: t('sellerMessagesScreen.mock.c3Message'),
+      timestamp: t('sellerMessagesScreen.mock.c3Time'),
+      unreadCount: 0,
+      orderId: t('sellerMessagesScreen.mock.c3OrderId'),
+    },
+  ];
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Müşteri Mesajları"
+        title={t('sellerMessagesScreen.title')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -85,18 +89,18 @@ export const SellerMessages: React.FC = () => {
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {MOCK_SELLER_CHATS.length === 0 ? (
+        {mockChats.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text variant="heading" center>
-              Mesaj Yok
+              {t('sellerMessagesScreen.emptyTitle')}
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.emptyText}>
-              Müşterilerden gelen mesajlar burada görünecek.
+              {t('sellerMessagesScreen.emptyDesc')}
             </Text>
           </View>
         ) : (
           <View style={styles.chatsContainer}>
-            {MOCK_SELLER_CHATS.map((chat) => (
+            {mockChats.map((chat) => (
               <TouchableOpacity
                 key={chat.id}
                 onPress={() => handleChatPress(chat.id, chat.orderId, chat.foodName, chat.orderStatus)}
@@ -110,7 +114,7 @@ export const SellerMessages: React.FC = () => {
                           {chat.foodName}
                         </Text>
                         <Text variant="caption" color="textSecondary">
-                          {chat.customerName} • Sipariş: {chat.orderId}
+                          {chat.customerName} • {t('sellerMessagesScreen.orderLabel')} {chat.orderId}
                         </Text>
                       </View>
                       
@@ -131,7 +135,7 @@ export const SellerMessages: React.FC = () => {
                     <View style={styles.statusContainer}>
                       <View style={[styles.statusBadge, { backgroundColor: getStatusColor(chat.orderStatus) }]}>
                         <Text variant="caption" style={{ color: 'white' }}>
-                          {chat.orderStatus}
+                          {t(`sellerMessagesScreen.status.${chat.orderStatus}`)}
                         </Text>
                       </View>
                     </View>
@@ -220,8 +224,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
-
 
 
 

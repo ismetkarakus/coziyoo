@@ -1,43 +1,44 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCart } from '../../../context/CartContext';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-
-// Mock saved card data
-const SAVED_CARDS = [
-  {
-    id: '1',
-    type: 'visa',
-    lastFour: '4532',
-    expiryMonth: '12',
-    expiryYear: '26',
-    holderName: 'Ahmet Yılmaz',
-    isDefault: true,
-  },
-  {
-    id: '2',
-    type: 'mastercard',
-    lastFour: '8765',
-    expiryMonth: '08',
-    expiryYear: '25',
-    holderName: 'Ahmet Yılmaz',
-    isDefault: false,
-  },
-];
 
 type PaymentMethod = 'card' | 'apple_pay' | 'google_pay';
 
 export const Payment: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { cartItems, getTotalPrice, clearCart } = useCart();
+  const { t } = useTranslation();
+  const { getTotalPrice, clearCart } = useCart();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('card');
-  const [selectedCard, setSelectedCard] = useState(SAVED_CARDS.find(card => card.isDefault)?.id || SAVED_CARDS[0]?.id);
+  const savedCards = [
+    {
+      id: '1',
+      type: 'visa',
+      lastFour: '4532',
+      expiryMonth: '12',
+      expiryYear: '26',
+      holderName: t('paymentScreen.mockCardHolder'),
+      isDefault: true,
+    },
+    {
+      id: '2',
+      type: 'mastercard',
+      lastFour: '8765',
+      expiryMonth: '08',
+      expiryYear: '25',
+      holderName: t('paymentScreen.mockCardHolder'),
+      isDefault: false,
+    },
+  ];
+  const defaultCardId = savedCards.find(card => card.isDefault)?.id || savedCards[0]?.id;
+  const [selectedCard, setSelectedCard] = useState(defaultCardId);
 
   const subtotal = getTotalPrice();
   const deliveryFee = 5;
@@ -56,26 +57,26 @@ export const Payment: React.FC = () => {
 
   const handlePayment = () => {
     if (selectedPaymentMethod === 'card' && !selectedCard) {
-      Alert.alert('Hata', 'Lütfen bir kart seçin.');
+      Alert.alert(t('paymentScreen.alerts.errorTitle'), t('paymentScreen.alerts.selectCard'));
       return;
     }
 
     // Simulate payment processing
     Alert.alert(
-      'Ödeme İşlemi',
-      'Ödemeniz işleniyor...',
+      t('paymentScreen.alerts.processingTitle'),
+      t('paymentScreen.alerts.processingMessage'),
       [
         {
-          text: 'Tamam',
+          text: t('paymentScreen.alerts.ok'),
           onPress: () => {
             // Simulate successful payment
             setTimeout(() => {
               Alert.alert(
-                'Başarılı!',
-                'Ödemeniz başarıyla tamamlandı. Siparişiniz hazırlanmaya başlandı.',
+                t('paymentScreen.alerts.successTitle'),
+                t('paymentScreen.alerts.successMessage'),
                 [
                   {
-                    text: 'Tamam',
+                    text: t('paymentScreen.alerts.ok'),
                     onPress: () => {
                       clearCart();
                       router.push('/(tabs)/orders');
@@ -162,7 +163,7 @@ export const Payment: React.FC = () => {
         {card.isDefault && (
           <View style={[styles.defaultBadge, { backgroundColor: colors.success }]}>
             <Text variant="caption" style={{ color: 'white', fontSize: 10 }}>
-              Varsayılan
+              {t('paymentScreen.default')}
             </Text>
           </View>
         )}
@@ -173,7 +174,7 @@ export const Payment: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Ödeme" 
+        title={t('paymentScreen.title')} 
         leftIcon="arrow-left"
         onLeftPress={() => router.back()}
       />
@@ -182,21 +183,21 @@ export const Payment: React.FC = () => {
         {/* Order Summary */}
         <Card variant="default" padding="md" style={styles.summaryCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Sipariş Özeti
+            {t('paymentScreen.summaryTitle')}
           </Text>
           
           <View style={styles.summaryRow}>
-            <Text variant="body">Ara Toplam</Text>
+            <Text variant="body">{t('paymentScreen.subtotal')}</Text>
             <Text variant="body">₺{subtotal.toFixed(2)}</Text>
           </View>
           
           <View style={styles.summaryRow}>
-            <Text variant="body">Teslimat Ücreti</Text>
+            <Text variant="body">{t('paymentScreen.deliveryFee')}</Text>
             <Text variant="body">₺{deliveryFee.toFixed(2)}</Text>
           </View>
           
           <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text variant="subheading" weight="semibold">Toplam Tutar</Text>
+            <Text variant="subheading" weight="semibold">{t('paymentScreen.total')}</Text>
             <Text variant="subheading" weight="semibold" color="primary">
               ₺{total.toFixed(2)}
             </Text>
@@ -206,31 +207,31 @@ export const Payment: React.FC = () => {
         {/* Payment Methods */}
         <Card variant="default" padding="md" style={styles.paymentCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Ödeme Yöntemi
+            {t('paymentScreen.methodTitle')}
           </Text>
           
           <View style={styles.paymentMethods}>
-            {renderPaymentMethod('card', 'Kredi/Banka Kartı', '💳')}
-            {Platform.OS === 'ios' && renderPaymentMethod('apple_pay', 'Apple Pay', '🍎')}
-            {Platform.OS === 'android' && renderPaymentMethod('google_pay', 'Google Pay', '🟢')}
+            {renderPaymentMethod('card', t('paymentScreen.methodCard'), '💳')}
+            {Platform.OS === 'ios' && renderPaymentMethod('apple_pay', t('paymentScreen.methodApple'), '🍎')}
+            {Platform.OS === 'android' && renderPaymentMethod('google_pay', t('paymentScreen.methodGoogle'), '🟢')}
           </View>
         </Card>
 
         {/* Saved Cards (only show when card payment is selected) */}
-        {selectedPaymentMethod === 'card' && SAVED_CARDS.length > 0 && (
+        {selectedPaymentMethod === 'card' && savedCards.length > 0 && (
           <Card variant="default" padding="md" style={styles.cardsCard}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Kayıtlı Kartlarım
+              {t('paymentScreen.savedCards')}
             </Text>
             
             <View style={styles.savedCards}>
-              {SAVED_CARDS.map(renderSavedCard)}
+              {savedCards.map(renderSavedCard)}
             </View>
             
             <TouchableOpacity style={styles.addCardButton}>
               <FontAwesome name="plus" size={16} color={colors.primary} />
               <Text variant="body" color="primary" style={{ marginLeft: Spacing.sm }}>
-                Yeni Kart Ekle
+                {t('paymentScreen.addCard')}
               </Text>
             </TouchableOpacity>
           </Card>
@@ -245,10 +246,10 @@ export const Payment: React.FC = () => {
               </Text>
               <View style={styles.walletText}>
                 <Text variant="body" weight="medium">
-                  {selectedPaymentMethod === 'apple_pay' ? 'Apple Pay' : 'Google Pay'}
+                  {selectedPaymentMethod === 'apple_pay' ? t('paymentScreen.methodApple') : t('paymentScreen.methodGoogle')}
                 </Text>
                 <Text variant="caption" color="textSecondary">
-                  Güvenli ve hızlı ödeme
+                  {t('paymentScreen.walletFast')}
                 </Text>
               </View>
             </View>
@@ -265,10 +266,10 @@ export const Payment: React.FC = () => {
           style={styles.payButton}
         >
           {selectedPaymentMethod === 'apple_pay' 
-            ? '🍎 Apple Pay ile Öde' 
+            ? t('paymentScreen.payWithApple') 
             : selectedPaymentMethod === 'google_pay'
-            ? '🟢 Google Pay ile Öde'
-            : `₺${total.toFixed(2)} Öde`
+            ? t('paymentScreen.payWithGoogle')
+            : t('paymentScreen.payAmount', { amount: total.toFixed(2) })
           }
         </Button>
       </View>

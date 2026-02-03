@@ -4,10 +4,12 @@ import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const UserTypeSelection: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const handleBuyerSelection = () => {
     router.push('/(auth)/buyer-register');
@@ -22,7 +24,7 @@ export const UserTypeSelection: React.FC = () => {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text variant="heading" center style={styles.title}>
-            Nasıl devam etmek istiyorsun?
+            {t('authUserType.title')}
           </Text>
         </View>
 
@@ -33,7 +35,7 @@ export const UserTypeSelection: React.FC = () => {
             onPress={handleBuyerSelection}
             style={styles.button}
           >
-            Yemek Satın Almak İstiyorum
+            {t('authUserType.buyer')}
           </Button>
           <Button 
             variant="secondary" 
@@ -41,13 +43,13 @@ export const UserTypeSelection: React.FC = () => {
             onPress={handleSellerSelection}
             style={styles.button}
           >
-            Yemek Satmak İstiyorum
+            {t('authUserType.seller')}
           </Button>
         </View>
 
         <View style={styles.note}>
           <Text variant="caption" center color="textSecondary">
-            Not: İstediğin zaman satıcı olabilirsin.
+            {t('authUserType.note')}
           </Text>
         </View>
       </View>
@@ -83,7 +85,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
 
 
 

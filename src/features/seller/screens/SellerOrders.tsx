@@ -4,6 +4,7 @@ import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -49,8 +50,10 @@ const MOCK_ORDERS = [
 export const SellerOrders: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
   const [orders, setOrders] = useState(MOCK_ORDERS);
   const [realOrders, setRealOrders] = useState<any[]>([]);
+  const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
 
   // Load orders from AsyncStorage when screen comes into focus
   useFocusEffect(
@@ -80,15 +83,17 @@ export const SellerOrders: React.FC = () => {
   };
 
   const handleOrderAction = async (orderId: string, action: 'confirm' | 'reject') => {
-    const actionText = action === 'confirm' ? 'onaylamak' : 'reddetmek';
+    const actionText = action === 'confirm'
+      ? t('sellerOrdersScreen.alerts.actionConfirm')
+      : t('sellerOrdersScreen.alerts.actionReject');
     
     Alert.alert(
-      'Emin misiniz?',
-      `Bu siparişi ${actionText} istediğinizden emin misiniz?`,
+      t('sellerOrdersScreen.alerts.confirmTitle'),
+      t('sellerOrdersScreen.alerts.confirmMessage', { action: actionText }),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('sellerOrdersScreen.alerts.cancel'), style: 'cancel' },
         {
-          text: action === 'confirm' ? 'Onayla' : 'Reddet',
+          text: action === 'confirm' ? t('sellerOrdersScreen.actions.confirm') : t('sellerOrdersScreen.actions.reject'),
           style: action === 'confirm' ? 'default' : 'destructive',
           onPress: async () => {
             try {
@@ -121,14 +126,14 @@ export const SellerOrders: React.FC = () => {
               }
 
               Alert.alert(
-                'Başarılı',
+                t('sellerOrdersScreen.alerts.successTitle'),
                 action === 'confirm' 
-                  ? 'Sipariş onaylandı. Müşteri bilgilendirildi.' 
-                  : 'Sipariş reddedildi.'
+                  ? t('sellerOrdersScreen.alerts.successConfirm') 
+                  : t('sellerOrdersScreen.alerts.successReject')
               );
             } catch (error) {
               console.error('Error updating order:', error);
-              Alert.alert('Hata', 'Sipariş güncellenirken bir hata oluştu.');
+              Alert.alert(t('sellerOrdersScreen.alerts.errorTitle'), t('sellerOrdersScreen.alerts.errorMessage'));
             }
           },
         },
@@ -158,17 +163,17 @@ export const SellerOrders: React.FC = () => {
     switch (status) {
       case 'pending':
       case 'pending_seller_approval':
-        return 'Onay Bekliyor';
+        return t('sellerOrdersScreen.status.pending');
       case 'seller_approved':
-        return 'Onaylandı (Müşteri Onayı Bekliyor)';
+        return t('sellerOrdersScreen.status.sellerApproved');
       case 'pending_buyer_approval':
-        return 'Müşteri Onayı Bekliyor';
+        return t('sellerOrdersScreen.status.pendingBuyerApproval');
       case 'confirmed':
-        return 'Onaylandı';
+        return t('sellerOrdersScreen.status.confirmed');
       case 'rejected':
-        return 'Reddedildi';
+        return t('sellerOrdersScreen.status.rejected');
       default:
-        return status;
+        return t('sellerOrdersScreen.status.unknown', { status });
     }
   };
 
@@ -184,7 +189,7 @@ export const SellerOrders: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Siparişler"
+        title={t('sellerOrdersScreen.title')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -201,7 +206,7 @@ export const SellerOrders: React.FC = () => {
         {pendingOrders.length > 0 && (
           <View style={styles.section}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Bekleyen Siparişler ({pendingOrders.length})
+              {t('sellerOrdersScreen.pendingTitle', { count: pendingOrders.length })}
             </Text>
             
             {pendingOrders.map((order) => (
@@ -219,34 +224,34 @@ export const SellerOrders: React.FC = () => {
 
                 <View style={styles.orderInfo}>
                   <Text variant="body">
-                    <Text weight="medium">Müşteri:</Text> {order.customerName || order.buyerName}
+                    <Text weight="medium">{t('sellerOrdersScreen.labels.customer')}</Text> {order.customerName || order.buyerName}
                   </Text>
                   {(order.customerPhone || order.buyerPhone) && (
                     <Text variant="body">
-                      <Text weight="medium">Telefon:</Text> {order.customerPhone || order.buyerPhone || 'Belirtilmemiş'}
+                      <Text weight="medium">{t('sellerOrdersScreen.labels.phone')}</Text> {order.customerPhone || order.buyerPhone || t('sellerOrdersScreen.labels.unknown')}
                     </Text>
                   )}
                   <Text variant="body">
-                    <Text weight="medium">Miktar:</Text> {order.quantity} adet
+                    <Text weight="medium">{t('sellerOrdersScreen.labels.quantity')}</Text> {order.quantity} {t('sellerOrdersScreen.labels.quantityUnit')}
                   </Text>
                   <Text variant="body">
-                    <Text weight="medium">Toplam:</Text> ₺{order.totalPrice}
+                    <Text weight="medium">{t('sellerOrdersScreen.labels.total')}</Text> ₺{order.totalPrice}
                   </Text>
                       <Text variant="body">
-                        <Text weight="medium">Sipariş Tarihi:</Text> {order.requestedDate || order.orderTime || 'Belirtilmemiş'}
+                        <Text weight="medium">{t('sellerOrdersScreen.labels.orderDate')}</Text> {order.requestedDate || order.orderTime || t('sellerOrdersScreen.labels.unknown')}
                         {order.requestedTime && ` - ${order.requestedTime}`}
                       </Text>
                   <Text variant="body">
-                    <Text weight="medium">Teslimat:</Text> {order.deliveryType === 'pickup' ? 'Gel Al' : 'Teslimat'}
+                    <Text weight="medium">{t('sellerOrdersScreen.labels.delivery')}</Text> {order.deliveryType === 'pickup' ? t('sellerOrdersScreen.delivery.pickup') : t('sellerOrdersScreen.delivery.delivery')}
                   </Text>
                   {order.address && (
                     <Text variant="body">
-                      <Text weight="medium">Adres:</Text> {order.address}
+                      <Text weight="medium">{t('sellerOrdersScreen.labels.address')}</Text> {order.address}
                     </Text>
                   )}
                   {order.createdAt && (
                     <Text variant="caption" color="textSecondary">
-                      Sipariş Zamanı: {new Date(order.createdAt).toLocaleString('tr-TR')}
+                      {t('sellerOrdersScreen.labels.orderTime')} {new Date(order.createdAt).toLocaleString(locale)}
                     </Text>
                   )}
                 </View>
@@ -258,14 +263,14 @@ export const SellerOrders: React.FC = () => {
                       onPress={() => handleOrderAction(order.id, 'reject')}
                       style={[styles.actionButton, { borderColor: colors.error }]}
                     >
-                      <Text color="error">Reddet</Text>
+                      <Text color="error">{t('sellerOrdersScreen.actions.reject')}</Text>
                     </Button>
                     <Button
                       variant="primary"
                       onPress={() => handleOrderAction(order.id, 'confirm')}
                       style={styles.actionButton}
                     >
-                      Onayla
+                      {t('sellerOrdersScreen.actions.confirm')}
                     </Button>
                   </View>
                 )}
@@ -278,7 +283,7 @@ export const SellerOrders: React.FC = () => {
         {otherOrders.length > 0 && (
           <View style={styles.section}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              Diğer Siparişler
+              {t('sellerOrdersScreen.otherTitle')}
             </Text>
             
             {otherOrders.map((order) => (
@@ -296,13 +301,13 @@ export const SellerOrders: React.FC = () => {
 
                 <View style={styles.orderInfo}>
                   <Text variant="body">
-                    <Text weight="medium">Müşteri:</Text> {order.customerName}
+                    <Text weight="medium">{t('sellerOrdersScreen.labels.customer')}</Text> {order.customerName}
                   </Text>
                   <Text variant="body">
-                    <Text weight="medium">Miktar:</Text> {order.quantity} adet • ₺{order.totalPrice}
+                    <Text weight="medium">{t('sellerOrdersScreen.labels.quantity')}</Text> {order.quantity} {t('sellerOrdersScreen.labels.quantityUnit')} • ₺{order.totalPrice}
                   </Text>
                   <Text variant="body">
-                    <Text weight="medium">Sipariş Saati:</Text> {order.orderTime}
+                    <Text weight="medium">{t('sellerOrdersScreen.labels.orderTimeShort')}</Text> {order.orderTime}
                   </Text>
                 </View>
               </Card>
@@ -313,10 +318,10 @@ export const SellerOrders: React.FC = () => {
         {orders.length === 0 && (
           <View style={styles.emptyContainer}>
             <Text variant="heading" center>
-              Sipariş Yok
+              {t('sellerOrdersScreen.emptyTitle')}
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.emptyText}>
-              Henüz hiç siparişiniz yok.
+              {t('sellerOrdersScreen.emptyDesc')}
             </Text>
           </View>
         )}
@@ -378,4 +383,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

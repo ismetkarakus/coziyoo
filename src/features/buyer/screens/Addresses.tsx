@@ -7,6 +7,7 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface Address {
   id: string;
@@ -18,6 +19,7 @@ interface Address {
 export const Addresses: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [addresses, setAddresses] = useState<Address[]>([]);
 
   useEffect(() => {
@@ -34,14 +36,14 @@ export const Addresses: React.FC = () => {
         const defaultAddresses: Address[] = [
           {
             id: '1',
-            title: 'Ev',
-            address: 'Kadıköy Mah. Bağdat Cad. No:123 Kadıköy/İstanbul',
+            title: t('addressesScreen.defaultAddresses.homeTitle'),
+            address: t('addressesScreen.defaultAddresses.homeAddress'),
             isDefault: true,
           },
           {
             id: '2',
-            title: 'İş',
-            address: 'Levent Mah. Büyükdere Cad. No:456 Şişli/İstanbul',
+            title: t('addressesScreen.defaultAddresses.workTitle'),
+            address: t('addressesScreen.defaultAddresses.workAddress'),
             isDefault: false,
           },
         ];
@@ -64,12 +66,12 @@ export const Addresses: React.FC = () => {
 
   const deleteAddress = (addressId: string) => {
     Alert.alert(
-      'Adresi Sil',
-      'Bu adresi silmek istediğinizden emin misiniz?',
+      t('addressesScreen.deleteTitle'),
+      t('addressesScreen.deleteMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('addressesScreen.deleteCancel'), style: 'cancel' },
         {
-          text: 'Sil',
+          text: t('addressesScreen.deleteConfirm'),
           style: 'destructive',
           onPress: async () => {
             const updatedAddresses = addresses.filter(addr => addr.id !== addressId);
@@ -84,14 +86,14 @@ export const Addresses: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Adreslerim"
+        title={t('addressesScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
             <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={
-          <TouchableOpacity onPress={() => Alert.alert('Yakında', 'Yeni adres ekleme özelliği yakında gelecek.')}>
+          <TouchableOpacity onPress={() => Alert.alert(t('addressesScreen.addSoonTitle'), t('addressesScreen.addSoonMessage'))}>
             <WebSafeIcon name="plus" size={20} color={colors.primary} />
           </TouchableOpacity>
         }
@@ -108,7 +110,7 @@ export const Addresses: React.FC = () => {
                 {address.isDefault && (
                   <View style={[styles.defaultBadge, { backgroundColor: colors.primary }]}>
                     <Text variant="caption" style={{ color: 'white' }}>
-                      Varsayılan
+                      {t('addressesScreen.defaultLabel')}
                     </Text>
                   </View>
                 )}
@@ -141,7 +143,7 @@ export const Addresses: React.FC = () => {
         {addresses.length === 0 && (
           <View style={styles.emptyContainer}>
             <Text variant="body" color="textSecondary" style={styles.emptyText}>
-              Henüz kayıtlı adresiniz bulunmuyor.
+              {t('addressesScreen.empty')}
             </Text>
           </View>
         )}
@@ -199,7 +201,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
 
 
 

@@ -5,6 +5,7 @@ import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 // Mock order data
 const MOCK_ORDERS = [
@@ -40,6 +41,7 @@ const MOCK_ORDERS = [
 export const Orders: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const handleTrackOrder = (order: any) => {
     router.push({
@@ -92,7 +94,7 @@ export const Orders: React.FC = () => {
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
           <Text variant="caption" style={{ color: 'white', fontSize: 11 }}>
-            {order.statusText}
+            {t(`ordersScreen.statuses.${order.status}`)}
           </Text>
         </View>
       </View>
@@ -113,7 +115,7 @@ export const Orders: React.FC = () => {
       <View style={styles.orderFooter}>
         <View style={styles.orderTotal}>
           <Text variant="body" weight="semibold">
-            Toplam: ₺{order.total.toFixed(2)}
+            {t('ordersScreen.total')} ₺{order.total.toFixed(2)}
           </Text>
           <Text variant="caption" color="textSecondary">
             {order.estimatedTime}
@@ -128,7 +130,7 @@ export const Orders: React.FC = () => {
               style={styles.actionButton}
               onPress={() => handleTrackOrder(order)}
             >
-              Takip Et
+              {t('ordersScreen.track')}
             </Button>
           )}
           <Button 
@@ -137,7 +139,7 @@ export const Orders: React.FC = () => {
             style={styles.actionButton}
             onPress={() => handleOrderDetails(order)}
           >
-            Detaylar
+            {t('ordersScreen.details')}
           </Button>
         </View>
       </View>
@@ -147,20 +149,20 @@ export const Orders: React.FC = () => {
   if (MOCK_ORDERS.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <TopBar title="Siparişlerim" />
+        <TopBar title={t('ordersScreen.title')} />
         <View style={styles.emptyContainer}>
           <Text variant="heading" center>
-            Henüz Siparişiniz Yok
+            {t('ordersScreen.emptyTitle')}
           </Text>
           <Text variant="body" center color="textSecondary" style={styles.emptyText}>
-            İlk siparişinizi vermek için ana sayfaya dönün.
+            {t('ordersScreen.emptyDesc')}
           </Text>
           <Button 
             variant="primary" 
             onPress={() => router.push('/(tabs)')}
             style={styles.browseButton}
           >
-            Yemekleri Keşfet
+            {t('ordersScreen.browse')}
           </Button>
         </View>
       </View>
@@ -169,7 +171,7 @@ export const Orders: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Siparişlerim" />
+      <TopBar title={t('ordersScreen.title')} />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.ordersContainer}>

@@ -6,11 +6,13 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCart } from '../../../context/CartContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const Cart: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { cartItems, updateQuantity, getTotalPrice } = useCart();
+  const { t } = useTranslation();
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
 
   const subtotal = getTotalPrice();
@@ -24,20 +26,20 @@ export const Cart: React.FC = () => {
   if (cartItems.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <TopBar title="Sepetim" />
+        <TopBar title={t('cartScreen.title')} />
         <View style={styles.emptyContainer}>
           <Text variant="heading" center>
-            Sepetiniz Boş
+            {t('cartScreen.emptyTitle')}
           </Text>
           <Text variant="body" center color="textSecondary" style={styles.emptyText}>
-            Lezzetli yemekleri keşfetmek için ana sayfaya dönün.
+            {t('cartScreen.emptyDesc')}
           </Text>
           <Button 
             variant="primary" 
             onPress={() => router.push('/(tabs)')}
             style={styles.browseButton}
           >
-            Yemekleri Keşfet
+            {t('cartScreen.browse')}
           </Button>
         </View>
       </View>
@@ -46,7 +48,7 @@ export const Cart: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="Sepetim" />
+      <TopBar title={t('cartScreen.title')} />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Cart Items */}
@@ -99,7 +101,7 @@ export const Cart: React.FC = () => {
         {/* Delivery Selection */}
         <Card variant="default" padding="md" style={styles.deliveryCard}>
           <Text variant="subheading" weight="semibold" style={styles.deliveryTitle}>
-            Teslimat Seçeneği
+            {t('cartScreen.deliveryTitle')}
           </Text>
           
           <View style={styles.deliveryOptions}>
@@ -108,14 +110,14 @@ export const Cart: React.FC = () => {
               onPress={() => setDeliveryType('pickup')}
               style={styles.deliveryButton}
             >
-              {deliveryType === 'pickup' ? '✓ ' : ''}Pickup (Gel Al)
+              {deliveryType === 'pickup' ? '✓ ' : ''}{t('cartScreen.pickup')}
             </Button>
             <Button
               variant={deliveryType === 'delivery' ? 'primary' : 'outline'}
               onPress={() => setDeliveryType('delivery')}
               style={styles.deliveryButton}
             >
-              {deliveryType === 'delivery' ? '✓ ' : ''}Delivery (+₺5)
+              {deliveryType === 'delivery' ? '✓ ' : ''}{t('cartScreen.delivery')}
             </Button>
           </View>
         </Card>
@@ -123,23 +125,23 @@ export const Cart: React.FC = () => {
         {/* Order Summary */}
         <Card variant="default" padding="md" style={styles.summaryCard}>
           <Text variant="subheading" weight="semibold" style={styles.summaryTitle}>
-            Sipariş Özeti
+            {t('cartScreen.summaryTitle')}
           </Text>
           
           <View style={styles.summaryRow}>
-            <Text variant="body">Ara Toplam</Text>
+            <Text variant="body">{t('cartScreen.subtotal')}</Text>
             <Text variant="body">₺{subtotal.toFixed(2)}</Text>
           </View>
           
           {deliveryType === 'delivery' && (
             <View style={styles.summaryRow}>
-              <Text variant="body">Teslimat Ücreti</Text>
+              <Text variant="body">{t('cartScreen.deliveryFee')}</Text>
               <Text variant="body">₺{deliveryFee.toFixed(2)}</Text>
             </View>
           )}
           
           <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text variant="subheading" weight="semibold">Toplam Tutar</Text>
+            <Text variant="subheading" weight="semibold">{t('cartScreen.total')}</Text>
             <Text variant="subheading" weight="semibold" color="primary">
               ₺{total.toFixed(2)}
             </Text>
@@ -155,7 +157,7 @@ export const Cart: React.FC = () => {
           onPress={handleCheckout}
           style={styles.checkoutButton}
         >
-          Siparişi Tamamla
+          {t('cartScreen.checkout')}
         </Button>
       </View>
     </View>
@@ -259,4 +261,3 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
 });
-

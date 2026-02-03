@@ -7,10 +7,12 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const LocationSettings: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const [settings, setSettings] = useState({
     locationEnabled: true,
     autoDetect: false,
@@ -42,26 +44,26 @@ export const LocationSettings: React.FC = () => {
   const settingsItems = [
     {
       key: 'locationEnabled',
-      title: 'Konum Servisleri',
-      description: 'Yakınımdaki restoranları görmek için konumu kullan',
+      title: t('locationSettingsScreen.items.locationEnabled.title'),
+      description: t('locationSettingsScreen.items.locationEnabled.desc'),
       icon: '📍',
     },
     {
       key: 'autoDetect',
-      title: 'Otomatik Konum Tespiti',
-      description: 'Mevcut konumumu otomatik olarak tespit et',
+      title: t('locationSettingsScreen.items.autoDetect.title'),
+      description: t('locationSettingsScreen.items.autoDetect.desc'),
       icon: '🎯',
     },
     {
       key: 'showDistance',
-      title: 'Mesafe Göster',
-      description: 'Restoranlara olan mesafeyi göster',
+      title: t('locationSettingsScreen.items.showDistance.title'),
+      description: t('locationSettingsScreen.items.showDistance.desc'),
       icon: '📏',
     },
     {
       key: 'nearbyNotifications',
-      title: 'Yakın Mekan Bildirimleri',
-      description: 'Yakınımda yeni restoranlar açıldığında bildir',
+      title: t('locationSettingsScreen.items.nearbyNotifications.title'),
+      description: t('locationSettingsScreen.items.nearbyNotifications.desc'),
       icon: '🔔',
     },
   ];
@@ -69,7 +71,7 @@ export const LocationSettings: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Konum Ayarları"
+        title={t('locationSettingsScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
             <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
@@ -112,10 +114,10 @@ export const LocationSettings: React.FC = () => {
             <Text style={styles.infoIcon}>ℹ️</Text>
             <View style={styles.infoText}>
               <Text variant="body" weight="medium" style={styles.infoTitle}>
-                Konum Gizliliği
+                {t('locationSettingsScreen.privacy.title')}
               </Text>
               <Text variant="caption" color="textSecondary">
-                Konum bilgileriniz sadece size yakın restoranları göstermek için kullanılır ve üçüncü taraflarla paylaşılmaz.
+                {t('locationSettingsScreen.privacy.desc')}
               </Text>
             </View>
           </View>
@@ -180,7 +182,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
 });
-
 
 
 

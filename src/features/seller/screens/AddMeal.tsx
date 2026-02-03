@@ -5,6 +5,8 @@ import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { TopBar } from '../../../components/layout';
+import { useTranslation } from '../../../hooks/useTranslation';
+import { translations } from '../../../i18n/translations';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,38 +18,36 @@ import { storageService } from '../../../services/storageService';
 export const AddMeal: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
+  const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
   const { user } = useAuth();
 
   // Countries list for autocomplete
-  const COUNTRIES = [
-    'Türk', 'İtalyan', 'Çin', 'Japon', 'Meksika', 'Hint', 'Fransız', 'Yunan', 
-    'Arap', 'İspanyol', 'Tayland', 'Kore', 'Alman', 'Rus', 'İngiliz', 'Amerika',
-    'Fas', 'Lübnan', 'İran', 'Afgan', 'Etiyopya', 'Brezilya', 'Arjantin', 'Peru',
-    'Vietnam', 'Malezya', 'Singapur', 'Endonezya', 'Filipin', 'Pakistan', 'Bangladeş',
-    'Nepal', 'Sri Lanka', 'Myanmar', 'Kamboçya', 'Laos', 'Moğol', 'Kazak', 'Özbek'
-  ];
+  const COUNTRIES =
+    (translations[currentLanguage]?.addMealScreen?.countries ??
+      translations.tr.addMealScreen.countries) as string[];
 
   // Format date range for display (e.g., "1-3 Ocak")
   const formatDateRange = (startDate: string, endDate: string) => {
-    if (!startDate || !endDate) return 'Tarih belirtilmemiş';
+    if (!startDate || !endDate) return t('addMealScreen.date.unknown');
     
     try {
-      const months = [
-        'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-      ];
-      
       // Parse dates (assuming DD/MM/YYYY format)
       const [startDay, startMonth, startYear] = startDate.split('/').map(Number);
       const [endDay, endMonth, endYear] = endDate.split('/').map(Number);
+      const startDateObj = new Date(startYear, startMonth - 1, startDay);
+      const endDateObj = new Date(endYear, endMonth - 1, endDay);
       
       // Same month and year
       if (startMonth === endMonth && startYear === endYear) {
-        return `${startDay}-${endDay} ${months[startMonth - 1]}`;
+        const monthName = startDateObj.toLocaleString(locale, { month: 'long' });
+        return `${startDay}-${endDay} ${monthName}`;
       }
       
       // Different months or years
-      return `${startDay} ${months[startMonth - 1]} - ${endDay} ${months[endMonth - 1]}`;
+      const startMonthName = startDateObj.toLocaleString(locale, { month: 'long' });
+      const endMonthName = endDateObj.toLocaleString(locale, { month: 'long' });
+      return `${startDay} ${startMonthName} - ${endDay} ${endMonthName}`;
     } catch (error) {
       return `${startDate} - ${endDate}`;
     }
@@ -82,21 +82,17 @@ export const AddMeal: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Categories from Home page
-  const CATEGORIES = [
-    'Ana Yemek',
-    'Çorba', 
-    'Kahvaltı',
-    'Salata',
-  ];
+  const CATEGORIES =
+    (translations[currentLanguage]?.addMealScreen?.categories ??
+      translations.tr.addMealScreen.categories) as string[];
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
     // Açıklama alanı için karakter limiti kontrolü
     if (field === 'description' && value.length > 500) {
       Alert.alert(
-        'Karakter Limiti',
-        'Açıklama en fazla 500 karakter olabilir.',
-        [{ text: 'Tamam' }]
+        t('addMealScreen.alerts.characterLimitTitle'),
+        t('addMealScreen.alerts.characterLimitMessage'),
+        [{ text: t('addMealScreen.alerts.ok') }]
       );
       return;
     }
@@ -143,23 +139,23 @@ export const AddMeal: React.FC = () => {
   const handleSubmit = async () => {
     // Validation
     if (!formData.name.trim()) {
-      Alert.alert('Hata', 'Yemek adı gereklidir.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.nameRequired'));
       return;
     }
     if (!formData.description.trim()) {
-      Alert.alert('Hata', 'Açıklama gereklidir.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.descriptionRequired'));
       return;
     }
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      Alert.alert('Hata', 'Geçerli bir fiyat giriniz.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.priceInvalid'));
       return;
     }
     if (!formData.category) {
-      Alert.alert('Hata', 'Kategori seçiniz.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.categoryRequired'));
       return;
     }
     if (!user) {
-      Alert.alert('Hata', 'Giriş yapmalısınız.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.loginRequired'));
       return;
     }
 
@@ -189,13 +185,13 @@ export const AddMeal: React.FC = () => {
         deliveryOptions,
         createdAt: new Date().toISOString(),
         sellerId: user.uid,
-        sellerName: user.displayName || 'Satıcı',
-        cookName: user.displayName || 'Satıcı', // Usta ismi için
+        sellerName: user.displayName || t('addMealScreen.defaults.sellerName'),
+        cookName: user.displayName || t('addMealScreen.defaults.sellerName'), // Usta ismi için
         imageUrl,
         // Tarih bilgileri
         availableDates: formData.startDate && formData.endDate ? 
           formatDateRange(formData.startDate, formData.endDate) : 
-          'Tarih belirtilmemiş',
+          t('addMealScreen.date.unknown'),
         startDate: formData.startDate,
         endDate: formData.endDate,
         // Diğer eksik alanlar
@@ -210,11 +206,11 @@ export const AddMeal: React.FC = () => {
       await AsyncStorage.setItem('publishedMeals', JSON.stringify(meals));
 
       Alert.alert(
-        'Başarılı!',
-        'Yemeğiniz başarıyla eklendi ve satışa sunuldu.',
+        t('addMealScreen.alerts.successTitle'),
+        t('addMealScreen.alerts.successMessage'),
         [
           {
-            text: 'Tamam',
+            text: t('addMealScreen.alerts.ok'),
             onPress: () => {
               // Form'u temizle
               setFormData({
@@ -241,7 +237,7 @@ export const AddMeal: React.FC = () => {
 
     } catch (error) {
       console.error('Error adding food:', error);
-      Alert.alert('Hata', 'Yemek eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.publishError'));
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -253,11 +249,11 @@ export const AddMeal: React.FC = () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
-        'İzin Gerekli',
-        'Fotoğraf seçmek için galeri erişim izni gereklidir.',
+        t('addMealScreen.alerts.permissionTitle'),
+        t('addMealScreen.alerts.galleryPermission'),
         [
-          { text: 'İptal', style: 'cancel' },
-          { text: 'Ayarlara Git', onPress: () => ImagePicker.requestMediaLibraryPermissionsAsync() }
+          { text: t('addMealScreen.alerts.cancel'), style: 'cancel' },
+          { text: t('addMealScreen.alerts.goToSettings'), onPress: () => ImagePicker.requestMediaLibraryPermissionsAsync() }
         ]
       );
       return;
@@ -266,7 +262,7 @@ export const AddMeal: React.FC = () => {
     // Kalan resim sayısını hesapla
     const remainingSlots = 5 - selectedImages.length;
     if (remainingSlots <= 0) {
-      Alert.alert('Resim Limiti', 'En fazla 5 resim ekleyebilirsiniz.');
+      Alert.alert(t('addMealScreen.alerts.imageLimitTitle'), t('addMealScreen.alerts.imageLimitMessage'));
       return;
     }
 
@@ -286,20 +282,20 @@ export const AddMeal: React.FC = () => {
       
       // Başarı mesajı
       Alert.alert(
-        'Resimler Eklendi',
-        `${newImages.length} resim başarıyla eklendi. Toplam: ${selectedImages.length + newImages.length}/5`
+        t('addMealScreen.alerts.imagesAddedTitle'),
+        t('addMealScreen.alerts.imagesAddedMessage', { count: newImages.length, total: selectedImages.length + newImages.length })
       );
     }
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
     Alert.alert(
-      'Resmi Sil',
-      'Bu resmi silmek istediğinizden emin misiniz?',
+      t('addMealScreen.alerts.deleteImageTitle'),
+      t('addMealScreen.alerts.deleteImageMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('addMealScreen.alerts.cancel'), style: 'cancel' },
         {
-          text: 'Sil',
+          text: t('addMealScreen.alerts.delete'),
           style: 'destructive',
           onPress: () => {
             setSelectedImages(prev => prev.filter((_, index) => index !== indexToRemove));
@@ -314,12 +310,12 @@ export const AddMeal: React.FC = () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
-        'İzin Gerekli',
-        'Fotoğraf seçmek için galeri erişim izni gereklidir.',
+        t('addMealScreen.alerts.permissionTitle'),
+        t('addMealScreen.alerts.galleryPermission'),
         [
-          { text: 'İptal', style: 'cancel' },
+          { text: t('addMealScreen.alerts.cancel'), style: 'cancel' },
           { 
-            text: 'Ayarlara Git', 
+            text: t('addMealScreen.alerts.goToSettings'), 
             onPress: async () => {
               await ImagePicker.requestMediaLibraryPermissionsAsync();
             }
@@ -332,19 +328,19 @@ export const AddMeal: React.FC = () => {
     // Kalan resim sayısını hesapla
     const remainingSlots = 5 - selectedImages.length;
     if (remainingSlots <= 0) {
-      Alert.alert('Resim Limiti', 'En fazla 5 resim ekleyebilirsiniz.');
+      Alert.alert(t('addMealScreen.alerts.imageLimitTitle'), t('addMealScreen.alerts.imageLimitMessage'));
       return;
     }
 
     // Resim seçme seçenekleri
     Alert.alert(
-      'Fotoğraf Ekle',
-      'Nasıl fotoğraf eklemek istiyorsunuz?',
+      t('addMealScreen.alerts.addPhotoTitle'),
+      t('addMealScreen.alerts.addPhotoMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Tek Resim Seç', onPress: () => pickSingleImage() },
-        { text: 'Çoklu Resim Seç', onPress: () => pickMultipleImages() },
-        { text: 'Kameradan Çek', onPress: () => takePhoto() },
+        { text: t('addMealScreen.alerts.cancel'), style: 'cancel' },
+        { text: t('addMealScreen.alerts.pickSingle'), onPress: () => pickSingleImage() },
+        { text: t('addMealScreen.alerts.pickMultiple'), onPress: () => pickMultipleImages() },
+        { text: t('addMealScreen.alerts.takePhoto'), onPress: () => takePhoto() },
       ]
     );
   };
@@ -364,14 +360,14 @@ export const AddMeal: React.FC = () => {
         setSelectedImages(prev => [...prev, newImage]);
         
         Alert.alert(
-          'Başarılı',
-          'Resim başarıyla eklendi.',
-          [{ text: 'Tamam' }]
+          t('addMealScreen.alerts.successTitle'),
+          t('addMealScreen.alerts.imageAdded'),
+          [{ text: t('addMealScreen.alerts.ok') }]
         );
       }
     } catch (error) {
       console.error('Error picking single image:', error);
-      Alert.alert('Hata', 'Resim seçilirken bir hata oluştu.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.imagePickError'));
     }
   };
 
@@ -392,14 +388,14 @@ export const AddMeal: React.FC = () => {
         setSelectedImages(prev => [...prev, ...newImages]);
         
         Alert.alert(
-          'Başarılı',
-          `${newImages.length} resim başarıyla eklendi. Toplam: ${selectedImages.length + newImages.length}/5`,
-          [{ text: 'Tamam' }]
+          t('addMealScreen.alerts.successTitle'),
+          t('addMealScreen.alerts.imagesAddedMessage', { count: newImages.length, total: selectedImages.length + newImages.length }),
+          [{ text: t('addMealScreen.alerts.ok') }]
         );
       }
     } catch (error) {
       console.error('Error picking multiple images:', error);
-      Alert.alert('Hata', 'Resimler seçilirken bir hata oluştu.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.imagesPickError'));
     }
   };
 
@@ -408,7 +404,7 @@ export const AddMeal: React.FC = () => {
       // Kamera izni kontrolü
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+        Alert.alert(t('addMealScreen.alerts.permissionTitle'), t('addMealScreen.alerts.cameraPermission'));
         return;
       }
 
@@ -424,25 +420,25 @@ export const AddMeal: React.FC = () => {
         setSelectedImages(prev => [...prev, newImage]);
         
         Alert.alert(
-          'Başarılı',
-          'Fotoğraf başarıyla çekildi ve eklendi.',
-          [{ text: 'Tamam' }]
+          t('addMealScreen.alerts.successTitle'),
+          t('addMealScreen.alerts.photoTaken'),
+          [{ text: t('addMealScreen.alerts.ok') }]
         );
       }
     } catch (error) {
       console.error('Error taking photo:', error);
-      Alert.alert('Hata', 'Fotoğraf çekilirken bir hata oluştu.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.photoError'));
     }
   };
 
   const handleImageRemove = (index: number) => {
     Alert.alert(
-      'Resmi Sil',
-      'Bu resmi silmek istediğinizden emin misiniz?',
+      t('addMealScreen.alerts.deleteImageTitle'),
+      t('addMealScreen.alerts.deleteImageMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('addMealScreen.alerts.cancel'), style: 'cancel' },
         {
-          text: 'Sil',
+          text: t('addMealScreen.alerts.delete'),
           style: 'destructive',
           onPress: () => {
             setSelectedImages(prev => prev.filter((_, i) => i !== index));
@@ -506,9 +502,9 @@ export const AddMeal: React.FC = () => {
     // Basic validation for preview
     if (!formData.name || !formData.price || !formData.category) {
       Alert.alert(
-        'Eksik Bilgi',
-        'Önizleme için en az yemek adı, fiyat ve kategori gereklidir.',
-        [{ text: 'Tamam' }]
+        t('addMealScreen.alerts.missingInfoTitle'),
+        t('addMealScreen.alerts.missingInfoMessage'),
+        [{ text: t('addMealScreen.alerts.ok') }]
       );
       return;
     }
@@ -516,9 +512,9 @@ export const AddMeal: React.FC = () => {
     // Tarih seçimi kontrolü
     if (!formData.startDate || !formData.endDate) {
       Alert.alert(
-        'Tarih Seçimi Gerekli',
-        'Önizleme için başlangıç ve bitiş tarihlerini seçmelisiniz.',
-        [{ text: 'Tamam' }]
+        t('addMealScreen.alerts.dateRequiredTitle'),
+        t('addMealScreen.alerts.dateRequiredMessage'),
+        [{ text: t('addMealScreen.alerts.ok') }]
       );
       return;
     }
@@ -526,9 +522,9 @@ export const AddMeal: React.FC = () => {
     // Delivery seçilmişse teslimat mesafesi gerekli
     if (deliveryOptions.delivery && !formData.maxDistance) {
       Alert.alert(
-        'Teslimat Mesafesi Gerekli',
-        'Delivery seçeneğini aktifleştirdiğiniz için teslimat mesafesini belirtmelisiniz.',
-        [{ text: 'Tamam' }]
+        t('addMealScreen.alerts.distanceRequiredTitle'),
+        t('addMealScreen.alerts.distanceRequiredMessage'),
+        [{ text: t('addMealScreen.alerts.ok') }]
       );
       return;
     }
@@ -561,9 +557,9 @@ export const AddMeal: React.FC = () => {
     } catch (error) {
       console.error('Navigation error:', error);
       Alert.alert(
-        'Navigasyon Hatası',
-        'Önizleme sayfasına geçiş yapılamadı. Lütfen tekrar deneyin.',
-        [{ text: 'Tamam' }]
+        t('addMealScreen.alerts.navigationErrorTitle'),
+        t('addMealScreen.alerts.navigationErrorMessage'),
+        [{ text: t('addMealScreen.alerts.ok') }]
       );
     }
   };
@@ -571,33 +567,33 @@ export const AddMeal: React.FC = () => {
   const handlePublish = async () => {
     // Detaylı validation
     const missingFields = [];
-    if (!formData.name?.trim()) missingFields.push('Yemek Adı');
-    if (!formData.price?.trim()) missingFields.push('Fiyat');
-    if (!formData.dailyStock?.trim()) missingFields.push('Günlük Stok');
-    if (!formData.category?.trim()) missingFields.push('Kategori');
+    if (!formData.name?.trim()) missingFields.push(t('addMealScreen.fields.name'));
+    if (!formData.price?.trim()) missingFields.push(t('addMealScreen.fields.price'));
+    if (!formData.dailyStock?.trim()) missingFields.push(t('addMealScreen.fields.dailyStock'));
+    if (!formData.category?.trim()) missingFields.push(t('addMealScreen.fields.category'));
     
     if (missingFields.length > 0) {
       Alert.alert(
-        'Eksik Bilgi',
-        `Lütfen şu alanları doldurun:\n• ${missingFields.join('\n• ')}`,
-        [{ text: 'Tamam' }]
+        t('addMealScreen.alerts.missingInfoTitle'),
+        t('addMealScreen.alerts.missingFieldsMessage', { fields: missingFields.join('\n• ') }),
+        [{ text: t('addMealScreen.alerts.ok') }]
       );
       return;
     }
 
     // Sayısal değer kontrolü
     if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
-      Alert.alert('Hata', 'Lütfen geçerli bir fiyat girin.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.priceInvalid'));
       return;
     }
 
     if (isNaN(parseInt(formData.dailyStock)) || parseInt(formData.dailyStock) <= 0) {
-      Alert.alert('Hata', 'Lütfen geçerli bir stok miktarı girin.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.stockInvalid'));
       return;
     }
 
     if (!user) {
-      Alert.alert('Hata', 'Giriş yapmalısınız.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.loginRequired'));
       return;
     }
 
@@ -627,13 +623,13 @@ export const AddMeal: React.FC = () => {
         deliveryOptions,
         createdAt: new Date().toISOString(),
         sellerId: user.uid,
-        sellerName: user.displayName || 'Satıcı',
-        cookName: user.displayName || 'Satıcı', // Usta ismi için
+        sellerName: user.displayName || t('addMealScreen.defaults.sellerName'),
+        cookName: user.displayName || t('addMealScreen.defaults.sellerName'), // Usta ismi için
         imageUrl,
         // Tarih bilgileri
         availableDates: formData.startDate && formData.endDate ? 
           formatDateRange(formData.startDate, formData.endDate) : 
-          'Tarih belirtilmemiş',
+          t('addMealScreen.date.unknown'),
         startDate: formData.startDate,
         endDate: formData.endDate,
         // Diğer eksik alanlar
@@ -648,11 +644,11 @@ export const AddMeal: React.FC = () => {
       await AsyncStorage.setItem('publishedMeals', JSON.stringify(meals));
 
       Alert.alert(
-        'Başarılı!',
-        'Yemeğiniz başarıyla eklendi ve satışa sunuldu.',
+        t('addMealScreen.alerts.successTitle'),
+        t('addMealScreen.alerts.successMessage'),
         [
           {
-            text: 'Tamam',
+            text: t('addMealScreen.alerts.ok'),
             onPress: () => {
               // Form'u temizle
               setFormData({
@@ -681,12 +677,12 @@ export const AddMeal: React.FC = () => {
       console.error('Error adding food:', error);
       
       // Daha detaylı hata mesajı
-      let errorMessage = 'Yemek eklenirken bir hata oluştu.';
+      let errorMessage = t('addMealScreen.alerts.publishError');
       if (error instanceof Error) {
         errorMessage += `\n\nDetay: ${error.message}`;
       }
       
-      Alert.alert('Hata', errorMessage + '\n\nLütfen tekrar deneyin.');
+      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.publishErrorDetail', { message: errorMessage }));
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -696,7 +692,7 @@ export const AddMeal: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title="Yemek Ekle" 
+        title={t('addMealScreen.title')} 
         leftComponent={
           <TouchableOpacity 
             onPress={() => router.back()}
@@ -718,7 +714,7 @@ export const AddMeal: React.FC = () => {
           {/* Photo Upload */}
           <View style={styles.photoSection}>
             <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: '#000000' }]}>
-              Yemek Fotoğrafları
+              {t('addMealScreen.sections.photos')}
             </Text>
             
             {/* Selected Images Preview */}
@@ -748,13 +744,13 @@ export const AddMeal: React.FC = () => {
                     📸
                   </Text>
                   <Text variant="caption" style={[styles.photoText, { color: colors.primary, fontWeight: '600' }]}>
-                    Resim Ekle
+                    {t('addMealScreen.photos.add')}
                   </Text>
                   <Text variant="caption" style={[styles.photoCounter, { color: colors.textSecondary }]}>
                     ({selectedImages.length}/5)
                   </Text>
                   <Text variant="caption" style={[styles.photoHint, { color: colors.textSecondary }]}>
-                    Tek/Çoklu/Kamera
+                    {t('addMealScreen.photos.hint')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -768,10 +764,10 @@ export const AddMeal: React.FC = () => {
             {/* Country Selection */}
             <View style={styles.countryContainer}>
               <FormField
-                label="🌍 Hangi Ülke Yemeği"
+                label={t('addMealScreen.fields.country')}
                 value={formData.country}
                 onChangeText={handleInputChange('country')}
-                placeholder="Örn: Türk, İtalyan, Çin..."
+                placeholder={t('addMealScreen.placeholders.country')}
                 required
               />
               
@@ -798,33 +794,33 @@ export const AddMeal: React.FC = () => {
             {/* Category Selection */}
             <View style={styles.categoryContainer}>
               <Text variant="body" weight="medium" style={[styles.categoryLabel, { color: '#000000' }]}>
-                Kategori Seç
+                {t('addMealScreen.labels.categorySelect')}
               </Text>
               <TouchableOpacity
                 onPress={() => setCategoryModalVisible(true)}
                 style={[styles.categoryButton, { borderColor: colors.border }]}
               >
                 <Text variant="body" style={{ color: formData.category ? '#000000' : '#666666', fontSize: 16 }}>
-                  {formData.category || "Kategori seçin"}
+                  {formData.category || t('addMealScreen.placeholders.category')}
                 </Text>
                 <Text variant="body" style={{ color: '#666666' }}>📁</Text>
               </TouchableOpacity>
             </View>
 
             <FormField
-              label="Yemek Adı"
+              label={t('addMealScreen.fields.name')}
               value={formData.name}
               onChangeText={handleInputChange('name')}
-              placeholder="Örn: Ev Yapımı Mantı"
+              placeholder={t('addMealScreen.placeholders.name')}
               required
             />
 
             <View style={styles.descriptionContainer}>
               <FormField
-                label="Açıklama / Baharatlar"
+                label={t('addMealScreen.fields.description')}
                 value={formData.description}
                 onChangeText={handleInputChange('description')}
-                placeholder="Yemeğinizin özelliklerini ve kullanılan baharatları açıklayın..."
+                placeholder={t('addMealScreen.placeholders.description')}
                 multiline={true}
                 numberOfLines={3}
                 textAlignVertical="top"
@@ -838,30 +834,30 @@ export const AddMeal: React.FC = () => {
                 <Text variant="caption" style={[styles.counterText, { 
                   color: formData.description.length > 500 ? colors.error : colors.textSecondary 
                 }]}>
-                  {formData.description.length}/500 karakter
+                  {t('addMealScreen.labels.characterCount', { count: formData.description.length })}
                 </Text>
                 {formData.description.length > 0 && (
                   <Text variant="caption" style={[styles.lineCounter, { color: colors.textSecondary }]}>
-                    {formData.description.split('\n').length} satır
+                    {t('addMealScreen.labels.lineCount', { count: formData.description.split('\n').length })}
                   </Text>
                 )}
               </View>
             </View>
 
             <FormField
-              label="Fiyat (₺)"
+              label={t('addMealScreen.fields.price')}
               value={formData.price}
               onChangeText={handleInputChange('price')}
-              placeholder="25"
+              placeholder={t('addMealScreen.placeholders.price')}
               keyboardType="numeric"
               required
             />
 
             <FormField
-              label="Günlük Stok"
+              label={t('addMealScreen.fields.dailyStock')}
               value={formData.dailyStock}
               onChangeText={handleInputChange('dailyStock')}
-              placeholder="10"
+              placeholder={t('addMealScreen.placeholders.dailyStock')}
               keyboardType="numeric"
               required
             />
@@ -870,28 +866,28 @@ export const AddMeal: React.FC = () => {
             <View style={styles.dateInputs}>
               <View style={styles.dateInput}>
                 <Text variant="caption" style={[styles.dateLabel, { color: '#666666', fontSize: 14 }]}>
-                  Başlangıç Tarihi
+                  {t('addMealScreen.fields.startDate')}
                 </Text>
                 <TouchableOpacity
                   onPress={() => openDatePicker('startDate')}
                   style={[styles.dateButton, { borderColor: colors.border }]}
                 >
                   <Text variant="body" style={{ color: formData.startDate ? '#000000' : '#666666', fontSize: 16 }}>
-                    {formData.startDate || "DD/MM/YYYY"}
+                    {formData.startDate || t('addMealScreen.placeholders.date')}
                   </Text>
                   <Text variant="body" style={{ color: '#666666', fontSize: 18 }}>📅</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.dateInput}>
                 <Text variant="caption" style={[styles.dateLabel, { color: '#666666', fontSize: 14 }]}>
-                  Bitiş Tarihi
+                  {t('addMealScreen.fields.endDate')}
                 </Text>
                 <TouchableOpacity
                   onPress={() => openDatePicker('endDate')}
                   style={[styles.dateButton, { borderColor: colors.border }]}
                 >
                   <Text variant="body" style={{ color: formData.endDate ? '#000000' : '#666666', fontSize: 16 }}>
-                    {formData.endDate || "DD/MM/YYYY"}
+                    {formData.endDate || t('addMealScreen.placeholders.date')}
                   </Text>
                   <Text variant="body" style={{ color: '#666666', fontSize: 18 }}>📅</Text>
                 </TouchableOpacity>
@@ -902,7 +898,7 @@ export const AddMeal: React.FC = () => {
           {/* Delivery Options */}
           <View style={styles.section}>
             <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: '#000000' }]}>
-              Teslimat Seçenekleri
+              {t('addMealScreen.sections.deliveryOptions')}
             </Text>
             
             <View style={styles.deliveryOptions}>
@@ -911,7 +907,7 @@ export const AddMeal: React.FC = () => {
                 onPress={() => toggleDeliveryOption('pickup')}
                 style={styles.deliveryButton}
               >
-                {deliveryOptions.pickup ? "✓ " : ""}Pickup (Gel Al)
+                {deliveryOptions.pickup ? `✓ ${t('addMealScreen.delivery.pickup')}` : t('addMealScreen.delivery.pickup')}
               </Button>
               
               <Button
@@ -919,28 +915,28 @@ export const AddMeal: React.FC = () => {
                 onPress={() => toggleDeliveryOption('delivery')}
                 style={styles.deliveryButton}
               >
-                {deliveryOptions.delivery ? "✓ " : ""}Delivery (Teslimat)
+                {deliveryOptions.delivery ? `✓ ${t('addMealScreen.delivery.delivery')}` : t('addMealScreen.delivery.delivery')}
               </Button>
             </View>
 
             {deliveryOptions.delivery && (
               <View style={styles.deliverySettings}>
                 <FormField
-                  label="🚗 Teslimat Mesafesi (km)"
+                  label={t('addMealScreen.fields.maxDistance')}
                   value={formData.maxDistance}
                   onChangeText={handleInputChange('maxDistance')}
-                  placeholder="Örn: 5"
+                  placeholder={t('addMealScreen.placeholders.maxDistance')}
                   keyboardType="numeric"
                   required
                 />
 
                 <FormField
-                  label="Teslimat Ücreti (₺)"
+                  label={t('addMealScreen.fields.deliveryFee')}
                   value={formData.deliveryFee}
                   onChangeText={handleInputChange('deliveryFee')}
-                  placeholder="Örn: 10 ₺"
+                  placeholder={t('addMealScreen.placeholders.deliveryFee')}
                   keyboardType="numeric"
-                  helperText="Müşterilerden alacağınız teslimat ücreti"
+                  helperText={t('addMealScreen.labels.deliveryFeeHelper')}
                 />
               </View>
             )}
@@ -952,7 +948,7 @@ export const AddMeal: React.FC = () => {
             onPress={handlePreview}
             style={styles.previewButton}
           >
-            👁️ Önizleme (Müşteri Görünümü)
+            {t('addMealScreen.actions.preview')}
           </Button>
 
           <Button
@@ -962,7 +958,9 @@ export const AddMeal: React.FC = () => {
             style={styles.publishButton}
             loading={uploading}
           >
-            {uploading ? `Yükleniyor... %${uploadProgress.toFixed(0)}` : 'Yemeği Yayınla'}
+            {uploading
+              ? t('addMealScreen.actions.uploading', { progress: uploadProgress.toFixed(0) })
+              : t('addMealScreen.actions.publish')}
           </Button>
         </View>
         </ScrollView>
@@ -986,7 +984,7 @@ export const AddMeal: React.FC = () => {
               </TouchableOpacity>
               
               <Text variant="subheading" weight="semibold">
-                {currentDate.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}
+                {currentDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
               </Text>
               
               <TouchableOpacity
@@ -998,9 +996,9 @@ export const AddMeal: React.FC = () => {
             </View>
 
             <View style={styles.weekDays}>
-              {['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'].map((day) => (
-                <Text key={day} variant="caption" color="textSecondary" style={styles.weekDay}>
-                  {day}
+              {['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].map((dayKey) => (
+                <Text key={dayKey} variant="caption" color="textSecondary" style={styles.weekDay}>
+                  {t(`addMealScreen.weekDays.${dayKey}`)}
                 </Text>
               ))}
             </View>
@@ -1043,7 +1041,7 @@ export const AddMeal: React.FC = () => {
                 onPress={() => setDatePickerVisible(false)}
                 style={styles.cancelButton}
               >
-                İptal
+                {t('addMealScreen.actions.cancel')}
               </Button>
             </View>
           </View>
@@ -1061,7 +1059,7 @@ export const AddMeal: React.FC = () => {
           <View style={[styles.categoryModalContainer, { backgroundColor: colors.background }]}>
             <View style={styles.categoryModalHeader}>
               <Text variant="heading" weight="bold" style={styles.categoryModalTitle}>
-                Kategori Seçin
+                {t('addMealScreen.modals.categoryTitle')}
               </Text>
               <TouchableOpacity
                 onPress={() => setCategoryModalVisible(false)}
@@ -1072,7 +1070,7 @@ export const AddMeal: React.FC = () => {
             </View>
 
             <Text variant="body" color="textSecondary" style={styles.categoryModalSubtitle}>
-              Yemeğinizin hangi kategoriye ait olduğunu seçin
+              {t('addMealScreen.modals.categorySubtitle')}
             </Text>
 
             <View style={styles.categoryList}>
@@ -1090,10 +1088,10 @@ export const AddMeal: React.FC = () => {
                   activeOpacity={0.7}
                 >
                   <Text style={styles.categoryIcon}>
-                    {category === 'Ana Yemek' && '🍽️'}
-                    {category === 'Çorba' && '🍲'}
-                    {category === 'Kahvaltı' && '🥐'}
-                    {category === 'Salata' && '🥗'}
+                    {category === t('addMealScreen.categoryIcons.main') && '🍽️'}
+                    {category === t('addMealScreen.categoryIcons.soup') && '🍲'}
+                    {category === t('addMealScreen.categoryIcons.breakfast') && '🥐'}
+                    {category === t('addMealScreen.categoryIcons.salad') && '🥗'}
                   </Text>
                   <Text 
                     variant="body" 
@@ -1118,7 +1116,7 @@ export const AddMeal: React.FC = () => {
                 onPress={() => setCategoryModalVisible(false)}
                 style={styles.categoryCancelButton}
               >
-                İptal
+                {t('addMealScreen.actions.cancel')}
               </Button>
             </View>
           </View>
@@ -1538,4 +1536,3 @@ const styles = StyleSheet.create({
     color: '#000000', // Siyah renk
   },
 });
-

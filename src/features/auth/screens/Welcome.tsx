@@ -4,10 +4,12 @@ import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export const Welcome: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const handleSignIn = () => {
     router.push('/sign-in');
@@ -22,13 +24,13 @@ export const Welcome: React.FC = () => {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text variant="title" center style={styles.title}>
-            Cazi
+            {t('authWelcome.title')}
           </Text>
           <Text variant="subheading" center color="textSecondary" style={styles.subtitle}>
-            Ev Yemekleri, Gerçek Lezzet
+            {t('authWelcome.subtitle')}
           </Text>
           <Text variant="body" center color="textSecondary" style={styles.description}>
-            Cazi'ye Hoş Geldin. Evde yapılan taze yemekleri keşfet veya kendi yemeklerini sat.
+            {t('authWelcome.description')}
           </Text>
         </View>
 
@@ -39,14 +41,14 @@ export const Welcome: React.FC = () => {
             onPress={handleSignIn}
             style={styles.button}
           >
-            Giriş Yap
+            {t('authWelcome.signIn')}
           </Button>
           <Button 
             variant="outline" 
             fullWidth 
             onPress={handleSignUp}
           >
-            Kayıt Ol
+            {t('authWelcome.signUp')}
           </Button>
         </View>
       </View>
@@ -84,7 +86,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
 });
-
 
 
 

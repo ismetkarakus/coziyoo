@@ -9,6 +9,7 @@ import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
 import { useNotifications } from '../../../context/NotificationContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { foodService, Food } from '../../../services/foodService';
 import { chatService } from '../../../services/chatService';
 import { reviewService, Review, ReviewStats } from '../../../services/reviewService';
@@ -110,6 +111,7 @@ const getMockFoodDetail = (name: string, cookName: string, imageUrl: string) => 
 export const FoodDetail: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const { user } = useAuth();
   const { sendOrderNotification } = useNotifications();
@@ -292,7 +294,7 @@ export const FoodDetail: React.FC = () => {
 
   const handleMessageSeller = async () => {
     if (!user || !firebaseFood) {
-      Alert.alert('Hata', 'Mesaj göndermek için giriş yapmalısınız.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.loginToMessage'));
       return;
     }
 
@@ -312,7 +314,7 @@ export const FoodDetail: React.FC = () => {
       router.push(`/chat?id=${chatId}&name=${encodeURIComponent(firebaseFood.cookName)}&type=buyer`);
     } catch (error) {
       console.error('Error creating chat:', error);
-      Alert.alert('Hata', 'Sohbet başlatılamadı. Lütfen tekrar deneyin.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.chatFailed'));
     }
   };
 
@@ -405,17 +407,17 @@ export const FoodDetail: React.FC = () => {
 
   const handleSubmitOrder = async () => {
     if (!selectedDate) {
-      Alert.alert('Hata', 'Lütfen bir tarih seçin.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.selectDate'));
       return;
     }
 
     if (!selectedTime) {
-      Alert.alert('Hata', 'Lütfen bir saat seçin.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.selectTime'));
       return;
     }
 
     if (!user) {
-      Alert.alert('Hata', 'Sipariş vermek için giriş yapmalısınız.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.loginToOrder'));
       return;
     }
 
@@ -424,7 +426,7 @@ export const FoodDetail: React.FC = () => {
       if (firebaseFood?.id) {
         const stockDecreased = await foodService.decreaseStock(firebaseFood.id, quantity);
         if (!stockDecreased) {
-          Alert.alert('Stok Yetersiz', 'Seçtiğiniz miktarda ürün stokta bulunmuyor.');
+          Alert.alert(t('foodDetailScreen.alerts.stockTitle'), t('foodDetailScreen.alerts.stockMessage'));
           return;
         }
       }
@@ -514,14 +516,14 @@ export const FoodDetail: React.FC = () => {
       setShowPaymentModal(true);
     } catch (error) {
       console.error('Error submitting order:', error);
-      Alert.alert('Hata', 'Sipariş gönderilirken bir hata oluştu.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.orderError'));
     }
   };
 
   // Review handlers
   const handleSubmitReview = async (rating: number, comment: string, images: string[]) => {
     if (!user || !food.id) {
-      Alert.alert('Hata', 'Yorum yapmak için giriş yapmalısınız.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.loginToReview'));
       return;
     }
 
@@ -543,13 +545,13 @@ export const FoodDetail: React.FC = () => {
       });
 
       setShowReviewModal(false);
-      Alert.alert('Başarılı', 'Yorumunuz başarıyla gönderildi!');
+      Alert.alert(t('foodDetailScreen.alerts.reviewSuccessTitle'), t('foodDetailScreen.alerts.reviewSuccessMessage'));
       
       // Refresh reviews
       loadReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
-      Alert.alert('Hata', 'Yorum gönderilirken bir hata oluştu.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.reviewError'));
     } finally {
       setReviewLoading(false);
     }
@@ -562,26 +564,26 @@ export const FoodDetail: React.FC = () => {
       loadReviews();
     } catch (error) {
       console.error('Error marking review helpful:', error);
-      Alert.alert('Hata', 'İşlem gerçekleştirilemedi.');
+      Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.actionFailed'));
     }
   };
 
   const handleReviewReport = async (reviewId: string) => {
     Alert.alert(
-      'Yorumu Şikayet Et',
-      'Bu yorumu neden şikayet ediyorsunuz?',
+      t('foodDetailScreen.alerts.reportTitle'),
+      t('foodDetailScreen.alerts.reportQuestion'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('foodDetailScreen.alerts.cancel'), style: 'cancel' },
         {
-          text: 'Şikayet Et',
+          text: t('foodDetailScreen.alerts.report'),
           style: 'destructive',
           onPress: async () => {
             try {
               await reviewService.reportReview(reviewId);
-              Alert.alert('Teşekkürler', 'Şikayetiniz alındı ve incelenecek.');
+              Alert.alert(t('foodDetailScreen.alerts.thanksTitle'), t('foodDetailScreen.alerts.thanksMessage'));
             } catch (error) {
               console.error('Error reporting review:', error);
-              Alert.alert('Hata', 'Şikayet gönderilemedi.');
+              Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.reportFailed'));
             }
           }
         }
@@ -592,11 +594,11 @@ export const FoodDetail: React.FC = () => {
   // Payment handlers
   const handlePaymentSuccess = (transactionId: string) => {
     Alert.alert(
-      'Sipariş Tamamlandı!',
-      `Ödemeniz başarıyla alındı. Sipariş numaranız: ${paymentRequest?.orderId}\n\nİşlem ID: ${transactionId}`,
+      t('foodDetailScreen.alerts.orderCompleteTitle'),
+      t('foodDetailScreen.alerts.paymentSuccessMessage', { orderId: paymentRequest?.orderId ?? '', transactionId }),
       [
         {
-          text: 'Tamam',
+          text: t('foodDetailScreen.alerts.ok'),
           onPress: () => {
             // Reset form
             setSelectedDate('2024-01-15');
@@ -618,7 +620,7 @@ export const FoodDetail: React.FC = () => {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <TopBar 
-          title="Yükleniyor..."
+          title={t('foodDetailScreen.loadingTitle')}
           leftComponent={
             <TouchableOpacity 
               onPress={handleBackPress}
@@ -631,7 +633,7 @@ export const FoodDetail: React.FC = () => {
         />
         <View style={styles.loadingContainer}>
           <Text variant="body" color="textSecondary">
-            Yemek detayları yükleniyor...
+            {t('foodDetailScreen.loadingText')}
           </Text>
         </View>
       </View>
@@ -748,14 +750,14 @@ export const FoodDetail: React.FC = () => {
                       }}
                     >
                       <Text variant="body" style={{ color: colors.primary }}>
-                        🍴 hepsini gör
+                        {t('foodDetailScreen.viewAllCook')}
                       </Text>
                     </TouchableOpacity>
                   </View>
                   <View style={styles.rating}>
                     <StarRating rating={food.rating} size="small" showNumber />
                     <Text variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
-                      ({food.reviewCount} değerlendirme)
+                      {t('foodDetailScreen.reviewCount', { count: food.reviewCount })}
                     </Text>
                   </View>
                 </View>
@@ -764,28 +766,30 @@ export const FoodDetail: React.FC = () => {
 
             <View style={styles.metaInfo}>
               <View style={styles.metaItem}>
-                <Text variant="caption" color="textSecondary">Mesafe</Text>
+                <Text variant="caption" color="textSecondary">{t('foodDetailScreen.distance')}</Text>
                 <Text variant="body" weight="medium">{food.distance}</Text>
               </View>
               <View style={styles.metaItem}>
-                <Text variant="caption" color="textSecondary">Hazırlık</Text>
+                <Text variant="caption" color="textSecondary">{t('foodDetailScreen.prep')}</Text>
                 <Text variant="body" weight="medium">{food.prepTime}</Text>
               </View>
               <View style={styles.metaItem}>
-                <Text variant="body" weight="medium" color="primary">{deliveryType}</Text>
+                <Text variant="body" weight="medium" color="primary">
+                  {deliveryType === 'pickup' ? t('foodDetailScreen.pickup') : t('foodDetailScreen.delivery')}
+                </Text>
               </View>
             </View>
 
             {/* Availability Info */}
             <View style={styles.availabilitySection}>
               <View style={styles.availabilityItem}>
-                <Text variant="caption" color="textSecondary">Satış Tarihleri</Text>
+                <Text variant="caption" color="textSecondary">{t('foodDetailScreen.saleDates')}</Text>
                 <Text variant="body" weight="medium" color="primary">📅 {food.availableDates}</Text>
               </View>
               <View style={styles.availabilityItem}>
-                <Text variant="caption" color="textSecondary">Stok Durumu</Text>
+                <Text variant="caption" color="textSecondary">{t('foodDetailScreen.stockStatus')}</Text>
                 <Text variant="body" weight="medium" color={food.currentStock > 0 ? "primary" : "error"}>
-                  📦 {food.currentStock}/{food.dailyStock} kalan
+                  {t('foodDetailScreen.stockRemaining', { current: food.currentStock, total: food.dailyStock })}
                 </Text>
               </View>
             </View>
@@ -795,7 +799,7 @@ export const FoodDetail: React.FC = () => {
           {/* Description */}
           <Card variant="default" padding="md" style={styles.descriptionCard}>
             <Text variant="subheading" weight="medium" style={styles.descriptionTitle}>
-              Açıklama
+              {t('foodDetailScreen.descriptionTitle')}
             </Text>
             <Text variant="body" style={styles.description}>
               {food.description}
@@ -807,7 +811,7 @@ export const FoodDetail: React.FC = () => {
           <Card variant="default" padding="md" style={styles.reviewsCard}>
             <View style={styles.reviewsHeader}>
               <Text variant="subheading" weight="medium" style={styles.reviewsTitle}>
-                Değerlendirmeler
+                {t('foodDetailScreen.reviewsTitle')}
               </Text>
               {user && !hasUserReviewed && (
                 <TouchableOpacity
@@ -815,7 +819,7 @@ export const FoodDetail: React.FC = () => {
                   style={[styles.addReviewButton, { backgroundColor: colors.primary }]}
                 >
                   <Text variant="caption" style={{ color: colors.background }}>
-                    Yorum Yap
+                    {t('foodDetailScreen.addReview')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -841,7 +845,7 @@ export const FoodDetail: React.FC = () => {
               ) : (
                 <View style={styles.noReviews}>
                   <Text variant="body" color="textSecondary" style={{ textAlign: 'center' }}>
-                    Henüz değerlendirme yapılmamış.
+                    {t('foodDetailScreen.noReviews')}
                   </Text>
                   {user && (
                     <TouchableOpacity
@@ -849,7 +853,7 @@ export const FoodDetail: React.FC = () => {
                       style={[styles.firstReviewButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
                     >
                       <Text variant="body" style={{ color: colors.primary }}>
-                        İlk yorumu sen yap!
+                        {t('foodDetailScreen.firstReview')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -866,7 +870,7 @@ export const FoodDetail: React.FC = () => {
                 }}
               >
                 <Text variant="body" style={{ color: colors.primary }}>
-                  Tüm yorumları gör ({reviews.length})
+                  {t('foodDetailScreen.viewAllReviews', { count: reviews.length })}
                 </Text>
               </TouchableOpacity>
             )}
@@ -883,7 +887,7 @@ export const FoodDetail: React.FC = () => {
           activeOpacity={0.8}
         >
           <Text variant="body" weight="semibold" style={[styles.bottomButtonText, { color: colors.primary }]}>
-            💬 Mesajlaş
+            {t('foodDetailScreen.message')}
           </Text>
         </TouchableOpacity>
         
@@ -893,7 +897,7 @@ export const FoodDetail: React.FC = () => {
           activeOpacity={0.8}
         >
           <Text variant="body" weight="semibold" style={styles.bottomButtonText}>
-            🛒 Sipariş Ver
+            {t('foodDetailScreen.order')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -908,7 +912,7 @@ export const FoodDetail: React.FC = () => {
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <Text variant="heading" weight="semibold">
-              Sipariş Ver
+              {t('foodDetailScreen.orderModalTitle')}
             </Text>
             <TouchableOpacity
               onPress={() => setShowOrderModal(false)}
@@ -942,7 +946,7 @@ export const FoodDetail: React.FC = () => {
                 <View style={styles.counterHeader}>
                   <FontAwesome name="calendar" size={18} color={colors.primary} />
                   <Text variant="caption" color="textSecondary">
-                    Ocak 2024
+                    {t('foodDetailScreen.monthLabel')}
                   </Text>
                 </View>
                 <View style={styles.counterControls}>
@@ -978,7 +982,7 @@ export const FoodDetail: React.FC = () => {
               <View style={[styles.counterContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={styles.counterHeader}>
                   <FontAwesome name="clock-o" size={18} color={colors.primary} />
-                  <Text variant="caption" color="textSecondary">Saat</Text>
+                  <Text variant="caption" color="textSecondary">{t('foodDetailScreen.timeLabel')}</Text>
                 </View>
                 <View style={styles.counterControls}>
                   <TouchableOpacity
@@ -1057,7 +1061,7 @@ export const FoodDetail: React.FC = () => {
             {/* Quantity Selection */}
             <View style={styles.sectionContainer}>
               <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                Adet
+                {t('foodDetailScreen.quantityLabel')}
               </Text>
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
@@ -1081,7 +1085,7 @@ export const FoodDetail: React.FC = () => {
             {/* Delivery Type */}
             <View style={styles.sectionContainer}>
               <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                Teslimat Türü
+                {t('foodDetailScreen.deliveryType')}
               </Text>
               <View style={styles.deliveryContainer}>
                 <TouchableOpacity
@@ -1101,7 +1105,7 @@ export const FoodDetail: React.FC = () => {
                       color: deliveryType === 'pickup' ? 'white' : colors.text,
                     }}
                   >
-                    🏪 Gel Al
+                    {t('foodDetailScreen.pickup')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -1121,7 +1125,7 @@ export const FoodDetail: React.FC = () => {
                       color: deliveryType === 'delivery' ? 'white' : colors.text,
                     }}
                   >
-                    🚗 Teslimat
+                    {t('foodDetailScreen.delivery')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1130,7 +1134,7 @@ export const FoodDetail: React.FC = () => {
             {/* Total Price */}
             <View style={[styles.totalContainer, { backgroundColor: colors.surface }]}>
               <Text variant="subheading" weight="semibold">
-                Toplam Tutar
+                {t('foodDetailScreen.total')}
               </Text>
               <Text variant="heading" weight="bold" color="primary">
                 ₺{(food.price * quantity).toFixed(2)}
@@ -1143,7 +1147,7 @@ export const FoodDetail: React.FC = () => {
               onPress={handleSubmitOrder}
             >
               <Text variant="body" weight="semibold" style={styles.submitButtonText}>
-                Sipariş Talebini Gönder
+                {t('foodDetailScreen.submit')}
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -1723,4 +1727,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
