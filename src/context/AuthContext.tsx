@@ -53,15 +53,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // First check for mock session (test accounts)
         const mockSession = await authService.getMockSession();
         if (mockSession) {
           setUser(mockSession.user);
           setUserData(mockSession.userData);
-          handleAutoRedirect(mockSession.userData);
-        } else {
-          setUser(null);
-          setUserData(null);
+          // Let AuthGuard handle the redirect after state is set
+          return;
         }
+        
+        // Then check for regular stored auth
+        const storedUser = await authService.loadStoredUser();
+        if (storedUser) {
+          const userData = await authService.getUserData(storedUser.uid);
+          if (userData) {
+            setUser(storedUser);
+            setUserData(userData);
+            // Let AuthGuard handle the redirect after state is set
+            return;
+          }
+        }
+        
+        setUser(null);
+        setUserData(null);
       } catch (error) {
         console.error('Auth initialization error:', error);
       } finally {
@@ -78,13 +92,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await authService.signIn(email, password);
       setUser(result.user);
       setUserData(result.userData);
-      handleAutoRedirect(result.userData);
+      // State updates are async - wait for next tick before redirect
+      setTimeout(() => handleAutoRedirect(result.userData), 0);
     } catch (error) {
       const mockSession = await authService.signInWithMockCredentials(email, password);
       if (mockSession) {
         setUser(mockSession.user);
         setUserData(mockSession.userData);
-        handleAutoRedirect(mockSession.userData);
+        // State updates are async - wait for next tick before redirect
+        setTimeout(() => handleAutoRedirect(mockSession.userData), 0);
         return;
       }
       throw error;

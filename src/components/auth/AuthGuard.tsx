@@ -37,7 +37,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     // ZORLA REDIRECT - Kullanıcı yoksa auth'a git
     if (!user && !inAuthGroup) {
       console.log('🚨 FORCING REDIRECT: No user, going to sign-in');
-      router.replace('/sign-in');
+      router.replace('/(auth)');
       return;
     }
 

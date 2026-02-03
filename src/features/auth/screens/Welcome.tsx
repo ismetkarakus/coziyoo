@@ -12,7 +12,7 @@ export const Welcome: React.FC = () => {
   const { t } = useTranslation();
 
   const handleSignIn = () => {
-    router.push('/sign-in');
+    router.push('/(auth)');
   };
 
   const handleSignUp = () => {
