@@ -33,13 +33,6 @@ const getMenuItems = (t: (key: string) => string) => ([
     icon: '📝',
     route: '/(seller)/manage-meals',
   },
-  {
-    id: 'messages',
-    title: t('sellerPanel.menu.messages.title'),
-    description: t('sellerPanel.menu.messages.description'),
-    icon: '💬',
-    route: '/(seller)/messages',
-  },
 ]);
 
 // Default seller data
@@ -121,7 +114,7 @@ export const SellerPanel: React.FC = () => {
     const runSignOut = async () => {
       try {
         await signOut();
-        router.replace('/(auth)/sign-in');
+        router.replace('/sign-in');
       } catch (error) {
         console.error('Sign out error:', error);
         Alert.alert(t('error'), t('sellerPanel.alerts.signOutError'));

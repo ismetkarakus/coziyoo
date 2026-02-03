@@ -11,51 +11,10 @@ import { useAuth } from '../../../context/AuthContext';
 
 const getProfileSections = (t: (key: string) => string) => ([
   {
-    id: 'account',
-    title: t('profileScreen.sections.account'),
-    items: [
-      { id: 'personal-info', title: t('profileScreen.items.personalInfo'), icon: '👤' },
-      { id: 'change-password', title: t('profileScreen.items.changePassword'), icon: '🔒' },
-    ],
-  },
-  {
-    id: 'location',
-    title: t('profileScreen.sections.location'),
-    items: [
-      { id: 'addresses', title: t('profileScreen.items.addresses'), icon: '📍' },
-      { id: 'location-settings', title: t('profileScreen.items.locationSettings'), icon: '🗺️' },
-    ],
-  },
-  {
-    id: 'wallet',
-    title: t('profileScreen.sections.wallet'),
-    items: [
-      { id: 'wallet', title: t('profileScreen.items.wallet'), icon: '💰' },
-    ],
-  },
-  {
-    id: 'orders',
-    title: t('profileScreen.sections.orders'),
-    items: [
-      { id: 'order-history', title: t('profileScreen.items.orderHistory'), icon: '📋' },
-      { id: 'favorites', title: t('profileScreen.items.favorites'), icon: '❤️' },
-    ],
-  },
-  {
-    id: 'communication',
-    title: t('profileScreen.sections.communication'),
-    items: [
-      { id: 'messages', title: t('profileScreen.items.messages'), icon: '💬' },
-      { id: 'notifications', title: t('profileScreen.items.notifications'), icon: '🔔' },
-    ],
-  },
-  {
     id: 'support',
-    title: t('profileScreen.sections.support'),
+    title: t('profileScreen.items.contact'),
     items: [
-      { id: 'help', title: t('profileScreen.items.help'), icon: '❓' },
       { id: 'contact', title: t('profileScreen.items.contact'), icon: '📞' },
-      { id: 'about', title: t('profileScreen.items.about'), icon: 'ℹ️' },
     ],
   },
 ]);
@@ -167,7 +126,7 @@ export const Profile: React.FC = () => {
     const runSignOut = async () => {
       try {
         await signOut();
-        router.replace('/(auth)/sign-in');
+        router.replace('/sign-in');
       } catch (error) {
         console.error('Sign out error:', error);
         Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
@@ -195,11 +154,7 @@ export const Profile: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar title="" leftComponent={
-        <Text variant="heading" weight="bold" color="primary" style={{ fontSize: 24 }}>
-          {t('profileScreen.title')}
-        </Text>
-      } />
+      <TopBar title={t('profileScreen.title')} titleStyle={{ fontSize: 24 }} />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* User Info */}
@@ -229,39 +184,76 @@ export const Profile: React.FC = () => {
           </View>
         </Card>
 
-        {/* Profile Sections */}
-        {profileSections.map((section) => (
-          <View key={section.id} style={styles.section}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              {section.title}
+        {/* Quick Actions under profile */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={styles.quickActionItem}
+            onPress={() => handleItemPress('personal-info')}
+            activeOpacity={0.7}
+          >
+            <Text variant="body" weight="semibold" style={styles.quickActionText}>
+              👤 {t('profileScreen.items.personalInfo')}
             </Text>
-            
-            <Card variant="default" padding="xs" style={styles.sectionCard}>
-              {section.items.map((item, index) => (
-                <TouchableOpacity
-                  key={item.id}
-                  onPress={() => handleItemPress(item.id)}
-                  style={[
-                    styles.menuItem,
-                    index !== section.items.length - 1 && styles.menuItemBorder,
-                    { borderBottomColor: colors.border }
-                  ]}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.menuItemContent}>
-                    <Text style={styles.menuIcon}>{item.icon}</Text>
-                    <Text variant="body" style={styles.menuTitle}>
-                      {item.title}
-                    </Text>
-                    <Text variant="body" color="textSecondary">
-                      →
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </Card>
-          </View>
-        ))}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionItem}
+            onPress={() => handleItemPress('change-password')}
+            activeOpacity={0.7}
+          >
+            <Text variant="body" weight="semibold" style={styles.quickActionText}>
+              🔒 {t('profileScreen.items.changePassword')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionItem}
+            onPress={() => handleItemPress('order-history')}
+            activeOpacity={0.7}
+          >
+            <Text variant="body" weight="semibold" style={styles.quickActionText}>
+              📋 {t('profileScreen.items.orderHistory')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionItem}
+            onPress={() => handleItemPress('favorites')}
+            activeOpacity={0.7}
+          >
+            <Text variant="body" weight="semibold" style={styles.quickActionText}>
+              ❤️ {t('profileScreen.items.favorites')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionItem}
+            onPress={() => handleItemPress('location-settings')}
+            activeOpacity={0.7}
+          >
+            <Text variant="body" weight="semibold" style={styles.quickActionText}>
+              🗺️ {t('profileScreen.items.locationSettings')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionItem}
+            onPress={() => handleItemPress('addresses')}
+            activeOpacity={0.7}
+          >
+            <Text variant="body" weight="semibold" style={styles.quickActionText}>
+              📍 {t('profileScreen.items.addresses')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Contact Card (Language button style) */}
+        <Card variant="default" padding="md" style={styles.sectionCard}>
+          <TouchableOpacity
+            onPress={() => handleItemPress('contact')}
+            style={[styles.contactButton, { borderColor: colors.border }]}
+            activeOpacity={0.7}
+          >
+            <Text variant="body" weight="semibold">
+              {t('profileScreen.items.contact')}
+            </Text>
+          </TouchableOpacity>
+        </Card>
 
         {/* Language */}
         <View style={styles.section}>
@@ -322,6 +314,26 @@ const styles = StyleSheet.create({
   userDetails: {
     flex: 1,
   },
+  quickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  quickActionItem: {
+    flexBasis: '48%',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 12,
+    backgroundColor: Colors.light.primary,
+    borderWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickActionText: {
+    color: 'white',
+  },
   section: {
     marginBottom: Spacing.lg,
   },
@@ -331,6 +343,13 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     marginHorizontal: Spacing.md,
+  },
+  contactButton: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   menuItem: {
     paddingHorizontal: Spacing.md,

@@ -339,6 +339,7 @@ export default function SellerProfileScreen() {
                   currentStock={foodStocks[food.id] ?? food.currentStock}
                   onAddToCart={handleAddToCart}
                   isPreview={false}
+                  showAvailableDates={true}
                 />
               ))}
             </View>
@@ -403,10 +404,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   foodsContainer: {
-    padding: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: 0,
   },
   sectionTitle: {
     marginBottom: Spacing.md,
+    marginHorizontal: Spacing.md,
   },
   categorySection: {
     marginBottom: Spacing.lg,
@@ -414,9 +417,8 @@ const styles = StyleSheet.create({
   categoryTitle: {
     marginBottom: Spacing.md,
     color: '#666',
+    marginHorizontal: Spacing.md,
   },
 });
-
-
 
 

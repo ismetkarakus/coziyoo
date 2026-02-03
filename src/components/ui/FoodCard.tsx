@@ -255,6 +255,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           </View>
 
 
+          {/* Food details column */}
+          <View style={styles.detailsColumn}>
+            <View style={styles.detailsTopRow}>
           {/* Food info - NOT clickable */}
           <View style={[styles.info, isGridMode && styles.gridInfo]}>
             <View style={styles.headerRow}>
@@ -290,66 +293,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({
             />
           </View>
         </View>
-        <Text variant="caption" color="textSecondary" style={{ fontSize: 11, marginLeft: 8 }}>
-          • {showAvailableDates ? (availableDates || 'Tarih belirtilmemiş') : (maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance)}
-        </Text>
       </View>
 
-      {/* Stock Info and Country */}
-      <View style={styles.availabilityInfo}>
-        <Text variant="caption" color="textSecondary" style={styles.compactDateText}>
-          {country} yemeği • {currentStock || 0} adet
-        </Text>
-      </View>
-
-            {/* Delivery Options */}
-            <View style={styles.badges}>
-              {availableOptions.length > 1 ? (
-                // Multiple options - show selectable buttons
-                availableOptions.map((option) => {
-                  const isSelected = selectedDeliveryType === option;
-                  return (
-                    <TouchableOpacity 
-                      key={option}
-                      onPress={() => setSelectedDeliveryType(option)}
-                      style={[
-                        styles.badge, 
-                        { 
-                          backgroundColor: isSelected ? colors.primary : '#F5F5F5',
-                          borderWidth: 1,
-                          borderColor: isSelected ? colors.primary : '#E0E0E0',
-                        }
-                      ]}
-                    >
-                      <Text variant="body" weight="medium" style={{ 
-                        color: isSelected ? 'white' : '#888888', 
-                        fontSize: 11
-                      }}>
-                        {option === 'pickup' ? 'Gel Al' : 'Teslimat'}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })
-              ) : (
-                // Single option - show with primary color
-                availableOptions.length === 1 && (
-                  <View style={[
-                    styles.badge, 
-                    { 
-                      backgroundColor: colors.primary,
-                      borderWidth: 0,
-                    }
-                  ]}>
-                    <Text variant="body" weight="medium" style={{ 
-                      color: 'white', 
-                      fontSize: 11 
-                    }}>
-                      {availableOptions[0] === 'pickup' ? '🏪 Gel Al' : '🚚 Teslimat'}
-                    </Text>
-                  </View>
-                )
-              )}
-            </View>
           </View>
 
           {/* Right side controls - NOT clickable for navigation */}
@@ -378,16 +323,76 @@ export const FoodCard: React.FC<FoodCardProps> = ({
               </TouchableOpacity>
             </View>
           </View>
+            </View>
 
-          {/* Add to cart button - Bottom Right Corner */}
-          <TouchableOpacity 
-            onPress={handleAddToCart}
-            style={[styles.addToCartButtonBottomRight, { backgroundColor: colors.primary }]}
-          >
-            <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
-              Sepete Ekle
+          {/* Bottom meta info (near buttons) */}
+          <View style={styles.bottomMetaRow}>
+            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.bottomMetaDate]}>
+              • {showAvailableDates ? (availableDates || 'Tarih belirtilmemiş') : (maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance)}
             </Text>
-          </TouchableOpacity>
+            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText]}>
+              {country} yemeği • {currentStock || 0} adet
+            </Text>
+          </View>
+
+          {/* Bottom actions row */}
+          <View style={styles.bottomActionsRow}>
+            <View style={styles.deliveryButtonsRow}>
+              {availableOptions.length > 1 ? (
+                availableOptions.map((option) => {
+                  const isSelected = selectedDeliveryType === option;
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      onPress={() => setSelectedDeliveryType(option)}
+                      style={[
+                        styles.deliveryButton,
+                        {
+                          backgroundColor: isSelected ? colors.primary : '#F5F5F5',
+                          borderWidth: 1,
+                          borderColor: isSelected ? colors.primary : '#E0E0E0',
+                        },
+                      ]}
+                    >
+                      <Text
+                        variant="body"
+                        weight="medium"
+                        style={{ color: isSelected ? 'white' : '#888888', fontSize: 11 }}
+                      >
+                        {option === 'pickup' ? 'Gel Al' : 'Teslimat'}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })
+              ) : (
+                availableOptions.length === 1 && (
+                  <View
+                    style={[
+                      styles.deliveryButton,
+                      {
+                        backgroundColor: colors.primary,
+                        borderWidth: 0,
+                      },
+                    ]}
+                  >
+                    <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
+                      {availableOptions[0] === 'pickup' ? '🏪 Gel Al' : '🚚 Teslimat'}
+                    </Text>
+                  </View>
+                )
+              )}
+            </View>
+
+            <TouchableOpacity
+              onPress={handleAddToCart}
+              style={[styles.addToCartButtonBottomRight, { backgroundColor: colors.primary }]}
+            >
+              <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
+                Sepete Ekle
+              </Text>
+            </TouchableOpacity>
+          </View>
+          </View>
         </View>
 
       </Card>
@@ -421,6 +426,14 @@ const styles = StyleSheet.create({
     position: 'relative', // Allow absolute positioning for button
     minHeight: 160, // Back to original height
   },
+  detailsColumn: {
+    flex: 1,
+    minHeight: 160,
+    justifyContent: 'space-between',
+  },
+  detailsTopRow: {
+    flexDirection: 'row',
+  },
   imageContainer: {
     width: 180, // Back to original size
     height: 160, // Back to original size
@@ -449,7 +462,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 10, // Back to original
     paddingRight: 4, // Back to original
-    paddingVertical: 4, // Back to original
+    paddingVertical: 3, // Slightly lower to sit closer to buttons
   },
   headerRow: {
     flexDirection: 'row',
@@ -462,35 +475,58 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   cookInfo: {
+    marginTop: 4,
     marginBottom: 1, // Minimal margin
   },
   cookName: {
-    fontSize: 12, // Smaller font
+    fontSize: 13, // Slightly larger
   },
   ratingDistance: {
-    marginBottom: 1, // Minimal margin
+    marginTop: 4,
+    marginBottom: 0,
   },
   availabilityInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 1, // Minimal margin
+    marginBottom: -6,
+    marginTop: 2,
   },
-  badges: {
+  bottomMetaRow: {
+    marginTop: 0,
+    marginBottom: 0,
+    transform: [{ translateY: -12 }],
+  },
+  bottomMetaText: {
+    fontSize: 13,
+  },
+  bottomMetaDate: {
+    transform: [{ translateY: -4 }],
+  },
+  bottomActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.sm,
+    paddingBottom: 2,
+    paddingTop: 0,
+    marginTop: -6,
+  },
+  deliveryButtonsRow: {
     flexDirection: 'row',
     gap: Spacing.xs,
   },
-  badge: {
-    paddingHorizontal: Spacing.xs, // Same as sepete ekle button
-    paddingVertical: 1, // Reduced from 3 to 1 for thinner buttons
-    borderRadius: 6, // Same as sepete ekle button
-    minWidth: 60, // Same as sepete ekle button
+  deliveryButton: {
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    borderRadius: 5,
+    minWidth: 48,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    elevation: 3, // Same shadow as sepete ekle button
+    elevation: 3,
   },
   rightControls: {
     alignItems: 'flex-end',
@@ -510,8 +546,8 @@ const styles = StyleSheet.create({
     gap: 4, // Reduced gap for compact design
     backgroundColor: '#FFFFFF', // White background
     borderRadius: 12, // Smaller radius for compact oval
-    paddingHorizontal: 6, // Reduced padding for smaller size
-    paddingVertical: 3, // Reduced padding for smaller size
+    paddingHorizontal: 4, // Reduced padding for smaller size
+    paddingVertical: 2, // Reduced padding for smaller size
     marginTop: 38, // Increased margin to push down even closer to sepete ekle
     marginBottom: 2, // Keep minimal bottom margin
     marginLeft: 'auto', // Push to right side
@@ -525,23 +561,23 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0', // Light border for definition
   },
   quantityButton: {
-    width: 18, // Smaller for compact design
-    height: 18, // Smaller for compact design
-    borderRadius: 9, // Circular buttons
+    width: 16, // Smaller for compact design
+    height: 16, // Smaller for compact design
+    borderRadius: 8, // Circular buttons
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
   quantityButtonText: {
-    fontSize: 14, // Smaller for compact design
+    fontSize: 13, // Slightly larger
     fontWeight: 'bold',
     color: '#333333', // Dark color for contrast
-    lineHeight: 14, // Better alignment
+    lineHeight: 13, // Better alignment
   },
   quantityText: {
-    minWidth: 14, // Smaller for compact design
+    minWidth: 12, // Smaller for compact design
     textAlign: 'center',
-    fontSize: 12, // Smaller font size
+    fontSize: 12, // Slightly larger
     color: '#333333', // Dark color
     fontWeight: 'bold',
   },
@@ -553,22 +589,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addToCartButtonBottomRight: {
-    position: 'absolute',
-    bottom: Spacing.sm, // Distance from bottom edge
-    right: Spacing.sm, // Distance from right edge
-    paddingHorizontal: Spacing.xs, // Smaller padding
-    paddingVertical: 3, // Smaller vertical padding
-    borderRadius: 6, // Badge format radius
-    minWidth: 60, // Smaller width
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    borderRadius: 6,
+    minWidth: 56,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    elevation: 3, // Add shadow for visibility
+    elevation: 3,
   },
   compactDateText: {
-    fontSize: 11, // Slightly smaller for compact look
+    fontSize: 12, // Slightly larger
     paddingHorizontal: 4, // Narrower from sides
   },
   // Grid Mode Styles
@@ -613,7 +646,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   priceAligned: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8, // Sayaç ile arasında boşluk

@@ -131,16 +131,6 @@ export default function FoodDetailSimple() {
             </Text>
           </View>
 
-          {/* Hakkımda - Satıcı Hakkında */}
-          <View style={styles.aboutSellerSection}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              {t('foodDetailSimpleScreen.aboutSellerTitle')}
-            </Text>
-            <Text variant="body" style={styles.description}>
-              {t('foodDetailSimpleScreen.aboutSeller')}
-            </Text>
-          </View>
-          
           {/* Reviews Section */}
           <View style={styles.reviewsSection}>
             <Text variant="subheading" weight="semibold" style={styles.reviewsTitle}>

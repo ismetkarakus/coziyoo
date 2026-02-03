@@ -12,6 +12,7 @@ interface TopBarProps {
   rightComponent?: React.ReactNode;
   transparent?: boolean;
   onBack?: () => void;
+  titleStyle?: object;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -20,6 +21,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   rightComponent,
   transparent = false,
   onBack,
+  titleStyle,
 }) => {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
@@ -65,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           
           <View style={styles.center}>
             {title && (
-              <Text variant="heading" weight="bold" center style={{ fontSize: 20 }}>
+              <Text variant="heading" weight="bold" center style={[{ fontSize: 20 }, titleStyle]}>
                 {title}
               </Text>
             )}
@@ -104,4 +106,3 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-

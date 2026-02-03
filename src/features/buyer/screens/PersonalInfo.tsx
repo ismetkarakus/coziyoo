@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -17,13 +17,24 @@ interface PersonalInfoData {
   birthDate: string;
   gender: string;
   avatar: string;
+  cards: CardData[];
+  addressLine1: string;
+  city: string;
+  postcode: string;
+}
+
+interface CardData {
+  cardNumber: string;
+  cardExpiry: string;
+  cardCvv: string;
 }
 
 export const PersonalInfo: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
+  const [showCards, setShowCards] = useState(false);
   const [formData, setFormData] = useState<PersonalInfoData>({
     name: '',
     email: '',
@@ -31,6 +42,10 @@ export const PersonalInfo: React.FC = () => {
     birthDate: '',
     gender: '',
     avatar: '',
+    cards: [],
+    addressLine1: '',
+    city: '',
+    postcode: '',
   });
 
   useEffect(() => {
@@ -41,7 +56,11 @@ export const PersonalInfo: React.FC = () => {
     try {
       const data = await AsyncStorage.getItem('personalInfo');
       if (data) {
-        setFormData(JSON.parse(data));
+        const parsed = JSON.parse(data);
+        setFormData({
+          ...parsed,
+          cards: Array.isArray(parsed?.cards) ? parsed.cards : [],
+        });
       } else {
       // Default data
       setFormData({
@@ -51,6 +70,16 @@ export const PersonalInfo: React.FC = () => {
         birthDate: '15/03/1990',
         gender: 'Erkek',
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+        cards: [
+          {
+            cardNumber: '4111 1111 1111 1111',
+            cardExpiry: '12/28',
+            cardCvv: '123',
+          },
+        ],
+        addressLine1: 'Moda Mah. Bahariye Cd. No: 12 D:3',
+        city: 'Kadıköy / İstanbul',
+        postcode: '34710',
       });
     }
   } catch (error) {
@@ -90,8 +119,38 @@ export const PersonalInfo: React.FC = () => {
     }
   };
 
+  const handleCardButtonPress = () => {
+    setShowCards(true);
+    setIsEditing(true);
+    if (!isEditing) {
+      // allow edit mode when user taps "Kart Ekle"
+    }
+    setFormData((prev) => ({
+      ...prev,
+      cards: [
+        ...prev.cards,
+        {
+          cardNumber: '',
+          cardExpiry: '',
+          cardCvv: '',
+        },
+      ],
+    }));
+  };
+
+  const updateCard = (index: number, update: Partial<CardData>) => {
+    setFormData((prev) => ({
+      ...prev,
+      cards: prev.cards.map((card, i) => (i === index ? { ...card, ...update } : card)),
+    }));
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <TopBar 
         title={t('personalInfoScreen.title')}
         leftComponent={
@@ -108,7 +167,12 @@ export const PersonalInfo: React.FC = () => {
         }
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Avatar Section */}
         <Card style={styles.avatarCard}>
           <View style={styles.avatarContainer}>
@@ -240,8 +304,181 @@ export const PersonalInfo: React.FC = () => {
             </View>
           </View>
         </Card>
+
+        {/* Address Details */}
+        <Card style={styles.formCard}>
+          <View style={styles.formSection}>
+            <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
+              {t('personalInfoScreen.addressSectionTitle')}
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text variant="body" color="textSecondary" style={styles.label}>
+                {t('personalInfoScreen.labels.addressLine1')}
+              </Text>
+              <TextInput
+                style={[styles.input, { 
+                  backgroundColor: isEditing ? colors.surface : colors.background,
+                  borderColor: colors.border,
+                  color: colors.text 
+                }]}
+                value={formData.addressLine1}
+                onChangeText={(text) => setFormData({ ...formData, addressLine1: text })}
+                editable={isEditing}
+                placeholder={t('personalInfoScreen.placeholders.addressLine1')}
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <View style={styles.inputRow}>
+              <View style={[styles.inputGroup, styles.inputHalf]}>
+                <Text variant="body" color="textSecondary" style={styles.label}>
+                  {t('personalInfoScreen.labels.city')}
+                </Text>
+                <TextInput
+                  style={[styles.input, { 
+                    backgroundColor: isEditing ? colors.surface : colors.background,
+                    borderColor: colors.border,
+                    color: colors.text 
+                  }]}
+                  value={formData.city}
+                  onChangeText={(text) => setFormData({ ...formData, city: text })}
+                  editable={isEditing}
+                  placeholder={t('personalInfoScreen.placeholders.city')}
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+
+              <View style={[styles.inputGroup, styles.inputHalf]}>
+                <Text variant="body" color="textSecondary" style={styles.label}>
+                  {t('personalInfoScreen.labels.postcode')}
+                </Text>
+                <TextInput
+                  style={[styles.input, { 
+                    backgroundColor: isEditing ? colors.surface : colors.background,
+                    borderColor: colors.border,
+                    color: colors.text 
+                  }]}
+                  value={formData.postcode}
+                  onChangeText={(text) => setFormData({ ...formData, postcode: text })}
+                  editable={isEditing}
+                  placeholder={t('personalInfoScreen.placeholders.postcode')}
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+            </View>
+          </View>
+        </Card>
+
+        {/* Card Details */}
+        <Card style={styles.formCard}>
+          <View style={styles.formSection}>
+            <TouchableOpacity
+              style={[styles.cardActionButton, { backgroundColor: colors.primary }]}
+              activeOpacity={0.9}
+              onPress={handleCardButtonPress}
+            >
+              <Text variant="body" weight="medium" style={styles.cardActionText}>
+                {t('personalInfoScreen.addCard')}
+              </Text>
+            </TouchableOpacity>
+
+            {(showCards || formData.cards.length > 0) && (
+              <View style={styles.cardList}>
+                <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
+                  {t('personalInfoScreen.cardSectionTitle')}
+                </Text>
+
+                {formData.cards.map((card, index) => (
+                  <View key={`card-${index}`} style={styles.cardItem}>
+                    <Text variant="body" color="textSecondary" style={styles.cardItemTitle}>
+                      {t('personalInfoScreen.cardItem', { number: index + 1 })}
+                    </Text>
+
+                    <View style={styles.inputGroup}>
+                      <Text variant="body" color="textSecondary" style={styles.label}>
+                        {t('personalInfoScreen.labels.cardNumber')}
+                      </Text>
+                      <TextInput
+                        style={[styles.input, { 
+                          backgroundColor: isEditing ? colors.surface : colors.background,
+                          borderColor: colors.border,
+                          color: colors.text 
+                        }]}
+                        value={card.cardNumber}
+                        onChangeText={(text) => updateCard(index, { cardNumber: text })}
+                        editable={isEditing}
+                        placeholder={t('personalInfoScreen.placeholders.cardNumber')}
+                        placeholderTextColor={colors.textSecondary}
+                        keyboardType="number-pad"
+                      />
+                    </View>
+
+                    <View style={styles.inputRow}>
+                      <View style={[styles.inputGroup, styles.inputHalf]}>
+                        <Text variant="body" color="textSecondary" style={styles.label}>
+                          {t('personalInfoScreen.labels.cardExpiry')}
+                        </Text>
+                        <TextInput
+                          style={[styles.input, { 
+                            backgroundColor: isEditing ? colors.surface : colors.background,
+                            borderColor: colors.border,
+                            color: colors.text 
+                          }]}
+                          value={card.cardExpiry}
+                          onChangeText={(text) => updateCard(index, { cardExpiry: text })}
+                          editable={isEditing}
+                          placeholder={t('personalInfoScreen.placeholders.cardExpiry')}
+                          placeholderTextColor={colors.textSecondary}
+                          keyboardType="number-pad"
+                        />
+                      </View>
+
+                      <View style={[styles.inputGroup, styles.inputHalf]}>
+                        <Text variant="body" color="textSecondary" style={styles.label}>
+                          {t('personalInfoScreen.labels.cardCvv')}
+                        </Text>
+                        <TextInput
+                          style={[styles.input, { 
+                            backgroundColor: isEditing ? colors.surface : colors.background,
+                            borderColor: colors.border,
+                            color: colors.text 
+                          }]}
+                          value={card.cardCvv}
+                          onChangeText={(text) => updateCard(index, { cardCvv: text })}
+                          editable={isEditing}
+                          placeholder={t('personalInfoScreen.placeholders.cardCvv')}
+                          placeholderTextColor={colors.textSecondary}
+                          keyboardType="number-pad"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                ))}
+
+                <TouchableOpacity
+                  style={[styles.addAnotherCardButton, { borderColor: colors.primary }]}
+                  activeOpacity={0.85}
+                  onPress={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      cards: [
+                        ...prev.cards,
+                        { cardNumber: '', cardExpiry: '', cardCvv: '' },
+                      ],
+                    }))
+                  }
+                >
+                  <Text variant="body" weight="medium" style={[styles.addAnotherCardText, { color: colors.primary }]}>
+                    {t('personalInfoScreen.addAnotherCard')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </Card>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -252,6 +489,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: Spacing.md,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
   },
   avatarCard: {
     marginBottom: Spacing.md,
@@ -300,6 +540,27 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: Spacing.md,
   },
+  cardList: {
+    marginTop: Spacing.md,
+  },
+  cardItem: {
+    marginBottom: Spacing.md,
+  },
+  cardItemTitle: {
+    marginBottom: Spacing.sm,
+  },
+  addAnotherCardButton: {
+    marginTop: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addAnotherCardText: {
+    textAlign: 'center',
+  },
   inputGroup: {
     marginBottom: Spacing.md,
   },
@@ -312,13 +573,14 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     fontSize: 16,
   },
+  cardActionButton: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardActionText: {
+    color: '#ffffff',
+  },
 });
-
-
-
-
-
-
-
-
-

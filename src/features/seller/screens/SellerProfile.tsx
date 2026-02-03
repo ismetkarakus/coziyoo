@@ -423,100 +423,101 @@ export const SellerProfile: React.FC = () => {
 
         {/* Contact Information */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {t('sellerProfileScreen.sections.contact')}
-          </Text>
-          
-          {isEditing ? (
-            <View style={styles.formContainer}>
-              <FormField
-                label={t('sellerProfileScreen.fields.nickname')}
-                value={formData.nickname}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, nickname: text }))}
-                placeholder={t('sellerProfileScreen.placeholders.nickname')}
-              />
-              
-              <FormField
-                label={t('sellerProfileScreen.fields.fullName')}
-                value={formData.name}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-                placeholder={t('sellerProfileScreen.placeholders.fullName')}
-              />
-              
-              <FormField
-                label={t('sellerProfileScreen.fields.email')}
-                value={formData.email}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-                placeholder={t('sellerProfileScreen.placeholders.email')}
-                keyboardType="email-address"
-              />
-              <FormField
-                label={t('sellerProfileScreen.fields.phone')}
-                value={formData.phone}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
-                placeholder={t('sellerProfileScreen.placeholders.phone')}
-                keyboardType="phone-pad"
-              />
-            </View>
-          ) : (
-            <View style={styles.infoContainer}>
-              <View style={styles.infoRow}>
-                <FontAwesome name="user" size={16} color={colors.textSecondary} />
-                <Text variant="body" style={styles.infoText}>
-                  {formData.name}
-                  {identityVerification.status === 'verified' && (
-                    <Text style={styles.verifiedBadge}> ✓ {t('sellerProfileScreen.identity.status.verified')}</Text>
-                  )}
-                </Text>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              {t('sellerProfileScreen.sections.contact')}
+            </Text>
+            
+            {isEditing ? (
+              <View style={styles.formContainer}>
+                <FormField
+                  label={t('sellerProfileScreen.fields.nickname')}
+                  value={formData.nickname}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, nickname: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.nickname')}
+                />
+                
+                <FormField
+                  label={t('sellerProfileScreen.fields.fullName')}
+                  value={formData.name}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.fullName')}
+                />
+                
+                <FormField
+                  label={t('sellerProfileScreen.fields.email')}
+                  value={formData.email}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.email')}
+                  keyboardType="email-address"
+                />
+                <FormField
+                  label={t('sellerProfileScreen.fields.phone')}
+                  value={formData.phone}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.phone')}
+                  keyboardType="phone-pad"
+                />
               </View>
-              <View style={styles.infoRow}>
-                <FontAwesome name="envelope" size={16} color={colors.textSecondary} />
-                <Text variant="body" style={styles.infoText}>{formData.email}</Text>
+            ) : (
+              <View style={styles.infoContainer}>
+                <View style={styles.infoRow}>
+                  <FontAwesome name="user" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>
+                    {formData.name}
+                    {identityVerification.status === 'verified' && (
+                      <Text style={styles.verifiedBadge}> ✓ {t('sellerProfileScreen.identity.status.verified')}</Text>
+                    )}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <FontAwesome name="envelope" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{formData.email}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <FontAwesome name="phone" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{formData.phone}</Text>
+                </View>
               </View>
-              <View style={styles.infoRow}>
-                <FontAwesome name="phone" size={16} color={colors.textSecondary} />
-                <Text variant="body" style={styles.infoText}>{formData.phone}</Text>
-              </View>
-            </View>
-          )}
+            )}
         </Card>
 
         {/* Location Information */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {t('sellerProfileScreen.sections.location')}
-          </Text>
-          
-          {isEditing ? (
-            <View style={styles.formContainer}>
-              <FormField
-                label={t('sellerProfileScreen.fields.city')}
-                value={formData.location}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, location: text }))}
-                placeholder={t('sellerProfileScreen.placeholders.city')}
-              />
-              <FormField
-                label={t('sellerProfileScreen.fields.address')}
-                value={formData.address}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, address: text }))}
-                placeholder={t('sellerProfileScreen.placeholders.address')}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          ) : (
-            <View style={styles.infoContainer}>
-              <View style={styles.infoRow}>
-                <FontAwesome name="map-marker" size={16} color={colors.textSecondary} />
-                <Text variant="body" style={styles.infoText}>{formData.location}</Text>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              {t('sellerProfileScreen.sections.location')}
+            </Text>
+            
+            {isEditing ? (
+              <View style={styles.formContainer}>
+                <FormField
+                  label={t('sellerProfileScreen.fields.city')}
+                  value={formData.location}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, location: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.city')}
+                />
+                <FormField
+                  label={t('sellerProfileScreen.fields.address')}
+                  value={formData.address}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, address: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.address')}
+                  multiline
+                  numberOfLines={3}
+                />
               </View>
-              <View style={styles.infoRow}>
-                <FontAwesome name="home" size={16} color={colors.textSecondary} />
-                <Text variant="body" style={styles.infoText}>{formData.address}</Text>
+            ) : (
+              <View style={styles.infoContainer}>
+                <View style={styles.infoRow}>
+                  <FontAwesome name="map-marker" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{formData.location}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <FontAwesome name="home" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{formData.address}</Text>
+                </View>
               </View>
-            </View>
-          )}
+            )}
         </Card>
+
 
         {/* About Section */}
         <Card variant="default" padding="md" style={styles.sectionCard}>

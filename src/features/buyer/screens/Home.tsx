@@ -1030,6 +1030,7 @@ export const Home: React.FC = () => {
                   backgroundColor: selectedCategory === category 
                     ? colors.primary 
                     : 'transparent',
+                  borderColor: selectedCategory === category ? colors.primary : 'transparent',
                 },
               ]}
             >
@@ -1327,8 +1328,8 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     paddingHorizontal: Spacing.xs,
-    paddingVertical: Spacing.sm, // Increased vertical padding for better visibility
-    paddingTop: Spacing.xs,
+    paddingVertical: 0,
+    paddingTop: 0,
     // @ts-ignore
     backgroundColor: Colors.light.background,
     borderBottomWidth: 1,
@@ -1339,7 +1340,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    minHeight: 56,
+    minHeight: 0,
   },
   categoriesScroll: {
     flexGrow: 0,
@@ -1347,14 +1348,16 @@ const styles = StyleSheet.create({
   categoryButton: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: 18,
+    borderRadius: 12,
     marginRight: Spacing.xs,
     minWidth: 60,
     alignItems: 'center',
+    borderWidth: Platform.OS === 'web' ? 1 : 0.5,
   },
   foodListContainer: {
     paddingHorizontal: 0, // Remove side padding for full-width cards
-    paddingBottom: Spacing.xl,
+    paddingVertical: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   emptyContainer: {
     alignItems: 'center',
