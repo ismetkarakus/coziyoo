@@ -20,22 +20,25 @@ export const SignIn: React.FC = () => {
   });
 
   const testCredentials = {
-    buyer: { email: 'buyer@test.com', password: 'Test1234!' },
-    seller: { email: 'seller@test.com', password: 'Test1234!' },
+    buyer: { email: 'test@cazi.com', password: '123456' },
+    seller: { email: 'satici@cazi.com', password: '123456' },
   };
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSignIn = async () => {
-    if (!formData.email || !formData.password) {
+  const handleSignIn = async (override?: { email: string; password: string }) => {
+    const email = override?.email ?? formData.email;
+    const password = override?.password ?? formData.password;
+
+    if (!email || !password) {
       Alert.alert(t('authSignIn.errorTitle'), t('authSignIn.errorMessage'));
       return;
     }
 
     try {
-      await signIn(formData.email, formData.password);
+      await signIn(email, password);
       // Giriş başarılı - AuthContext otomatik olarak yönlendirecek
     } catch (error: any) {
       Alert.alert(t('authSignIn.signInErrorTitle'), error.message);
@@ -54,7 +57,7 @@ export const SignIn: React.FC = () => {
     const creds = testCredentials[role];
     setFormData({ email: creds.email, password: creds.password });
     try {
-      await signIn(creds.email, creds.password);
+      await handleSignIn(creds);
       // AuthGuard will route based on role
     } catch (error: any) {
       Alert.alert('Giriş Hatası', error.message);
@@ -119,14 +122,14 @@ export const SignIn: React.FC = () => {
                 onPress={() => handleTestLogin('buyer')}
                 style={styles.testButton}
               >
-                Buyer
+                Alıcı (Test)
               </Button>
               <Button
                 variant="outline"
                 onPress={() => handleTestLogin('seller')}
                 style={styles.testButton}
               >
-                Seller
+                Satıcı (Test)
               </Button>
             </View>
           </View>
@@ -198,6 +201,4 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-
-
 

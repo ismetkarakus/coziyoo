@@ -48,9 +48,9 @@ export const HelpCenter: React.FC = () => {
     },
     {
       title: t('helpCenterScreen.contactOptions.email'),
-      description: 'destek@cazi.com',
+      description: 'destek@coziyoo.com',
       icon: '✉️',
-      action: () => Linking.openURL('mailto:destek@cazi.com'),
+      action: () => Linking.openURL('mailto:destek@coziyoo.com'),
     },
     {
       title: t('helpCenterScreen.contactOptions.phone'),

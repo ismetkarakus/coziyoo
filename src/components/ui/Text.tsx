@@ -60,6 +60,6 @@ export const Text: React.FC<TextProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    lineHeight: Typography.lineHeight.normal * Typography.fontSize.base,
+    // Natural line height unless overridden
   },
 });

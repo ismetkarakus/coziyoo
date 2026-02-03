@@ -16,26 +16,26 @@ export const About: React.FC = () => {
   const appInfo = [
     { label: t('aboutScreen.appInfo.version'), value: '1.0.0' },
     { label: t('aboutScreen.appInfo.lastUpdate'), value: '7 Ocak 2026' },
-    { label: t('aboutScreen.appInfo.developer'), value: 'Cazi Team' },
+    { label: t('aboutScreen.appInfo.developer'), value: 'Coziyoo Team' },
     { label: t('aboutScreen.appInfo.platform'), value: 'iOS & Android' },
   ];
 
   const legalLinks = [
     {
       title: t('aboutScreen.legalLinks.terms'),
-      onPress: () => Linking.openURL('https://cazi.com/terms'),
+      onPress: () => Linking.openURL('https://coziyoo.com/terms'),
     },
     {
       title: t('aboutScreen.legalLinks.privacy'),
-      onPress: () => Linking.openURL('https://cazi.com/privacy'),
+      onPress: () => Linking.openURL('https://coziyoo.com/privacy'),
     },
     {
       title: t('aboutScreen.legalLinks.cookies'),
-      onPress: () => Linking.openURL('https://cazi.com/cookies'),
+      onPress: () => Linking.openURL('https://coziyoo.com/cookies'),
     },
     {
       title: t('aboutScreen.legalLinks.kvkk'),
-      onPress: () => Linking.openURL('https://cazi.com/kvkk'),
+      onPress: () => Linking.openURL('https://coziyoo.com/kvkk'),
     },
   ];
 
@@ -79,7 +79,7 @@ export const About: React.FC = () => {
           <View style={styles.heroContent}>
             <Text style={styles.appLogo}>🍽️</Text>
             <Text variant="heading" weight="bold" style={styles.appName}>
-              Cazi
+              Coziyoo
             </Text>
             <Text variant="body" color="textSecondary" style={styles.appDescription}>
               {t('aboutScreen.heroDescription')}

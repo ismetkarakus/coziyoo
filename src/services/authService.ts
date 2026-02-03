@@ -45,19 +45,28 @@ const MOCK_ACCOUNTS: MockAccount[] = [
 class AuthService {
   private currentUser: User | null = null;
 
-  async signIn(email: string, password: string): Promise<User> {
+  async signIn(email: string, password: string): Promise<{ user: User; userData: UserData }> {
     const response = await apiClient.post('/auth/login', { email, password });
     if (response.status !== 200) throw new Error(response.error || 'Giriş başarısız');
     
-    const userData = response.data;
+    const rawUserData = response.data;
     this.currentUser = {
-        uid: userData.uid,
-        email: userData.email,
-        displayName: userData.displayName
+      uid: rawUserData.uid,
+      email: rawUserData.email,
+      displayName: rawUserData.displayName
+    };
+
+    const userData: UserData = {
+      uid: rawUserData.uid,
+      email: rawUserData.email,
+      displayName: rawUserData.displayName,
+      userType: rawUserData.userType ?? 'buyer',
+      createdAt: rawUserData.createdAt ? new Date(rawUserData.createdAt) : new Date()
     };
     
     await AsyncStorage.setItem('auth_user', JSON.stringify(this.currentUser));
-    return this.currentUser;
+    await AsyncStorage.setItem(`user_${this.currentUser.uid}`, JSON.stringify(userData));
+    return { user: this.currentUser, userData };
   }
 
   async signUp(email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both'): Promise<User> {

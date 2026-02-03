@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import usersData from '../../mock/users.json'
+import usersData from '../../../src/mock/users.json'
 import {
   Box,
   Chip,

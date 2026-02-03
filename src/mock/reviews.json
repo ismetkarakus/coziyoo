@@ -1,0 +1,21 @@
+[
+  {
+    "id": "rev_001",
+    "foodId": "food_001",
+    "foodName": "Ev Yapımı Mantı",
+    "buyerId": "user_buyer_001",
+    "buyerName": "Ahmet Yilmaz",
+    "buyerAvatar": "",
+    "sellerId": "user_seller_001",
+    "sellerName": "Ayse Hanim",
+    "orderId": "order_001",
+    "rating": 5,
+    "comment": "Çok lezzetli ve sıcak geldi, tekrar sipariş edeceğim.",
+    "images": [],
+    "helpfulCount": 2,
+    "reportCount": 0,
+    "isVerifiedPurchase": true,
+    "createdAt": "2026-02-01T12:00:00.000Z",
+    "updatedAt": "2026-02-01T12:00:00.000Z"
+  }
+]

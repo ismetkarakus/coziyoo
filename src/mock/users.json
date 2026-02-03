@@ -1,0 +1,65 @@
+[
+  {
+    "uid": "mock_buyer_1",
+    "email": "test@cazi.com",
+    "displayName": "Test Kullanıcı",
+    "userType": "buyer",
+    "password": "123456",
+    "createdAt": "2026-01-04T12:00:00.000Z",
+    "updatedAt": "2026-02-01T12:00:00.000Z"
+  },
+  {
+    "uid": "mock_seller_1",
+    "email": "satici@cazi.com",
+    "displayName": "Test Satıcı",
+    "userType": "seller",
+    "password": "123456",
+    "createdAt": "2025-12-20T12:00:00.000Z",
+    "updatedAt": "2026-02-02T12:00:00.000Z"
+  },
+  {
+    "uid": "user_buyer_001",
+    "email": "ahmet@example.com",
+    "displayName": "Ahmet Yilmaz",
+    "userType": "buyer",
+    "password": "123456",
+    "createdAt": "2026-01-12T09:12:00.000Z",
+    "updatedAt": "2026-02-02T18:44:00.000Z"
+  },
+  {
+    "uid": "user_buyer_002",
+    "email": "zeynep@example.com",
+    "displayName": "Zeynep Kaya",
+    "userType": "buyer",
+    "password": "123456",
+    "createdAt": "2025-11-03T11:30:00.000Z",
+    "updatedAt": "2026-02-01T12:05:00.000Z"
+  },
+  {
+    "uid": "user_seller_001",
+    "email": "ayse@example.com",
+    "displayName": "Ayse Hanim",
+    "userType": "seller",
+    "password": "123456",
+    "createdAt": "2024-06-15T10:20:00.000Z",
+    "updatedAt": "2026-02-02T20:10:00.000Z"
+  },
+  {
+    "uid": "user_seller_002",
+    "email": "can@example.com",
+    "displayName": "Can Demir",
+    "userType": "seller",
+    "password": "123456",
+    "createdAt": "2025-02-19T08:00:00.000Z",
+    "updatedAt": "2026-01-28T09:30:00.000Z"
+  },
+  {
+    "uid": "user_both_001",
+    "email": "elif@example.com",
+    "displayName": "Elif Sezer",
+    "userType": "both",
+    "password": "123456",
+    "createdAt": "2025-07-05T14:22:00.000Z",
+    "updatedAt": "2026-02-03T09:02:00.000Z"
+  }
+]

@@ -13,15 +13,6 @@ export const BuyerRegister: React.FC = () => {
   const { signUp, loading } = useAuth();
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    email: '',
-    password: '',
-    location: '',
-  });
-  const [autoFillEnabled, setAutoFillEnabled] = useState(false);
-
   const testBuyerData = {
     fullName: 'Test Buyer',
     phone: '0555 111 22 33',
@@ -29,6 +20,9 @@ export const BuyerRegister: React.FC = () => {
     password: 'Test1234!',
     location: 'Kadıköy, İstanbul',
   };
+
+  const [formData, setFormData] = useState(testBuyerData);
+  const [autoFillEnabled, setAutoFillEnabled] = useState(true);
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

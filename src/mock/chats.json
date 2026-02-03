@@ -1,0 +1,19 @@
+[
+  {
+    "id": "chat_001",
+    "buyerId": "user_buyer_001",
+    "buyerName": "Ahmet Yilmaz",
+    "sellerId": "user_seller_001",
+    "sellerName": "Ayse Hanim",
+    "orderId": "order_001",
+    "foodId": "food_001",
+    "foodName": "Ev Yapımı Mantı",
+    "lastMessage": "Siparişiniz hazırlanıyor.",
+    "lastMessageTime": "2026-02-02T12:00:00.000Z",
+    "lastMessageSender": "user_seller_001",
+    "buyerUnreadCount": 0,
+    "sellerUnreadCount": 0,
+    "isActive": true,
+    "createdAt": "2026-01-31T12:00:00.000Z"
+  }
+]

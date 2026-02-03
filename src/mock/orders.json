@@ -1,0 +1,26 @@
+[
+  {
+    "id": "order_001",
+    "foodId": "food_001",
+    "buyerId": "user_buyer_001",
+    "sellerId": "user_seller_001",
+    "quantity": 2,
+    "totalPrice": 70,
+    "status": "confirmed",
+    "deliveryAddress": "Kadikoy, Moda",
+    "orderDate": "2026-02-01T12:00:00.000Z",
+    "estimatedDeliveryTime": "2026-02-01T12:00:00.000Z"
+  },
+  {
+    "id": "order_002",
+    "foodId": "food_004",
+    "buyerId": "user_buyer_002",
+    "sellerId": "user_seller_002",
+    "quantity": 1,
+    "totalPrice": 55,
+    "status": "preparing",
+    "deliveryAddress": "Cankaya, Ankara",
+    "orderDate": "2026-02-02T12:00:00.000Z",
+    "estimatedDeliveryTime": "2026-02-02T12:00:00.000Z"
+  }
+]

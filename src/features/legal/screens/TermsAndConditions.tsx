@@ -43,9 +43,8 @@ export const TermsAndConditions: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar 
+      <TopBar
         title="Terms & Conditions"
-        subtitle="UK Food Marketplace"
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -63,7 +62,7 @@ export const TermsAndConditions: React.FC = () => {
             1. Platform Role & Responsibility
           </Text>
           <Text variant="body" style={styles.paragraph}>
-            Cazi acts as a <Text weight="semibold">marketplace platform only</Text> and does not prepare, handle, or sell food directly. All food is prepared, handled, and sold by independent sellers who are responsible for their own food safety and compliance.
+            Coziyoo acts as a <Text weight="semibold">marketplace platform only</Text> and does not prepare, handle, or sell food directly. All food is prepared, handled, and sold by independent sellers who are responsible for their own food safety and compliance.
           </Text>
         </View>
 
@@ -125,7 +124,7 @@ export const TermsAndConditions: React.FC = () => {
               ⚠️ IMPORTANT LIABILITY NOTICE
             </Text>
             <Text variant="body" style={styles.paragraph}>
-              Cazi is <Text weight="semibold">not liable</Text> for:
+              Coziyoo is <Text weight="semibold">not liable</Text> for:
             </Text>
             <View style={styles.bulletPoints}>
               <Text variant="body" style={styles.bulletPoint}>
@@ -179,7 +178,7 @@ export const TermsAndConditions: React.FC = () => {
             For questions about these terms or food safety concerns, contact us at:
           </Text>
           <Text variant="body" style={styles.contactInfo}>
-            📧 legal@cazi.co.uk{'\n'}
+            📧 legal@coziyoo.co.uk{'\n'}
             📞 +44 20 1234 5678{'\n'}
             🏛️ Registered in England & Wales
           </Text>

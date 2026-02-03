@@ -20,9 +20,9 @@ export const translations = {
     },
 
     authWelcome: {
-      title: 'Cazi',
+      title: 'Coziyoo',
       subtitle: 'Ev Yemekleri, Gerçek Lezzet',
-      description: 'Cazi\'ye Hoş Geldin. Evde yapılan taze yemekleri keşfet veya kendi yemeklerini sat.',
+      description: 'Coziyoo\'ya Hoş Geldin. Evde yapılan taze yemekleri keşfet veya kendi yemeklerini sat.',
       signIn: 'Giriş Yap',
       signUp: 'Kayıt Ol',
     },
@@ -1256,7 +1256,7 @@ export const translations = {
 
     // Onboarding
     onboarding: {
-      title: 'Cazi’ye Hoş Geldiniz',
+      title: 'Coziyoo’ya Hoş Geldiniz',
       subtitle: 'Başlamak için ülkenizi seçin',
       autoDetect: '📍 Ülkemi otomatik algıla',
       detecting: '🌍 Konum algılanıyor...',
@@ -1344,7 +1344,7 @@ export const translations = {
         contactDesc: 'Bizimle iletişime geçin',
       },
       copyright: {
-        line1: '© 2026 Cazi. Tüm hakları saklıdır.',
+        line1: '© 2026 Coziyoo. Tüm hakları saklıdır.',
         line2: 'Made with ❤️ in Turkey',
       },
     },
@@ -1501,7 +1501,7 @@ export const translations = {
     delivery: 'Teslimat',
     
     // Satıcı
-    sellerPanel: 'Satıcı Paneli',
+    sellerPanelText: 'Satıcı Paneli',
     addMeal: 'Yemek Ekle',
     manageMeals: 'Yemeklerimi Yönet',
     earnings: 'Kazançlar',
@@ -1554,9 +1554,9 @@ export const translations = {
     },
 
     authWelcome: {
-      title: 'Cazi',
+      title: 'Coziyoo',
       subtitle: 'Home Meals, Real Taste',
-      description: 'Welcome to Cazi. Discover fresh home-cooked meals or sell your own dishes.',
+      description: 'Welcome to Coziyoo. Discover fresh home-cooked meals or sell your own dishes.',
       signIn: 'Sign In',
       signUp: 'Sign Up',
     },
@@ -2790,7 +2790,7 @@ export const translations = {
 
     // Onboarding
     onboarding: {
-      title: 'Welcome to Cazi',
+      title: 'Welcome to Coziyoo',
       subtitle: 'Choose your country to get started',
       autoDetect: '📍 Auto-detect my country',
       detecting: '🌍 Detecting location...',
@@ -2878,7 +2878,7 @@ export const translations = {
         contactDesc: 'Get in touch with us',
       },
       copyright: {
-        line1: '© 2026 Cazi. All rights reserved.',
+        line1: '© 2026 Coziyoo. All rights reserved.',
         line2: 'Made with ❤️ in Turkey',
       },
     },
@@ -3035,7 +3035,7 @@ export const translations = {
     delivery: 'Delivery',
     
     // Seller
-    sellerPanel: 'Seller Dashboard',
+    sellerPanelText: 'Seller Dashboard',
     addMeal: 'Add Food',
     manageMeals: 'Manage Foods',
     earnings: 'Earnings',

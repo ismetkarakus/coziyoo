@@ -7,6 +7,7 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useAuth } from '../../../context/AuthContext';
 
 const getProfileSections = (t: (key: string) => string) => ([
   {
@@ -71,6 +72,7 @@ export const Profile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
+  const { signOut } = useAuth();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
   const profileSections = getProfileSections(t);

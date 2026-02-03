@@ -22,4 +22,3 @@ export { ReviewModal } from './ReviewModal';
 export { PaymentMethodCard } from './PaymentMethodCard';
 export { PaymentModal } from './PaymentModal';
 export { LanguageSwitcher } from './LanguageSwitcher';
-export { NetworkStatus } from './NetworkStatus';

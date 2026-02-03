@@ -1,0 +1,24 @@
+[
+  {
+    "id": "msg_001",
+    "chatId": "chat_001",
+    "senderId": "user_buyer_001",
+    "senderName": "Ahmet Yilmaz",
+    "senderType": "buyer",
+    "message": "Merhaba, teslimat ne zaman olur?",
+    "messageType": "text",
+    "timestamp": "2026-02-01T12:00:00.000Z",
+    "isRead": true
+  },
+  {
+    "id": "msg_002",
+    "chatId": "chat_001",
+    "senderId": "user_seller_001",
+    "senderName": "Ayse Hanim",
+    "senderType": "seller",
+    "message": "Siparişiniz hazırlanıyor, 30-40 dk içinde teslim ederim.",
+    "messageType": "text",
+    "timestamp": "2026-02-02T12:00:00.000Z",
+    "isRead": false
+  }
+]

@@ -32,15 +32,15 @@ export const Contact: React.FC = () => {
     },
     {
       title: t('contactScreen.info.email'),
-      value: 'info@cazi.com',
+      value: 'info@coziyoo.com',
       icon: '✉️',
-      action: () => Linking.openURL('mailto:info@cazi.com'),
+      action: () => Linking.openURL('mailto:info@coziyoo.com'),
     },
     {
       title: t('contactScreen.info.hours'),
       value: 'Pazartesi - Pazar\n09:00 - 22:00',
       icon: '🕘',
-      action: null,
+      action: undefined,
     },
   ];
 
@@ -48,17 +48,17 @@ export const Contact: React.FC = () => {
     {
       name: t('contactScreen.social.instagram'),
       icon: '📷',
-      action: () => Linking.openURL('https://instagram.com/cazi'),
+      action: () => Linking.openURL('https://instagram.com/coziyoo'),
     },
     {
       name: t('contactScreen.social.twitter'),
       icon: '🐦',
-      action: () => Linking.openURL('https://twitter.com/cazi'),
+      action: () => Linking.openURL('https://twitter.com/coziyoo'),
     },
     {
       name: t('contactScreen.social.facebook'),
       icon: '📘',
-      action: () => Linking.openURL('https://facebook.com/cazi'),
+      action: () => Linking.openURL('https://facebook.com/coziyoo'),
     },
     {
       name: t('contactScreen.social.whatsapp'),
@@ -155,6 +155,7 @@ export const Contact: React.FC = () => {
             <TouchableOpacity
               key={index}
               style={styles.infoItem}
+              // @ts-ignore
               onPress={info.action}
               disabled={!info.action}
             >

@@ -7,23 +7,14 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCountry } from '../../../context/CountryContext';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useAuth } from '../../../context/AuthContext';
 
 export const SellerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { currentCountry } = useCountry();
   const { t } = useTranslation();
-
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    email: '',
-    password: '',
-    kitchenLocation: '',
-    postcode: '',
-    councilName: '',
-  });
-  const [autoFillEnabled, setAutoFillEnabled] = useState(false);
+  const { loading } = useAuth();
 
   const testSellerData = {
     fullName: 'Test Seller',
@@ -35,20 +26,23 @@ export const SellerRegister: React.FC = () => {
     councilName: 'Westminster City Council',
   };
 
+  const [formData, setFormData] = useState(testSellerData);
+  const [autoFillEnabled, setAutoFillEnabled] = useState(true);
+
   const [deliveryOptions, setDeliveryOptions] = useState({
-    pickup: false,
+    pickup: true,
     delivery: false,
   });
 
   // UK Compliance Fields
   const [ukCompliance, setUkCompliance] = useState({
-    councilRegistered: false,
-    foodHygieneCertificate: false,
-    hygieneRating: '',
-    allergenDeclaration: false,
-    legalResponsibility: false,
+    councilRegistered: true,
+    foodHygieneCertificate: true,
+    hygieneRating: '5',
+    allergenDeclaration: true,
+    legalResponsibility: true,
     insuranceOptional: false,
-    termsAccepted: false,
+    termsAccepted: true,
   });
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {

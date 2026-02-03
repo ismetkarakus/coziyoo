@@ -5,7 +5,7 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 
 interface CheckboxProps {
-  label: string;
+  label: string | React.ReactNode;
   checked: boolean;
   onPress: () => void;
   required?: boolean;
@@ -50,15 +50,19 @@ export const Checkbox: React.FC<CheckboxProps> = ({
             </Text>
           )}
         </View>
-        <Text
-          variant="body"
-          style={[
-            styles.label,
-            { color: disabled ? colors.textSecondary : colors.text },
-          ]}
-        >
-          {required ? `${label} *` : label}
-        </Text>
+        {typeof label === 'string' ? (
+          <Text
+            variant="body"
+            style={[
+              styles.label,
+              { color: disabled ? colors.textSecondary : colors.text },
+            ]}
+          >
+            {required ? `${label} *` : label}
+          </Text>
+        ) : (
+          <View style={styles.label}>{label}</View>
+        )}
       </TouchableOpacity>
       
       {(error || helperText) && (

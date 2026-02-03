@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import usersData from '../../mock/users.json'
+import usersData from '../../../src/mock/users.json'
 import {
   Avatar,
   Box,
