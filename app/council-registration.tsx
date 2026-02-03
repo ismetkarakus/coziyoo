@@ -6,11 +6,16 @@ import { Text, Card, Button, FormField, Checkbox, HeaderBackButton } from '../sr
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
 import { useCountry } from '../src/context/CountryContext';
+import { useTranslation } from '../src/hooks/useTranslation';
 
 export default function CouncilRegistration() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { currentCountry } = useCountry();
+  const { t } = useTranslation();
+  const isTR = currentCountry.code === 'TR';
+  const baseKey = isTR ? 'councilRegistrationScreen.tr' : 'councilRegistrationScreen.uk';
+  const commonKey = 'councilRegistrationScreen.common';
   
   const [formData, setFormData] = useState({
     councilName: currentCountry?.code === 'TR' ? 'Kadıköy Belediyesi' : 'Westminster City Council',
@@ -33,12 +38,10 @@ export default function CouncilRegistration() {
 
   const handleSave = () => {
     Alert.alert(
-      currentCountry.code === 'TR' ? 'Başarılı' : 'Success',
-      currentCountry.code === 'TR' 
-        ? 'Belediye kayıt detayları başarıyla güncellendi.'
-        : 'Council registration details have been updated successfully.',
+      t(`${commonKey}.successTitle`),
+      t(`${commonKey}.successMessage`),
       [{ 
-        text: currentCountry.code === 'TR' ? 'Tamam' : 'OK', 
+        text: t(`${commonKey}.ok`), 
         onPress: () => setIsEditing(false) 
       }]
     );
@@ -56,16 +59,13 @@ export default function CouncilRegistration() {
     <>
       <Stack.Screen 
         options={{
-          title: currentCountry.code === 'TR' ? '🏛️ Gıda İşletme Belgesi' : '🏛️ Council Registration',
+          title: t(`${baseKey}.title`),
           headerBackVisible: false, // Otomatik geri butonunu gizle
           headerLeft: () => <HeaderBackButton />,
           headerRight: () => (
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
               <Text variant="body" color="primary">
-                {currentCountry.code === 'TR' 
-                  ? (isEditing ? 'İptal' : 'Düzenle')
-                  : (isEditing ? 'Cancel' : 'Edit')
-                }
+                {isEditing ? t(`${commonKey}.cancel`) : t(`${commonKey}.edit`)}
               </Text>
             </TouchableOpacity>
           ),
@@ -79,24 +79,18 @@ export default function CouncilRegistration() {
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              {currentCountry.code === 'TR' ? 'Kayıt Durumu' : 'Registration Status'}
+              {t(`${baseKey}.statusTitle`)}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: formData.isRegistered ? '#28A745' : '#FFC107' }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
-                {currentCountry.code === 'TR' 
-                  ? (formData.isRegistered ? '✅ KAYITLI' : '⏳ BEKLEMEDE')
-                  : (formData.isRegistered ? '✅ REGISTERED' : '⏳ PENDING')
-                }
+                {formData.isRegistered ? t(`${baseKey}.registered`) : t(`${baseKey}.pending`)}
               </Text>
             </View>
           </View>
           
           {formData.isRegistered && (
             <Text variant="body" color="success" style={styles.statusMessage}>
-              {currentCountry.code === 'TR' 
-                ? 'Gıda işletmeniz yerel belediyeye başarıyla kaydedilmiştir.'
-                : 'Your food business is successfully registered with your local council.'
-              }
+              {t(`${baseKey}.statusMessage`)}
             </Text>
           )}
         </Card>
@@ -104,22 +98,16 @@ export default function CouncilRegistration() {
         {/* Quick Actions */}
         <Card variant="default" padding="md" style={styles.actionsCard}>
           <Text variant="body" weight="semibold" style={styles.actionsTitle}>
-            {currentCountry.code === 'TR' ? '📋 Hızlı İşlemler' : '📋 Quick Actions'}
+            {t(`${baseKey}.actionsTitle`)}
           </Text>
           <TouchableOpacity style={styles.actionButton} onPress={openCouncilWebsite}>
             <Text variant="body" color="primary">
-              {currentCountry.code === 'TR' 
-                ? '🌐 Yeni Gıda İşletmesi Kaydı →'
-                : '🌐 Register New Food Business →'
-              }
+              {t(`${baseKey}.actionRegister`)}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={openCouncilSearch}>
             <Text variant="body" color="primary">
-              {currentCountry.code === 'TR' 
-                ? '🔍 Yerel Belediyenizi Bulun →'
-                : '🔍 Find Your Local Council →'
-              }
+              {t(`${baseKey}.actionFindCouncil`)}
             </Text>
           </TouchableOpacity>
         </Card>
@@ -127,88 +115,85 @@ export default function CouncilRegistration() {
         {/* Registration Details */}
         <Card variant="default" padding="md" style={styles.detailsCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {currentCountry.code === 'TR' ? 'Kayıt Detayları' : 'Registration Details'}
+            {t(`${baseKey}.detailsTitle`)}
           </Text>
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Belediye Adı' : 'Council Name'}
+            label={t(`${baseKey}.councilNameLabel`)}
             value={formData.councilName}
             onChangeText={handleInputChange('councilName')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'örn. Kadıköy Belediyesi' : 'e.g. Westminster City Council'}
+            placeholder={t(`${baseKey}.councilNamePlaceholder`)}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Posta Kodu' : 'Postcode'}
+            label={t(`${baseKey}.postcodeLabel`)}
             value={formData.postcode}
             onChangeText={handleInputChange('postcode')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? '34710' : 'SW1A 1AA'}
+            placeholder={t(`${baseKey}.postcodePlaceholder`)}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'İşletme Adı' : 'Business Name'}
+            label={t(`${baseKey}.businessNameLabel`)}
             value={formData.businessName}
             onChangeText={handleInputChange('businessName')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'İşletme adınız' : 'Your business name'}
+            placeholder={t(`${baseKey}.businessNamePlaceholder`)}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'İletişim Adı' : 'Contact Name'}
+            label={t(`${baseKey}.contactNameLabel`)}
             value={formData.contactName}
             onChangeText={handleInputChange('contactName')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'Tam adınız' : 'Your full name'}
+            placeholder={t(`${baseKey}.contactNamePlaceholder`)}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Telefon Numarası' : 'Phone Number'}
+            label={t(`${baseKey}.phoneLabel`)}
             value={formData.phoneNumber}
             onChangeText={handleInputChange('phoneNumber')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? '+90 216 348 0000' : '+44 20 7946 0958'}
+            placeholder={t(`${baseKey}.phonePlaceholder`)}
           />
 
           <FormField
-            label="Email Address"
+            label={t(`${commonKey}.emailLabel`)}
             value={formData.email}
             onChangeText={handleInputChange('email')}
             editable={isEditing}
-            placeholder="your.email@example.com"
+            placeholder={t(`${commonKey}.emailPlaceholder`)}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'İşletme Türü' : 'Business Type'}
+            label={t(`${baseKey}.businessTypeLabel`)}
             value={formData.businessType}
             onChangeText={handleInputChange('businessType')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'örn. Evde gıda üretimi' : 'e.g. Home-based food business'}
+            placeholder={t(`${baseKey}.businessTypePlaceholder`)}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'İşletme Başlangıç Tarihi' : 'Business Start Date'}
+            label={t(`${commonKey}.startDateLabel`)}
             value={formData.startDate}
             onChangeText={handleInputChange('startDate')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
+            placeholder={t(`${commonKey}.startDatePlaceholder`)}
           />
 
           {formData.isRegistered && (
               <FormField
-                label={currentCountry.code === 'TR' ? 'Kayıt Numarası' : 'Registration Number'}
+                label={t(`${baseKey}.registrationNumberLabel`)}
                 value={formData.registrationNumber}
                 onChangeText={handleInputChange('registrationNumber')}
                 editable={isEditing}
-                placeholder={currentCountry.code === 'TR' ? 'Belediye kayıt numarası' : 'Council registration number'}
+                placeholder={t(`${baseKey}.registrationNumberPlaceholder`)}
               />
           )}
 
           <Checkbox
-            label={currentCountry.code === 'TR' 
-              ? 'Bu gıda işletmesinin yerel belediyeye kayıtlı olduğunu onaylıyorum'
-              : 'I confirm this food business is registered with the local council'
-            }
+            label={t(`${baseKey}.checkbox`)}
             checked={formData.isRegistered}
             onPress={() => setFormData(prev => ({ ...prev, isRegistered: !prev.isRegistered }))}
             disabled={!isEditing}
@@ -220,7 +205,7 @@ export default function CouncilRegistration() {
               onPress={handleSave}
               style={styles.saveButton}
             >
-              {currentCountry.code === 'TR' ? '💾 Değişiklikleri Kaydet' : '💾 Save Changes'}
+              {t(`${baseKey}.saveButton`)}
             </Button>
           )}
         </Card>
@@ -228,41 +213,24 @@ export default function CouncilRegistration() {
         {/* Legal Information */}
         <Card variant="default" padding="md" style={styles.legalCard}>
           <Text variant="body" weight="semibold" style={styles.legalTitle}>
-            {currentCountry.code === 'TR' ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
+            {t(`${baseKey}.legalTitle`)}
           </Text>
-          {currentCountry.code === 'TR' ? (
-            <>
-              <Text variant="caption" style={styles.legalText}>
-                • Gıda işletmesi faaliyete başlamadan en az 28 gün önce belediyeye kayıt yaptırılmalıdır
-              </Text>
-              <Text variant="caption" style={styles.legalText}>
-                • Kayıt ücretsizdir ve Gıda Güvenliği Kanunu gereği zorunludur
-              </Text>
-              <Text variant="caption" style={styles.legalText}>
-                • İşletmede yapılan değişiklikler belediyeye bildirilmelidir
-              </Text>
-              <Text variant="caption" style={styles.legalText}>
-                • Kayıt yaptırmamak suç teşkil eder ve para cezası uygulanabilir
-              </Text>
-              <Text variant="caption" style={styles.legalText}>
-                • İşletme hijyen koşulları düzenli olarak denetlenebilir
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text variant="caption" style={styles.legalText}>
-                • Registration must be completed at least 28 days before starting your food business
-              </Text>
-              <Text variant="caption" style={styles.legalText}>
-                • Registration is free and mandatory under food safety law
-              </Text>
-              <Text variant="caption" style={styles.legalText}>
-                • You must notify the council of any changes to your business
-              </Text>
-              <Text variant="caption" style={styles.legalText}>
-                • Failure to register is a criminal offense with potential fines
-              </Text>
-            </>
+          <Text variant="caption" style={styles.legalText}>
+            • {t(`${baseKey}.legalBullet1`)}
+          </Text>
+          <Text variant="caption" style={styles.legalText}>
+            • {t(`${baseKey}.legalBullet2`)}
+          </Text>
+          <Text variant="caption" style={styles.legalText}>
+            • {t(`${baseKey}.legalBullet3`)}
+          </Text>
+          <Text variant="caption" style={styles.legalText}>
+            • {t(`${baseKey}.legalBullet4`)}
+          </Text>
+          {isTR && (
+            <Text variant="caption" style={styles.legalText}>
+              • {t(`${baseKey}.legalBullet5`)}
+            </Text>
           )}
         </Card>
 

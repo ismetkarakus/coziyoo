@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TouchableWithoutFeedback, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -118,6 +118,21 @@ export const SellerPanel: React.FC = () => {
   };
 
   const handleSignOut = () => {
+    const runSignOut = async () => {
+      try {
+        await signOut();
+        router.replace('/(auth)/sign-in');
+      } catch (error) {
+        console.error('Sign out error:', error);
+        Alert.alert(t('error'), t('sellerPanel.alerts.signOutError'));
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      runSignOut();
+      return;
+    }
+
     Alert.alert(
       t('sellerPanel.alerts.signOutTitle'),
       t('sellerPanel.alerts.signOutMessage'),
@@ -126,14 +141,7 @@ export const SellerPanel: React.FC = () => {
         {
           text: t('profileScreen.alerts.signOutConfirm'),
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await signOut();
-            } catch (error) {
-              console.error('Sign out error:', error);
-              Alert.alert(t('error'), t('sellerPanel.alerts.signOutError'));
-            }
-          },
+          onPress: runSignOut,
         },
       ]
     );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Platform } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Card, LanguageSwitcher } from '../../../components/ui';
@@ -164,6 +164,21 @@ export const Profile: React.FC = () => {
   };
 
   const handleSignOut = () => {
+    const runSignOut = async () => {
+      try {
+        await signOut();
+        router.replace('/(auth)/sign-in');
+      } catch (error) {
+        console.error('Sign out error:', error);
+        Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      runSignOut();
+      return;
+    }
+
     Alert.alert(
       t('profileScreen.alerts.signOutTitle'),
       t('profileScreen.alerts.signOutMessage'),
@@ -172,14 +187,7 @@ export const Profile: React.FC = () => {
         {
           text: t('profileScreen.alerts.signOutConfirm'),
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await signOut();
-            } catch (error) {
-              console.error('Sign out error:', error);
-              Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
-            }
-          },
+          onPress: runSignOut,
         },
       ]
     );

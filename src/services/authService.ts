@@ -155,10 +155,19 @@ class AuthService {
   // Çıkış yap
   async signOut(): Promise<void> {
     try {
+      const stored = await AsyncStorage.getItem('auth_user');
+      const storedUser = stored ? JSON.parse(stored) : null;
+      const uid = this.currentUser?.uid || storedUser?.uid;
+
       await this.clearMockSession();
-      await firebaseSignOut(auth);
+      await AsyncStorage.removeItem('auth_user');
+      if (uid) {
+        await AsyncStorage.removeItem(`user_${uid}`);
+      }
     } catch (error: any) {
-      throw new Error('Çıkış yapılırken bir hata oluştu');
+      console.warn('Sign out warning:', error);
+    } finally {
+      this.currentUser = null;
     }
   }
 
