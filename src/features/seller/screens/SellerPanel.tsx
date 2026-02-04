@@ -114,7 +114,7 @@ export const SellerPanel: React.FC = () => {
     const runSignOut = async () => {
       try {
         await signOut();
-        router.replace('/sign-in');
+        router.replace('/(auth)/sign-in');
       } catch (error) {
         console.error('Sign out error:', error);
         Alert.alert(t('error'), t('sellerPanel.alerts.signOutError'));

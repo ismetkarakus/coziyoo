@@ -91,14 +91,21 @@ class AuthService {
       throw new Error(response.error || (language === 'en' ? 'Registration failed' : 'Kayıt başarısız'));
     }
     
-    const userData = response.data;
+    const userData = response.data ?? { uid, email, displayName, userType, createdAt: new Date().toISOString() };
     this.currentUser = {
-        uid: userData.uid,
-        email: userData.email,
-        displayName: userData.displayName
+        uid: userData.uid ?? uid,
+        email: userData.email ?? email,
+        displayName: userData.displayName ?? displayName
     };
     
     await AsyncStorage.setItem('auth_user', JSON.stringify(this.currentUser));
+    await AsyncStorage.setItem(`user_${this.currentUser.uid}`, JSON.stringify({
+      uid: this.currentUser.uid,
+      email: this.currentUser.email,
+      displayName: this.currentUser.displayName,
+      userType,
+      createdAt: userData.createdAt ?? new Date().toISOString(),
+    }));
     return this.currentUser;
   }
 
@@ -135,37 +142,7 @@ class AuthService {
     return { user, userData };
   }
 
-  // Kullanıcı kaydı
-  async signUp(
-    email: string, 
-    password: string, 
-    displayName: string, 
-    userType: 'buyer' | 'seller'
-  ): Promise<User> {
-    try {
-      // Firebase Auth'da kullanıcı oluştur
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Profil güncelle
-      await updateProfile(user, { displayName });
-
-      // Firestore'da kullanıcı verilerini kaydet
-      const userData: UserData = {
-        uid: user.uid,
-        email: user.email!,
-        displayName,
-        userType,
-        createdAt: new Date()
-      };
-
-      await setDoc(doc(db, 'users', user.uid), userData);
-
-      return user;
-    } catch (error: any) {
-      throw new Error(this.getErrorMessage(error.code));
-    }
-  }
+  // Firebase tabanlı kayıt gerekiyorsa ayrı bir metot olarak eklenebilir.
 
   // Çıkış yap
   async signOut(): Promise<void> {

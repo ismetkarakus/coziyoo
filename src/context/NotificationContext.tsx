@@ -70,7 +70,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       
       if (data?.type === 'order_update' && data?.orderId) {
         // Navigate to order details
-        router.push(`/order-detail?id=${data.orderId}`);
+        router.push({ pathname: '/order-tracking', params: { orderId: data.orderId } } as any);
       } else if (data?.type === 'new_message' && data?.chatId) {
         // Navigate to chat
         router.push(`/chat?id=${data.chatId}`);

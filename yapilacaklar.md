@@ -17,3 +17,8 @@
 [x] satici cuzdani duzenlenecek
 [x] yemek ekle bolumunde tarif eksikti eklendi
 [x]satici banka bilgileri  tamamlandi
+[x]gida isletmesi bolumundeki hlinkler tr ayit yerlere gidiyor
+[x]ygulama tukce secilmisse hersey turkce cikicak 
+[x] tr gida isletmesi bolumundeki tum linkler turkiye sitelerine gidiyor
+[x] uygulama tr veya gb secilmis dil karisimi olmayacak
+[x] gece modunda gozukmeyean yazilar duzeldi 

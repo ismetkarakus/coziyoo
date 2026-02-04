@@ -12,7 +12,7 @@ export const Welcome: React.FC = () => {
   const { t } = useTranslation();
 
   const handleSignIn = () => {
-    router.push('/sign-in');
+    router.push('/(auth)/sign-in');
   };
 
   const handleSignUp = () => {
@@ -86,7 +86,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
 });
-
 
 
 

@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Linking, Platform } from 'react-native';
-import { router } from 'expo-router';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, Button, Checkbox } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
-import { useCountry } from '../../../context/CountryContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useAuth } from '../../../context/AuthContext';
 
 export const SellerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { currentCountry } = useCountry();
   const { t } = useTranslation();
-  const { loading } = useAuth();
+  const { loading, signUp } = useAuth();
 
   const testSellerData = {
     fullName: 'Test Seller',
@@ -90,23 +87,20 @@ export const SellerRegister: React.FC = () => {
       return;
     }
 
-    const goToSeller = () => router.replace('/(seller)/dashboard');
-
     const showSuccess = () => {
       Alert.alert(
         t('authSellerRegister.alerts.successTitle'),
         t('authSellerRegister.alerts.successMessage'),
-        [{ text: t('authSellerRegister.alerts.ok'), onPress: goToSeller }]
+        [{ text: t('authSellerRegister.alerts.ok') }]
       );
     };
 
-    if (Platform.OS === 'web') {
+    try {
+      await signUp(formData.email, formData.password, formData.fullName, 'seller');
       showSuccess();
-      return;
+    } catch (error) {
+      Alert.alert(t('authSellerRegister.registerErrorTitle'), t('authSellerRegister.registerErrorMessage'));
     }
-
-    // Mock registration - navigate to seller panel
-    showSuccess();
   };
 
   return (
@@ -221,11 +215,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
-
-
-
-
 
 
 

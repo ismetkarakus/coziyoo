@@ -113,9 +113,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUp = async (email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both') => {
     setLoading(true);
     try {
-      const user = await authService.signUp(email, password, displayName, userType);
-      setUser(user);
-      await refreshUserData(user.uid);
+      await authService.signUp(email, password, displayName, userType);
+      await authService.signOut();
+      setUser(null);
+      setUserData(null);
+      router.replace('/(auth)/sign-in');
     } finally {
       setLoading(false);
     }

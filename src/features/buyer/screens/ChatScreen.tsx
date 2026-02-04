@@ -96,7 +96,7 @@ export const ChatScreen: React.FC = () => {
   const handleMessagePress = (message: ChatMessage) => {
     if (message.messageType === 'order_update' && message.orderData) {
       // Navigate to order detail
-      router.push(`/order-detail?id=${message.orderData.orderId}`);
+      router.push({ pathname: '/order-tracking', params: { orderId: message.orderData.orderId } } as any);
     }
   };
 
@@ -205,7 +205,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 });
-
 
 
 
