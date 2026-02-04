@@ -6,6 +6,7 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { Review } from '../../services/reviewService';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ReviewCardProps {
   review: Review;
@@ -26,30 +27,31 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
 
   const formatDate = (date: Date | string | null | undefined) => {
-    if (!date) return 'Tarih bilinmiyor';
+    if (!date) return t('reviewCard.dateUnknown');
     
     const dateObj = date instanceof Date ? date : new Date(date);
-    if (isNaN(dateObj.getTime())) return 'Geçersiz tarih';
+    if (isNaN(dateObj.getTime())) return t('reviewCard.dateInvalid');
     
     const now = new Date();
     const diffInDays = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60 * 60 * 24));
     
     if (diffInDays === 0) {
-      return 'Bugün';
+      return t('reviewCard.today');
     } else if (diffInDays === 1) {
-      return 'Dün';
+      return t('reviewCard.yesterday');
     } else if (diffInDays < 7) {
-      return `${diffInDays} gün önce`;
+      return t('reviewCard.daysAgo', { count: diffInDays });
     } else if (diffInDays < 30) {
       const weeks = Math.floor(diffInDays / 7);
-      return `${weeks} hafta önce`;
+      return t('reviewCard.weeksAgo', { count: weeks });
     } else if (diffInDays < 365) {
       const months = Math.floor(diffInDays / 30);
-      return `${months} ay önce`;
+      return t('reviewCard.monthsAgo', { count: months });
     } else {
-      return date.toLocaleDateString('tr-TR');
+      return dateObj.toLocaleDateString(currentLanguage === 'en' ? 'en-GB' : 'tr-TR');
     }
   };
 
@@ -98,7 +100,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
                 <View style={[styles.verifiedBadge, { backgroundColor: colors.success }]}>
                   <FontAwesome name="check" size={10} color={colors.background} />
                   <Text variant="caption" style={{ color: colors.background, marginLeft: 2 }}>
-                    Doğrulandı
+                    {t('reviewCard.verified')}
                   </Text>
                 </View>
               )}
@@ -141,7 +143,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
         >
           <FontAwesome name="thumbs-up" size={14} color={colors.textSecondary} />
           <Text variant="caption" style={{ color: colors.textSecondary, marginLeft: 4 }}>
-            Faydalı ({review.helpfulCount})
+            {t('reviewCard.helpful', { count: review.helpfulCount })}
           </Text>
         </TouchableOpacity>
 
@@ -151,7 +153,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
         >
           <FontAwesome name="flag" size={14} color={colors.textSecondary} />
           <Text variant="caption" style={{ color: colors.textSecondary, marginLeft: 4 }}>
-            Şikayet Et
+            {t('reviewCard.report')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -237,7 +239,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
 });
-
 
 
 

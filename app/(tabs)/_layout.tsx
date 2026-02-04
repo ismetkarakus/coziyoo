@@ -7,6 +7,7 @@ import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useCart } from '@/src/context/CartContext';
 import { WebSafeIcon } from '@/src/components/ui/WebSafeIcon';
 import { useAuth } from '@/src/context/AuthContext';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -27,6 +28,7 @@ function TabBarIcon(props: {
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   const { getTotalItems } = useCart();
   const cartItemCount = getTotalItems();
   const { userData } = useAuth();
@@ -113,7 +115,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Ana Sayfa',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
               name={focused ? "th-large" : "th-large"} 
@@ -135,7 +137,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="cart"
         options={{
-          title: 'Sepet',
+          title: t('tabs.cart'),
           tabBarBadge: cartItemCount > 0 ? cartItemCount : undefined,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
@@ -190,7 +192,7 @@ export default function TabLayout() {
               {
                 ...props,
                 children: content,
-                accessibilityLabel: 'Profile shortcut',
+                accessibilityLabel: t('tabs.profileShortcut'),
               },
               handleProfilePress
             );
@@ -200,7 +202,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
-          title: 'Mesajlar',
+          title: t('tabs.messages'),
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
               name={focused ? "envelope" : "envelope-o"} 
@@ -216,7 +218,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="notifications"
         options={{
-          title: 'Bildirimler',
+          title: t('tabs.notifications'),
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
               name={focused ? "bullhorn" : "bullhorn"} 

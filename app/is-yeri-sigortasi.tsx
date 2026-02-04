@@ -1,29 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { Text, Card, Button, FormField, Checkbox, HeaderBackButton } from '../src/components/ui';
 // TopBar kaldırıldı - Expo Router header kullanılacak
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
-import { useCountry } from '../src/context/CountryContext';
+import { useTranslation } from '../src/hooks/useTranslation';
 
 export default function IsYeriSigortasi() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { currentCountry } = useCountry();
+  const { currentLanguage } = useTranslation();
+  const isTR = currentLanguage === 'tr';
   
-  const [formData, setFormData] = useState({
-    policyNumber: currentCountry.code === 'TR' ? 'AXA-IY-2024-123456' : 'AXA-PL-2024-123456',
-    insuranceCompany: currentCountry.code === 'TR' ? 'Axa Sigorta' : 'AXA Insurance',
-    coverageAmount: currentCountry.code === 'TR' ? '2.000.000 ₺' : '£2,000,000',
+  const getInitialFormData = (useTR: boolean) => ({
+    policyNumber: useTR ? 'AXA-IY-2024-123456' : 'AXA-PL-2024-123456',
+    insuranceCompany: useTR ? 'Axa Sigorta' : 'AXA Insurance',
+    coverageAmount: useTR ? '2.000.000 ₺' : '£2,000,000',
     startDate: '2024-01-01',
     endDate: '2025-01-01',
     holderName: 'Fatma Teyze',
-    businessType: currentCountry.code === 'TR' ? 'Evde Gıda Üretimi' : 'Home Food Business',
+    businessType: useTR ? 'Evde Gıda Üretimi' : 'Home Food Business',
     hasInsurance: true,
   });
 
+  const [formData, setFormData] = useState(getInitialFormData(isTR));
+
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData(getInitialFormData(isTR));
+    }
+  }, [currentLanguage, isEditing, isTR]);
 
   const handleInputChange = (field: string) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -31,19 +40,19 @@ export default function IsYeriSigortasi() {
 
   const handleSave = () => {
     Alert.alert(
-      currentCountry.code === 'TR' ? 'Başarılı' : 'Success',
-      currentCountry.code === 'TR' 
+      isTR ? 'Başarılı' : 'Success',
+      isTR 
         ? 'İş yeri sigortası bilgileri başarıyla güncellendi.'
         : 'Public liability insurance details have been updated successfully.',
       [{ 
-        text: currentCountry.code === 'TR' ? 'Tamam' : 'OK', 
+        text: isTR ? 'Tamam' : 'OK', 
         onPress: () => setIsEditing(false) 
       }]
     );
   };
 
   const openInsuranceWebsite = () => {
-    if (currentCountry.code === 'TR') {
+    if (isTR) {
       Linking.openURL('https://www.axasigorta.com.tr');
     } else {
       Linking.openURL('https://www.axa.co.uk/business-insurance/');
@@ -54,13 +63,13 @@ export default function IsYeriSigortasi() {
     <>
       <Stack.Screen 
         options={{
-          title: currentCountry.code === 'TR' ? '🛡️ İş Yeri Sigortası' : '🛡️ Public Liability Insurance',
+          title: isTR ? '🛡️ İş Yeri Sigortası' : '🛡️ Public Liability Insurance',
           headerBackVisible: false, // Otomatik geri butonunu gizle
           headerLeft: () => <HeaderBackButton />,
           headerRight: () => (
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
               <Text variant="body" color="primary">
-                {currentCountry.code === 'TR' 
+                {isTR 
                   ? (isEditing ? 'İptal' : 'Düzenle')
                   : (isEditing ? 'Cancel' : 'Edit')
                 }
@@ -77,11 +86,11 @@ export default function IsYeriSigortasi() {
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              {currentCountry.code === 'TR' ? 'Sigorta Durumu' : 'Insurance Status'}
+              {isTR ? 'Sigorta Durumu' : 'Insurance Status'}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: formData.hasInsurance ? '#28A745' : '#FFC107' }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
-                {currentCountry.code === 'TR' 
+                {isTR 
                   ? (formData.hasInsurance ? '✅ AKTİF' : '⏳ BEKLEMEDE')
                   : (formData.hasInsurance ? '✅ ACTIVE' : '⏳ PENDING')
                 }
@@ -91,7 +100,7 @@ export default function IsYeriSigortasi() {
           
           {formData.hasInsurance && (
             <Text variant="body" color="success" style={styles.statusMessage}>
-              {currentCountry.code === 'TR' 
+              {isTR 
                 ? 'İş yeri sigortanız aktif ve geçerli.'
                 : 'Your public liability insurance is active and valid.'
               }
@@ -102,11 +111,11 @@ export default function IsYeriSigortasi() {
         {/* Quick Actions */}
         <Card variant="default" padding="md" style={styles.actionsCard}>
           <Text variant="body" weight="semibold" style={styles.actionsTitle}>
-            {currentCountry.code === 'TR' ? '📋 Hızlı İşlemler' : '📋 Quick Actions'}
+            {isTR ? '📋 Hızlı İşlemler' : '📋 Quick Actions'}
           </Text>
           <TouchableOpacity style={styles.actionButton} onPress={openInsuranceWebsite}>
             <Text variant="body" color="primary">
-              {currentCountry.code === 'TR' 
+              {isTR 
                 ? '🌐 Sigorta Şirketi →'
                 : '🌐 Insurance Provider →'
               }
@@ -117,67 +126,67 @@ export default function IsYeriSigortasi() {
         {/* Insurance Details */}
         <Card variant="default" padding="md" style={styles.detailsCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {currentCountry.code === 'TR' ? 'Sigorta Detayları' : 'Insurance Details'}
+            {isTR ? 'Sigorta Detayları' : 'Insurance Details'}
           </Text>
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Poliçe Numarası' : 'Policy Number'}
+            label={isTR ? 'Poliçe Numarası' : 'Policy Number'}
             value={formData.policyNumber}
             onChangeText={handleInputChange('policyNumber')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'AXA-IY-2024-123456' : 'Policy number'}
+            placeholder={isTR ? 'AXA-IY-2024-123456' : 'Policy number'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Sigorta Şirketi' : 'Insurance Company'}
+            label={isTR ? 'Sigorta Şirketi' : 'Insurance Company'}
             value={formData.insuranceCompany}
             onChangeText={handleInputChange('insuranceCompany')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'Axa Sigorta' : 'Insurance provider'}
+            placeholder={isTR ? 'Axa Sigorta' : 'Insurance provider'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Teminat Tutarı' : 'Coverage Amount'}
+            label={isTR ? 'Teminat Tutarı' : 'Coverage Amount'}
             value={formData.coverageAmount}
             onChangeText={handleInputChange('coverageAmount')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? '2.000.000 ₺' : '£2,000,000'}
+            placeholder={isTR ? '2.000.000 ₺' : '£2,000,000'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Poliçe Sahibi' : 'Policy Holder'}
+            label={isTR ? 'Poliçe Sahibi' : 'Policy Holder'}
             value={formData.holderName}
             onChangeText={handleInputChange('holderName')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'Tam adınız' : 'Your full name'}
+            placeholder={isTR ? 'Tam adınız' : 'Your full name'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'İşletme Türü' : 'Business Type'}
+            label={isTR ? 'İşletme Türü' : 'Business Type'}
             value={formData.businessType}
             onChangeText={handleInputChange('businessType')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'Evde Gıda Üretimi' : 'Home Food Business'}
+            placeholder={isTR ? 'Evde Gıda Üretimi' : 'Home Food Business'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Başlangıç Tarihi' : 'Start Date'}
+            label={isTR ? 'Başlangıç Tarihi' : 'Start Date'}
             value={formData.startDate}
             onChangeText={handleInputChange('startDate')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
+            placeholder={isTR ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Bitiş Tarihi' : 'End Date'}
+            label={isTR ? 'Bitiş Tarihi' : 'End Date'}
             value={formData.endDate}
             onChangeText={handleInputChange('endDate')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
+            placeholder={isTR ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
           />
 
           <Checkbox
-            label={currentCountry.code === 'TR' 
+            label={isTR 
               ? 'Geçerli iş yeri sigortam var'
               : 'I have valid public liability insurance'
             }
@@ -192,7 +201,7 @@ export default function IsYeriSigortasi() {
               onPress={handleSave}
               style={styles.saveButton}
             >
-              {currentCountry.code === 'TR' ? '💾 Değişiklikleri Kaydet' : '💾 Save Changes'}
+              {isTR ? '💾 Değişiklikleri Kaydet' : '💾 Save Changes'}
             </Button>
           )}
         </Card>
@@ -200,35 +209,35 @@ export default function IsYeriSigortasi() {
         {/* Legal Information */}
         <Card variant="default" padding="md" style={styles.legalCard}>
           <Text variant="body" weight="semibold" style={styles.legalTitle}>
-            {currentCountry.code === 'TR' ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
+            {isTR ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
           </Text>
-          {currentCountry.code === 'TR' ? (
+          {isTR ? (
             <>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Gıda işletmeleri için iş yeri sigortası önerilir
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Müşteri zararları için yeterli teminat bulunmalıdır
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Sigorta poliçesi düzenli olarak yenilenmelidir
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Hasar durumunda sigorta şirketi derhal bilgilendirilmelidir
               </Text>
             </>
           ) : (
             <>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Public liability insurance is recommended for food businesses
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Adequate coverage should be maintained for customer claims
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Insurance policies must be renewed regularly
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Insurance provider must be notified immediately of any claims
               </Text>
             </>
@@ -330,7 +339,6 @@ const styles = StyleSheet.create({
   legalText: {
     marginBottom: Spacing.xs,
     lineHeight: 18,
-    color: Colors.light.text,
   },
   bottomSpace: {
     height: Spacing.xl,

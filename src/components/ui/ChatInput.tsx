@@ -3,6 +3,7 @@ import { View, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-n
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -12,11 +13,13 @@ interface ChatInputProps {
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
-  placeholder = 'Mesaj yazın...',
+  placeholder,
   disabled = false,
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder || t('chatInput.placeholder');
   const [message, setMessage] = useState('');
 
   const handleSend = () => {
@@ -33,7 +36,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           style={[styles.textInput, { color: colors.text }]}
           value={message}
           onChangeText={setMessage}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           placeholderTextColor={colors.textSecondary}
           multiline
           maxLength={500}
@@ -104,7 +107,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-
 
 
 

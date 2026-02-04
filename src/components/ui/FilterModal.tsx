@@ -8,6 +8,8 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { SearchFilters } from '../../services/searchService';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useCountry } from '../../context/CountryContext';
 
 interface FilterModalProps {
   visible: boolean;
@@ -24,41 +26,43 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
+  const { currentCountry } = useCountry();
   
   const [filters, setFilters] = useState<SearchFilters>(initialFilters);
 
-  const categories = [
-    'Tümü', 'Ana Yemek', 'Çorba', 'Kahvaltı', 'Salata', 
-    'Tatlı', 'İçecek', 'Atıştırmalık', 'Vegan', 'Diyet'
-  ];
+  const categories = currentLanguage === 'en'
+    ? ['All', 'Main Dish', 'Soup', 'Breakfast', 'Salad', 'Dessert', 'Drinks', 'Snack', 'Vegan', 'Diet']
+    : ['Tümü', 'Ana Yemek', 'Çorba', 'Kahvaltı', 'Salata', 'Tatlı', 'İçecek', 'Atıştırmalık', 'Vegan', 'Diyet'];
+  const defaultCategory = currentLanguage === 'en' ? 'All' : 'Tümü';
 
   const priceRanges = [
-    { label: '0-25 ₺', min: 0, max: 25 },
-    { label: '25-50 ₺', min: 25, max: 50 },
-    { label: '50-75 ₺', min: 50, max: 75 },
-    { label: '75-100 ₺', min: 75, max: 100 },
-    { label: '100+ ₺', min: 100, max: 1000 },
+    { label: `0-25 ${currentCountry.currencySymbol}`, min: 0, max: 25 },
+    { label: `25-50 ${currentCountry.currencySymbol}`, min: 25, max: 50 },
+    { label: `50-75 ${currentCountry.currencySymbol}`, min: 50, max: 75 },
+    { label: `75-100 ${currentCountry.currencySymbol}`, min: 75, max: 100 },
+    { label: `100+ ${currentCountry.currencySymbol}`, min: 100, max: 1000 },
   ];
 
   const ratingOptions = [
-    { label: '4+ Yıldız', value: 4 },
-    { label: '3+ Yıldız', value: 3 },
-    { label: '2+ Yıldız', value: 2 },
-    { label: '1+ Yıldız', value: 1 },
+    { label: t('filterModal.rating4'), value: 4 },
+    { label: t('filterModal.rating3'), value: 3 },
+    { label: t('filterModal.rating2'), value: 2 },
+    { label: t('filterModal.rating1'), value: 1 },
   ];
 
   const sortOptions = [
-    { label: 'En Yeni', value: 'newest' as const },
-    { label: 'En Popüler', value: 'popularity' as const },
-    { label: 'En Yüksek Puan', value: 'rating_desc' as const },
-    { label: 'Fiyat (Düşük-Yüksek)', value: 'price_asc' as const },
-    { label: 'Fiyat (Yüksek-Düşük)', value: 'price_desc' as const },
+    { label: t('filterModal.sortNewest'), value: 'newest' as const },
+    { label: t('filterModal.sortPopular'), value: 'popularity' as const },
+    { label: t('filterModal.sortRating'), value: 'rating_desc' as const },
+    { label: t('filterModal.sortPriceAsc'), value: 'price_asc' as const },
+    { label: t('filterModal.sortPriceDesc'), value: 'price_desc' as const },
   ];
 
   const handleCategorySelect = (category: string) => {
     setFilters(prev => ({
       ...prev,
-      category: category === 'Tümü' ? undefined : category
+      category: category === defaultCategory ? undefined : category
     }));
   };
 
@@ -146,10 +150,10 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             <FontAwesome name="times" size={20} color={colors.text} />
           </TouchableOpacity>
           <Text variant="heading" style={styles.title}>
-            Filtreler
+            {t('filterModal.title')}
           </Text>
           <TouchableOpacity onPress={handleReset} style={styles.resetButton}>
-            <Text variant="body" color="primary">Temizle</Text>
+            <Text variant="body" color="primary">{t('filterModal.reset')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -157,7 +161,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           {/* Categories */}
           <Card style={styles.section}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Kategori
+              {t('filterModal.category')}
             </Text>
             <View style={styles.chipContainer}>
               {categories.map((category) => (
@@ -166,7 +170,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   style={[
                     styles.chip,
                     {
-                      backgroundColor: filters.category === category || (category === 'Tümü' && !filters.category)
+                      backgroundColor: filters.category === category || (category === defaultCategory && !filters.category)
                         ? colors.primary
                         : colors.surface,
                       borderColor: colors.border,
@@ -177,7 +181,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   <Text
                     variant="body"
                     style={{
-                      color: filters.category === category || (category === 'Tümü' && !filters.category)
+                      color: filters.category === category || (category === defaultCategory && !filters.category)
                         ? colors.background
                         : colors.text
                     }}
@@ -192,7 +196,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           {/* Price Range */}
           <Card style={styles.section}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Fiyat Aralığı
+              {t('filterModal.priceRange')}
             </Text>
             <View style={styles.chipContainer}>
               {priceRanges.map((range, index) => (
@@ -227,7 +231,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           {/* Rating */}
           <Card style={styles.section}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Minimum Puan
+              {t('filterModal.minRating')}
             </Text>
             <View style={styles.chipContainer}>
               {ratingOptions.map((option) => (
@@ -262,7 +266,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           {/* Delivery Options */}
           <Card style={styles.section}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Teslimat Seçenekleri
+              {t('filterModal.deliveryOptions')}
             </Text>
             <View style={styles.chipContainer}>
               <TouchableOpacity
@@ -285,7 +289,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                       : colors.text
                   }}
                 >
-                  🏃‍♂️ Gel Al
+                  🏃‍♂️ {t('foodDetailScreen.pickup')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -308,7 +312,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                       : colors.text
                   }}
                 >
-                  🚚 Teslimat
+                  🚚 {t('foodDetailScreen.delivery')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -317,7 +321,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           {/* Max Distance */}
           <Card style={styles.section}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Maksimum Mesafe: {filters.maxDistance || 10} km
+              {t('filterModal.maxDistance', { value: filters.maxDistance || 10 })}
             </Text>
             <Slider
               style={styles.slider}
@@ -335,7 +339,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           {/* Preparation Time */}
           <Card style={styles.section}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Maksimum Hazırlık Süresi: {filters.preparationTime?.max || 60} dk
+              {t('filterModal.maxPrepTime', { value: filters.preparationTime?.max || 60 })}
             </Text>
             <Slider
               style={styles.slider}
@@ -353,7 +357,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           {/* Sort Options */}
           <Card style={styles.section}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Sıralama
+              {t('filterModal.sort')}
             </Text>
             <View style={styles.radioContainer}>
               {sortOptions.map((option) => (
@@ -386,7 +390,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             fullWidth
             onPress={handleApply}
           >
-            Filtreleri Uygula {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
+            {t('filterModal.apply')} {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
           </Button>
         </View>
       </View>

@@ -7,12 +7,15 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useCountry } from '../../../context/CountryContext';
 
 export const OrderHistory: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
+  const { formatCurrency } = useCountry();
   const [orders, setOrders] = useState<any[]>([]);
+  const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
 
   // Load orders from AsyncStorage when screen comes into focus
   useFocusEffect(
@@ -191,7 +194,7 @@ export const OrderHistory: React.FC = () => {
                         <Text weight="medium">{t('orderHistoryScreen.quantity')}</Text> {order.quantity} {t('orderHistoryScreen.quantityUnit')}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">{t('orderHistoryScreen.total')}</Text> ₺{order.totalPrice}
+                        <Text weight="medium">{t('orderHistoryScreen.total')}</Text> {formatCurrency(order.totalPrice)}
                       </Text>
                       <Text variant="body">
                         <Text weight="medium">{t('orderHistoryScreen.requestedDate')}</Text> {order.requestedDate}
@@ -201,7 +204,7 @@ export const OrderHistory: React.FC = () => {
                         <Text weight="medium">{t('orderHistoryScreen.delivery')}</Text> {order.deliveryType === 'pickup' ? t('orderHistoryScreen.pickup') : t('orderHistoryScreen.deliveryOption')}
                       </Text>
                       <Text variant="caption" color="textSecondary">
-                        {t('orderHistoryScreen.orderTime')} {new Date(order.createdAt).toLocaleString('tr-TR')}
+                        {t('orderHistoryScreen.orderTime')} {new Date(order.createdAt).toLocaleString(locale)}
                       </Text>
                     </View>
 
@@ -256,7 +259,7 @@ export const OrderHistory: React.FC = () => {
                         <Text weight="medium">{t('orderHistoryScreen.quantity')}</Text> {order.quantity} {t('orderHistoryScreen.quantityUnit')}
                       </Text>
                       <Text variant="body">
-                        <Text weight="medium">{t('orderHistoryScreen.total')}</Text> ₺{order.totalPrice}
+                        <Text weight="medium">{t('orderHistoryScreen.total')}</Text> {formatCurrency(order.totalPrice)}
                       </Text>
                       <Text variant="body">
                         <Text weight="medium">{t('orderHistoryScreen.requestedDate')}</Text> {order.requestedDate}
@@ -266,7 +269,7 @@ export const OrderHistory: React.FC = () => {
                         <Text weight="medium">{t('orderHistoryScreen.delivery')}</Text> {order.deliveryType === 'pickup' ? t('orderHistoryScreen.pickup') : t('orderHistoryScreen.deliveryOption')}
                       </Text>
                       <Text variant="caption" color="textSecondary">
-                        {t('orderHistoryScreen.orderTime')} {new Date(order.createdAt).toLocaleString('tr-TR')}
+                        {t('orderHistoryScreen.orderTime')} {new Date(order.createdAt).toLocaleString(locale)}
                       </Text>
                       {order.buyerApprovedAt && (
                         <Text variant="caption" color="success">

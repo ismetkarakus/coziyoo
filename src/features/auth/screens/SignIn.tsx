@@ -41,7 +41,7 @@ export const SignIn: React.FC = () => {
       await signIn(email, password);
       // Giriş başarılı - AuthContext otomatik olarak yönlendirecek
     } catch (error: any) {
-      Alert.alert(t('authSignIn.signInErrorTitle'), error.message);
+      Alert.alert(t('authSignIn.signInErrorTitle'), t('authSignIn.signInErrorMessage'));
     }
   };
 
@@ -60,7 +60,7 @@ export const SignIn: React.FC = () => {
       await handleSignIn(creds);
       // AuthGuard will route based on role
     } catch (error: any) {
-      Alert.alert('Giriş Hatası', error.message);
+      Alert.alert(t('authSignIn.signInErrorTitle'), t('authSignIn.signInErrorMessage'));
     }
   };
 
@@ -125,14 +125,14 @@ export const SignIn: React.FC = () => {
                 onPress={() => handleTestLogin('buyer')}
                 style={styles.testButton}
               >
-                Alıcı (Test)
+                {t('authSignIn.testBuyer')}
               </Button>
               <Button
                 variant="outline"
                 onPress={() => handleTestLogin('seller')}
                 style={styles.testButton}
               >
-                Satıcı (Test)
+                {t('authSignIn.testSeller')}
               </Button>
             </View>
           </View>
@@ -213,4 +213,3 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-

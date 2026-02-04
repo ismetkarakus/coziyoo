@@ -48,10 +48,18 @@ export default function CouncilRegistration() {
   };
 
   const openCouncilWebsite = () => {
+    if (isTR) {
+      Linking.openURL('https://www.turkiye.gov.tr/gida-tarbil-isletme-kayit-belgesi');
+      return;
+    }
     Linking.openURL('https://www.gov.uk/food-business-registration');
   };
 
   const openCouncilSearch = () => {
+    if (isTR) {
+      Linking.openURL('https://www.turkiye.gov.tr/belediyeler');
+      return;
+    }
     Linking.openURL('https://www.gov.uk/find-local-council');
   };
 
@@ -215,20 +223,20 @@ export default function CouncilRegistration() {
           <Text variant="body" weight="semibold" style={styles.legalTitle}>
             {t(`${baseKey}.legalTitle`)}
           </Text>
-          <Text variant="caption" style={styles.legalText}>
+          <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
             • {t(`${baseKey}.legalBullet1`)}
           </Text>
-          <Text variant="caption" style={styles.legalText}>
+          <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
             • {t(`${baseKey}.legalBullet2`)}
           </Text>
-          <Text variant="caption" style={styles.legalText}>
+          <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
             • {t(`${baseKey}.legalBullet3`)}
           </Text>
-          <Text variant="caption" style={styles.legalText}>
+          <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
             • {t(`${baseKey}.legalBullet4`)}
           </Text>
           {isTR && (
-            <Text variant="caption" style={styles.legalText}>
+            <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
               • {t(`${baseKey}.legalBullet5`)}
             </Text>
           )}
@@ -328,7 +336,6 @@ const styles = StyleSheet.create({
   legalText: {
     marginBottom: Spacing.xs,
     lineHeight: 18,
-    color: Colors.light.text,
   },
   bottomSpace: {
     height: Spacing.xl,

@@ -11,13 +11,25 @@ import { useTranslation } from '../../../hooks/useTranslation';
 export const About: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
+
+  const appInfoValues = currentLanguage === 'en'
+    ? {
+        lastUpdate: 'January 7, 2026',
+        developer: 'Coziyoo Team',
+        platform: 'iOS & Android',
+      }
+    : {
+        lastUpdate: '7 Ocak 2026',
+        developer: 'Coziyoo Team',
+        platform: 'iOS & Android',
+      };
 
   const appInfo = [
     { label: t('aboutScreen.appInfo.version'), value: '1.0.0' },
-    { label: t('aboutScreen.appInfo.lastUpdate'), value: '7 Ocak 2026' },
-    { label: t('aboutScreen.appInfo.developer'), value: 'Coziyoo Team' },
-    { label: t('aboutScreen.appInfo.platform'), value: 'iOS & Android' },
+    { label: t('aboutScreen.appInfo.lastUpdate'), value: appInfoValues.lastUpdate },
+    { label: t('aboutScreen.appInfo.developer'), value: appInfoValues.developer },
+    { label: t('aboutScreen.appInfo.platform'), value: appInfoValues.platform },
   ];
 
   const legalLinks = [
@@ -293,7 +305,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
 });
-
 
 
 

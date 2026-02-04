@@ -12,6 +12,7 @@ import { Text } from './Text';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface SearchBarProps {
   value: string;
@@ -30,7 +31,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onChangeText,
   onSubmit,
   onFilterPress,
-  placeholder = 'Yemek, satıcı ara...',
+  placeholder,
   suggestions = [],
   onSuggestionPress,
   showFilter = true,
@@ -38,6 +39,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder || t('searchBar.placeholder');
   
   const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -134,7 +137,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onFocus={handleFocus}
           onBlur={handleBlur}
           onSubmitEditing={handleSubmit}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           placeholderTextColor={colors.textSecondary}
           returnKeyType="search"
           autoCorrect={false}
@@ -272,7 +275,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
 
 
 

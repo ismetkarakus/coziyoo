@@ -48,7 +48,7 @@ class SearchService {
       };
     } catch (error) {
       console.error('Error searching foods:', error);
-      throw new Error('Arama yapılırken hata oluştu');
+      throw new Error('SEARCH_ERROR');
     }
   }
 
@@ -77,7 +77,7 @@ class SearchService {
       );
     }
 
-    if (filters.category && filters.category !== 'Tümü') {
+    if (filters.category && filters.category !== 'Tümü' && filters.category !== 'All') {
       filtered = filtered.filter(f => f.category === filters.category);
     }
 

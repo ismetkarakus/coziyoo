@@ -12,4 +12,8 @@
 [x] alici profili degistirildi
 [x] start
  kart ve adres bilgileri eklendi cuzdan bolumu kalkti
-[] alici cikis ikonu kisisel bilgiler bolumunun en altina alalimalimi ??
+[] alici cikis ikonu kisisel bilgiler bolumunun en altina alalimi ??
+[x]kayit sonrasi onaypopup tebrikler
+[x] satici cuzdani duzenlenecek
+[x] yemek ekle bolumunde tarif eksikti eklendi
+[x]satici banka bilgileri  tamamlandi

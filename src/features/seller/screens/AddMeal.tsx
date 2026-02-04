@@ -696,9 +696,6 @@ export const AddMeal: React.FC = () => {
       
       // Daha detaylı hata mesajı
       let errorMessage = t('addMealScreen.alerts.publishError');
-      if (error instanceof Error) {
-        errorMessage += `\n\nDetay: ${error.message}`;
-      }
       
       Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.publishErrorDetail', { message: errorMessage }));
     } finally {

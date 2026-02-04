@@ -8,6 +8,7 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useCountry } from '../../../context/CountryContext';
 
 interface FavoriteItem {
   id: string;
@@ -19,15 +20,62 @@ interface FavoriteItem {
   category: string;
 }
 
+const getMockFavorites = (language: 'tr' | 'en'): FavoriteItem[] => {
+  if (language === 'tr') {
+    return [
+      {
+        id: '1',
+        name: 'Mantı',
+        cookName: 'Ayşe Hanım',
+        price: 25,
+        rating: 4.8,
+        imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=160&h=140&fit=crop',
+        category: 'Ana Yemek',
+      },
+      {
+        id: '2',
+        name: 'Baklava',
+        cookName: 'Mehmet Usta',
+        price: 15,
+        rating: 4.9,
+        imageUrl: 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=160&h=140&fit=crop',
+        category: 'Tatlı',
+      },
+    ];
+  }
+
+  return [
+    {
+      id: '1',
+      name: 'Manti',
+      cookName: 'Ayse Hanim',
+      price: 25,
+      rating: 4.8,
+      imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=160&h=140&fit=crop',
+      category: 'Main Dish',
+    },
+    {
+      id: '2',
+      name: 'Baklava',
+      cookName: 'Mehmet Usta',
+      price: 15,
+      rating: 4.9,
+      imageUrl: 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=160&h=140&fit=crop',
+      category: 'Dessert',
+    },
+  ];
+};
+
 export const Favorites: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
+  const { formatCurrency } = useCountry();
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
   useEffect(() => {
     loadFavorites();
-  }, []);
+  }, [currentLanguage]);
 
   const loadFavorites = async () => {
     try {
@@ -36,27 +84,7 @@ export const Favorites: React.FC = () => {
         setFavorites(JSON.parse(data));
       } else {
         // Mock favorites
-        const mockFavorites: FavoriteItem[] = [
-          {
-            id: '1',
-            name: 'Mantı',
-            cookName: 'Ayşe Hanım',
-            price: 25,
-            rating: 4.8,
-            imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=160&h=140&fit=crop',
-            category: 'Ana Yemek',
-          },
-          {
-            id: '2',
-            name: 'Baklava',
-            cookName: 'Mehmet Usta',
-            price: 15,
-            rating: 4.9,
-            imageUrl: 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=160&h=140&fit=crop',
-            category: 'Tatlı',
-          },
-        ];
-        setFavorites(mockFavorites);
+        setFavorites(getMockFavorites(currentLanguage));
       }
     } catch (error) {
       console.error('Error loading favorites:', error);
@@ -105,7 +133,7 @@ export const Favorites: React.FC = () => {
                 </Text>
                 <View style={styles.favoriteDetails}>
                   <Text variant="body" color="primary" weight="medium">
-                    ₺{item.price}
+                    {formatCurrency(item.price)}
                   </Text>
                   <View style={styles.rating}>
                     <Text style={styles.star}>⭐</Text>
@@ -219,4 +247,3 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-

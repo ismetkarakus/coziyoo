@@ -6,42 +6,74 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useCountry } from '../../../context/CountryContext';
 
-// Mock order data
-const MOCK_ORDERS = [
-  {
-    id: '1',
-    orderNumber: '#ORD-2024-001',
-    date: '4 Ocak 2024',
-    status: 'preparing',
-    statusText: 'Hazırlanıyor',
-    items: [
-      { name: 'Ev Yapımı Mantı', quantity: 2, price: 35 },
-      { name: 'Mercimek Çorbası', quantity: 1, price: 15 },
-    ],
-    total: 85,
-    cookName: 'Ayşe Hanım',
-    estimatedTime: '30-45 dk',
-  },
-  {
-    id: '2',
-    orderNumber: '#ORD-2024-002',
-    date: '3 Ocak 2024',
-    status: 'completed',
-    statusText: 'Tamamlandı',
-    items: [
-      { name: 'Karnıyarık', quantity: 1, price: 28 },
-    ],
-    total: 33,
-    cookName: 'Mehmet Usta',
-    estimatedTime: 'Teslim edildi',
-  },
-];
+const getMockOrders = (language: 'tr' | 'en') => {
+  if (language === 'tr') {
+    return [
+      {
+        id: '1',
+        orderNumber: '#ORD-2024-001',
+        date: '4 Ocak 2024',
+        status: 'preparing',
+        items: [
+          { name: 'Ev Yapımı Mantı', quantity: 2, price: 35 },
+          { name: 'Mercimek Çorbası', quantity: 1, price: 15 },
+        ],
+        total: 85,
+        cookName: 'Ayşe Hanım',
+        estimatedTime: '30-45 dk',
+      },
+      {
+        id: '2',
+        orderNumber: '#ORD-2024-002',
+        date: '3 Ocak 2024',
+        status: 'completed',
+        items: [
+          { name: 'Karnıyarık', quantity: 1, price: 28 },
+        ],
+        total: 33,
+        cookName: 'Mehmet Usta',
+        estimatedTime: 'Teslim edildi',
+      },
+    ];
+  }
+
+  return [
+    {
+      id: '1',
+      orderNumber: '#ORD-2024-001',
+      date: '4 Jan 2024',
+      status: 'preparing',
+      items: [
+        { name: 'Homemade Manti', quantity: 2, price: 35 },
+        { name: 'Lentil Soup', quantity: 1, price: 15 },
+      ],
+      total: 85,
+      cookName: 'Ayse Hanim',
+      estimatedTime: '30-45 min',
+    },
+    {
+      id: '2',
+      orderNumber: '#ORD-2024-002',
+      date: '3 Jan 2024',
+      status: 'completed',
+      items: [
+        { name: 'Stuffed Eggplant', quantity: 1, price: 28 },
+      ],
+      total: 33,
+      cookName: 'Mehmet Usta',
+      estimatedTime: 'Delivered',
+    },
+  ];
+};
 
 export const Orders: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
+  const { formatCurrency } = useCountry();
+  const mockOrders = getMockOrders(currentLanguage);
 
   const handleTrackOrder = (order: any) => {
     router.push({
@@ -106,7 +138,7 @@ export const Orders: React.FC = () => {
               {item.quantity}x {item.name}
             </Text>
             <Text variant="body" weight="medium">
-              ₺{(item.price * item.quantity).toFixed(2)}
+              {formatCurrency(item.price * item.quantity)}
             </Text>
           </View>
         ))}
@@ -115,7 +147,7 @@ export const Orders: React.FC = () => {
       <View style={styles.orderFooter}>
         <View style={styles.orderTotal}>
           <Text variant="body" weight="semibold">
-            {t('ordersScreen.total')} ₺{order.total.toFixed(2)}
+            {t('ordersScreen.total')} {formatCurrency(order.total)}
           </Text>
           <Text variant="caption" color="textSecondary">
             {order.estimatedTime}
@@ -146,7 +178,7 @@ export const Orders: React.FC = () => {
     </Card>
   );
 
-  if (MOCK_ORDERS.length === 0) {
+  if (mockOrders.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <TopBar title={t('ordersScreen.title')} />
@@ -175,7 +207,7 @@ export const Orders: React.FC = () => {
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.ordersContainer}>
-          {MOCK_ORDERS.map(renderOrder)}
+          {mockOrders.map(renderOrder)}
         </View>
       </ScrollView>
     </View>

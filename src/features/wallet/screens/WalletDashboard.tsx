@@ -8,20 +8,30 @@ import { Colors, Spacing } from '../../../theme';
 import { useWallet, Transaction } from '../../../context/WalletContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useTranslation } from '../../../hooks/useTranslation';
+import { useCountry } from '../../../context/CountryContext';
 
 export const WalletDashboard: React.FC = () => {
   const { wallet, withdrawFunds, refreshWallet, loading } = useWallet();
   const { user } = useAuth();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
+  const { formatCurrency } = useCountry();
   const [withdrawing, setWithdrawing] = useState(false);
   const [showBankDetails, setShowBankDetails] = useState(false);
+  const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
   
   // Mock banka bilgileri - gerçek uygulamada AsyncStorage'dan gelecek
-  const bankDetails = {
-    bankName: 'Türkiye İş Bankası',
-    iban: 'TR33 0006 4000 0011 2345 6789 01',
-  };
+  const bankDetails = currentLanguage === 'en'
+    ? {
+        bankName: 'Barclays',
+        iban: 'GB33 BARC 2020 1500 1234 56',
+      }
+    : {
+        bankName: 'Türkiye İş Bankası',
+        iban: 'TR33 0006 4000 0011 2345 6789 01',
+      };
 
   // Kullanıcı tipini belirle
   const isBuyer = user?.userType === 'buyer';
@@ -68,29 +78,31 @@ export const WalletDashboard: React.FC = () => {
       .filter(t => t.type === 'earning')
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const reportMessage = `📊 **Detaylı Cüzdan Raporu**
+    const reportLines = [
+      t('walletDashboard.reportTitle'),
+      '',
+      t('walletDashboard.reportMonthTitle', { month: now.toLocaleDateString(locale, { month: 'long' }), year: thisYear }),
+      ...(isBuyer ? [t('walletDashboard.reportSpending', { amount: formatCurrency(monthlySpending) })] : []),
+      ...((isSeller || isHybrid) ? [t('walletDashboard.reportEarnings', { amount: formatCurrency(monthlyEarnings) })] : []),
+      t('walletDashboard.reportTransactions', { count: thisMonthTransactions.length }),
+      '',
+      t('walletDashboard.reportYearTitle', { year: thisYear }),
+      ...(isBuyer ? [t('walletDashboard.reportSpending', { amount: formatCurrency(yearlySpending) })] : []),
+      ...((isSeller || isHybrid) ? [t('walletDashboard.reportEarnings', { amount: formatCurrency(yearlyEarnings) })] : []),
+      t('walletDashboard.reportTransactions', { count: thisYearTransactions.length }),
+      '',
+      t('walletDashboard.reportFooterTitle'),
+      t('walletDashboard.reportFooterLine1'),
+      t('walletDashboard.reportFooterLine2'),
+      t('walletDashboard.reportFooterLine3'),
+    ];
 
-📅 **Bu Ay (${now.toLocaleDateString('tr-TR', { month: 'long' })} ${thisYear}):**
-${isBuyer ? `💸 Toplam Harcama: ${formatCurrency(monthlySpending)}` : ''}
-${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(monthlyEarnings)}` : ''}
-🔄 İşlem Sayısı: ${thisMonthTransactions.length}
+    const reportMessage = reportLines.filter(Boolean).join('\n');
 
-📅 **Bu Yıl (${thisYear}):**
-${isBuyer ? `💸 Toplam Harcama: ${formatCurrency(yearlySpending)}` : ''}
-${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings)}` : ''}
-🔄 İşlem Sayısı: ${thisYearTransactions.length}
-
-💡 **Bu rapor şunları gösterir:**
-• Aylık ve yıllık harcama/kazanç özeti
-• İşlem sayısı istatistikleri
-• Finansal aktivite genel bakış`;
-
-    Alert.alert('Detaylı Rapor', reportMessage, [
-      { text: 'Tamam', style: 'default' }
+    Alert.alert(t('walletDashboard.reportDialogTitle'), reportMessage, [
+      { text: t('walletDashboard.reportDialogOk'), style: 'default' }
     ]);
   };
-
-  const formatCurrency = (amount: number) => `₺${amount.toFixed(2)}`;
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -99,13 +111,13 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffHours < 1) {
-      return 'Az önce';
+      return t('walletDashboard.time.justNow');
     } else if (diffHours < 24) {
-      return `${diffHours} saat önce`;
+      return t('walletDashboard.time.hoursAgo', { count: diffHours });
     } else if (diffDays < 7) {
-      return `${diffDays} gün önce`;
+      return t('walletDashboard.time.daysAgo', { count: diffDays });
     } else {
-      return date.toLocaleDateString('tr-TR');
+      return date.toLocaleDateString(locale);
     }
   };
 
@@ -144,28 +156,28 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
 
   const handleWithdraw = () => {
     if (wallet.availableEarnings <= 0) {
-      Alert.alert('Uyarı', 'Çekilebilir bakiyeniz bulunmuyor');
+      Alert.alert(t('walletDashboard.withdraw.warningTitle'), t('walletDashboard.withdraw.noBalance'));
       return;
     }
 
     Alert.prompt(
-      'Para Çek',
-      `Çekilebilir bakiye: ${formatCurrency(wallet.availableEarnings)}\n\nÇekmek istediğiniz tutarı girin:`,
+      t('walletDashboard.withdraw.title'),
+      t('walletDashboard.withdraw.prompt', { balance: formatCurrency(wallet.availableEarnings) }),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('walletDashboard.withdraw.cancel'), style: 'cancel' },
         {
-          text: 'Çek',
+          text: t('walletDashboard.withdraw.confirm'),
           onPress: async (amount) => {
             if (!amount) return;
             
             const withdrawAmount = parseFloat(amount);
             if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
-              Alert.alert('Hata', 'Geçerli bir tutar girin');
+              Alert.alert(t('walletDashboard.withdraw.errorTitle'), t('walletDashboard.withdraw.invalidAmount'));
               return;
             }
             
             if (withdrawAmount > wallet.availableEarnings) {
-              Alert.alert('Hata', 'Çekilebilir bakiyenizden fazla tutar giremezsiniz');
+              Alert.alert(t('walletDashboard.withdraw.errorTitle'), t('walletDashboard.withdraw.exceedsBalance'));
               return;
             }
 
@@ -173,11 +185,11 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
               setWithdrawing(true);
               await withdrawFunds(withdrawAmount, 'TR12 3456 7890 1234 5678 90'); // Mock IBAN
               Alert.alert(
-                'Para Çekme Talebi Alındı',
-                `${formatCurrency(withdrawAmount)} tutarındaki para çekme talebiniz alındı. 1-2 iş günü içinde hesabınıza aktarılacak.`
+                t('walletDashboard.withdraw.successTitle'),
+                t('walletDashboard.withdraw.successMessage', { amount: formatCurrency(withdrawAmount) })
               );
             } catch (error) {
-              Alert.alert('Hata', 'Para çekme işlemi başarısız oldu');
+              Alert.alert(t('walletDashboard.withdraw.errorTitle'), t('walletDashboard.withdraw.failed'));
             } finally {
               setWithdrawing(false);
             }
@@ -194,7 +206,7 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
     try {
       await refreshWallet();
     } catch (error) {
-      Alert.alert('Hata', 'Cüzdan bilgileri güncellenemedi');
+      Alert.alert(t('walletDashboard.alerts.errorTitle'), t('walletDashboard.alerts.refreshFailed'));
     }
   };
 
@@ -206,7 +218,7 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
   return (
     <View style={styles.container}>
       <TopBar 
-        title="Cüzdanım" 
+        title={t('walletDashboard.title')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -232,7 +244,11 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
         <Card variant="default" padding="lg" style={styles.overviewCard}>
           <View style={styles.balanceHeader}>
             <Text variant="body" weight="medium" style={styles.balanceTitle}>
-              {isBuyer ? 'Cüzdan Bakiyesi' : isSeller ? 'Toplam Kazanç' : 'Kullanılabilir Bakiye'}
+              {isBuyer
+                ? t('walletDashboard.balance.wallet')
+                : isSeller
+                  ? t('walletDashboard.balance.totalEarnings')
+                  : t('walletDashboard.balance.available')}
             </Text>
             <Text variant="heading" weight="bold" color="primary" style={styles.balanceAmount}>
               {isBuyer ? formatCurrency(wallet.balance) : 
@@ -245,13 +261,13 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
           {isHybrid && (
             <View style={styles.balanceBreakdown}>
               <View style={styles.balanceItem}>
-                <Text variant="caption" color="textSecondary">Cüzdan Bakiyesi</Text>
+                <Text variant="caption" color="textSecondary">{t('walletDashboard.balance.wallet')}</Text>
                 <Text variant="body" weight="medium" color="success">
                   {formatCurrency(wallet.balance)}
                 </Text>
               </View>
               <View style={styles.balanceItem}>
-                <Text variant="caption" color="textSecondary">Çekilebilir Kazanç</Text>
+                <Text variant="caption" color="textSecondary">{t('walletDashboard.balance.withdrawable')}</Text>
                 <Text variant="body" weight="medium" color="success">
                   {formatCurrency(wallet.availableEarnings)}
                 </Text>
@@ -262,20 +278,20 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
           {/* Sadece alıcılar için bakiye ekleme butonu */}
           {isBuyer && (
             <View style={styles.buyerActions}>
-              <Button variant="primary" onPress={() => Alert.alert('Para Yükle', 'Para yükleme özelliği yakında gelecek')}>
-                💳 Para Yükle
+              <Button variant="primary" onPress={() => Alert.alert(t('walletDashboard.alerts.addMoneyTitle'), t('walletDashboard.alerts.addMoneyMessage'))}>
+                💳 {t('walletDashboard.actions.addMoney')}
               </Button>
             </View>
           )}
 
           {wallet.pendingEarnings > 0 && (
             <View style={styles.pendingEarnings}>
-              <Text variant="caption" color="textSecondary">⏳ Bekleyen Kazanç</Text>
+              <Text variant="caption" color="textSecondary">⏳ {t('walletDashboard.pending.title')}</Text>
               <Text variant="body" weight="medium" color="warning">
                 {formatCurrency(wallet.pendingEarnings)}
               </Text>
               <Text variant="caption" color="textSecondary" style={styles.pendingNote}>
-                7 gün sonra çekilebilir duruma geçecek
+                {t('walletDashboard.pending.note')}
               </Text>
             </View>
           )}
@@ -286,9 +302,9 @@ ${(isSeller || isHybrid) ? `💰 Toplam Kazanç: ${formatCurrency(yearlyEarnings
         <View style={styles.mainActionsContainer}>
           {/* Para Çek butonu - Kazançları çek */}
           <Button
-            title="💸 Para Çek
-Kazançları Çek"
-            onPress={() => Alert.alert('Para Çek', 'Para çekme özelliği yakında gelecek')}
+            title={`💸 ${t('walletDashboard.actions.withdraw')}
+${t('walletDashboard.actions.withdrawSubtitle')}`}
+            onPress={() => Alert.alert(t('walletDashboard.alerts.withdrawTitle'), t('walletDashboard.alerts.withdrawMessage'))}
             style={[styles.mainActionButton, styles.cardColorButton]}
             textStyle={styles.buttonText}
             variant="outline"
@@ -296,9 +312,9 @@ Kazançları Çek"
           
           {/* Para Yükle butonu - Bakiye yükle */}
           <Button
-            title="💳 Para Yükle
-Bakiye Yükle"
-            onPress={() => Alert.alert('Para Yükle', 'Para yükleme özelliği yakında gelecek')}
+            title={`💳 ${t('walletDashboard.actions.addMoney')}
+${t('walletDashboard.actions.addMoneySubtitle')}`}
+            onPress={() => Alert.alert(t('walletDashboard.alerts.addMoneyTitle'), t('walletDashboard.alerts.addMoneyMessage'))}
             style={[styles.mainActionButton, styles.cardColorButton]}
             textStyle={styles.whiteButtonText}
             variant="outline"
@@ -306,8 +322,8 @@ Bakiye Yükle"
           
           {/* Banka Bilgileri butonu - Hesap bilgileri */}
           <Button
-            title={`🏦 Banka
-Hesap Bilgileri ${showBankDetails ? '▲' : '▼'}`}
+            title={`🏦 ${t('walletDashboard.actions.bankDetails')}
+${t('walletDashboard.actions.accountInfo')} ${showBankDetails ? '▲' : '▼'}`}
             onPress={() => setShowBankDetails(!showBankDetails)}
             style={[styles.mainActionButton, styles.cardColorButton]}
             textStyle={styles.buttonText}
@@ -316,8 +332,8 @@ Hesap Bilgileri ${showBankDetails ? '▲' : '▼'}`}
           
           {/* Detaylı Rapor butonu - Gelir gider */}
           <Button
-            title="📊 Rapor
-Gelir Gider"
+            title={`📊 ${t('walletDashboard.actions.report')}
+${t('walletDashboard.actions.reportSubtitle')}`}
             onPress={() => showDetailedReport()}
             style={[styles.mainActionButton, styles.cardColorButton]}
             textStyle={styles.buttonText}
@@ -343,7 +359,7 @@ Gelir Gider"
               </View>
             ) : (
               <Text variant="body" color="textSecondary">
-                Banka bilgisi yok
+                {t('walletDashboard.bank.noInfo')}
               </Text>
             )}
           </View>
@@ -352,14 +368,14 @@ Gelir Gider"
         {/* Monthly Summary */}
         <Card variant="default" padding="md" style={styles.summaryCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Bu Ay Özeti
+            {t('walletDashboard.monthlySummary')}
           </Text>
           
           {/* Satış İstatistikleri - Sadece satıcılar ve hibrit için */}
           {(isSeller || isHybrid) && (
             <>
               <Text variant="body" weight="medium" style={styles.subsectionTitle}>
-                🍽️ Satış Performansı
+                🍽️ {t('walletDashboard.salesPerformance')}
               </Text>
               <View style={styles.summaryGrid}>
                 <View style={styles.summaryItem}>
@@ -367,28 +383,28 @@ Gelir Gider"
                   <Text variant="body" weight="bold" color="primary">
                     23
                   </Text>
-                  <Text variant="caption" color="textSecondary">Satılan Yemek</Text>
+                  <Text variant="caption" color="textSecondary">{t('walletDashboard.soldMeals')}</Text>
                 </View>
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryIcon}>💰</Text>
                   <Text variant="body" weight="bold" color="success">
                     {formatCurrency(340)}
                   </Text>
-                  <Text variant="caption" color="textSecondary">Brüt Kazanç</Text>
+                  <Text variant="caption" color="textSecondary">{t('walletDashboard.grossEarnings')}</Text>
                 </View>
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryIcon}>📊</Text>
                   <Text variant="body" weight="bold" color="warning">
                     {formatCurrency(34)}
                   </Text>
-                  <Text variant="caption" color="textSecondary">Komisyon (%10)</Text>
+                  <Text variant="caption" color="textSecondary">{t('walletDashboard.commission')}</Text>
                 </View>
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryIcon}>✅</Text>
                   <Text variant="body" weight="bold" color="success">
                     {formatCurrency(306)}
                   </Text>
-                  <Text variant="caption" color="textSecondary">Net Kazanç</Text>
+                  <Text variant="caption" color="textSecondary">{t('walletDashboard.netEarnings')}</Text>
                 </View>
               </View>
             </>
@@ -396,7 +412,7 @@ Gelir Gider"
           
           {/* Genel Finansal Özet */}
           <Text variant="body" weight="medium" style={[styles.subsectionTitle, { marginTop: (isSeller || isHybrid) ? Spacing.md : 0 }]}>
-            💳 Finansal Özet
+            💳 {t('walletDashboard.financialSummary')}
           </Text>
           <View style={styles.summaryGrid}>
             {(isSeller || isHybrid) && (
@@ -405,7 +421,7 @@ Gelir Gider"
                 <Text variant="body" weight="bold" color="success">
                   {formatCurrency(306)}
                 </Text>
-                <Text variant="caption" color="textSecondary">Toplam Kazanç</Text>
+                <Text variant="caption" color="textSecondary">{t('walletDashboard.totalEarnings')}</Text>
               </View>
             )}
             {(isBuyer || isHybrid) && (
@@ -414,7 +430,7 @@ Gelir Gider"
                 <Text variant="body" weight="bold" color="error">
                   {formatCurrency(120)}
                 </Text>
-                <Text variant="caption" color="textSecondary">Toplam Harcama</Text>
+                <Text variant="caption" color="textSecondary">{t('walletDashboard.totalSpending')}</Text>
               </View>
             )}
             <View style={styles.summaryItem}>
@@ -423,7 +439,11 @@ Gelir Gider"
                 {formatCurrency(isHybrid ? 186 : isSeller ? 306 : -120)}
               </Text>
               <Text variant="caption" color="textSecondary">
-                {isHybrid ? 'Net Kar' : isSeller ? 'Net Kazanç' : 'Toplam Harcama'}
+                {isHybrid
+                  ? t('walletDashboard.netProfit')
+                  : isSeller
+                    ? t('walletDashboard.netEarnings')
+                    : t('walletDashboard.totalSpending')}
               </Text>
             </View>
           </View>
@@ -433,15 +453,15 @@ Gelir Gider"
         <Card variant="default" padding="md" style={styles.transactionsCard}>
           <View style={styles.transactionsHeader}>
             <Text variant="subheading" weight="semibold">
-              Son İşlemler
+              {t('walletDashboard.recentTransactions')}
             </Text>
             <TouchableOpacity
               onPress={() => {
                 // TODO: Navigate to full transaction history
-                Alert.alert('Yakında', 'Tüm işlemler sayfası yakında eklenecek');
+                Alert.alert(t('walletDashboard.alerts.comingSoonTitle'), t('walletDashboard.alerts.comingSoonMessage'));
               }}
             >
-              <Text variant="caption" color="primary">Tümünü Gör</Text>
+              <Text variant="caption" color="primary">{t('walletDashboard.viewAll')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -449,7 +469,7 @@ Gelir Gider"
             <View style={styles.emptyTransactions}>
               <Text style={styles.emptyIcon}>💳</Text>
               <Text variant="body" color="textSecondary" center>
-                Henüz işlem geçmişiniz yok
+                {t('walletDashboard.emptyTransactions')}
               </Text>
             </View>
           ) : (
@@ -466,7 +486,7 @@ Gelir Gider"
                       </Text>
                       <Text variant="caption" color="textSecondary">
                         {formatDate(transaction.createdAt)}
-                        {transaction.status === 'pending' && ' • Beklemede'}
+                        {transaction.status === 'pending' && ` • ${t('walletDashboard.pending.status')}`}
                       </Text>
                     </View>
                   </View>

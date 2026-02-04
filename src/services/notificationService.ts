@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import type * as ExpoNotifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const isWeb = Platform.OS === 'web';
 const Notifications: typeof ExpoNotifications | null = isWeb ? null : require('expo-notifications');
@@ -24,6 +25,16 @@ export interface NotificationData {
 class NotificationService {
   private expoPushToken: string | null = null;
   private fcmToken: string | null = null;
+  private languageStorageKey = 'userLanguage';
+
+  private async getLanguage(): Promise<'tr' | 'en'> {
+    try {
+      const stored = await AsyncStorage.getItem(this.languageStorageKey);
+      return stored === 'en' ? 'en' : 'tr';
+    } catch {
+      return 'tr';
+    }
+  }
 
   // Initialize notification service
   async initialize() {
@@ -131,32 +142,60 @@ class NotificationService {
 
   // Send notification for order status updates
   async sendOrderNotification(orderId: string, status: string, buyerName: string, foodName: string) {
-    const notifications = {
-      pending_seller_approval: {
-        title: '🍽️ Yeni Sipariş!',
-        body: `${buyerName} "${foodName}" için sipariş verdi. Onayınızı bekliyor.`,
-      },
-      approved: {
-        title: '✅ Sipariş Onaylandı!',
-        body: `"${foodName}" siparişiniz onaylandı. Hazırlanıyor...`,
-      },
-      preparing: {
-        title: '👨‍🍳 Hazırlanıyor',
-        body: `"${foodName}" siparişiniz hazırlanıyor.`,
-      },
-      ready: {
-        title: '🎉 Sipariş Hazır!',
-        body: `"${foodName}" siparişiniz hazır. Teslim alabilirsiniz.`,
-      },
-      completed: {
-        title: '✨ Sipariş Tamamlandı',
-        body: `"${foodName}" siparişiniz teslim edildi. Afiyet olsun!`,
-      },
-      cancelled: {
-        title: '❌ Sipariş İptal Edildi',
-        body: `"${foodName}" siparişiniz iptal edildi.`,
-      },
-    };
+    const language = await this.getLanguage();
+    const notifications = language === 'en'
+      ? {
+          pending_seller_approval: {
+            title: '🍽️ New Order!',
+            body: `${buyerName} placed an order for "${foodName}". Awaiting your approval.`,
+          },
+          approved: {
+            title: '✅ Order Approved!',
+            body: `Your "${foodName}" order was approved. Preparing...`,
+          },
+          preparing: {
+            title: '👨‍🍳 Preparing',
+            body: `Your "${foodName}" order is being prepared.`,
+          },
+          ready: {
+            title: '🎉 Order Ready!',
+            body: `Your "${foodName}" order is ready. You can pick it up.`,
+          },
+          completed: {
+            title: '✨ Order Completed',
+            body: `Your "${foodName}" order was delivered. Enjoy!`,
+          },
+          cancelled: {
+            title: '❌ Order Cancelled',
+            body: `Your "${foodName}" order was cancelled.`,
+          },
+        }
+      : {
+          pending_seller_approval: {
+            title: '🍽️ Yeni Sipariş!',
+            body: `${buyerName} "${foodName}" için sipariş verdi. Onayınızı bekliyor.`,
+          },
+          approved: {
+            title: '✅ Sipariş Onaylandı!',
+            body: `"${foodName}" siparişiniz onaylandı. Hazırlanıyor...`,
+          },
+          preparing: {
+            title: '👨‍🍳 Hazırlanıyor',
+            body: `"${foodName}" siparişiniz hazırlanıyor.`,
+          },
+          ready: {
+            title: '🎉 Sipariş Hazır!',
+            body: `"${foodName}" siparişiniz hazır. Teslim alabilirsiniz.`,
+          },
+          completed: {
+            title: '✨ Sipariş Tamamlandı',
+            body: `"${foodName}" siparişiniz teslim edildi. Afiyet olsun!`,
+          },
+          cancelled: {
+            title: '❌ Sipariş İptal Edildi',
+            body: `"${foodName}" siparişiniz iptal edildi.`,
+          },
+        };
 
     const notification = notifications[status as keyof typeof notifications];
     if (notification) {
@@ -178,9 +217,12 @@ class NotificationService {
 
   // Send notification for low stock
   async sendLowStockNotification(foodName: string, currentStock: number) {
+    const language = await this.getLanguage();
     await this.sendLocalNotification({
-      title: '⚠️ Stok Azalıyor',
-      body: `"${foodName}" için sadece ${currentStock} adet kaldı!`,
+      title: language === 'en' ? '⚠️ Low Stock' : '⚠️ Stok Azalıyor',
+      body: language === 'en'
+        ? `Only ${currentStock} left for "${foodName}"!`
+        : `"${foodName}" için sadece ${currentStock} adet kaldı!`,
       data: { type: 'low_stock', foodName, currentStock },
     });
   }

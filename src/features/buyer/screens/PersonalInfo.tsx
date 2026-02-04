@@ -29,10 +29,52 @@ interface CardData {
   cardCvv: string;
 }
 
+const getDefaultPersonalInfo = (language: 'tr' | 'en'): PersonalInfoData => {
+  if (language === 'tr') {
+    return {
+      name: 'Ahmet Yılmaz',
+      email: 'ahmet@example.com',
+      phone: '+90 555 123 4567',
+      birthDate: '15/03/1990',
+      gender: 'Erkek',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+      cards: [
+        {
+          cardNumber: '4111 1111 1111 1111',
+          cardExpiry: '12/28',
+          cardCvv: '123',
+        },
+      ],
+      addressLine1: 'Moda Mah. Bahariye Cd. No: 12 D:3',
+      city: 'Kadıköy / İstanbul',
+      postcode: '34710',
+    };
+  }
+
+  return {
+    name: 'Ahmet Yilmaz',
+    email: 'ahmet@example.com',
+    phone: '+44 7700 900123',
+    birthDate: '15/03/1990',
+    gender: 'Male',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    cards: [
+      {
+        cardNumber: '4111 1111 1111 1111',
+        cardExpiry: '12/28',
+        cardCvv: '123',
+      },
+    ],
+    addressLine1: '221B Baker Street',
+    city: 'London',
+    postcode: 'NW1 6XE',
+  };
+};
+
 export const PersonalInfo: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const [isEditing, setIsEditing] = useState(true);
   const [showCards, setShowCards] = useState(false);
   const [formData, setFormData] = useState<PersonalInfoData>({
@@ -50,7 +92,7 @@ export const PersonalInfo: React.FC = () => {
 
   useEffect(() => {
     loadPersonalInfo();
-  }, []);
+  }, [currentLanguage]);
 
   const loadPersonalInfo = async () => {
     try {
@@ -62,25 +104,8 @@ export const PersonalInfo: React.FC = () => {
           cards: Array.isArray(parsed?.cards) ? parsed.cards : [],
         });
       } else {
-      // Default data
-      setFormData({
-        name: 'Ahmet Yılmaz',
-        email: 'ahmet@example.com',
-        phone: '+90 555 123 4567',
-        birthDate: '15/03/1990',
-        gender: 'Erkek',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-        cards: [
-          {
-            cardNumber: '4111 1111 1111 1111',
-            cardExpiry: '12/28',
-            cardCvv: '123',
-          },
-        ],
-        addressLine1: 'Moda Mah. Bahariye Cd. No: 12 D:3',
-        city: 'Kadıköy / İstanbul',
-        postcode: '34710',
-      });
+        // Default data
+        setFormData(getDefaultPersonalInfo(currentLanguage));
     }
   } catch (error) {
       console.error('Error loading personal info:', error);

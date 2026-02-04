@@ -9,49 +9,48 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-// Mock orders data
-const MOCK_ORDERS = [
+const getMockOrders = (t: (key: string, params?: Record<string, string | number>) => string) => ([
   {
     id: 'ORD-001',
-    customerName: 'Ahmet Yılmaz',
-    foodName: 'Ev Yapımı Mantı',
+    customerName: t('sellerOrdersScreen.mock.customer1'),
+    foodName: t('sellerOrdersScreen.mock.food1'),
     quantity: 2,
     totalPrice: 50,
     orderTime: '14:30',
     deliveryType: 'pickup',
     status: 'pending',
-    customerPhone: '0532 123 45 67',
+    customerPhone: t('sellerOrdersScreen.mock.phone1'),
   },
   {
     id: 'ORD-002',
-    customerName: 'Ayşe Demir',
-    foodName: 'Karnıyarık',
+    customerName: t('sellerOrdersScreen.mock.customer2'),
+    foodName: t('sellerOrdersScreen.mock.food2'),
     quantity: 1,
     totalPrice: 18,
     orderTime: '13:45',
     deliveryType: 'delivery',
     status: 'pending',
-    customerPhone: '0533 987 65 43',
-    address: 'Kadıköy, İstanbul',
+    customerPhone: t('sellerOrdersScreen.mock.phone2'),
+    address: t('sellerOrdersScreen.mock.address2'),
   },
   {
     id: 'ORD-003',
-    customerName: 'Mehmet Kaya',
-    foodName: 'Ev Böreği',
+    customerName: t('sellerOrdersScreen.mock.customer3'),
+    foodName: t('sellerOrdersScreen.mock.food3'),
     quantity: 3,
     totalPrice: 45,
     orderTime: '12:15',
     deliveryType: 'pickup',
     status: 'confirmed',
-    customerPhone: '0534 555 44 33',
+    customerPhone: t('sellerOrdersScreen.mock.phone3'),
   },
-];
+]);
 
 export const SellerOrders: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
-  const [orders, setOrders] = useState(MOCK_ORDERS);
+  const [orders, setOrders] = useState(() => getMockOrders(t));
   const [realOrders, setRealOrders] = useState<any[]>([]);
   const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
 
@@ -61,6 +60,10 @@ export const SellerOrders: React.FC = () => {
       loadOrders();
     }, [])
   );
+
+  useEffect(() => {
+    setOrders(getMockOrders(t));
+  }, [currentLanguage, t]);
 
   const loadOrders = async () => {
     try {

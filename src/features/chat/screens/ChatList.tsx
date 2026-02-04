@@ -6,102 +6,181 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-// Mock buyer chat data (as a buyer, chatting with sellers)
-const BUYER_CHATS = [
-  {
-    id: '1',
-    foodName: 'Ev Yapımı Mantı',
-    cookName: 'Ayşe Hanım',
-    orderStatus: 'Hazırlanıyor',
-    lastMessage: 'Yemeğiniz 15 dakika içinde hazır olacak.',
-    timestamp: '14:30',
-    unreadCount: 2,
-    orderId: 'ORD-001',
-    userType: 'buyer',
-  },
-  {
-    id: '2',
-    foodName: 'Karnıyarık',
-    cookName: 'Fatma Teyze',
-    orderStatus: 'Hazır',
-    lastMessage: 'Yemeğiniz hazır, gel al yapabilirsiniz.',
-    timestamp: '13:45',
-    unreadCount: 1,
-    orderId: 'ORD-002',
-    userType: 'buyer',
-  },
-  {
-    id: '3',
-    foodName: 'Ev Böreği',
-    cookName: 'Zehra Hanım',
-    orderStatus: 'Teslim Edildi',
-    lastMessage: 'Teşekkür ederim, çok lezzetliydi!',
-    timestamp: 'Dün',
-    unreadCount: 0,
-    orderId: 'ORD-003',
-    userType: 'buyer',
-  },
-];
+const getMockChats = (language: 'tr' | 'en') => {
+  if (language === 'tr') {
+    return {
+      buyerChats: [
+        {
+          id: '1',
+          foodName: 'Ev Yapımı Mantı',
+          cookName: 'Ayşe Hanım',
+          orderStatus: 'Hazırlanıyor',
+          lastMessage: 'Yemeğiniz 15 dakika içinde hazır olacak.',
+          timestamp: '14:30',
+          unreadCount: 2,
+          orderId: 'ORD-001',
+          userType: 'buyer',
+        },
+        {
+          id: '2',
+          foodName: 'Karnıyarık',
+          cookName: 'Fatma Teyze',
+          orderStatus: 'Hazır',
+          lastMessage: 'Yemeğiniz hazır, gel al yapabilirsiniz.',
+          timestamp: '13:45',
+          unreadCount: 1,
+          orderId: 'ORD-002',
+          userType: 'buyer',
+        },
+        {
+          id: '3',
+          foodName: 'Ev Böreği',
+          cookName: 'Zehra Hanım',
+          orderStatus: 'Teslim Edildi',
+          lastMessage: 'Teşekkür ederim, çok lezzetliydi!',
+          timestamp: 'Dün',
+          unreadCount: 0,
+          orderId: 'ORD-003',
+          userType: 'buyer',
+        },
+      ],
+      sellerChats: [
+        {
+          id: '4',
+          foodName: 'Ev Yapımı Mantı',
+          customerName: 'Ahmet Yılmaz',
+          orderStatus: 'Hazırlanıyor',
+          lastMessage: 'Ne zaman hazır olur?',
+          timestamp: '14:25',
+          unreadCount: 1,
+          orderId: 'ORD-004',
+          userType: 'seller',
+        },
+        {
+          id: '5',
+          foodName: 'Karnıyarık',
+          customerName: 'Zeynep Kaya',
+          orderStatus: 'Onay Bekliyor',
+          lastMessage: 'Siparişimi onaylayabilir misiniz?',
+          timestamp: '13:50',
+          unreadCount: 2,
+          orderId: 'ORD-005',
+          userType: 'seller',
+        },
+        {
+          id: '6',
+          foodName: 'Baklava',
+          customerName: 'Can Demir',
+          orderStatus: 'Teslim Edildi',
+          lastMessage: 'Çok lezzetliydi, teşekkürler!',
+          timestamp: '12:30',
+          unreadCount: 0,
+          orderId: 'ORD-006',
+          userType: 'seller',
+        },
+      ],
+    };
+  }
 
-// Mock seller chat data (as a seller, chatting with buyers)
-const SELLER_CHATS = [
-  {
-    id: '4',
-    foodName: 'Ev Yapımı Mantı',
-    customerName: 'Ahmet Yılmaz',
-    orderStatus: 'Hazırlanıyor',
-    lastMessage: 'Ne zaman hazır olur?',
-    timestamp: '14:25',
-    unreadCount: 1,
-    orderId: 'ORD-004',
-    userType: 'seller',
-  },
-  {
-    id: '5',
-    foodName: 'Karnıyarık',
-    customerName: 'Zeynep Kaya',
-    orderStatus: 'Onay Bekliyor',
-    lastMessage: 'Siparişimi onaylayabilir misiniz?',
-    timestamp: '13:50',
-    unreadCount: 2,
-    orderId: 'ORD-005',
-    userType: 'seller',
-  },
-  {
-    id: '6',
-    foodName: 'Baklava',
-    customerName: 'Can Demir',
-    orderStatus: 'Teslim Edildi',
-    lastMessage: 'Çok lezzetliydi, teşekkürler!',
-    timestamp: '12:30',
-    unreadCount: 0,
-    orderId: 'ORD-006',
-    userType: 'seller',
-  },
-];
+  return {
+    buyerChats: [
+      {
+        id: '1',
+        foodName: 'Homemade Manti',
+        cookName: 'Ayse Hanim',
+        orderStatus: 'Preparing',
+        lastMessage: 'Your meal will be ready in 15 minutes.',
+        timestamp: '14:30',
+        unreadCount: 2,
+        orderId: 'ORD-001',
+        userType: 'buyer',
+      },
+      {
+        id: '2',
+        foodName: 'Stuffed Eggplant',
+        cookName: 'Fatma Teyze',
+        orderStatus: 'Ready',
+        lastMessage: 'Your meal is ready, you can pick it up.',
+        timestamp: '13:45',
+        unreadCount: 1,
+        orderId: 'ORD-002',
+        userType: 'buyer',
+      },
+      {
+        id: '3',
+        foodName: 'Homemade Pastry',
+        cookName: 'Zehra Hanim',
+        orderStatus: 'Delivered',
+        lastMessage: 'Thank you, it was delicious!',
+        timestamp: 'Yesterday',
+        unreadCount: 0,
+        orderId: 'ORD-003',
+        userType: 'buyer',
+      },
+    ],
+    sellerChats: [
+      {
+        id: '4',
+        foodName: 'Homemade Manti',
+        customerName: 'Ahmet Yilmaz',
+        orderStatus: 'Preparing',
+        lastMessage: 'When will it be ready?',
+        timestamp: '14:25',
+        unreadCount: 1,
+        orderId: 'ORD-004',
+        userType: 'seller',
+      },
+      {
+        id: '5',
+        foodName: 'Stuffed Eggplant',
+        customerName: 'Zeynep Kaya',
+        orderStatus: 'Awaiting Approval',
+        lastMessage: 'Could you approve my order?',
+        timestamp: '13:50',
+        unreadCount: 2,
+        orderId: 'ORD-005',
+        userType: 'seller',
+      },
+      {
+        id: '6',
+        foodName: 'Baklava',
+        customerName: 'Can Demir',
+        orderStatus: 'Delivered',
+        lastMessage: 'Very delicious, thank you!',
+        timestamp: '12:30',
+        unreadCount: 0,
+        orderId: 'ORD-006',
+        userType: 'seller',
+      },
+    ],
+  };
+};
 
 export const ChatList: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { userData } = useAuth();
+  const { t, currentLanguage } = useTranslation();
+  const { buyerChats, sellerChats } = getMockChats(currentLanguage);
 
   // Determine which chats to show based on user type
   const getChats = () => {
     if (userData?.userType === 'seller') {
-      return SELLER_CHATS;
+      return sellerChats;
     } else if (userData?.userType === 'both') {
       // If user is both buyer and seller, merge and sort by timestamp
-      const combinedChats = [...BUYER_CHATS, ...SELLER_CHATS]
+      const combinedChats = [...buyerChats, ...sellerChats]
         .sort((a, b) => {
           // Sort by unread status first (unread first), then by timestamp
           if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
           if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
           
           // Simple timestamp sorting (newer first)
-          if (a.timestamp === 'Dün') return 1;
-          if (b.timestamp === 'Dün') return -1;
+          if (a.timestamp === t('chatListScreen.timestamp.yesterday')) return 1;
+          if (b.timestamp === t('chatListScreen.timestamp.yesterday')) return -1;
           
           const timeA = a.timestamp.includes(':') ? 
             parseInt(a.timestamp.split(':')[0]) * 60 + parseInt(a.timestamp.split(':')[1]) : 0;
@@ -112,7 +191,7 @@ export const ChatList: React.FC = () => {
         });
       return combinedChats;
     } else {
-      return BUYER_CHATS;
+      return buyerChats;
     }
   };
 
@@ -129,14 +208,16 @@ export const ChatList: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Hazırlanıyor':
+      case t('chatListScreen.statuses.preparing'):
         return colors.warning;
-      case 'Hazır':
+      case t('chatListScreen.statuses.ready'):
         return colors.success;
-      case 'Yolda':
+      case t('chatListScreen.statuses.onTheWay'):
         return colors.info;
-      case 'Teslim Edildi':
+      case t('chatListScreen.statuses.delivered'):
         return colors.textSecondary;
+      case t('chatListScreen.statuses.awaitingApproval'):
+        return colors.info;
       default:
         return colors.primary;
     }
@@ -144,11 +225,11 @@ export const ChatList: React.FC = () => {
 
   const getTopBarTitle = () => {
     if (userData?.userType === 'both') {
-      return 'Mesajlar (Alıcı & Satıcı)';
+      return t('chatListScreen.titleBoth');
     } else if (userData?.userType === 'seller') {
-      return 'Mesajlar (Satıcı)';
+      return t('chatListScreen.titleSeller');
     } else {
-      return 'Mesajlar (Alıcı)';
+      return t('chatListScreen.titleBuyer');
     }
   };
 
@@ -171,10 +252,10 @@ export const ChatList: React.FC = () => {
         {chats.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text variant="heading" center>
-              Mesaj Yok
+              {t('chatListScreen.emptyTitle')}
             </Text>
             <Text variant="body" center color="textSecondary" style={styles.emptyText}>
-              Sipariş verdiğinde satıcılarla buradan mesajlaşabilirsin.
+              {t('chatListScreen.emptyDesc')}
             </Text>
           </View>
         ) : (
@@ -194,8 +275,8 @@ export const ChatList: React.FC = () => {
                         </Text>
                         <Text variant="caption" color="textSecondary">
                           {chat.userType === 'seller' 
-                            ? `${(chat as any).customerName} • Sipariş: ${chat.orderId}`
-                            : `${(chat as any).cookName} • Sipariş: ${chat.orderId}`
+                            ? t('chatListScreen.orderInfoSeller', { name: (chat as any).customerName, orderId: chat.orderId })
+                            : t('chatListScreen.orderInfoBuyer', { name: (chat as any).cookName, orderId: chat.orderId })
                           }
                         </Text>
                         {userData?.userType === 'both' && (
@@ -211,7 +292,9 @@ export const ChatList: React.FC = () => {
                               styles.userTypeBadgeText,
                               { color: 'white' }
                             ]}>
-                              {chat.userType === 'seller' ? 'Satıcı' : 'Alıcı'}
+                              {chat.userType === 'seller'
+                                ? t('chatListScreen.userTypes.seller')
+                                : t('chatListScreen.userTypes.buyer')}
                             </Text>
                           </View>
                         )}
@@ -333,9 +416,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-
-
-
 
 
 

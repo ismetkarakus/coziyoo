@@ -11,34 +11,54 @@ import { useTranslation } from '../../../hooks/useTranslation';
 export const Contact: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const [formData, setFormData] = useState({
     subject: '',
     message: '',
   });
 
+  const contactValues = currentLanguage === 'en'
+    ? {
+        address: '221B Baker Street\nLondon, UK',
+        addressLink: 'https://maps.google.com/?q=221B%20Baker%20Street%20London',
+        phone: '+44 20 7946 0958',
+        phoneLink: 'tel:+442079460958',
+        email: 'info@coziyoo.com',
+        hours: 'Monday - Sunday\n09:00 - 22:00',
+        whatsapp: 'https://wa.me/447700900123',
+      }
+    : {
+        address: 'Kadıköy Mah. Bağdat Cad. No:123\nKadıköy/İstanbul',
+        addressLink: 'https://maps.google.com/?q=Kadıköy,İstanbul',
+        phone: '0850 123 45 67',
+        phoneLink: 'tel:08501234567',
+        email: 'info@coziyoo.com',
+        hours: 'Pazartesi - Pazar\n09:00 - 22:00',
+        whatsapp: 'https://wa.me/905551234567',
+      };
+
   const contactInfo = [
     {
       title: t('contactScreen.info.address'),
-      value: 'Kadıköy Mah. Bağdat Cad. No:123\nKadıköy/İstanbul',
+      value: contactValues.address,
       icon: '📍',
-      action: () => Linking.openURL('https://maps.google.com/?q=Kadıköy,İstanbul'),
+      action: () => Linking.openURL(contactValues.addressLink),
     },
     {
       title: t('contactScreen.info.phone'),
-      value: '0850 123 45 67',
+      value: contactValues.phone,
       icon: '📞',
-      action: () => Linking.openURL('tel:08501234567'),
+      action: () => Linking.openURL(contactValues.phoneLink),
     },
     {
       title: t('contactScreen.info.email'),
-      value: 'info@coziyoo.com',
+      value: contactValues.email,
       icon: '✉️',
       action: () => Linking.openURL('mailto:info@coziyoo.com'),
     },
     {
       title: t('contactScreen.info.hours'),
-      value: 'Pazartesi - Pazar\n09:00 - 22:00',
+      value: contactValues.hours,
       icon: '🕘',
       action: undefined,
     },
@@ -63,7 +83,7 @@ export const Contact: React.FC = () => {
     {
       name: t('contactScreen.social.whatsapp'),
       icon: '📱',
-      action: () => Linking.openURL('https://wa.me/905551234567'),
+      action: () => Linking.openURL(contactValues.whatsapp),
     },
   ];
 
@@ -288,7 +308,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
 
 
 

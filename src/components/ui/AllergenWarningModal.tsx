@@ -5,6 +5,7 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { UK_ALLERGENS, TR_ALLERGENS, AllergenId } from '../../constants/allergens';
 import { useCountry } from '../../context/CountryContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface AllergenWarningModalProps {
   visible: boolean;
@@ -24,6 +25,7 @@ export const AllergenWarningModal: React.FC<AllergenWarningModalProps> = ({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { currentCountry } = useCountry();
+  const { t } = useTranslation();
 
   // Ülkeye göre alerjen listesi
   const allergenList = currentCountry.code === 'TR' ? TR_ALLERGENS : UK_ALLERGENS;
@@ -44,7 +46,7 @@ export const AllergenWarningModal: React.FC<AllergenWarningModalProps> = ({
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.header}>
               <Text variant="heading" style={styles.title}>
-                ⚠️ Allergen Information
+                {t('allergenWarning.title')}
               </Text>
               <Text variant="body" style={styles.foodName}>
                 {foodName}
@@ -53,17 +55,17 @@ export const AllergenWarningModal: React.FC<AllergenWarningModalProps> = ({
 
             <View style={styles.warningBox}>
               <Text variant="body" weight="bold" style={[styles.warningText, { color: colors.error }]}>
-                This food may contain allergens.
+                {t('allergenWarning.warningTitle')}
               </Text>
               <Text variant="body" style={styles.warningSubtext}>
-                Please review the allergen information carefully before ordering.
+                {t('allergenWarning.warningMessage')}
               </Text>
             </View>
 
             {allergenDetails.length > 0 ? (
               <View style={styles.allergenSection}>
                 <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                  Contains the following allergens:
+                  {t('allergenWarning.containsTitle')}
                 </Text>
                 {allergenDetails.map((allergen) => (
                   <View key={allergen!.id} style={[styles.allergenItem, { borderColor: colors.border }]}>
@@ -84,28 +86,28 @@ export const AllergenWarningModal: React.FC<AllergenWarningModalProps> = ({
             ) : (
               <View style={styles.noAllergenSection}>
                 <Text variant="body" style={styles.noAllergenText}>
-                  ✅ No major allergens declared by the seller.
+                  {t('allergenWarning.noAllergens')}
                 </Text>
                 <Text variant="caption" color="textSecondary" style={styles.noAllergenNote}>
-                  However, cross-contamination may still occur during preparation.
+                  {t('allergenWarning.crossContamination')}
                 </Text>
               </View>
             )}
 
             <View style={[styles.criticalWarning, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
               <Text variant="body" weight="bold" style={[styles.criticalText, { color: colors.error }]}>
-                ⚠️ IMPORTANT WARNING
+                {t('allergenWarning.criticalTitle')}
               </Text>
               <Text variant="body" style={styles.criticalSubtext}>
-                If you have a food allergy or intolerance, do not order unless you are certain it is safe for you.
+                {t('allergenWarning.criticalMessage')}
               </Text>
             </View>
 
             <View style={styles.legalNote}>
               <Text variant="caption" color="textSecondary" style={styles.legalText}>
                 {currentCountry.code === 'TR'
-                  ? 'Bu platform yalnızca bir pazar yeri olarak hizmet verir. Satıcı, gıda güvenliği, alerjen doğruluğu ve Türkiye gıda mevzuatına uygunluktan tamamen sorumludur.'
-                  : 'This platform acts as a marketplace only. The seller is fully responsible for food safety, allergen accuracy, and compliance with food regulations.'
+                  ? t('allergenWarning.legalNoteTr')
+                  : t('allergenWarning.legalNoteEn')
                 }
               </Text>
             </View>
@@ -117,14 +119,14 @@ export const AllergenWarningModal: React.FC<AllergenWarningModalProps> = ({
               onPress={onClose}
               style={styles.cancelButton}
             >
-              Cancel Order
+              {t('allergenWarning.cancel')}
             </Button>
             <Button
               variant="primary"
               onPress={onConfirm}
               style={styles.confirmButton}
             >
-              I Understand - Continue
+              {t('allergenWarning.confirm')}
             </Button>
           </View>
         </View>
@@ -248,4 +250,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-

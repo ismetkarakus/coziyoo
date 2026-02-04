@@ -4,6 +4,7 @@ import { Text } from './Text';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { Chat } from '../../services/chatService';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ChatListItemProps {
   chat: Chat;
@@ -20,6 +21,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
 
   const getOtherUserName = () => {
     return currentUserType === 'buyer' ? chat.sellerName : chat.buyerName;
@@ -32,18 +34,19 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
   const formatTime = (date: Date) => {
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
     
     if (diffInHours < 24) {
-      return date.toLocaleTimeString('tr-TR', {
+      return date.toLocaleTimeString(locale, {
         hour: '2-digit',
         minute: '2-digit',
       });
     } else if (diffInHours < 168) { // 7 days
-      return date.toLocaleDateString('tr-TR', {
+      return date.toLocaleDateString(locale, {
         weekday: 'short',
       });
     } else {
-      return date.toLocaleDateString('tr-TR', {
+      return date.toLocaleDateString(locale, {
         day: '2-digit',
         month: '2-digit',
       });
@@ -111,7 +114,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
             ]}
             numberOfLines={1}
           >
-            {chat.lastMessage ? truncateMessage(chat.lastMessage) : 'Henüz mesaj yok'}
+            {chat.lastMessage ? truncateMessage(chat.lastMessage) : t('chatListItem.emptyMessage')}
           </Text>
         </View>
 
@@ -195,7 +198,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
 
 
 

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { router, useSegments } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { Text } from '../ui';
 import { Colors, Spacing } from '../../theme';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -14,6 +14,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, userData, loading, profileLoading } = useAuth();
   const segments = useSegments();
   const group = segments[0];
+  const { t } = useTranslation();
   
   // ✅ Çok akıllı bekleme - cache varsa hiç bekleme
   const shouldWait = loading && !userData;
@@ -69,7 +70,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     return (
       <View style={styles.loadingContainer}>
         <Text variant="body" color="textSecondary">
-          Yükleniyor...
+          {t('authGuard.loading')}
         </Text>
       </View>
     );
@@ -83,10 +84,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     return (
       <View style={styles.loadingContainer}>
         <Text variant="body" color="textSecondary">
-          🔐 Giriş yapmanız gerekiyor...
+          {t('authGuard.loginRequired')}
         </Text>
         <Text variant="caption" color="textSecondary" style={{ marginTop: 8 }}>
-          Giriş sayfasına yönlendiriliyor...
+          {t('authGuard.redirectingToLogin')}
         </Text>
       </View>
     );
@@ -98,7 +99,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     return (
       <View style={styles.loadingContainer}>
         <Text variant="body" color="textSecondary">
-          Ana sayfaya yönlendiriliyor...
+          {t('authGuard.redirectingHome')}
         </Text>
       </View>
     );

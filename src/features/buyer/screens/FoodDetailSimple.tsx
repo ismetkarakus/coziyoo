@@ -14,8 +14,8 @@ export default function FoodDetailSimple() {
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
 
-  const foodName = params.name as string || 'Ev Yapımı Mantı';
-  const cookName = params.cookName as string || 'Ayşe Hanım';
+  const foodName = params.name as string || t('foodDetailSimpleScreen.defaults.foodName');
+  const cookName = params.cookName as string || t('foodDetailSimpleScreen.defaults.cookName');
   const foodImageUrl = params.imageUrl as string || 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop';
   
   // Satıcı profil resmi için state

@@ -1,28 +1,37 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { Text, Card, Button, FormField, Checkbox, HeaderBackButton } from '../src/components/ui';
 // TopBar kaldırıldı - Expo Router header kullanılacak
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
-import { useCountry } from '../src/context/CountryContext';
+import { useTranslation } from '../src/hooks/useTranslation';
 
 export default function GidaGuvenligiEgitimi() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { currentCountry } = useCountry();
+  const { currentLanguage } = useTranslation();
+  const isTR = currentLanguage === 'tr';
   
-  const [formData, setFormData] = useState({
-    certificateLevel: currentCountry.code === 'TR' ? 'Temel Seviye' : 'Level 2',
+  const getInitialFormData = (useTR: boolean) => ({
+    certificateLevel: useTR ? 'Temel Seviye' : 'Level 2',
     issueDate: '2024-01-15',
     expiryDate: '2026-01-15',
-    certificateNumber: currentCountry.code === 'TR' ? 'GGE-2024-789456' : 'CIEH-FS-2024-789456',
+    certificateNumber: useTR ? 'GGE-2024-789456' : 'CIEH-FS-2024-789456',
     holderName: 'Fatma Teyze',
-    institution: currentCountry.code === 'TR' ? 'Tarım ve Orman Bakanlığı' : 'CIEH',
+    institution: useTR ? 'Tarım ve Orman Bakanlığı' : 'CIEH',
     hasTraining: true,
   });
 
+  const [formData, setFormData] = useState(getInitialFormData(isTR));
+
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData(getInitialFormData(isTR));
+    }
+  }, [currentLanguage, isEditing, isTR]);
 
   const handleInputChange = (field: string) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -30,19 +39,19 @@ export default function GidaGuvenligiEgitimi() {
 
   const handleSave = () => {
     Alert.alert(
-      currentCountry.code === 'TR' ? 'Başarılı' : 'Success',
-      currentCountry.code === 'TR' 
+      isTR ? 'Başarılı' : 'Success',
+      isTR 
         ? 'Gıda güvenliği eğitimi bilgileri başarıyla güncellendi.'
         : 'Food safety training details have been updated successfully.',
       [{ 
-        text: currentCountry.code === 'TR' ? 'Tamam' : 'OK', 
+        text: isTR ? 'Tamam' : 'OK', 
         onPress: () => setIsEditing(false) 
       }]
     );
   };
 
   const openTrainingWebsite = () => {
-    if (currentCountry.code === 'TR') {
+    if (isTR) {
       Linking.openURL('https://www.tarimorman.gov.tr');
     } else {
       Linking.openURL('https://www.cieh.org/training/');
@@ -53,13 +62,13 @@ export default function GidaGuvenligiEgitimi() {
     <>
       <Stack.Screen 
         options={{
-          title: currentCountry.code === 'TR' ? '🏛️ Gıda Güvenliği Eğitimi' : '🏛️ Food Safety Training',
+          title: isTR ? '🏛️ Gıda Güvenliği Eğitimi' : '🏛️ Food Safety Training',
           headerBackVisible: false, // Otomatik geri butonunu gizle
           headerLeft: () => <HeaderBackButton />,
           headerRight: () => (
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
               <Text variant="body" color="primary">
-                {currentCountry.code === 'TR' 
+                {isTR 
                   ? (isEditing ? 'İptal' : 'Düzenle')
                   : (isEditing ? 'Cancel' : 'Edit')
                 }
@@ -76,11 +85,11 @@ export default function GidaGuvenligiEgitimi() {
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              {currentCountry.code === 'TR' ? 'Eğitim Durumu' : 'Training Status'}
+              {isTR ? 'Eğitim Durumu' : 'Training Status'}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: formData.hasTraining ? '#28A745' : '#FFC107' }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
-                {currentCountry.code === 'TR' 
+                {isTR 
                   ? (formData.hasTraining ? '✅ TAMAMLANDI' : '⏳ BEKLEMEDE')
                   : (formData.hasTraining ? '✅ COMPLETED' : '⏳ PENDING')
                 }
@@ -90,7 +99,7 @@ export default function GidaGuvenligiEgitimi() {
           
           {formData.hasTraining && (
             <Text variant="body" color="success" style={styles.statusMessage}>
-              {currentCountry.code === 'TR' 
+              {isTR 
                 ? 'Gıda güvenliği eğitiminiz tamamlanmış ve sertifikanız geçerli.'
                 : 'Your food safety training is completed and certificate is valid.'
               }
@@ -101,11 +110,11 @@ export default function GidaGuvenligiEgitimi() {
         {/* Quick Actions */}
         <Card variant="default" padding="md" style={styles.actionsCard}>
           <Text variant="body" weight="semibold" style={styles.actionsTitle}>
-            {currentCountry.code === 'TR' ? '📋 Hızlı İşlemler' : '📋 Quick Actions'}
+            {isTR ? '📋 Hızlı İşlemler' : '📋 Quick Actions'}
           </Text>
           <TouchableOpacity style={styles.actionButton} onPress={openTrainingWebsite}>
             <Text variant="body" color="primary">
-              {currentCountry.code === 'TR' 
+              {isTR 
                 ? '🌐 Tarım ve Orman Bakanlığı →'
                 : '🌐 CIEH Training Courses →'
               }
@@ -116,59 +125,59 @@ export default function GidaGuvenligiEgitimi() {
         {/* Training Details */}
         <Card variant="default" padding="md" style={styles.detailsCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {currentCountry.code === 'TR' ? 'Eğitim Detayları' : 'Training Details'}
+            {isTR ? 'Eğitim Detayları' : 'Training Details'}
           </Text>
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Eğitim Seviyesi' : 'Training Level'}
+            label={isTR ? 'Eğitim Seviyesi' : 'Training Level'}
             value={formData.certificateLevel}
             onChangeText={handleInputChange('certificateLevel')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'Temel Seviye' : 'Level 2'}
+            placeholder={isTR ? 'Temel Seviye' : 'Level 2'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Sertifika Numarası' : 'Certificate Number'}
+            label={isTR ? 'Sertifika Numarası' : 'Certificate Number'}
             value={formData.certificateNumber}
             onChangeText={handleInputChange('certificateNumber')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'GGE-2024-789456' : 'Certificate number'}
+            placeholder={isTR ? 'GGE-2024-789456' : 'Certificate number'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Sertifika Sahibi' : 'Certificate Holder'}
+            label={isTR ? 'Sertifika Sahibi' : 'Certificate Holder'}
             value={formData.holderName}
             onChangeText={handleInputChange('holderName')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'Tam adınız' : 'Your full name'}
+            placeholder={isTR ? 'Tam adınız' : 'Your full name'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Eğitim Kurumu' : 'Training Institution'}
+            label={isTR ? 'Eğitim Kurumu' : 'Training Institution'}
             value={formData.institution}
             onChangeText={handleInputChange('institution')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'Tarım ve Orman Bakanlığı' : 'Training provider'}
+            placeholder={isTR ? 'Tarım ve Orman Bakanlığı' : 'Training provider'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Düzenleme Tarihi' : 'Issue Date'}
+            label={isTR ? 'Düzenleme Tarihi' : 'Issue Date'}
             value={formData.issueDate}
             onChangeText={handleInputChange('issueDate')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
+            placeholder={isTR ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Geçerlilik Tarihi' : 'Expiry Date'}
+            label={isTR ? 'Geçerlilik Tarihi' : 'Expiry Date'}
             value={formData.expiryDate}
             onChangeText={handleInputChange('expiryDate')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
+            placeholder={isTR ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
           />
 
           <Checkbox
-            label={currentCountry.code === 'TR' 
+            label={isTR 
               ? 'Gıda güvenliği eğitimimi tamamladım'
               : 'I have completed food safety training'
             }
@@ -183,7 +192,7 @@ export default function GidaGuvenligiEgitimi() {
               onPress={handleSave}
               style={styles.saveButton}
             >
-              {currentCountry.code === 'TR' ? '💾 Değişiklikleri Kaydet' : '💾 Save Changes'}
+              {isTR ? '💾 Değişiklikleri Kaydet' : '💾 Save Changes'}
             </Button>
           )}
         </Card>
@@ -191,35 +200,35 @@ export default function GidaGuvenligiEgitimi() {
         {/* Legal Information */}
         <Card variant="default" padding="md" style={styles.legalCard}>
           <Text variant="body" weight="semibold" style={styles.legalTitle}>
-            {currentCountry.code === 'TR' ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
+            {isTR ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
           </Text>
-          {currentCountry.code === 'TR' ? (
+          {isTR ? (
             <>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Gıda işletmesi sahipleri gıda güvenliği eğitimi almalıdır
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Eğitim sertifikası düzenli olarak yenilenmelidir
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Çalışanlar da temel gıda güvenliği eğitimi almalıdır
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Eğitim kayıtları denetim sırasında ibraz edilmelidir
               </Text>
             </>
           ) : (
             <>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Food business owners must complete food safety training
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Training certificates must be renewed regularly
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Staff must also receive basic food safety training
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Training records must be available during inspections
               </Text>
             </>
@@ -321,7 +330,6 @@ const styles = StyleSheet.create({
   legalText: {
     marginBottom: Spacing.xs,
     lineHeight: 18,
-    color: Colors.light.text,
   },
   bottomSpace: {
     height: Spacing.xl,

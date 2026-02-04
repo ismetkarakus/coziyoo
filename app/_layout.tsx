@@ -86,10 +86,10 @@ function RootLayoutNav() {
         <Stack.Screen name="seller-profile" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="admin-panel" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="terms-and-conditions" options={{ headerShown: false, presentation: 'card' }} />
-        <Stack.Screen name="council-registration" options={{ headerShown: false, presentation: 'card' }} />
-        <Stack.Screen name="hygiene-certificate" options={{ headerShown: false, presentation: 'card' }} />
-        <Stack.Screen name="allergen-declaration" options={{ headerShown: false, presentation: 'card' }} />
-        <Stack.Screen name="insurance-details" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="council-registration" options={{ headerShown: true, presentation: 'card' }} />
+        <Stack.Screen name="hygiene-certificate" options={{ headerShown: true, presentation: 'card' }} />
+        <Stack.Screen name="allergen-declaration" options={{ headerShown: true, presentation: 'card' }} />
+        <Stack.Screen name="insurance-details" options={{ headerShown: true, presentation: 'card' }} />
         <Stack.Screen name="hygiene-rating" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="checkout" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="wallet" options={{ headerShown: false, presentation: 'card' }} />

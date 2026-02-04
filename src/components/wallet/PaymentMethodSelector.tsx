@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Card, Text, Button } from '../ui';
 import { Colors, Spacing } from '../../theme';
 import { PaymentMethod, useWallet } from '../../context/WalletContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface PaymentMethodSelectorProps {
   selectedMethodId?: string;
@@ -16,6 +17,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   showAddButton = true,
 }) => {
   const { wallet, removePaymentMethod, setDefaultPaymentMethod } = useWallet();
+  const { t } = useTranslation();
   const [expandedMethodId, setExpandedMethodId] = useState<string | null>(null);
 
   const handleMethodPress = (method: PaymentMethod) => {
@@ -30,20 +32,20 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const handleSetDefault = async (methodId: string) => {
     try {
       await setDefaultPaymentMethod(methodId);
-      Alert.alert('Başarılı', 'Varsayılan ödeme yöntemi güncellendi');
+      Alert.alert(t('paymentMethodSelector.alerts.successTitle'), t('paymentMethodSelector.alerts.defaultUpdated'));
     } catch (error) {
-      Alert.alert('Hata', 'Varsayılan ödeme yöntemi güncellenemedi');
+      Alert.alert(t('paymentMethodSelector.alerts.errorTitle'), t('paymentMethodSelector.alerts.defaultUpdateFailed'));
     }
   };
 
   const handleRemoveMethod = async (methodId: string) => {
     Alert.alert(
-      'Ödeme Yöntemini Sil',
-      'Bu ödeme yöntemini silmek istediğinizden emin misiniz?',
+      t('paymentMethodSelector.alerts.deleteTitle'),
+      t('paymentMethodSelector.alerts.deleteMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('paymentMethodSelector.alerts.cancel'), style: 'cancel' },
         {
-          text: 'Sil',
+          text: t('paymentMethodSelector.alerts.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -52,7 +54,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 setExpandedMethodId(null);
               }
             } catch (error) {
-              Alert.alert('Hata', 'Ödeme yöntemi silinemedi');
+              Alert.alert(t('paymentMethodSelector.alerts.errorTitle'), t('paymentMethodSelector.alerts.deleteFailed'));
             }
           },
         },
@@ -81,19 +83,19 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     return (
       <Card variant="default" padding="md" style={styles.container}>
         <Text variant="subheading" weight="semibold" style={styles.title}>
-          Ödeme Yöntemleri
+          {t('paymentMethodSelector.title')}
         </Text>
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>💳</Text>
           <Text variant="body" color="textSecondary" center style={styles.emptyText}>
-            Henüz kayıtlı ödeme yönteminiz yok
+            {t('paymentMethodSelector.empty')}
           </Text>
           {showAddButton && (
             <Button
-              title="Kart Ekle"
+              title={t('paymentMethodSelector.addCard')}
               onPress={() => {
                 // TODO: Navigate to add payment method screen
-                Alert.alert('Yakında', 'Kart ekleme özelliği yakında eklenecek');
+                Alert.alert(t('paymentMethodSelector.alerts.comingSoonTitle'), t('paymentMethodSelector.alerts.comingSoonMessage'));
               }}
               style={styles.addButton}
             />
@@ -106,7 +108,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   return (
     <Card variant="default" padding="md" style={styles.container}>
       <Text variant="subheading" weight="semibold" style={styles.title}>
-        Ödeme Yöntemleri
+        {t('paymentMethodSelector.title')}
       </Text>
 
       <View style={styles.methodsList}>
@@ -141,7 +143,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 {method.isDefault && (
                   <View style={styles.defaultBadge}>
                     <Text variant="caption" style={styles.defaultBadgeText}>
-                      Varsayılan
+                      {t('paymentMethodSelector.default')}
                     </Text>
                   </View>
                 )}
@@ -160,7 +162,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                     onPress={() => handleSetDefault(method.id)}
                   >
                     <Text variant="caption" color="primary">
-                      Varsayılan Yap
+                      {t('paymentMethodSelector.setDefault')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -169,7 +171,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                   onPress={() => handleRemoveMethod(method.id)}
                 >
                   <Text variant="caption" color="error">
-                    Sil
+                    {t('paymentMethodSelector.delete')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -183,12 +185,12 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           style={styles.addMethodButton}
           onPress={() => {
             // TODO: Navigate to add payment method screen
-            Alert.alert('Yakında', 'Kart ekleme özelliği yakında eklenecek');
+            Alert.alert(t('paymentMethodSelector.alerts.comingSoonTitle'), t('paymentMethodSelector.alerts.comingSoonMessage'));
           }}
         >
           <Text style={styles.addMethodIcon}>➕</Text>
           <Text variant="body" color="primary" weight="medium">
-            Yeni Kart Ekle
+            {t('paymentMethodSelector.addNewCard')}
           </Text>
         </TouchableOpacity>
       )}

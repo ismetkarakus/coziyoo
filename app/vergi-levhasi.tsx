@@ -1,28 +1,37 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, Image } from 'react-native';
-import { router, Stack } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import { Stack } from 'expo-router';
 import { Text, Card, Button, FormField, Checkbox, HeaderBackButton } from '../src/components/ui';
 // TopBar kaldırıldı - Expo Router header kullanılacak
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
-import { useCountry } from '../src/context/CountryContext';
+import { useTranslation } from '../src/hooks/useTranslation';
 
 export default function VergiLevhasi() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { currentCountry } = useCountry();
+  const { currentLanguage } = useTranslation();
+  const isTR = currentLanguage === 'tr';
   
-  const [formData, setFormData] = useState({
+  const getInitialFormData = (useTR: boolean) => ({
     vergiNo: '1234567890',
     issueDate: '2024-01-15',
-    businessName: 'Ev Mutfağı',
+    businessName: useTR ? 'Ev Mutfağı' : 'Home Kitchen',
     holderName: 'Fatma Teyze',
-    address: 'Kadıköy, İstanbul',
+    address: useTR ? 'Kadıköy, İstanbul' : 'Kadikoy, Istanbul',
     hasVergiLevhasi: true,
     certificateImageUri: null as string | null,
   });
 
+  const [formData, setFormData] = useState(getInitialFormData(isTR));
+
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData(getInitialFormData(isTR));
+    }
+  }, [currentLanguage, isEditing, isTR]);
 
   const handleInputChange = (field: string) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -30,19 +39,19 @@ export default function VergiLevhasi() {
 
   const handleSave = () => {
     Alert.alert(
-      currentCountry.code === 'TR' ? 'Başarılı' : 'Success',
-      currentCountry.code === 'TR' 
+      isTR ? 'Başarılı' : 'Success',
+      isTR 
         ? 'Vergi levhası bilgileri başarıyla güncellendi.'
         : 'Tax certificate details have been updated successfully.',
       [{ 
-        text: currentCountry.code === 'TR' ? 'Tamam' : 'OK', 
+        text: isTR ? 'Tamam' : 'OK', 
         onPress: () => setIsEditing(false) 
       }]
     );
   };
 
   const openTaxWebsite = () => {
-    if (currentCountry.code === 'TR') {
+    if (isTR) {
       Linking.openURL('https://www.gib.gov.tr');
     } else {
       Linking.openURL('https://www.gov.uk/business-tax');
@@ -53,13 +62,13 @@ export default function VergiLevhasi() {
     <>
       <Stack.Screen 
         options={{
-          title: currentCountry.code === 'TR' ? '📜 Vergi Levhası' : '📜 Tax Certificate',
+          title: isTR ? '📜 Vergi Levhası' : '📜 Tax Certificate',
           headerBackVisible: false, // Otomatik geri butonunu gizle
           headerLeft: () => <HeaderBackButton />,
           headerRight: () => (
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
               <Text variant="body" color="primary">
-                {currentCountry.code === 'TR' 
+                {isTR 
                   ? (isEditing ? 'İptal' : 'Düzenle')
                   : (isEditing ? 'Cancel' : 'Edit')
                 }
@@ -76,11 +85,11 @@ export default function VergiLevhasi() {
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              {currentCountry.code === 'TR' ? 'Vergi Levhası Durumu' : 'Tax Certificate Status'}
+              {isTR ? 'Vergi Levhası Durumu' : 'Tax Certificate Status'}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: formData.hasVergiLevhasi ? '#28A745' : '#FFC107' }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
-                {currentCountry.code === 'TR' 
+                {isTR 
                   ? (formData.hasVergiLevhasi ? '✅ GEÇERLİ' : '⏳ BEKLEMEDE')
                   : (formData.hasVergiLevhasi ? '✅ VALID' : '⏳ PENDING')
                 }
@@ -90,7 +99,7 @@ export default function VergiLevhasi() {
           
           {formData.hasVergiLevhasi && (
             <Text variant="body" color="success" style={styles.statusMessage}>
-              {currentCountry.code === 'TR' 
+              {isTR 
                 ? 'Vergi levhanız geçerli ve güncel.'
                 : 'Your tax certificate is valid and up to date.'
               }
@@ -101,11 +110,11 @@ export default function VergiLevhasi() {
         {/* Quick Actions */}
         <Card variant="default" padding="md" style={styles.actionsCard}>
           <Text variant="body" weight="semibold" style={styles.actionsTitle}>
-            {currentCountry.code === 'TR' ? '📋 Hızlı İşlemler' : '📋 Quick Actions'}
+            {isTR ? '📋 Hızlı İşlemler' : '📋 Quick Actions'}
           </Text>
           <TouchableOpacity style={styles.actionButton} onPress={openTaxWebsite}>
             <Text variant="body" color="primary">
-              {currentCountry.code === 'TR' 
+              {isTR 
                 ? '🌐 Gelir İdaresi Başkanlığı →'
                 : '🌐 Tax Authority Website →'
               }
@@ -116,51 +125,51 @@ export default function VergiLevhasi() {
         {/* Certificate Details */}
         <Card variant="default" padding="md" style={styles.detailsCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {currentCountry.code === 'TR' ? 'Vergi Levhası Detayları' : 'Tax Certificate Details'}
+            {isTR ? 'Vergi Levhası Detayları' : 'Tax Certificate Details'}
           </Text>
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Vergi Numarası' : 'Tax Number'}
+            label={isTR ? 'Vergi Numarası' : 'Tax Number'}
             value={formData.vergiNo}
             onChangeText={handleInputChange('vergiNo')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? '1234567890' : 'Tax number'}
+            placeholder={isTR ? '1234567890' : 'Tax number'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'İşletme Adı' : 'Business Name'}
+            label={isTR ? 'İşletme Adı' : 'Business Name'}
             value={formData.businessName}
             onChangeText={handleInputChange('businessName')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'İşletme adınız' : 'Your business name'}
+            placeholder={isTR ? 'İşletme adınız' : 'Your business name'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Sahip Adı' : 'Owner Name'}
+            label={isTR ? 'Sahip Adı' : 'Owner Name'}
             value={formData.holderName}
             onChangeText={handleInputChange('holderName')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'Tam adınız' : 'Your full name'}
+            placeholder={isTR ? 'Tam adınız' : 'Your full name'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Adres' : 'Address'}
+            label={isTR ? 'Adres' : 'Address'}
             value={formData.address}
             onChangeText={handleInputChange('address')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'İş yeri adresi' : 'Business address'}
+            placeholder={isTR ? 'İş yeri adresi' : 'Business address'}
           />
 
           <FormField
-            label={currentCountry.code === 'TR' ? 'Düzenleme Tarihi' : 'Issue Date'}
+            label={isTR ? 'Düzenleme Tarihi' : 'Issue Date'}
             value={formData.issueDate}
             onChangeText={handleInputChange('issueDate')}
             editable={isEditing}
-            placeholder={currentCountry.code === 'TR' ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
+            placeholder={isTR ? 'YYYY-AA-GG' : 'YYYY-MM-DD'}
           />
 
           <Checkbox
-            label={currentCountry.code === 'TR' 
+            label={isTR 
               ? 'Geçerli vergi levhasına sahibim'
               : 'I have a valid tax certificate'
             }
@@ -175,7 +184,7 @@ export default function VergiLevhasi() {
               onPress={handleSave}
               style={styles.saveButton}
             >
-              {currentCountry.code === 'TR' ? '💾 Değişiklikleri Kaydet' : '💾 Save Changes'}
+              {isTR ? '💾 Değişiklikleri Kaydet' : '💾 Save Changes'}
             </Button>
           )}
         </Card>
@@ -183,29 +192,29 @@ export default function VergiLevhasi() {
         {/* Legal Information */}
         <Card variant="default" padding="md" style={styles.legalCard}>
           <Text variant="body" weight="semibold" style={styles.legalTitle}>
-            {currentCountry.code === 'TR' ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
+            {isTR ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
           </Text>
-          {currentCountry.code === 'TR' ? (
+          {isTR ? (
             <>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Gıda işletmesi olarak vergi levhanız bulunmalıdır
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Vergi numaranız tüm belgelerde yer almalıdır
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Yıllık vergi beyannamelerinizi zamanında vermelisiniz
               </Text>
             </>
           ) : (
             <>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • You must have a valid tax registration for your food business
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Your tax number must appear on all official documents
               </Text>
-              <Text variant="caption" style={styles.legalText}>
+              <Text variant="caption" style={[styles.legalText, { color: colors.text }]}>
                 • Annual tax returns must be filed on time
               </Text>
             </>
@@ -307,7 +316,6 @@ const styles = StyleSheet.create({
   legalText: {
     marginBottom: Spacing.xs,
     lineHeight: 18,
-    color: Colors.light.text,
   },
   bottomSpace: {
     height: Spacing.xl,

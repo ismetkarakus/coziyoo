@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLanguage } from './LanguageContext';
 
 // Types
 export interface Transaction {
@@ -77,8 +78,7 @@ const DEFAULT_WALLET: WalletData = {
   lastUpdated: new Date(),
 };
 
-// Mock data for development
-const MOCK_WALLET: WalletData = {
+const getMockWallet = (language: 'tr' | 'en'): WalletData => ({
   balance: 150.00,
   pendingEarnings: 85.00,
   availableEarnings: 240.00,
@@ -91,8 +91,8 @@ const MOCK_WALLET: WalletData = {
       amount: 25.00,
       status: 'completed',
       orderId: 'order_123',
-      description: 'Mantı siparişi kazancı',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 saat önce
+      description: language === 'en' ? 'Manti order earnings' : 'Mantı siparişi kazancı',
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
     },
     {
@@ -101,8 +101,8 @@ const MOCK_WALLET: WalletData = {
       amount: 12.00,
       status: 'completed',
       orderId: 'order_124',
-      description: 'Börek siparişi',
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 saat önce
+      description: language === 'en' ? 'Borek order' : 'Börek siparişi',
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
       completedAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
     },
     {
@@ -111,8 +111,8 @@ const MOCK_WALLET: WalletData = {
       amount: 18.00,
       status: 'pending',
       orderId: 'order_125',
-      description: 'Dolma siparişi kazancı',
-      createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 saat önce
+      description: language === 'en' ? 'Dolma order earnings' : 'Dolma siparişi kazancı',
+      createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
     },
   ],
   paymentMethods: [
@@ -137,16 +137,17 @@ const MOCK_WALLET: WalletData = {
   ],
   defaultPaymentMethod: 'pm_001',
   lastUpdated: new Date(),
-};
+});
 
 export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [wallet, setWallet] = useState<WalletData>(DEFAULT_WALLET);
   const [loading, setLoading] = useState(true);
+  const { currentLanguage } = useLanguage();
 
   // Load wallet data on mount
   useEffect(() => {
     loadWalletData();
-  }, []);
+  }, [currentLanguage]);
 
   const loadWalletData = async () => {
     try {
@@ -165,12 +166,13 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setWallet(parsedWallet);
       } else {
         // Use mock data for development
-        setWallet(MOCK_WALLET);
-        await saveWalletData(MOCK_WALLET);
+        const mockWallet = getMockWallet(currentLanguage);
+        setWallet(mockWallet);
+        await saveWalletData(mockWallet);
       }
     } catch (error) {
       console.error('Error loading wallet data:', error);
-      setWallet(MOCK_WALLET);
+      setWallet(getMockWallet(currentLanguage));
     } finally {
       setLoading(false);
     }
@@ -421,4 +423,3 @@ export const useWallet = (): WalletContextType => {
   }
   return context;
 };
-

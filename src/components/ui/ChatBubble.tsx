@@ -4,6 +4,7 @@ import { Text } from './Text';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { ChatMessage } from '../../services/chatService';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ChatBubbleProps {
   message: ChatMessage;
@@ -18,9 +19,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('tr-TR', {
+    return date.toLocaleTimeString(currentLanguage === 'en' ? 'en-GB' : 'tr-TR', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -68,13 +70,13 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     return (
       <View style={styles.orderUpdateContent}>
         <Text variant="caption" weight="medium" style={{ color: colors.primary }}>
-          {statusEmojis[status as keyof typeof statusEmojis]} Sipariş Güncellendi
+          {statusEmojis[status as keyof typeof statusEmojis]} {t('chatBubble.orderUpdated')}
         </Text>
         <Text variant="body" style={{ color: getTextColor(), marginTop: 2 }}>
           {foodName}
         </Text>
         <Text variant="caption" style={{ color: colors.textSecondary, marginTop: 2 }}>
-          Sipariş #{orderId.substring(0, 8)}
+          {t('chatBubble.orderLabel', { id: orderId.substring(0, 8) })}
         </Text>
       </View>
     );
@@ -159,7 +161,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
-
 
 
 

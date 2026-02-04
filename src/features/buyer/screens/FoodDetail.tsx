@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, Moda
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Text, Button, Card, WebSafeIcon, StarRating, ReviewCard, RatingStats, ReviewModal, PaymentModal } from '../../../components/ui';
+import { Text, Button, Card, WebSafeIcon, StarRating, ReviewCard, RatingStats, ReviewModal, PaymentModal, AllergenWarningModal } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -15,49 +15,80 @@ import { chatService } from '../../../services/chatService';
 import { reviewService, Review, ReviewStats } from '../../../services/reviewService';
 import { paymentService, PaymentRequest } from '../../../services/paymentService';
 
-// Mock review data
-const MOCK_REVIEWS = [
-  {
-    id: '1',
-    userName: 'Ahmet K.',
-    userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face',
-    rating: 5,
-    comment: 'Çok lezzetli ve taze. Kesinlikle tavsiye ederim!',
-    date: '2 gün önce',
-  },
-  {
-    id: '2',
-    userName: 'Zeynep M.',
-    userAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face',
-    rating: 4,
-    comment: 'Güzel bir deneyimdi, tekrar sipariş vereceğim.',
-    date: '1 hafta önce',
-  },
-  {
-    id: '3',
-    userName: 'Can Y.',
-    userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face',
-    rating: 5,
-    comment: 'Harika bir tat! Ev yemeği tadında.',
-    date: '2 hafta önce',
-  },
-];
+const getMockReviews = (language: 'tr' | 'en') => {
+  if (language === 'en') {
+    return [
+      {
+        id: '1',
+        userName: 'Ahmet K.',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face',
+        rating: 5,
+        comment: 'Very tasty and fresh. Highly recommended!',
+        date: '2 days ago',
+      },
+      {
+        id: '2',
+        userName: 'Zeynep M.',
+        userAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face',
+        rating: 4,
+        comment: 'Great experience, I will order again.',
+        date: '1 week ago',
+      },
+      {
+        id: '3',
+        userName: 'Can Y.',
+        userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face',
+        rating: 5,
+        comment: 'Amazing taste! Feels like home cooking.',
+        date: '2 weeks ago',
+      },
+    ];
+  }
+
+  return [
+    {
+      id: '1',
+      userName: 'Ahmet K.',
+      userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face',
+      rating: 5,
+      comment: 'Çok lezzetli ve taze. Kesinlikle tavsiye ederim!',
+      date: '2 gün önce',
+    },
+    {
+      id: '2',
+      userName: 'Zeynep M.',
+      userAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face',
+      rating: 4,
+      comment: 'Güzel bir deneyimdi, tekrar sipariş vereceğim.',
+      date: '1 hafta önce',
+    },
+    {
+      id: '3',
+      userName: 'Can Y.',
+      userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face',
+      rating: 5,
+      comment: 'Harika bir tat! Ev yemeği tadında.',
+      date: '2 hafta önce',
+    },
+  ];
+};
 
 // Mock cook avatars based on cook name
 const getCookAvatar = (cookName: string) => {
   const cookAvatars: { [key: string]: string } = {
     'Ayşe Hanım': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face',
+    'Ayse Hanim': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face',
     'Mehmet Usta': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face',
     'Fatma Teyze': 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face',
     'Ali Usta': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face',
     'Zeynep Hanım': 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=60&h=60&fit=crop&crop=face',
+    'Zeynep Hanim': 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=60&h=60&fit=crop&crop=face',
   };
   return cookAvatars[cookName] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop&crop=face';
 };
 
-// Mock cook data - in real app, this would come from API
-const getMockCookInfo = (cookName: string) => {
-  const cookData: { [key: string]: any } = {
+const getMockCookInfo = (cookName: string, language: 'tr' | 'en') => {
+  const cookDataTr: { [key: string]: any } = {
     'Ayşe Hanım': {
       description: 'Ev yemekleri konusunda 15 yıllık deneyimim var. Geleneksel Türk mutfağının lezzetlerini sizlerle paylaşmaktan mutluluk duyuyorum.',
       specialties: ['Türk Mutfağı', 'Ev Yemekleri', 'Hamur İşleri', 'Çorbalar'],
@@ -77,41 +108,74 @@ const getMockCookInfo = (cookName: string) => {
       totalOrders: 89,
     },
   };
-  return cookData[cookName] || cookData['Ayşe Hanım'];
+
+  const cookDataEn: { [key: string]: any } = {
+    'Ayse Hanim': {
+      description: 'I have 15 years of experience in home cooking. I’m happy to share the flavors of traditional Turkish cuisine with you.',
+      specialties: ['Turkish Cuisine', 'Home Cooking', 'Pastries', 'Soups'],
+      joinDate: 'January 2023',
+      totalOrders: 156,
+    },
+    'Mehmet Usta': {
+      description: 'I have 20 years of experience as a professional chef, specializing in meat dishes and kebabs.',
+      specialties: ['Meat Dishes', 'Kebab', 'Grill', 'Turkish Cuisine'],
+      joinDate: 'March 2022',
+      totalOrders: 203,
+    },
+    'Fatma Teyze': {
+      description: 'I prepare traditional home meals with a modern touch. My pastries and desserts are especially popular.',
+      specialties: ['Pastries', 'Desserts', 'Borek', 'Home Cooking'],
+      joinDate: 'June 2023',
+      totalOrders: 89,
+    },
+  };
+
+  const cookData = language === 'en' ? cookDataEn : cookDataTr;
+  const fallbackKey = language === 'en' ? 'Ayse Hanim' : 'Ayşe Hanım';
+  return cookData[cookName] || cookData[fallbackKey];
 };
 
-// Mock data - in real app, this would come from API
-const getMockFoodDetail = (name: string, cookName: string, imageUrl: string) => ({
-  id: '1',
-  name: name || 'Ev Yapımı Mantı',
-  cookName: cookName || 'Ayşe Hanım',
-  cookAvatar: getCookAvatar(cookName || 'Ayşe Hanım'),
-  cookInfo: getMockCookInfo(cookName || 'Ayşe Hanım'),
-  rating: 4.8,
-  reviewCount: 24,
-  price: 25,
-  distance: '1.2 km',
-  prepTime: '30 dk',
-  availableDates: '15-20 Ocak',
-  currentStock: 8,
-  dailyStock: 10,
-  description: 'Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, özel baharatlarla tatlandırılmış ev yapımı mantı. Yanında yoğurt ve tereyağlı sos ile servis edilir.',
-  hasPickup: true,
-  hasDelivery: true,
-  imageUrl: imageUrl,
-  images: [
-    imageUrl || 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=400&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=400&fit=crop',
-  ],
-});
+const getMockFoodDetail = (name: string, cookName: string, imageUrl: string, language: 'tr' | 'en') => {
+  const defaultFoodName = language === 'en' ? 'Homemade Manti' : 'Ev Yapımı Mantı';
+  const defaultCookName = language === 'en' ? 'Ayse Hanim' : 'Ayşe Hanım';
+  const description = language === 'en'
+    ? 'Prepared with traditional methods, thin dough wrapped and flavored with special spices. Served with yogurt and butter sauce.'
+    : 'Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, özel baharatlarla tatlandırılmış ev yapımı mantı. Yanında yoğurt ve tereyağlı sos ile servis edilir.';
+  const prepTime = language === 'en' ? '30 min' : '30 dk';
+  const availableDates = language === 'en' ? 'Jan 15-20' : '15-20 Ocak';
+
+  return {
+    id: '1',
+    name: name || defaultFoodName,
+    cookName: cookName || defaultCookName,
+    cookAvatar: getCookAvatar(cookName || defaultCookName),
+    cookInfo: getMockCookInfo(cookName || defaultCookName, language),
+    rating: 4.8,
+    reviewCount: 24,
+    price: 25,
+    distance: '1.2 km',
+    prepTime,
+    availableDates,
+    currentStock: 8,
+    dailyStock: 10,
+    description,
+    hasPickup: true,
+    hasDelivery: true,
+    imageUrl: imageUrl,
+    images: [
+      imageUrl || 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=400&fit=crop',
+    ],
+  };
+};
 
 export const FoodDetail: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const params = useLocalSearchParams();
   const { user } = useAuth();
   const { sendOrderNotification } = useNotifications();
@@ -122,7 +186,9 @@ export const FoodDetail: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState('12:00');
   const [selectedHour, setSelectedHour] = useState(12);
   const [selectedMinute, setSelectedMinute] = useState(0);
-  const [currentMonth, setCurrentMonth] = useState('Ocak 2024');
+  const [currentMonth, setCurrentMonth] = useState(
+    new Date().toLocaleDateString(currentLanguage === 'en' ? 'en-GB' : 'tr-TR', { month: 'long', year: 'numeric' })
+  );
   const [quantity, setQuantity] = useState(1);
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
   const [firebaseFood, setFirebaseFood] = useState<Food | null>(null);
@@ -134,7 +200,9 @@ export const FoodDetail: React.FC = () => {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
+  const [showAllergenModal, setShowAllergenModal] = useState(false);
   const screenWidth = Dimensions.get('window').width;
+  const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
 
   // Get food details from URL parameters
   const foodId = params.id as string;
@@ -143,6 +211,8 @@ export const FoodDetail: React.FC = () => {
   const foodImageUrl = params.imageUrl as string;
   const paramDeliveryType = params.deliveryType as string || 'Pickup';
   console.log('FoodDetail params:', { foodId, foodName, cookName, foodImageUrl, paramDeliveryType, allParams: params });
+  const defaultCookName = currentLanguage === 'en' ? 'Ayse Hanim' : 'Ayşe Hanım';
+  const defaultFoodName = currentLanguage === 'en' ? 'Homemade Manti' : 'Ev Yapımı Mantı';
 
   // Load Firebase food data
   useEffect(() => {
@@ -183,11 +253,11 @@ export const FoodDetail: React.FC = () => {
   const loadSellerProfile = async () => {
     console.log('🚀 Hızlı yükleme - Mock seller profile kullanılıyor');
     setSellerProfile({
-      name: cookName || 'Ayşe Hanım',
-      avatar: getCookAvatar(cookName || 'Ayşe Hanım'),
+      name: cookName || defaultCookName,
+      avatar: getCookAvatar(cookName || defaultCookName),
       rating: 4.8,
       totalOrders: 245,
-      responseTime: '~15 dk'
+      responseTime: currentLanguage === 'en' ? '~15 min' : '~15 dk'
     });
     try {
       // İsocan verilerini temizle
@@ -202,7 +272,7 @@ export const FoodDetail: React.FC = () => {
   // Load reviews and stats
   const loadReviews = async () => {
     console.log('🚀 Hızlı yükleme - Mock reviews kullanılıyor');
-    setReviews(MOCK_REVIEWS as any);
+    setReviews(getMockReviews(currentLanguage) as any);
     setReviewStats({
       averageRating: 4.7,
       totalReviews: 156,
@@ -242,41 +312,23 @@ export const FoodDetail: React.FC = () => {
   useEffect(() => {
     handleTimeChange();
   }, [selectedHour, selectedMinute]);
+
+  useEffect(() => {
+    setCurrentMonth(new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' }));
+  }, [locale]);
   
   // Create food object with simple mock data for fast loading
   const food = {
-    id: '1',
-    name: foodName || 'Ev Yapımı Mantı',
-    cookName: cookName || 'Ayşe Hanım',
-    cookAvatar: getCookAvatar(cookName || 'Ayşe Hanım'),
-    rating: 4.8,
-    reviewCount: 24,
-    price: 25,
-    distance: '1.2 km',
-    prepTime: '30 dk',
-    availableDates: '15-20 Ocak',
-    currentStock: 8,
-    dailyStock: 10,
-    description: 'Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, özel baharatlarla tatlandırılmış ev yapımı mantı. Yanında yoğurt ve tereyağlı sos ile servis edilir.',
-    recipe: '1. Hamur malzemelerini yoğurun ve ince açın.\n2. İç harcı hazırlayıp hamura yerleştirin ve kapatın.\n3. Haşlayıp sos ile servis edin.',
-    hasPickup: true,
-    hasDelivery: true,
-    imageUrl: foodImageUrl || 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop',
-    images: [
-      foodImageUrl || 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=400&fit=crop',
-    ],
-    ingredients: ['Hamur', 'Kıyma', 'Soğan', 'Baharat', 'Yoğurt', 'Tereyağı'],
+    ...getMockFoodDetail(foodName || defaultFoodName, cookName || defaultCookName, foodImageUrl || '', currentLanguage),
+    recipe: currentLanguage === 'en'
+      ? '1. Knead the dough and roll it thin.\n2. Prepare the filling, place it on the dough, and seal.\n3. Boil and serve with sauce.'
+      : '1. Hamur malzemelerini yoğurun ve ince açın.\n2. İç harcı hazırlayıp hamura yerleştirin ve kapatın.\n3. Haşlayıp sos ile servis edin.',
+    ingredients: currentLanguage === 'en'
+      ? ['Dough', 'Minced Meat', 'Onion', 'Spices', 'Yogurt', 'Butter']
+      : ['Hamur', 'Kıyma', 'Soğan', 'Baharat', 'Yoğurt', 'Tereyağı'],
     preparationTime: 30,
-    servingSize: '2-3 kişilik',
-    category: 'Ana Yemek',
-    cookInfo: {
-      description: 'Ev yemekleri konusunda 15 yıllık deneyimim var. Geleneksel Türk mutfağının lezzetlerini sizlerle paylaşmaktan mutluluk duyuyorum.',
-      specialties: ['Türk Mutfağı', 'Ev Yemekleri', 'Hamur İşleri', 'Çorbalar'],
-      joinDate: 'Ocak 2023',
-      totalOrders: 156,
-    }
+    servingSize: currentLanguage === 'en' ? '2-3 servings' : '2-3 kişilik',
+    category: currentLanguage === 'en' ? 'Main Dish' : 'Ana Yemek',
   };
 
   const handleBackPress = () => {
@@ -303,7 +355,7 @@ export const FoodDetail: React.FC = () => {
       // Create or get existing chat
       const chatId = await chatService.getOrCreateChat(
         user.uid,
-        user.displayName || user.email || 'Alıcı',
+        user.displayName || user.email || t('foodDetailScreen.defaults.buyerName'),
         firebaseFood.cookId,
         firebaseFood.cookName,
         undefined, // no specific order
@@ -320,11 +372,26 @@ export const FoodDetail: React.FC = () => {
   };
 
   const handleOrderPress = () => {
+    setShowAllergenModal(true);
+  };
+
+  const handleAllergenConfirm = () => {
+    setShowAllergenModal(false);
     setShowOrderModal(true);
   };
 
+  const handleAllergenCancel = () => {
+    setShowAllergenModal(false);
+  };
+
   const generateAvailableDates = () => {
-    // Basit mock tarihler - performans için
+    if (currentLanguage === 'en') {
+      return [
+        { value: '01/15/2024', dayName: 'Monday', shortDate: 'Jan 15', fullDate: '01/15/2024', label: 'Today', date: '2024-01-15' },
+        { value: '01/16/2024', dayName: 'Tuesday', shortDate: 'Jan 16', fullDate: '01/16/2024', label: 'Tomorrow', date: '2024-01-16' },
+        { value: '01/17/2024', dayName: 'Wednesday', shortDate: 'Jan 17', fullDate: '01/17/2024', label: 'Wednesday', date: '2024-01-17' },
+      ];
+    }
     return [
       { value: '15.01.2024', dayName: 'Pazartesi', shortDate: '15 Oca', fullDate: '15.01.2024', label: 'Bugün', date: '2024-01-15' },
       { value: '16.01.2024', dayName: 'Salı', shortDate: '16 Oca', fullDate: '16.01.2024', label: 'Yarın', date: '2024-01-16' },
@@ -333,7 +400,13 @@ export const FoodDetail: React.FC = () => {
   };
 
   const generateCalendarDays = () => {
-    // Basit mock takvim - performans için
+    if (currentLanguage === 'en') {
+      return [
+        { date: '2024-01-15', day: 15, isCurrentMonth: true, isSelectable: true, isToday: true, dateString: '01/15/2024' },
+        { date: '2024-01-16', day: 16, isCurrentMonth: true, isSelectable: true, isToday: false, dateString: '01/16/2024' },
+        { date: '2024-01-17', day: 17, isCurrentMonth: true, isSelectable: true, isToday: false, dateString: '01/17/2024' },
+      ];
+    }
     return [
       { date: '2024-01-15', day: 15, isCurrentMonth: true, isSelectable: true, isToday: true, dateString: '15.01.2024' },
       { date: '2024-01-16', day: 16, isCurrentMonth: true, isSelectable: true, isToday: false, dateString: '16.01.2024' },
@@ -440,7 +513,9 @@ export const FoodDetail: React.FC = () => {
         quantity: quantity,
         totalPrice: food.price * quantity,
         status: 'pending',
-        deliveryAddress: deliveryType === 'delivery' ? 'Kullanıcı adresi' : 'Gel al',
+        deliveryAddress: deliveryType === 'delivery'
+          ? t('foodDetailScreen.defaults.deliveryAddress')
+          : t('foodDetailScreen.defaults.pickupLabel'),
       });
 
       // AsyncStorage'a da kaydet (backward compatibility için)
@@ -459,7 +534,7 @@ export const FoodDetail: React.FC = () => {
         status: 'pending',
         createdAt: '2024-01-15T12:00:00Z',
         buyerId: user.uid,
-        buyerName: user.displayName || 'Kullanıcı',
+        buyerName: user.displayName || t('foodDetailScreen.defaults.userName'),
       };
 
       const existingOrders = await AsyncStorage.getItem('orders');
@@ -468,13 +543,13 @@ export const FoodDetail: React.FC = () => {
       await AsyncStorage.setItem('orders', JSON.stringify(orders));
 
       // Send notification to seller about new order
-      await sendOrderNotification(orderId, 'pending_seller_approval', user.displayName || 'Müşteri', food.name);
+      await sendOrderNotification(orderId, 'pending_seller_approval', user.displayName || t('foodDetailScreen.defaults.customerName'), food.name);
 
       // Create chat for this order
       try {
         const chatId = await chatService.getOrCreateChat(
           user.uid,
-          user.displayName || user.email || 'Alıcı',
+          user.displayName || user.email || t('foodDetailScreen.defaults.buyerName'),
           firebaseFood?.cookId || 'seller_id',
           food.cookName,
           orderId,
@@ -489,7 +564,7 @@ export const FoodDetail: React.FC = () => {
           'pending',
           food.name,
           user.uid,
-          user.displayName || user.email || 'Alıcı',
+          user.displayName || user.email || t('foodDetailScreen.defaults.buyerName'),
           'buyer'
         );
       } catch (error) {
@@ -506,7 +581,7 @@ export const FoodDetail: React.FC = () => {
         description: `${food.name} - ${food.cookName}`,
         paymentMethodId: '', // Will be selected in payment modal
         customerInfo: {
-          name: user.displayName || user.email || 'Kullanıcı',
+          name: user.displayName || user.email || t('foodDetailScreen.defaults.userName'),
           email: user.email || '',
           phone: user.phoneNumber || undefined,
         },
@@ -535,7 +610,7 @@ export const FoodDetail: React.FC = () => {
         foodId: food.id,
         foodName: food.name,
         buyerId: user.uid,
-        buyerName: user.displayName || user.email || 'Kullanıcı',
+        buyerName: user.displayName || user.email || t('foodDetailScreen.defaults.userName'),
         buyerAvatar: user.photoURL || undefined,
         sellerId: firebaseFood?.cookId || 'seller_id',
         sellerName: food.cookName,
@@ -1173,6 +1248,14 @@ export const FoodDetail: React.FC = () => {
         onSubmit={handleSubmitReview}
         foodName={food.name}
         loading={reviewLoading}
+      />
+
+      <AllergenWarningModal
+        visible={showAllergenModal}
+        onClose={handleAllergenCancel}
+        onConfirm={handleAllergenConfirm}
+        allergens={food?.allergens ?? []}
+        foodName={food?.name ?? defaultFoodName}
       />
 
       {/* Payment Modal */}

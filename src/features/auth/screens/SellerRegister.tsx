@@ -124,7 +124,7 @@ export const SellerRegister: React.FC = () => {
 
           <View style={styles.form}>
             <Checkbox
-              label="Otomatik test bilgileriyle doldur"
+              label={t('authSellerRegister.autoFillLabel')}
               checked={autoFillEnabled}
               onPress={handleAutoFillToggle}
             />
@@ -221,7 +221,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
 
 
 

@@ -5,6 +5,7 @@ import { StarRating } from './StarRating';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { ReviewStats } from '../../services/reviewService';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface RatingStatsProps {
   stats: ReviewStats;
@@ -17,6 +18,7 @@ export const RatingStats: React.FC<RatingStatsProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const renderRatingBar = (rating: number, count: number) => {
     const percentage = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
@@ -54,7 +56,7 @@ export const RatingStats: React.FC<RatingStatsProps> = ({
           showNumber 
         />
         <Text variant="caption" style={[styles.reviewCount, { color: colors.textSecondary }]}>
-          ({stats.totalReviews} değerlendirme)
+          {t('ratingStats.reviewCountCompact', { count: stats.totalReviews })}
         </Text>
       </View>
     );
@@ -70,7 +72,7 @@ export const RatingStats: React.FC<RatingStatsProps> = ({
         <View style={styles.ratingInfo}>
           <StarRating rating={stats.averageRating} size="large" />
           <Text variant="body" style={[styles.totalReviews, { color: colors.textSecondary }]}>
-            {stats.totalReviews} değerlendirme
+            {t('ratingStats.reviewCount', { count: stats.totalReviews })}
           </Text>
         </View>
       </View>
@@ -141,7 +143,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 });
-
 
 
 

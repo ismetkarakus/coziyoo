@@ -9,21 +9,33 @@ import { AllergenWarningModal } from './AllergenWarningModal';
 import { Colors, Spacing, commonStyles } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { useCart } from '../../context/CartContext';
+import { useCountry } from '../../context/CountryContext';
 import { AllergenId } from '../../constants/allergens';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // Category-based images for food items
 const getCategoryImage = (category: string) => {
   const categoryImages: { [key: string]: string } = {
     'Ana Yemek': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
+    'Main Dish': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
     'Çorba': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=280&fit=crop',
+    'Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=280&fit=crop',
     'Kahvaltı': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=320&h=280&fit=crop',
+    'Breakfast': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=320&h=280&fit=crop',
     'Salata': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop',
+    'Salad': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop',
     'Tatlı': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
     'Tatlı/Kek': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
+    'Dessert': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
+    'Dessert/Cake': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
     'Meze': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=280&fit=crop', // Meze tabağı
+    'Appetizer': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=280&fit=crop',
     'Vejetaryen': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop', // Sebze yemekleri
+    'Vegetarian': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop',
     'Gluten Free': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=320&h=280&fit=crop', // Glutensiz ekmek
+    'Glutensiz': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=320&h=280&fit=crop',
     'İçecekler': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=320&h=280&fit=crop', // İçecekler
+    'Drinks': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=320&h=280&fit=crop',
   };
   
   return { uri: categoryImages[category] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=320&h=280&fit=crop' };
@@ -33,8 +45,11 @@ const getCategoryImage = (category: string) => {
 const getDefaultImage = (foodName: string) => {
   const foodImages: { [key: string]: string } = {
     'Ev Yapımı Mantı': 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=320&h=280&fit=crop',
+    'Homemade Manti': 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=320&h=280&fit=crop',
     'Karnıyarık': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
+    'Stuffed Eggplant': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
     'Baklava': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
+    'Homemade Baklava': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
     'Kuru fasülye pilav': 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=320&h=280&fit=crop',
     'Tavuk pilav': 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=320&h=280&fit=crop',
     'Helva': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=320&h=280&fit=crop',
@@ -83,7 +98,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   dailyStock,
   onAddToCart,
   maxDeliveryDistance,
-  country = 'Türk', // Default olarak Türk
+  country,
   category, // Yemek kategorisi
   isPreview = false, // Default olarak false
   allergens, // Alerjen bilgileri
@@ -94,7 +109,10 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
+  const { formatCurrency } = useCountry();
   const { cartItems, addToCart, removeFromCart } = useCart();
+  const resolvedCountry = country || (currentLanguage === 'en' ? 'Turkish' : 'Türk');
   
   // Determine available options and set default selection
   const getAvailableOptions = () => {
@@ -131,7 +149,6 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   const handlePress = () => {
     console.log('FoodCard pressed:', name, id, 'by', cookName);
     const foodImageUrl = imageUrl || getDefaultImage(name).uri;
-    const deliveryTypeText = selectedDeliveryType === 'pickup' ? 'Pickup' : 'Delivery';
     const route = `/food-detail-simple?id=${id}&name=${encodeURIComponent(name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}`;
     console.log('Navigating to SIMPLE FOOD DETAIL (no getTime errors):', route);
     router.push(route);
@@ -139,7 +156,10 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
   const incrementQuantity = () => {
     if (currentStock !== undefined && localQuantity >= currentStock) {
-      Alert.alert('Stok Yetersiz', `Sadece ${currentStock} adet ${name} kaldı.`);
+      Alert.alert(
+        t('foodCard.alerts.stockInsufficientTitle'),
+        t('foodCard.alerts.stockInsufficientMessage', { count: currentStock, name })
+      );
       return;
     }
     
@@ -154,15 +174,10 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
   const handleAddToCart = () => {
     if (localQuantity > 0) {
-      // Alerjen uyarısı: Sepete eklemeden önce alerjen uyarısı göster
-      if (allergens && allergens.length > 0) {
-        setShowAllergenModal(true);
-      } else {
-        // No allergens, proceed with confirmation
-        proceedWithAddToCart();
-      }
+      // Alerjen uyarısı: Sepete eklemeden önce zorunlu göster
+      setShowAllergenModal(true);
     } else {
-      Alert.alert('Uyarı', 'Lütfen önce miktar seçin.');
+      Alert.alert(t('foodCard.alerts.warningTitle'), t('foodCard.alerts.selectQuantity'));
     }
   };
 
@@ -170,27 +185,27 @@ export const FoodCard: React.FC<FoodCardProps> = ({
     // Check if user needs to select delivery option
     if (availableOptions.length > 1 && selectedDeliveryType === null) {
       Alert.alert(
-        'Teslimat Seçimi Gerekli',
-        'Lütfen önce teslimat seçeneğinizi belirleyin (Gel Al veya Teslimat).',
-        [{ text: 'Tamam' }]
+        t('foodCard.alerts.deliveryRequiredTitle'),
+        t('foodCard.alerts.deliveryRequiredMessage'),
+        [{ text: t('foodCard.alerts.ok') }]
       );
       return;
     }
     
     const deliveryText = selectedDeliveryType 
-      ? `\n\nTeslimat: ${selectedDeliveryType === 'pickup' ? '🏪 Gel Al' : '🚚 Teslimat'}`
+      ? `\n\n${t('foodCard.deliveryLabel')}: ${selectedDeliveryType === 'pickup' ? t('foodCard.pickupWithIcon') : t('foodCard.deliveryWithIcon')}`
       : '';
     
     Alert.alert(
-      'Sepete Ekle', 
-      `${localQuantity} adet ${name} sepete eklensin mi?${deliveryText}`,
+      t('foodCard.alerts.addToCartTitle'),
+      t('foodCard.alerts.addToCartMessage', { count: localQuantity, name }) + deliveryText,
       [
         {
-          text: 'Hayır',
+          text: t('foodCard.alerts.no'),
           style: 'cancel',
         },
         {
-          text: 'Evet',
+          text: t('foodCard.alerts.yes'),
           onPress: () => {
             // Add to actual cart
             addToCart({
@@ -301,7 +316,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           <View style={[styles.rightControls, isGridMode && styles.gridRightControls]}>
             {/* Price - aligned with quantity controls */}
             <Text variant="subheading" weight="bold" color="primary" style={styles.priceAligned}>
-              ₺{price}
+              {formatCurrency(price)}
             </Text>
             
             {/* Quantity controls */}
@@ -328,10 +343,12 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           {/* Bottom meta info (near buttons) */}
           <View style={styles.bottomMetaRow}>
             <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.bottomMetaDate]}>
-              • {showAvailableDates ? (availableDates || 'Tarih belirtilmemiş') : (maxDeliveryDistance ? `${maxDeliveryDistance} km teslimat` : distance)}
+              • {showAvailableDates
+                ? (availableDates || t('foodCard.unknownDate'))
+                : (maxDeliveryDistance ? t('foodCard.deliveryDistance', { distance: maxDeliveryDistance }) : distance)}
             </Text>
             <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText]}>
-              {country} yemeği • {currentStock || 0} adet
+              {t('foodCard.countryMeal', { country: resolvedCountry, count: currentStock || 0 })}
             </Text>
           </View>
 
@@ -359,7 +376,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                         weight="medium"
                         style={{ color: isSelected ? 'white' : '#888888', fontSize: 11 }}
                       >
-                        {option === 'pickup' ? 'Gel Al' : 'Teslimat'}
+                        {option === 'pickup' ? t('foodDetailScreen.pickup') : t('foodDetailScreen.delivery')}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -376,7 +393,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                     ]}
                   >
                     <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
-                      {availableOptions[0] === 'pickup' ? '🏪 Gel Al' : '🚚 Teslimat'}
+                      {availableOptions[0] === 'pickup'
+                        ? t('foodCard.pickupWithIcon')
+                        : t('foodCard.deliveryWithIcon')}
                     </Text>
                   </View>
                 )
@@ -388,7 +407,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
               style={[styles.addToCartButtonBottomRight, { backgroundColor: colors.primary }]}
             >
               <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
-                Sepete Ekle
+                {t('foodCard.addToCart')}
               </Text>
             </TouchableOpacity>
           </View>

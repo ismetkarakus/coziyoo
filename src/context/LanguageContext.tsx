@@ -26,7 +26,7 @@ const detectDeviceLanguage = (): SupportedLanguage => {
 };
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentCountry } = useCountry();
+  const { currentCountry, setCountry } = useCountry();
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>('tr');
 
   useEffect(() => {
@@ -55,6 +55,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = async (language: SupportedLanguage) => {
     setCurrentLanguage(language);
     await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+
+    // Dil seçimine göre ülkeyi senkronla
+    if (language === 'tr') {
+      await setCountry('TR');
+    } else if (language === 'en') {
+      await setCountry('UK');
+    }
   };
 
   const value = useMemo(

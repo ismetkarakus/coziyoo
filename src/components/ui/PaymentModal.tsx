@@ -7,6 +7,8 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { PaymentMethod, PaymentRequest, paymentService } from '../../services/paymentService';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useCountry } from '../../context/CountryContext';
 
 interface PaymentModalProps {
   visible: boolean;
@@ -25,6 +27,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
+  const { currentCountry } = useCountry();
   
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
@@ -52,7 +56,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       }
     } catch (error) {
       console.error('Error loading payment methods:', error);
-      Alert.alert('Hata', 'Ödeme yöntemleri yüklenemedi.');
+      Alert.alert(t('paymentModal.alerts.errorTitle'), t('paymentModal.alerts.loadMethodsError'));
     } finally {
       setLoadingMethods(false);
     }
@@ -60,7 +64,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handlePayment = async () => {
     if (!selectedPaymentMethod) {
-      Alert.alert('Hata', 'Lütfen bir ödeme yöntemi seçin.');
+      Alert.alert(t('paymentModal.alerts.errorTitle'), t('paymentModal.alerts.selectMethod'));
       return;
     }
 
@@ -75,11 +79,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
       if (requires3DSecure) {
         Alert.alert(
-          '3D Secure Doğrulama',
-          'Bu işlem için 3D Secure doğrulaması gereklidir. Devam etmek istiyor musunuz?',
+          t('paymentModal.alerts.secureTitle'),
+          t('paymentModal.alerts.secureMessage'),
           [
-            { text: 'İptal', style: 'cancel' },
-            { text: 'Devam Et', onPress: () => processPaymentWithSecure() }
+            { text: t('paymentModal.alerts.cancel'), style: 'cancel' },
+            { text: t('paymentModal.alerts.continue'), onPress: () => processPaymentWithSecure() }
           ]
         );
       } else {
@@ -87,7 +91,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       }
     } catch (error) {
       console.error('Error initiating payment:', error);
-      Alert.alert('Hata', 'Ödeme başlatılamadı.');
+      Alert.alert(t('paymentModal.alerts.errorTitle'), t('paymentModal.alerts.startError'));
       setProcessing(false);
     }
   };
@@ -103,11 +107,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
       if (result.success && result.transactionId) {
         Alert.alert(
-          'Ödeme Başarılı',
-          'Ödemeniz başarıyla tamamlandı.',
+          t('paymentModal.alerts.successTitle'),
+          t('paymentModal.alerts.successMessage'),
           [
             {
-              text: 'Tamam',
+              text: t('paymentModal.alerts.ok'),
               onPress: () => {
                 onPaymentSuccess(result.transactionId!);
                 onClose();
@@ -116,11 +120,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           ]
         );
       } else {
-        Alert.alert('Ödeme Başarısız', result.error || 'Ödeme işlemi başarısız oldu.');
+        Alert.alert(
+          t('paymentModal.alerts.failedTitle'),
+          result.error || t('paymentModal.alerts.failedMessage')
+        );
       }
     } catch (error) {
       console.error('Error processing payment:', error);
-      Alert.alert('Hata', 'Ödeme işlemi sırasında bir hata oluştu.');
+      Alert.alert(t('paymentModal.alerts.errorTitle'), t('paymentModal.alerts.processError'));
     } finally {
       setProcessing(false);
     }
@@ -129,11 +136,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const processPaymentWithSecure = async () => {
     // Simulate 3D Secure flow
     Alert.alert(
-      '3D Secure',
-      'Bankanızın güvenlik sayfasına yönlendiriliyorsunuz...',
+      t('paymentModal.alerts.secureShortTitle'),
+      t('paymentModal.alerts.secureRedirect'),
       [
         {
-          text: 'Tamam',
+          text: t('paymentModal.alerts.ok'),
           onPress: async () => {
             // Simulate 3D Secure success
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -146,19 +153,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleAddPaymentMethod = () => {
     Alert.alert(
-      'Yeni Ödeme Yöntemi',
-      'Yeni ödeme yöntemi eklemek için ayarlar sayfasına gidin.',
+      t('paymentModal.alerts.addMethodTitle'),
+      t('paymentModal.alerts.addMethodMessage'),
       [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Ayarlara Git', onPress: onClose }
+        { text: t('paymentModal.alerts.cancel'), style: 'cancel' },
+        { text: t('paymentModal.alerts.goToSettings'), onPress: onClose }
       ]
     );
   };
 
   const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('tr-TR', {
+    return new Intl.NumberFormat(currentLanguage === 'en' ? 'en-GB' : 'tr-TR', {
       style: 'currency',
-      currency: 'TRY',
+      currency: currentCountry.currency,
     }).format(amount);
   };
 
@@ -176,7 +183,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <FontAwesome name="times" size={20} color={colors.text} />
           </TouchableOpacity>
           <Text variant="heading" style={styles.title}>
-            Ödeme
+            {t('paymentModal.title')}
           </Text>
           <View style={styles.placeholder} />
         </View>
@@ -185,7 +192,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           {/* Order Summary */}
           <View style={[styles.section, { backgroundColor: colors.surface }]}>
             <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              Sipariş Özeti
+              {t('paymentModal.orderSummary')}
             </Text>
             <View style={styles.orderInfo}>
               <Text variant="body" style={{ color: colors.text }}>
@@ -201,7 +208,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-                Ödeme Yöntemi
+                {t('paymentModal.paymentMethod')}
               </Text>
               <TouchableOpacity
                 onPress={handleAddPaymentMethod}
@@ -209,7 +216,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               >
                 <FontAwesome name="plus" size={12} color={colors.background} />
                 <Text variant="caption" style={{ color: colors.background, marginLeft: 4 }}>
-                  Ekle
+                  {t('paymentModal.add')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -217,7 +224,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             {loadingMethods ? (
               <View style={styles.loadingContainer}>
                 <Text variant="body" color="textSecondary">
-                  Ödeme yöntemleri yükleniyor...
+                  {t('paymentModal.loadingMethods')}
                 </Text>
               </View>
             ) : paymentMethods.length > 0 ? (
@@ -232,14 +239,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             ) : (
               <View style={styles.emptyContainer}>
                 <Text variant="body" color="textSecondary" style={{ textAlign: 'center' }}>
-                  Kayıtlı ödeme yönteminiz bulunmuyor.
+                  {t('paymentModal.noMethods')}
                 </Text>
                 <TouchableOpacity
                   onPress={handleAddPaymentMethod}
                   style={[styles.addMethodButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
                 >
                   <Text variant="body" style={{ color: colors.primary }}>
-                    İlk ödeme yönteminizi ekleyin
+                    {t('paymentModal.addFirstMethod')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -250,7 +257,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <View style={[styles.securityInfo, { backgroundColor: colors.surface }]}>
             <FontAwesome name="shield" size={16} color={colors.success} />
             <Text variant="caption" style={{ color: colors.textSecondary, flex: 1, marginLeft: 8 }}>
-              Ödeme bilgileriniz SSL ile şifrelenir ve güvenli bir şekilde işlenir.
+              {t('paymentModal.securityNote')}
             </Text>
           </View>
         </ScrollView>
@@ -263,7 +270,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             style={styles.cancelButton}
             disabled={processing}
           >
-            İptal
+            {t('paymentModal.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -272,7 +279,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             disabled={!selectedPaymentMethod || processing || loading}
             style={styles.payButton}
           >
-            {formatAmount(paymentRequest.amount)} Öde
+            {t('paymentModal.pay', { amount: formatAmount(paymentRequest.amount) })}
           </Button>
         </View>
       </View>
@@ -367,4 +374,3 @@ const styles = StyleSheet.create({
     flex: 2,
   },
 });
-

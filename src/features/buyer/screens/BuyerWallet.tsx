@@ -7,14 +7,14 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useCountry } from '../../../context/CountryContext';
 
 export const BuyerWallet: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
+  const { formatCurrency } = useCountry();
   const [balance, setBalance] = useState(75.50); // Mock balance
-
-  const formatCurrency = (amount: number) => `₺${amount.toFixed(2)}`;
 
   const handleBackPress = () => {
     router.back();

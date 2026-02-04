@@ -7,6 +7,7 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ReviewModalProps {
   visible: boolean;
@@ -25,6 +26,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
   
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -32,12 +34,12 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 
   const handleSubmit = () => {
     if (rating === 0) {
-      Alert.alert('Hata', 'Lütfen bir puan verin.');
+      Alert.alert(t('reviewModal.alerts.errorTitle'), t('reviewModal.alerts.ratingRequired'));
       return;
     }
     
     if (comment.trim().length < 10) {
-      Alert.alert('Hata', 'Yorum en az 10 karakter olmalıdır.');
+      Alert.alert(t('reviewModal.alerts.errorTitle'), t('reviewModal.alerts.commentTooShort'));
       return;
     }
 
@@ -57,13 +59,13 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 
   const pickImage = async () => {
     if (images.length >= 3) {
-      Alert.alert('Limit', 'En fazla 3 resim ekleyebilirsiniz.');
+      Alert.alert(t('reviewModal.alerts.limitTitle'), t('reviewModal.alerts.imageLimit'));
       return;
     }
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+      Alert.alert(t('reviewModal.alerts.permissionTitle'), t('reviewModal.alerts.permissionMessage'));
       return;
     }
 
@@ -85,12 +87,12 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 
   const getRatingText = (rating: number) => {
     switch (rating) {
-      case 1: return 'Çok Kötü';
-      case 2: return 'Kötü';
-      case 3: return 'Orta';
-      case 4: return 'İyi';
-      case 5: return 'Mükemmel';
-      default: return 'Puan verin';
+      case 1: return t('reviewModal.ratingTexts.1');
+      case 2: return t('reviewModal.ratingTexts.2');
+      case 3: return t('reviewModal.ratingTexts.3');
+      case 4: return t('reviewModal.ratingTexts.4');
+      case 5: return t('reviewModal.ratingTexts.5');
+      default: return t('reviewModal.ratingTexts.default');
     }
   };
 
@@ -108,7 +110,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             <FontAwesome name="times" size={20} color={colors.text} />
           </TouchableOpacity>
           <Text variant="heading" style={styles.title}>
-            Değerlendirme Yap
+            {t('reviewModal.title')}
           </Text>
           <View style={styles.placeholder} />
         </View>
@@ -120,14 +122,14 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               {foodName}
             </Text>
             <Text variant="body" style={{ color: colors.textSecondary, marginTop: 4 }}>
-              Bu yemek hakkında ne düşünüyorsunuz?
+              {t('reviewModal.prompt')}
             </Text>
           </View>
 
           {/* Rating */}
           <View style={styles.ratingSection}>
             <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: colors.text }]}>
-              Puanınız
+              {t('reviewModal.ratingTitle')}
             </Text>
             <View style={styles.ratingContainer}>
               <StarRating
@@ -145,7 +147,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           {/* Comment */}
           <View style={styles.commentSection}>
             <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: colors.text }]}>
-              Yorumunuz
+              {t('reviewModal.commentTitle')}
             </Text>
             <TextInput
               style={[
@@ -156,7 +158,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                   color: colors.text,
                 }
               ]}
-              placeholder="Yemeğin tadı, sunumu, tazeliği hakkında düşüncelerinizi paylaşın... (En az 10 karakter)"
+              placeholder={t('reviewModal.commentPlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={comment}
               onChangeText={setComment}
@@ -172,10 +174,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           {/* Images */}
           <View style={styles.imagesSection}>
             <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: colors.text }]}>
-              Fotoğraflar (İsteğe bağlı)
+              {t('reviewModal.imagesTitle')}
             </Text>
             <Text variant="caption" style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-              En fazla 3 fotoğraf ekleyebilirsiniz
+              {t('reviewModal.imagesSubtitle')}
             </Text>
             
             <View style={styles.imagesContainer}>
@@ -198,7 +200,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                 >
                   <FontAwesome name="camera" size={20} color={colors.textSecondary} />
                   <Text variant="caption" style={{ color: colors.textSecondary, marginTop: 4 }}>
-                    Fotoğraf Ekle
+                    {t('reviewModal.addPhoto')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -213,7 +215,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             onPress={handleClose}
             style={styles.cancelButton}
           >
-            İptal
+            {t('reviewModal.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -222,7 +224,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             disabled={rating === 0 || comment.trim().length < 10}
             style={styles.submitButton}
           >
-            Gönder
+            {t('reviewModal.submit')}
           </Button>
         </View>
       </View>
@@ -340,4 +342,3 @@ const styles = StyleSheet.create({
     flex: 2,
   },
 });
-

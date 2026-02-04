@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text, FoodCard } from '../../../components/ui';
@@ -7,8 +7,7 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
 
-// Mock data for different categories
-const CATEGORY_FOODS = {
+const CATEGORY_FOODS_TR = {
   'Ana Yemek': [
     {
       id: '1',
@@ -139,12 +138,78 @@ const CATEGORY_FOODS = {
   ],
 };
 
+const CATEGORY_KEY_TR_TO_EN: Record<string, string> = {
+  'Ana Yemek': 'Main Dish',
+  'Çorba': 'Soup',
+  'Kahvaltı': 'Breakfast',
+  'Salata': 'Salad',
+};
+
+const translateCategoryToEn = (category: string) => CATEGORY_KEY_TR_TO_EN[category] || category;
+
+const translateFoodNameToEn = (name: string) => {
+  const mapping: Record<string, string> = {
+    'Ev Yapımı Mantı': 'Homemade Manti',
+    'Karnıyarık': 'Stuffed Eggplant',
+    'İskender Kebap': 'Iskender Kebab',
+    'Mercimek Çorbası': 'Lentil Soup',
+    'Tarhana Çorbası': 'Tarhana Soup',
+    'Yayla Çorbası': 'Yogurt Soup',
+    'Serpme Kahvaltı': 'Turkish Breakfast',
+    'Menemen': 'Menemen',
+    'Simit & Çay': 'Simit & Tea',
+    'Çoban Salata': 'Shepherd Salad',
+    'Mevsim Salata': 'Seasonal Salad',
+    'Roka Salata': 'Arugula Salad',
+  };
+  return mapping[name] || name;
+};
+
+const translateCookNameToEn = (name: string) => {
+  const mapping: Record<string, string> = {
+    'Ayşe Hanım': 'Ayse Hanim',
+    'Mehmet Usta': 'Mehmet Usta',
+    'Ali Usta': 'Ali Usta',
+    'Zeynep Hanım': 'Zeynep Hanim',
+    'Fatma Teyze': 'Fatma Teyze',
+    'Emine Hanım': 'Emine Hanim',
+    'Hasan Usta': 'Hasan Usta',
+    'Mehmet Abi': 'Mehmet Abi',
+    'Zehra Hanım': 'Zehra Hanim',
+    'Gül Teyze': 'Gul Teyze',
+    'Elif Hanım': 'Elif Hanim',
+  };
+  return mapping[name] || name;
+};
+
+const getCategoryFoods = (language: 'tr' | 'en') => {
+  if (language === 'tr') {
+    return CATEGORY_FOODS_TR;
+  }
+
+  return Object.fromEntries(
+    Object.entries(CATEGORY_FOODS_TR).map(([category, foods]) => [
+      translateCategoryToEn(category),
+      foods.map((food) => ({
+        ...food,
+        name: translateFoodNameToEn(food.name),
+        cookName: translateCookNameToEn(food.cookName),
+      })),
+    ])
+  ) as Record<string, typeof CATEGORY_FOODS_TR[keyof typeof CATEGORY_FOODS_TR]>;
+};
+
+const DEFAULT_CATEGORY_BY_LANG: Record<'tr' | 'en', string> = {
+  tr: 'Ana Yemek',
+  en: 'Main Dish',
+};
+
 export const CategoryFoods: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const params = useLocalSearchParams();
-  const categoryName = params.category as string || 'Ana Yemek';
+  const categoryName = (params.category as string) || DEFAULT_CATEGORY_BY_LANG[currentLanguage];
 
   const handleAddToCart = (foodId: string, quantity: number) => {
     console.log(`Added ${quantity} of food ${foodId} to cart`);
@@ -155,7 +220,8 @@ export const CategoryFoods: React.FC = () => {
   };
 
   // Get foods for the selected category
-  const categoryFoods = CATEGORY_FOODS[categoryName as keyof typeof CATEGORY_FOODS] || [];
+  const categoryFoodsMap = getCategoryFoods(currentLanguage);
+  const categoryFoods = categoryFoodsMap[categoryName] || [];
 
   const renderBackButton = () => (
     <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>

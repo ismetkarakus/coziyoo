@@ -6,64 +6,106 @@ import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useTranslation } from '../../../hooks/useTranslation';
 
-// Mock messages data
-const MOCK_MESSAGES = [
-  {
-    id: '1',
-    type: 'system',
-    content: 'Sipariş onaylandı ve hazırlanmaya başlandı.',
-    timestamp: '14:00',
-  },
-  {
-    id: '2',
-    type: 'seller',
-    content: 'Merhaba! Siparişinizi aldım, yaklaşık 30 dakika içinde hazır olacak.',
-    timestamp: '14:05',
-  },
-  {
-    id: '3',
-    type: 'buyer',
-    content: 'Teşekkür ederim, bekliyorum.',
-    timestamp: '14:06',
-  },
-  {
-    id: '4',
-    type: 'system',
-    content: 'Yemek hazırlanıyor.',
-    timestamp: '14:15',
-  },
-  {
-    id: '5',
-    type: 'seller',
-    content: 'Yemeğiniz 15 dakika içinde hazır olacak.',
-    timestamp: '14:30',
-  },
-];
+const getMockMessages = (language: 'tr' | 'en') => {
+  if (language === 'tr') {
+    return [
+      {
+        id: '1',
+        type: 'system',
+        content: 'Sipariş onaylandı ve hazırlanmaya başlandı.',
+        timestamp: '14:00',
+      },
+      {
+        id: '2',
+        type: 'seller',
+        content: 'Merhaba! Siparişinizi aldım, yaklaşık 30 dakika içinde hazır olacak.',
+        timestamp: '14:05',
+      },
+      {
+        id: '3',
+        type: 'buyer',
+        content: 'Teşekkür ederim, bekliyorum.',
+        timestamp: '14:06',
+      },
+      {
+        id: '4',
+        type: 'system',
+        content: 'Yemek hazırlanıyor.',
+        timestamp: '14:15',
+      },
+      {
+        id: '5',
+        type: 'seller',
+        content: 'Yemeğiniz 15 dakika içinde hazır olacak.',
+        timestamp: '14:30',
+      },
+    ];
+  }
 
-const QUICK_REPLIES = [
-  'Ne zaman hazır olur?',
-  'Yoldayım',
-  'Geldim',
-  'Teşekkür ederim',
-];
+  return [
+    {
+      id: '1',
+      type: 'system',
+      content: 'Order approved and preparation started.',
+      timestamp: '14:00',
+    },
+    {
+      id: '2',
+      type: 'seller',
+      content: 'Hi! I received your order, it will be ready in about 30 minutes.',
+      timestamp: '14:05',
+    },
+    {
+      id: '3',
+      type: 'buyer',
+      content: 'Thank you, I am waiting.',
+      timestamp: '14:06',
+    },
+    {
+      id: '4',
+      type: 'system',
+      content: 'Meal is being prepared.',
+      timestamp: '14:15',
+    },
+    {
+      id: '5',
+      type: 'seller',
+      content: 'Your meal will be ready in 15 minutes.',
+      timestamp: '14:30',
+    },
+  ];
+};
+
+const getQuickReplies = (language: 'tr' | 'en') => (
+  language === 'tr'
+    ? ['Ne zaman hazır olur?', 'Yoldayım', 'Geldim', 'Teşekkür ederim']
+    : ['When will it be ready?', 'On my way', 'I arrived', 'Thank you']
+);
 
 export const ChatDetail: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t, currentLanguage } = useTranslation();
   const params = useLocalSearchParams();
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(MOCK_MESSAGES);
+  const [messages, setMessages] = useState(getMockMessages(currentLanguage));
+  const quickReplies = getQuickReplies(currentLanguage);
 
   const foodName = params.foodName as string;
   const orderStatus = params.orderStatus as string;
+
+  React.useEffect(() => {
+    setMessages(getMockMessages(currentLanguage));
+  }, [currentLanguage]);
 
   const sendMessage = (content: string) => {
     const newMessage = {
       id: Date.now().toString(),
       type: 'buyer' as const,
       content,
-      timestamp: new Date().toLocaleTimeString('tr-TR', { 
+      timestamp: new Date().toLocaleTimeString(currentLanguage === 'en' ? 'en-GB' : 'tr-TR', { 
         hour: '2-digit', 
         minute: '2-digit' 
       }),
@@ -89,14 +131,16 @@ export const ChatDetail: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Hazırlanıyor':
+      case t('chatListScreen.statuses.preparing'):
         return colors.warning;
-      case 'Hazır':
+      case t('chatListScreen.statuses.ready'):
         return colors.success;
-      case 'Yolda':
+      case t('chatListScreen.statuses.onTheWay'):
         return colors.info;
-      case 'Teslim Edildi':
+      case t('chatListScreen.statuses.delivered'):
         return colors.textSecondary;
+      case t('chatListScreen.statuses.awaitingApproval'):
+        return colors.info;
       default:
         return colors.primary;
     }
@@ -157,7 +201,7 @@ export const ChatDetail: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title={foodName || 'Mesajlaşma'}
+        title={foodName || t('chatDetailScreen.titleFallback')}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -193,7 +237,7 @@ export const ChatDetail: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.quickRepliesContent}
         >
-          {QUICK_REPLIES.map((reply, index) => (
+          {quickReplies.map((reply, index) => (
             <TouchableOpacity
               key={index}
               onPress={() => handleQuickReply(reply)}
@@ -214,7 +258,7 @@ export const ChatDetail: React.FC = () => {
             <Input
               value={message}
               onChangeText={setMessage}
-              placeholder="Mesaj yazın..."
+              placeholder={t('chatDetailScreen.placeholder')}
               style={styles.messageInput}
               containerStyle={styles.inputContainerStyle}
               multiline
@@ -344,10 +388,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 });
-
-
-
-
 
 
 

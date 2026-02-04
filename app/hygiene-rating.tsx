@@ -1,27 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import { Text, Card, Button, FormField } from '../src/components/ui';
 import { TopBar } from '../src/components/layout/TopBar';
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
+import { useTranslation } from '../src/hooks/useTranslation';
 
 export default function HygieneRating() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { currentLanguage } = useTranslation();
+  const isTR = currentLanguage === 'tr';
   
-  const [formData, setFormData] = useState({
+  const getInitialFormData = (useTR: boolean) => ({
     currentRating: 5,
     lastInspectionDate: '2024-11-15',
     nextInspectionDue: '2025-11-15',
-    inspectorName: 'Sarah Johnson',
-    councilName: 'Westminster City Council',
-    inspectionType: 'Routine Inspection',
-    businessName: 'Fatma Teyze Home Kitchen',
-    businessAddress: 'SW1A 1AA, Westminster, London',
-    certificateNumber: 'WCC-HR-2024-001',
+    inspectorName: useTR ? 'Mehmet Yılmaz' : 'Sarah Johnson',
+    councilName: useTR ? 'Kadıköy Belediyesi' : 'Westminster City Council',
+    inspectionType: useTR ? 'Rutin Denetim' : 'Routine Inspection',
+    businessName: useTR ? 'Fatma Teyze Ev Mutfağı' : 'Fatma Teyze Home Kitchen',
+    businessAddress: useTR ? 'Kadıköy, İstanbul' : 'SW1A 1AA, Westminster, London',
+    certificateNumber: useTR ? 'KDK-HIJ-2024-001' : 'WCC-HR-2024-001',
     status: 'active' as 'active' | 'pending' | 'overdue',
   });
+
+  const [formData, setFormData] = useState(getInitialFormData(isTR));
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -43,32 +48,177 @@ export default function HygieneRating() {
     }
   };
 
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData(getInitialFormData(isTR));
+    }
+  }, [currentLanguage, isEditing, isTR]);
+
+  const copy = isTR
+    ? {
+        title: '🏛️ Hijyen Denetimi',
+        sellerLabel: 'Satıcı',
+        edit: 'Düzenle',
+        cancel: 'İptal',
+        successTitle: 'Başarılı',
+        successMessage: 'Hijyen denetimi bilgileri başarıyla güncellendi.',
+        ok: 'Tamam',
+        statusTitle: 'Mevcut Derece',
+        statusPending: '⏳ DENETİM BEKLEMEDE',
+        statusOverdue: '❌ DENETİM GECİKMİŞ',
+        statusRating: '⭐ DERECE: {{rating}}/5',
+        ratingDesc: {
+          5: 'Çok İyi',
+          4: 'İyi',
+          3: 'Genel Olarak Yeterli',
+          2: 'İyileştirme Gerekli',
+          1: 'Ciddi İyileştirme Gerekli',
+          0: 'Acil İyileştirme Gerekli',
+        } as Record<number, string>,
+        statusMessagePending:
+          'Gıda hijyeni denetiminiz beklemede. Denetim sonrası dereceniz bildirilecektir.',
+        statusMessageOverdue:
+          'Hijyen denetiminiz gecikmiş görünüyor. Lütfen belediyenizle iletişime geçin.',
+        statusMessageActive:
+          'İşletmeniz başarılı bir hijyen derecesi aldı. Son denetim tarihi: {{date}}.',
+        actionsTitle: '🔍 Gıda Denetimi Bilgileri',
+        actionPrimary: '🌐 Tarım ve Orman Bakanlığı →',
+        actionSecondary: '🏛️ Belediye Bilgileri →',
+        actionTertiary: '📋 Denetim Talebi →',
+        requestTitle: 'Denetim Talebi',
+        requestMessage: 'Belediyenizden yeni bir hijyen denetimi talep etmek ister misiniz?',
+        requestCancel: 'İptal',
+        requestConfirm: 'Talep Et',
+        requestSentTitle: 'Talep Gönderildi',
+        requestSentMessage: 'Denetim talebiniz belediyeye iletildi.',
+        ratingSelectTitle: 'Derecenizi Seçin',
+        ratingPending: 'Denetim Bekleniyor',
+        detailsTitle: 'Denetim Detayları',
+        businessNameLabel: 'İşletme Adı',
+        businessNamePlaceholder: 'Kayıtlı işletme adınız',
+        businessAddressLabel: 'İşletme Adresi',
+        businessAddressPlaceholder: 'Tam işletme adresi',
+        councilLabel: 'Yerel Belediye',
+        councilPlaceholder: 'örn. Kadıköy Belediyesi',
+        lastInspectionLabel: 'Son Denetim Tarihi',
+        nextInspectionLabel: 'Sonraki Denetim Tarihi',
+        datePlaceholder: 'YYYY-AA-GG',
+        inspectorLabel: 'Denetçi Adı',
+        inspectorPlaceholder: 'Gıda denetçisi adı',
+        inspectionTypeLabel: 'Denetim Türü',
+        inspectionTypePlaceholder: 'örn. Rutin, Takip, Şikayet',
+        certificateLabel: 'Belge Numarası',
+        certificatePlaceholder: 'Resmi belge referansı',
+        saveButton: '💾 Denetim Bilgilerini Kaydet',
+        infoTitle: 'ℹ️ Hijyen Derecesi Açıklaması',
+        infoItems: [
+          { label: '5 - Çok İyi', desc: 'Mükemmel hijyen standartları' },
+          { label: '4 - İyi', desc: 'İyi hijyen standartları' },
+          { label: '3 - Genel Olarak Yeterli', desc: 'Hijyen standartları yeterli' },
+          { label: '2 - İyileştirme Gerekli', desc: 'Bazı iyileştirmeler gerekli' },
+          { label: '1 - Ciddi İyileştirme Gerekli', desc: 'Ciddi iyileştirme gerekli' },
+          { label: '0 - Acil İyileştirme Gerekli', desc: 'Acil iyileştirme gerekli' },
+        ],
+      }
+    : {
+        title: '🏛️ Food Hygiene Rating',
+        sellerLabel: 'Seller',
+        edit: 'Edit',
+        cancel: 'Cancel',
+        successTitle: 'Success',
+        successMessage: 'Hygiene rating details have been updated successfully.',
+        ok: 'OK',
+        statusTitle: 'Current Rating',
+        statusPending: '⏳ INSPECTION PENDING',
+        statusOverdue: '❌ INSPECTION OVERDUE',
+        statusRating: '⭐ RATING: {{rating}}/5',
+        ratingDesc: {
+          5: 'Very Good',
+          4: 'Good',
+          3: 'Generally Satisfactory',
+          2: 'Improvement Necessary',
+          1: 'Major Improvement Necessary',
+          0: 'Urgent Improvement Necessary',
+        } as Record<number, string>,
+        statusMessagePending:
+          'Your food hygiene inspection is pending. You will receive your rating after the inspection.',
+        statusMessageOverdue: 'Your hygiene inspection is overdue. Please contact your local council.',
+        statusMessageActive:
+          'Your business has received an excellent hygiene rating. Last inspected on {{date}}.',
+        actionsTitle: '🔍 Hygiene Rating Information',
+        actionPrimary: '📖 About Food Hygiene Rating Scheme →',
+        actionSecondary: '🔍 Search Business Ratings →',
+        actionTertiary: '📋 Request New Inspection →',
+        requestTitle: 'Request Inspection',
+        requestMessage: 'Would you like to request a new hygiene inspection from your local council?',
+        requestCancel: 'Cancel',
+        requestConfirm: 'Request',
+        requestSentTitle: 'Request Sent',
+        requestSentMessage: 'Your inspection request has been sent to Westminster City Council.',
+        ratingSelectTitle: 'Select Your Rating',
+        ratingPending: 'Inspection Pending',
+        detailsTitle: 'Inspection Details',
+        businessNameLabel: 'Business Name',
+        businessNamePlaceholder: 'Your registered business name',
+        businessAddressLabel: 'Business Address',
+        businessAddressPlaceholder: 'Full business address',
+        councilLabel: 'Local Council',
+        councilPlaceholder: 'e.g. Westminster City Council',
+        lastInspectionLabel: 'Last Inspection Date',
+        nextInspectionLabel: 'Next Inspection Due',
+        datePlaceholder: 'YYYY-MM-DD',
+        inspectorLabel: 'Inspector Name',
+        inspectorPlaceholder: 'Name of the food safety inspector',
+        inspectionTypeLabel: 'Inspection Type',
+        inspectionTypePlaceholder: 'e.g. Routine, Follow-up, Complaint',
+        certificateLabel: 'Certificate Number',
+        certificatePlaceholder: 'Official certificate reference',
+        saveButton: '💾 Save Rating Details',
+        infoTitle: 'ℹ️ Understanding Food Hygiene Ratings',
+        infoItems: [
+          { label: '5 - Very Good', desc: 'Excellent hygiene standards' },
+          { label: '4 - Good', desc: 'Good hygiene standards' },
+          { label: '3 - Generally Satisfactory', desc: 'Hygiene standards are generally satisfactory' },
+          { label: '2 - Improvement Necessary', desc: 'Some improvement necessary' },
+          { label: '1 - Major Improvement Necessary', desc: 'Major improvement necessary' },
+          { label: '0 - Urgent Improvement Necessary', desc: 'Urgent improvement necessary' },
+        ],
+      };
+
   const handleSave = () => {
     Alert.alert(
-      'Success',
-      'Hygiene rating details have been updated successfully.',
-      [{ text: 'OK', onPress: () => setIsEditing(false) }]
+      copy.successTitle,
+      copy.successMessage,
+      [{ text: copy.ok, onPress: () => setIsEditing(false) }]
     );
   };
 
   const openFSAWebsite = () => {
+    if (isTR) {
+      Linking.openURL('https://www.tarimorman.gov.tr/');
+      return;
+    }
     Linking.openURL('https://www.food.gov.uk/safety-hygiene/food-hygiene-rating-scheme');
   };
 
   const openRatingSearch = () => {
+    if (isTR) {
+      Linking.openURL('https://www.turkiye.gov.tr/belediyeler');
+      return;
+    }
     Linking.openURL('https://ratings.food.gov.uk/');
   };
 
   const requestInspection = () => {
     Alert.alert(
-      'Request Inspection',
-      'Would you like to request a new hygiene inspection from your local council?',
+      copy.requestTitle,
+      copy.requestMessage,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: copy.requestCancel, style: 'cancel' },
         { 
-          text: 'Request', 
+          text: copy.requestConfirm, 
           onPress: () => {
-            Alert.alert('Request Sent', 'Your inspection request has been sent to Westminster City Council.');
+            Alert.alert(copy.requestSentTitle, copy.requestSentMessage);
           }
         },
       ]
@@ -82,15 +232,7 @@ export default function HygieneRating() {
   };
 
   const getRatingDescription = (rating: number) => {
-    switch (rating) {
-      case 5: return 'Very Good';
-      case 4: return 'Good';
-      case 3: return 'Generally Satisfactory';
-      case 2: return 'Improvement Necessary';
-      case 1: return 'Major Improvement Necessary';
-      case 0: return 'Urgent Improvement Necessary';
-      default: return 'Unknown';
-    }
+    return copy.ratingDesc[rating] ?? (isTR ? 'Bilinmiyor' : 'Unknown');
   };
 
   const getStatusColor = () => {
@@ -100,25 +242,25 @@ export default function HygieneRating() {
   };
 
   const getStatusText = () => {
-    if (formData.status === 'pending') return '⏳ INSPECTION PENDING';
-    if (formData.status === 'overdue') return '❌ INSPECTION OVERDUE';
-    return `⭐ RATING: ${formData.currentRating}/5`;
+    if (formData.status === 'pending') return copy.statusPending;
+    if (formData.status === 'overdue') return copy.statusOverdue;
+    return copy.statusRating.replace('{{rating}}', String(formData.currentRating));
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar
-        title="🏛️ Food Hygiene Rating"
+        title={copy.title}
         leftComponent={
           <TouchableOpacity onPress={() => router.push('/(seller)/dashboard')} style={styles.sellerButton}>
             <Text variant="body" color="text" style={styles.sellerText}>
-              Seller <Text style={styles.sellerIcon}>●</Text>
+              {copy.sellerLabel} <Text style={styles.sellerIcon}>●</Text>
             </Text>
           </TouchableOpacity>
         }
         rightComponent={
           <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
-            <Text variant="body" color="primary">{isEditing ? 'Cancel' : 'Edit'}</Text>
+            <Text variant="body" color="primary">{isEditing ? copy.cancel : copy.edit}</Text>
           </TouchableOpacity>
         }
       />
@@ -128,7 +270,7 @@ export default function HygieneRating() {
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              Current Rating
+              {copy.statusTitle}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
@@ -150,10 +292,10 @@ export default function HygieneRating() {
           
           <Text variant="body" style={[styles.statusMessage, { color: getStatusColor() }]}>
             {formData.status === 'pending' 
-              ? 'Your food hygiene inspection is pending. You will receive your rating after the inspection.'
+              ? copy.statusMessagePending
               : formData.status === 'overdue'
-              ? 'Your hygiene inspection is overdue. Please contact your local council.'
-              : `Your business has received an excellent hygiene rating. Last inspected on ${formData.lastInspectionDate}.`
+              ? copy.statusMessageOverdue
+              : copy.statusMessageActive.replace('{{date}}', formData.lastInspectionDate)
             }
           </Text>
         </Card>
@@ -161,16 +303,16 @@ export default function HygieneRating() {
         {/* Quick Actions */}
         <Card variant="default" padding="md" style={styles.actionsCard}>
           <Text variant="body" weight="semibold" style={styles.actionsTitle}>
-            🔍 Hygiene Rating Information
+            {copy.actionsTitle}
           </Text>
           <TouchableOpacity style={styles.actionButton} onPress={openFSAWebsite}>
-            <Text variant="body" color="primary">📖 About Food Hygiene Rating Scheme →</Text>
+            <Text variant="body" color="primary">{copy.actionPrimary}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={openRatingSearch}>
-            <Text variant="body" color="primary">🔍 Search Business Ratings →</Text>
+            <Text variant="body" color="primary">{copy.actionSecondary}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={requestInspection}>
-            <Text variant="body" color="primary">📋 Request New Inspection →</Text>
+            <Text variant="body" color="primary">{copy.actionTertiary}</Text>
           </TouchableOpacity>
         </Card>
 
@@ -178,7 +320,7 @@ export default function HygieneRating() {
         {isEditing && (
           <Card variant="default" padding="md" style={styles.ratingCard}>
             <Text variant="body" weight="semibold" style={styles.sectionTitle}>
-              Select Your Rating
+              {copy.ratingSelectTitle}
             </Text>
             
             <View style={styles.ratingOptions}>
@@ -213,7 +355,7 @@ export default function HygieneRating() {
                   ⏳
                 </Text>
                 <Text variant="caption" style={[styles.ratingOptionText, { color: '#FFC107' }]}>
-                  Inspection Pending
+                  {copy.ratingPending}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -223,71 +365,71 @@ export default function HygieneRating() {
         {/* Inspection Details */}
         <Card variant="default" padding="md" style={styles.detailsCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Inspection Details
+            {copy.detailsTitle}
           </Text>
 
           <FormField
-            label="Business Name"
+            label={copy.businessNameLabel}
             value={formData.businessName}
             onChangeText={handleInputChange('businessName')}
             editable={isEditing}
-            placeholder="Your registered business name"
+            placeholder={copy.businessNamePlaceholder}
           />
 
           <FormField
-            label="Business Address"
+            label={copy.businessAddressLabel}
             value={formData.businessAddress}
             onChangeText={handleInputChange('businessAddress')}
             editable={isEditing}
-            placeholder="Full business address"
+            placeholder={copy.businessAddressPlaceholder}
           />
 
           <FormField
-            label="Local Council"
+            label={copy.councilLabel}
             value={formData.councilName}
             onChangeText={handleInputChange('councilName')}
             editable={isEditing}
-            placeholder="e.g. Westminster City Council"
+            placeholder={copy.councilPlaceholder}
           />
 
           <FormField
-            label="Last Inspection Date"
+            label={copy.lastInspectionLabel}
             value={formData.lastInspectionDate}
             onChangeText={handleInputChange('lastInspectionDate')}
             editable={isEditing}
-            placeholder="YYYY-MM-DD"
+            placeholder={copy.datePlaceholder}
           />
 
           <FormField
-            label="Next Inspection Due"
+            label={copy.nextInspectionLabel}
             value={formData.nextInspectionDue}
             onChangeText={handleInputChange('nextInspectionDue')}
             editable={isEditing}
-            placeholder="YYYY-MM-DD"
+            placeholder={copy.datePlaceholder}
           />
 
           <FormField
-            label="Inspector Name"
+            label={copy.inspectorLabel}
             value={formData.inspectorName}
             onChangeText={handleInputChange('inspectorName')}
             editable={isEditing}
-            placeholder="Name of the food safety inspector"
+            placeholder={copy.inspectorPlaceholder}
           />
 
           <FormField
-            label="Inspection Type"
+            label={copy.inspectionTypeLabel}
             value={formData.inspectionType}
             onChangeText={handleInputChange('inspectionType')}
             editable={isEditing}
-            placeholder="e.g. Routine, Follow-up, Complaint"
+            placeholder={copy.inspectionTypePlaceholder}
           />
 
           <FormField
-            label="Certificate Number"
+            label={copy.certificateLabel}
             value={formData.certificateNumber}
             onChangeText={handleInputChange('certificateNumber')}
             editable={isEditing}
-            placeholder="Official certificate reference"
+            placeholder={copy.certificatePlaceholder}
           />
 
           {isEditing && (
@@ -296,7 +438,7 @@ export default function HygieneRating() {
               onPress={handleSave}
               style={styles.saveButton}
             >
-              💾 Save Rating Details
+              {copy.saveButton}
             </Button>
           )}
         </Card>
@@ -304,27 +446,21 @@ export default function HygieneRating() {
         {/* Rating Information */}
         <Card variant="default" padding="md" style={styles.infoCard}>
           <Text variant="body" weight="semibold" style={styles.infoTitle}>
-            ℹ️ Understanding Food Hygiene Ratings
+            {copy.infoTitle}
           </Text>
           <View style={styles.ratingInfo}>
-            <Text variant="caption" style={[styles.infoText, { color: '#28A745' }]}>
-              <Text weight="bold">5 - Very Good:</Text> Excellent hygiene standards
-            </Text>
-            <Text variant="caption" style={[styles.infoText, { color: '#28A745' }]}>
-              <Text weight="bold">4 - Good:</Text> Good hygiene standards
-            </Text>
-            <Text variant="caption" style={[styles.infoText, { color: '#FFC107' }]}>
-              <Text weight="bold">3 - Generally Satisfactory:</Text> Hygiene standards are generally satisfactory
-            </Text>
-            <Text variant="caption" style={[styles.infoText, { color: '#DC3545' }]}>
-              <Text weight="bold">2 - Improvement Necessary:</Text> Some improvement necessary
-            </Text>
-            <Text variant="caption" style={[styles.infoText, { color: '#DC3545' }]}>
-              <Text weight="bold">1 - Major Improvement Necessary:</Text> Major improvement necessary
-            </Text>
-            <Text variant="caption" style={[styles.infoText, { color: '#DC3545' }]}>
-              <Text weight="bold">0 - Urgent Improvement Necessary:</Text> Urgent improvement necessary
-            </Text>
+            {copy.infoItems.map((item, index) => (
+              <Text
+                key={item.label}
+                variant="caption"
+                style={[
+                  styles.infoText,
+                  { color: index <= 1 ? '#28A745' : index === 2 ? '#FFC107' : '#DC3545' }
+                ]}
+              >
+                <Text weight="bold">{item.label}:</Text> {item.desc}
+              </Text>
+            ))}
           </View>
         </Card>
 

@@ -8,16 +8,15 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 
-// Mock satış verileri
-const MOCK_SALES_DATA = [
+const getMockSalesData = (t: (key: string, params?: Record<string, string | number>) => string) => ([
   {
     id: '1',
     date: '2024-01-05',
     orderNumber: 'ORD-2024-001',
-    customerName: 'Ahmet K.',
+    customerName: t('sellerEarningsScreen.mock.customer1'),
     items: [
-      { name: 'Ev Yapımı Mantı', quantity: 2, price: 35 },
-      { name: 'Mercimek Çorbası', quantity: 1, price: 15 },
+      { name: t('sellerEarningsScreen.mock.items.item1'), quantity: 2, price: 35 },
+      { name: t('sellerEarningsScreen.mock.items.item2'), quantity: 1, price: 15 },
     ],
     totalAmount: 85,
     status: 'completed',
@@ -26,10 +25,10 @@ const MOCK_SALES_DATA = [
     id: '2',
     date: '2024-01-05',
     orderNumber: 'ORD-2024-002',
-    customerName: 'Zeynep M.',
+    customerName: t('sellerEarningsScreen.mock.customer2'),
     items: [
-      { name: 'Karnıyarık', quantity: 1, price: 45 },
-      { name: 'Pilav', quantity: 1, price: 20 },
+      { name: t('sellerEarningsScreen.mock.items.item3'), quantity: 1, price: 45 },
+      { name: t('sellerEarningsScreen.mock.items.item4'), quantity: 1, price: 20 },
     ],
     totalAmount: 65,
     status: 'completed',
@@ -38,10 +37,10 @@ const MOCK_SALES_DATA = [
     id: '3',
     date: '2024-01-04',
     orderNumber: 'ORD-2024-003',
-    customerName: 'Can Y.',
+    customerName: t('sellerEarningsScreen.mock.customer3'),
     items: [
-      { name: 'Döner', quantity: 1, price: 30 },
-      { name: 'Ayran', quantity: 2, price: 8 },
+      { name: t('sellerEarningsScreen.mock.items.item5'), quantity: 1, price: 30 },
+      { name: t('sellerEarningsScreen.mock.items.item6'), quantity: 2, price: 8 },
     ],
     totalAmount: 46,
     status: 'completed',
@@ -50,10 +49,10 @@ const MOCK_SALES_DATA = [
     id: '4',
     date: '2024-01-04',
     orderNumber: 'ORD-2024-004',
-    customerName: 'Elif S.',
+    customerName: t('sellerEarningsScreen.mock.customer4'),
     items: [
-      { name: 'Lahmacun', quantity: 3, price: 25 },
-      { name: 'Şalgam', quantity: 1, price: 10 },
+      { name: t('sellerEarningsScreen.mock.items.item7'), quantity: 3, price: 25 },
+      { name: t('sellerEarningsScreen.mock.items.item8'), quantity: 1, price: 10 },
     ],
     totalAmount: 85,
     status: 'completed',
@@ -62,14 +61,14 @@ const MOCK_SALES_DATA = [
     id: '5',
     date: '2024-01-03',
     orderNumber: 'ORD-2024-005',
-    customerName: 'Murat T.',
+    customerName: t('sellerEarningsScreen.mock.customer5'),
     items: [
-      { name: 'İskender', quantity: 1, price: 55 },
+      { name: t('sellerEarningsScreen.mock.items.item9'), quantity: 1, price: 55 },
     ],
     totalAmount: 55,
     status: 'completed',
   },
-];
+]);
 
 const COMMISSION_RATE = 15; // %15 komisyon
 
@@ -79,6 +78,7 @@ export const SellerEarnings: React.FC = () => {
   const { t, currentLanguage } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
+  const mockSalesData = getMockSalesData(t);
 
 
   // Komisyon hesaplama
@@ -92,9 +92,9 @@ export const SellerEarnings: React.FC = () => {
 
   // Günlük satışları gruplama
   const groupSalesByDate = () => {
-    const grouped: { [key: string]: typeof MOCK_SALES_DATA } = {};
+    const grouped: { [key: string]: typeof mockSalesData } = {};
     
-    MOCK_SALES_DATA.forEach(sale => {
+    mockSalesData.forEach(sale => {
       if (!grouped[sale.date]) {
         grouped[sale.date] = [];
       }
@@ -105,7 +105,7 @@ export const SellerEarnings: React.FC = () => {
   };
 
   // Günlük toplam hesaplama
-  const calculateDailyTotal = (sales: typeof MOCK_SALES_DATA) => {
+  const calculateDailyTotal = (sales: typeof mockSalesData) => {
     const total = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
     const commission = calculateCommission(total);
     const net = calculateNetAmount(total);
@@ -115,7 +115,7 @@ export const SellerEarnings: React.FC = () => {
 
   // Genel toplam hesaplama
   const calculateOverallTotal = () => {
-    const total = MOCK_SALES_DATA.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    const total = mockSalesData.reduce((sum, sale) => sum + sale.totalAmount, 0);
     const commission = calculateCommission(total);
     const net = calculateNetAmount(total);
     
@@ -165,7 +165,7 @@ export const SellerEarnings: React.FC = () => {
               ₺{overallTotal.net.toFixed(2)}
             </Text>
             <Text variant="body" color="textSecondary" style={styles.summarySubtext}>
-              {t('sellerEarningsScreen.summarySubtext', { count: MOCK_SALES_DATA.length })}
+              {t('sellerEarningsScreen.summarySubtext', { count: mockSalesData.length })}
             </Text>
             
             {/* Komisyon Bilgisi */}

@@ -19,22 +19,22 @@ const getProfileSections = (t: (key: string) => string) => ([
   },
 ]);
 
-// Mock user data
-const USER_DATA = {
-  name: 'Ahmet Yılmaz',
+const getDefaultUserData = (language: 'tr' | 'en') => ({
+  name: language === 'en' ? 'Ahmet Yilmaz' : 'Ahmet Yılmaz',
   email: 'ahmet@example.com',
-  location: 'Kadıköy, İstanbul',
+  location: language === 'en' ? 'Kadikoy, Istanbul' : 'Kadıköy, İstanbul',
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-};
+});
 
 export const Profile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { signOut } = useAuth();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
   const profileSections = getProfileSections(t);
+  const defaultUserData = getDefaultUserData(currentLanguage);
 
   // Load profile data on component mount
   useEffect(() => {
@@ -129,7 +129,10 @@ export const Profile: React.FC = () => {
         router.replace('/sign-in');
       } catch (error) {
         console.error('Sign out error:', error);
-        Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu.');
+        Alert.alert(
+          t('profileScreen.alerts.signOutErrorTitle'),
+          t('profileScreen.alerts.signOutErrorMessage')
+        );
       }
     };
 
@@ -166,7 +169,7 @@ export const Profile: React.FC = () => {
             <View style={styles.avatarContainer}>
               <Image 
                 key={`${avatarUri || 'default'}-${forceUpdate}`}
-                source={avatarUri ? { uri: avatarUri } : { uri: USER_DATA.avatar }}
+                source={avatarUri ? { uri: avatarUri } : { uri: defaultUserData.avatar }}
                 style={styles.avatarImage}
                 defaultSource={{ uri: 'https://via.placeholder.com/150x150/7FAF9A/FFFFFF?text=A' }}
                 onLoad={() => console.log('Buyer avatar loaded:', avatarUri)}
@@ -175,13 +178,13 @@ export const Profile: React.FC = () => {
             </View>
             <View style={styles.userDetails}>
               <Text variant="subheading" weight="semibold">
-                {USER_DATA.name}
+                {defaultUserData.name}
               </Text>
               <Text variant="body" color="textSecondary">
-                {USER_DATA.email}
+                {defaultUserData.email}
               </Text>
               <Text variant="caption" color="textSecondary">
-                {USER_DATA.location}
+                {defaultUserData.location}
               </Text>
             </View>
           </View>
@@ -275,7 +278,7 @@ export const Profile: React.FC = () => {
           activeOpacity={0.7}
         >
           <Text variant="body" weight="semibold" style={{ color: 'white' }}>
-            Çıkış Yap
+            {t('profileScreen.alerts.signOutConfirm')}
           </Text>
         </TouchableOpacity>
 

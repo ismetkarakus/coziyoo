@@ -143,7 +143,7 @@ export const SellerPanel: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title={t('seller.panel')} 
+        title={t('sellerPanelText')} 
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -251,7 +251,11 @@ export const SellerPanel: React.FC = () => {
             >
               <Card variant="default" padding="md" style={styles.complianceCard}>
                 <View style={styles.complianceHeader}>
-                  <Text variant="subheading" weight="semibold" style={styles.complianceTitle}>
+                <Text
+                  variant="subheading"
+                  weight="semibold"
+                  style={[styles.complianceTitle, { color: colors.text }]}
+                >
                     {currentCountry.code === 'TR' 
                       ? t('sellerPanel.compliance.tr.title')
                       : t('sellerPanel.compliance.uk.title')
@@ -272,7 +276,7 @@ export const SellerPanel: React.FC = () => {
                       : (complianceComplete ? t('sellerPanel.compliance.uk.statusComplete') : t('sellerPanel.compliance.uk.statusOptional'))
                     }
                   </Text>
-                  <Text variant="body" style={styles.expandIcon}>
+                  <Text variant="body" style={[styles.expandIcon, { color: colors.textSecondary }]}>
                     {complianceExpanded ? '▼' : '▶'}
                   </Text>
                 </View>
@@ -284,7 +288,7 @@ export const SellerPanel: React.FC = () => {
             <Card variant="default" padding="md" style={[styles.complianceCard, styles.complianceExpandedCard]}>
               <View style={styles.complianceItems}>
             <TouchableOpacity 
-              style={styles.complianceItem}
+              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={(e) => {
                 e?.stopPropagation?.();
                 if (currentCountry.code === 'TR') {
@@ -296,7 +300,7 @@ export const SellerPanel: React.FC = () => {
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
-                <Text variant="body" style={styles.complianceLabel}>
+                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
                   {currentCountry.code === 'TR' 
                     ? t('sellerPanel.compliance.tr.license')
                     : t('sellerPanel.compliance.uk.license')
@@ -315,7 +319,7 @@ export const SellerPanel: React.FC = () => {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.complianceItem}
+              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={(e) => {
                 e?.stopPropagation?.();
                 if (currentCountry.code === 'TR') {
@@ -327,7 +331,7 @@ export const SellerPanel: React.FC = () => {
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
-                <Text variant="body" style={styles.complianceLabel}>
+                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
                   {currentCountry.code === 'TR' 
                     ? t('sellerPanel.compliance.tr.tax')
                     : t('sellerPanel.compliance.uk.tax')
@@ -346,7 +350,7 @@ export const SellerPanel: React.FC = () => {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.complianceItem}
+              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={(e) => {
                 e?.stopPropagation?.();
                 if (currentCountry.code === 'TR') {
@@ -358,7 +362,7 @@ export const SellerPanel: React.FC = () => {
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
-                <Text variant="body" style={styles.complianceLabel}>
+                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
                   {currentCountry.code === 'TR' 
                     ? t('sellerPanel.compliance.tr.training')
                     : t('sellerPanel.compliance.uk.training')
@@ -377,7 +381,7 @@ export const SellerPanel: React.FC = () => {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.complianceItem}
+              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={(e) => {
                 e?.stopPropagation?.();
                 if (currentCountry.code === 'TR') {
@@ -389,7 +393,7 @@ export const SellerPanel: React.FC = () => {
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
-                <Text variant="body" style={styles.complianceLabel}>
+                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
                   {currentCountry.code === 'TR' 
                     ? t('sellerPanel.compliance.tr.kvkk')
                     : t('sellerPanel.compliance.uk.kvkk')
@@ -408,7 +412,7 @@ export const SellerPanel: React.FC = () => {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.complianceItem}
+              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={(e) => {
                 e?.stopPropagation?.();
                 if (currentCountry.code === 'TR') {
@@ -420,7 +424,7 @@ export const SellerPanel: React.FC = () => {
               activeOpacity={0.7}
             >
               <View style={styles.complianceItemContent}>
-                <Text variant="body" style={styles.complianceLabel}>
+                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
                   {currentCountry.code === 'TR' 
                     ? t('sellerPanel.compliance.tr.insurance')
                     : t('sellerPanel.compliance.uk.insurance')
@@ -439,7 +443,7 @@ export const SellerPanel: React.FC = () => {
             </TouchableOpacity>
               
                 <TouchableOpacity 
-                  style={styles.complianceButton}
+                  style={[styles.complianceButton, { backgroundColor: colors.primary + '20' }]}
                   onPress={(e) => {
                     e?.stopPropagation?.();
                     router.push('/terms-and-conditions');
@@ -712,12 +716,10 @@ const styles = StyleSheet.create({
   },
   expandIcon: {
     fontSize: 16,
-    color: '#2D5A4A',
     fontWeight: 'bold',
   },
   complianceTitle: {
     flex: 1,
-    color: '#2D5A4A',
   },
   statusBadge: {
     paddingHorizontal: Spacing.sm,
@@ -734,7 +736,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     paddingHorizontal: Spacing.sm,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderWidth: 1,
     marginVertical: 2,
   },
   complianceItemContent: {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,44 +19,125 @@ import { searchService, SearchFilters } from '../../../services/searchService';
 import { seedSampleData, checkExistingData } from '../../../utils/seedData';
 import { AllergenId } from '../../../constants/allergens';
 
-// Mock data
-const USER_DATA = {
-  name: 'Ahmet Yılmaz',
-  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-};
-
-// Kategoriler artık çeviri sisteminden gelecek
-const getCategoriesForCountry = (countryCode: string) => {
-  if (countryCode === 'TR') {
+const getCategoriesForLanguage = (language: 'tr' | 'en') => {
+  if (language === 'tr') {
     return [
       'Tümü',
       'Ana Yemek',
-      'Çorba', 
+      'Çorba',
       'Meze',
       'Salata',
       'Kahvaltı',
       'Tatlı/Kek',
       'İçecekler',
       'Vejetaryen',
-      'Gluten Free',
-    ];
-  } else {
-    return [
-      'All',
-      'Main Dish',
-      'Soup',
-      'Appetizer', 
-      'Salad',
-      'Breakfast',
-      'Dessert/Cake',
-      'Drinks',
-      'Vegetarian',
-      'Gluten Free',
+      'Glutensiz',
     ];
   }
+  return [
+    'All',
+    'Main Dish',
+    'Soup',
+    'Appetizer',
+    'Salad',
+    'Breakfast',
+    'Dessert/Cake',
+    'Drinks',
+    'Vegetarian',
+    'Gluten Free',
+  ];
 };
 
-const MOCK_FOODS = [
+const MONTH_MAP_TR_TO_EN: Record<string, string> = {
+  Ocak: 'Jan',
+  Şubat: 'Feb',
+  Mart: 'Mar',
+  Nisan: 'Apr',
+  Mayıs: 'May',
+  Haziran: 'Jun',
+  Temmuz: 'Jul',
+  Ağustos: 'Aug',
+  Eylül: 'Sep',
+  Ekim: 'Oct',
+  Kasım: 'Nov',
+  Aralık: 'Dec',
+};
+
+const translateDateRangeToEn = (value: string) => {
+  const match = value.match(/^(\d+\s*[–-]\s*\d+)\s+([A-Za-zÇĞİÖŞÜçğıöşü]+)$/);
+  if (!match) return value;
+  const range = match[1].replace(/\s+/g, '');
+  const month = MONTH_MAP_TR_TO_EN[match[2]] || match[2];
+  return `${month} ${range}`;
+};
+
+const translateCategoryToEn = (category: string) => {
+  const mapping: Record<string, string> = {
+    'Ana Yemek': 'Main Dish',
+    'Çorba': 'Soup',
+    'Meze': 'Appetizer',
+    'Salata': 'Salad',
+    'Kahvaltı': 'Breakfast',
+    'Tatlı/Kek': 'Dessert/Cake',
+    'İçecekler': 'Drinks',
+    'Vejetaryen': 'Vegetarian',
+    'Glutensiz': 'Gluten Free',
+  };
+  return mapping[category] || category;
+};
+
+const translateFoodNameToEn = (name: string) => {
+  const mapping: Record<string, string> = {
+    'Ev Yapımı Mantı': 'Homemade Manti',
+    'Karnıyarık': 'Stuffed Eggplant',
+    'İskender Kebap': 'Iskender Kebab',
+    'Mercimek Çorbası': 'Lentil Soup',
+    'Tarhana Çorbası': 'Tarhana Soup',
+    'Serpme Kahvaltı': 'Turkish Breakfast',
+    'Menemen': 'Menemen',
+    'Çoban Salata': 'Shepherd Salad',
+    'Mevsim Salata': 'Seasonal Salad',
+    'Kısır': 'Bulgur Salad',
+    'Zeytinyağlı Yaprak Sarma': 'Stuffed Vine Leaves',
+    'Sigara Böreği': 'Cheese Pastry Rolls',
+    'Kıymalı Börek': 'Minced Meat Pastry',
+    'Karışık Meze Tabağı': 'Mixed Meze Platter',
+    'Acılı Ezme': 'Spicy Ezme',
+    'Vejetaryen Köfte': 'Vegetarian Patties',
+    'Sebze Güveç': 'Vegetable Casserole',
+    'Sütlaç': 'Rice Pudding',
+    'Baklava': 'Baklava',
+    'Revani': 'Semolina Cake',
+    'Profiterol': 'Profiterole',
+    'Ev Yapımı Kek': 'Homemade Cake',
+    'Ev Yapımı Sütlaç': 'Homemade Rice Pudding',
+    'Glutensiz Ekmek': 'Gluten-Free Bread',
+    'Glutensiz Kurabiye': 'Gluten-Free Cookies',
+    'Roka Salata': 'Arugula Salad',
+    'Ev Yapımı Ayran': 'Homemade Ayran',
+    'Taze Sıkılmış Portakal Suyu': 'Fresh Orange Juice',
+    'Ayran': 'Ayran',
+    'Şalgam': 'Salgam',
+  };
+  return mapping[name] || name;
+};
+
+const translateCookNameToEn = (name: string) => {
+  const mapping: Record<string, string> = {
+    'Ayşe Hanım': 'Ayse Hanim',
+    'Mehmet Usta': 'Mehmet Usta',
+    'Ali Usta': 'Ali Usta',
+    'Zeynep Hanım': 'Zeynep Hanim',
+    'Fatma Teyze': 'Fatma Teyze',
+    'Hasan Usta': 'Hasan Usta',
+    'Gül Teyze': 'Gul Teyze',
+    'Zehra Hanım': 'Zehra Hanim',
+    'Elif Hanım': 'Elif Hanim',
+  };
+  return mapping[name] || name;
+};
+
+const MOCK_FOODS_TR = [
   // Ana Yemek
   {
     id: '1',
@@ -301,7 +382,7 @@ const MOCK_FOODS = [
     rating: 4.4,
     price: 18,
     distance: '1.3 km',
-    category: 'Gluten Free',
+    category: 'Glutensiz',
     hasPickup: true,
     hasDelivery: true,
     availableDates: '15-22 Ocak',
@@ -316,7 +397,7 @@ const MOCK_FOODS = [
     rating: 4.7,
     price: 22,
     distance: '2.8 km',
-    category: 'Gluten Free',
+    category: 'Glutensiz',
     hasPickup: true,
     hasDelivery: true,
     availableDates: '20-27 Ocak',
@@ -403,20 +484,38 @@ const MOCK_FOODS = [
   },
 ];
 
+const getMockFoods = (language: 'tr' | 'en') => {
+  if (language === 'tr') {
+    return MOCK_FOODS_TR;
+  }
+  return MOCK_FOODS_TR.map((food) => ({
+    ...food,
+    name: translateFoodNameToEn(food.name),
+    cookName: translateCookNameToEn(food.cookName),
+    category: translateCategoryToEn(food.category),
+    availableDates: translateDateRangeToEn(food.availableDates),
+  }));
+};
+
 export const Home: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
   const { currentCountry, formatCurrency } = useCountry();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const params = useLocalSearchParams();
   const { getTotalItems } = useCart();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Tümü');
-  
-  // Ülkeye göre kategoriler
-  const categories = getCategoriesForCountry(currentCountry.code);
+  const categories = useMemo(() => getCategoriesForLanguage(currentLanguage), [currentLanguage]);
+  const defaultCategory = categories[0] ?? '';
+  const [selectedCategory, setSelectedCategory] = useState(defaultCategory);
+  const mockFoods = getMockFoods(currentLanguage);
+  useEffect(() => {
+    if (defaultCategory) {
+      setSelectedCategory(defaultCategory);
+    }
+  }, [defaultCategory]);
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
   const [scrollY, setScrollY] = useState(0);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
@@ -439,18 +538,19 @@ export const Home: React.FC = () => {
     t('homeScreen.nearbyAlt2'),
     t('homeScreen.nearbyAlt3'),
   ];
+  const turkishKeywords = currentLanguage === 'tr' ? ['türk', 'türkiye'] : ['turkish', 'turkey'];
 
 
   // Load Firebase foods
   useEffect(() => {
-    // Firebase yüklemeyi skip et, sadece MOCK_FOODS kullan
-    console.log('🍽️ Using MOCK_FOODS only, skipping Firebase');
+    // Firebase yüklemeyi skip et, sadece mockFoods kullan
+    console.log('🍽️ Using mockFoods only, skipping Firebase');
     setLoading(false);
   }, []);
 
   const loadFirebaseFoods = async () => {
-    // Firebase yükleme devre dışı - sadece MOCK_FOODS kullan
-    console.log('🍽️ Firebase loading disabled, using MOCK_FOODS only');
+    // Firebase yükleme devre dışı - sadece mockFoods kullan
+    console.log('🍽️ Firebase loading disabled, using mockFoods only');
     setFirebaseFoods([]);
     setLoading(false);
   };
@@ -462,12 +562,12 @@ export const Home: React.FC = () => {
       console.log('Setting cook filter to:', params.filterByCook);
       setCookFilter(params.filterByCook as string);
       setSearchQuery(''); // Clear search when filtering by cook
-      setSelectedCategory('Tümü'); // Reset category when filtering by cook
+      setSelectedCategory(defaultCategory); // Reset category when filtering by cook
     } else if (!params.filterByCook && !params.showCookFilter) {
       // Clear cook filter if no params
       setCookFilter('');
     }
-  }, [params.filterByCook, params.showCookFilter]);
+  }, [params.filterByCook, params.showCookFilter, defaultCategory]);
 
   // Load published meals from AsyncStorage
   useEffect(() => {
@@ -512,7 +612,7 @@ export const Home: React.FC = () => {
             console.log('Loading cook filter from storage:', savedCookFilter);
             setCookFilter(savedCookFilter);
             setSearchQuery(''); // Clear search when filtering by cook
-            setSelectedCategory('Tümü'); // Reset category when filtering by cook
+            setSelectedCategory(defaultCategory); // Reset category when filtering by cook
             // Clear the filter from storage after using it
             await AsyncStorage.removeItem('cookFilter');
           }
@@ -524,7 +624,7 @@ export const Home: React.FC = () => {
       loadPublishedMeals();
       loadCookFilter();
       loadFirebaseFoods(); // Reload Firebase data on focus
-    }, [])
+    }, [defaultCategory])
   );
 
   // Firebase bağlantısını reset et
@@ -550,7 +650,7 @@ export const Home: React.FC = () => {
     
     // Check all food sources with original ID
     const firebaseFood = firebaseFoods.find(f => f.id === originalId);
-    const mockFood = MOCK_FOODS.find(f => f.id === originalId);
+    const mockFood = mockFoods.find(f => f.id === originalId);
     const publishedFood = publishedMeals.find(f => f.id === originalId);
     const food = firebaseFood || mockFood || publishedFood;
     
@@ -636,7 +736,7 @@ export const Home: React.FC = () => {
       const searchParams: SearchFilters = {
         ...filters,
         query: query.trim() || undefined,
-        category: selectedCategory !== 'Tümü' ? selectedCategory : filters.category,
+        category: selectedCategory !== defaultCategory ? selectedCategory : filters.category,
       };
 
       const result = await searchService.searchFoods(searchParams);
@@ -680,13 +780,13 @@ export const Home: React.FC = () => {
     const searchTerm = query.toLowerCase().trim();
     const allFoods = [
       ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
-      ...MOCK_FOODS.map(food => ({ ...food, id: `mock_${food.id}` })),
+      ...mockFoods.map(food => ({ ...food, id: `mock_${food.id}` })),
       ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
     ];
     const suggestions: string[] = [];
     
     // Add nearby suggestion if query matches
-    if (nearbyTerms.some(term => term.includes(searchTerm))) {
+    if (nearbyTerms.some(term => term.toLowerCase().includes(searchTerm))) {
       suggestions.push(t('homeScreen.nearbyAlt1'));
     }
     
@@ -708,7 +808,7 @@ export const Home: React.FC = () => {
     });
     
     // Add country suggestions
-    if ('türk'.includes(searchTerm) || 'türkiye'.includes(searchTerm)) {
+    if (turkishKeywords.some(keyword => keyword.includes(searchTerm))) {
       suggestions.push(t('homeScreen.turkishFood'));
     }
     
@@ -826,7 +926,8 @@ export const Home: React.FC = () => {
     const searchTerm = query.toLowerCase().trim();
     
     // Special case: nearby search
-    if (nearbyTerms.includes(searchTerm)) {
+    const nearbyLower = nearbyTerms.map(term => term.toLowerCase());
+    if (nearbyLower.includes(searchTerm)) {
       return sortFoodsByDistance([...foods]);
     }
     
@@ -838,9 +939,9 @@ export const Home: React.FC = () => {
       const cookMatch = food.cookName?.toLowerCase().includes(searchTerm);
       
       // Search in country (ülke)
-      const countryMatch = food.country?.toLowerCase().includes(searchTerm) || 
-                          (searchTerm.includes('türk') && food.country === 'Türk') ||
-                          (searchTerm.includes('türkiye') && food.country === 'Türk');
+      const turkishMatch = turkishKeywords.some(keyword => searchTerm.includes(keyword));
+      const countryMatch = food.country?.toLowerCase().includes(searchTerm) ||
+        (turkishMatch && (food.country === 'Türk' || food.country === 'Turkish' || food.country === t('homeScreen.turkishFood')));
       
       // Search in category
       const categoryMatch = food.category?.toLowerCase().includes(searchTerm);
@@ -864,7 +965,7 @@ export const Home: React.FC = () => {
     // Otherwise use local filtering - unique ID'ler için prefix ekle
     let foods = [
       ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
-      ...MOCK_FOODS.map(food => ({ ...food, id: `mock_${food.id}` })),
+      ...mockFoods.map(food => ({ ...food, id: `mock_${food.id}` })),
       ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
     ];
     
@@ -874,7 +975,7 @@ export const Home: React.FC = () => {
     }
     
     // Then filter by category
-    if (selectedCategory !== 'Tümü') {
+    if (selectedCategory !== defaultCategory) {
       foods = foods.filter(food => food.category === selectedCategory);
     }
     
@@ -996,7 +1097,7 @@ export const Home: React.FC = () => {
                 setSearchQuery(t('homeScreen.nearbyQuery'));
                 const allFoods = [
                   ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
-                  ...MOCK_FOODS.map(food => ({ ...food, id: `mock_${food.id}` })),
+                  ...mockFoods.map(food => ({ ...food, id: `mock_${food.id}` })),
                   ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
                 ];
                 const sortedFoods = sortFoodsByRealDistance(allFoods, userCoords);

@@ -1,26 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, Image } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { Text, Card, Button, FormField, Checkbox, HeaderBackButton } from '../src/components/ui';
 // TopBar kaldırıldı - Expo Router header kullanılacak
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
-import { useCountry } from '../src/context/CountryContext';
+import { useTranslation } from '../src/hooks/useTranslation';
 
 export default function HygieneCertificate() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { currentCountry } = useCountry();
+  const { currentLanguage } = useTranslation();
+  const isTR = currentLanguage === 'tr';
   
-  const [formData, setFormData] = useState({
-    certificateLevel: 'Level 2',
+  const getInitialFormData = (useTR: boolean) => ({
+    certificateLevel: useTR ? 'Seviye 2' : 'Level 2',
     issueDate: '2023-12-15',
     expiryDate: '2025-12-15',
-    certificateNumber: 'CIEH-FS-2023-789456',
-    holderName: 'Fatma Teyze',
+    certificateNumber: useTR ? 'GH-2023-789456' : 'CIEH-FS-2023-789456',
+    holderName: useTR ? 'Fatma Teyze' : 'Fatma Teyze',
     hasCertificate: true,
     certificateImageUri: null as string | null,
   });
+
+  const [formData, setFormData] = useState(getInitialFormData(isTR));
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -28,11 +31,107 @@ export default function HygieneCertificate() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData(getInitialFormData(isTR));
+    }
+  }, [currentLanguage, isEditing, isTR]);
+
+  const copy = isTR
+    ? {
+        title: '📜 Gıda Hijyeni Sertifikası',
+        edit: 'Düzenle',
+        cancel: 'İptal',
+        successTitle: 'Başarılı',
+        successMessage: 'Gıda hijyeni sertifika bilgileri başarıyla güncellendi.',
+        ok: 'Tamam',
+        uploadTitle: 'Sertifika Yükle',
+        uploadMessage: 'Lütfen gıda hijyeni sertifikanızın görselini seçin.',
+        camera: 'Kamera',
+        gallery: 'Galeri',
+        statusTitle: 'Sertifika Durumu',
+        statusExpired: '❌ SÜRESİ DOLMUŞ',
+        statusExpiring: '⚠️ YAKINDA SÜRESİ DOLACAK',
+        statusValid: '✅ GEÇERLİ',
+        statusMessageExpired: 'Sertifikanızın süresi dolmuş. Lütfen hemen yenileyin.',
+        statusMessageExpiring: 'Sertifikanızın süresi yakında doluyor. Yenilemeyi düşünün.',
+        statusMessageValid: 'Gıda hijyeni sertifikanız geçerli ve güncel.',
+        trainingLinkLabel: '📜 Hijyen Eğitimi Bilgisi →',
+        uploadSectionTitle: '📸 Sertifika Görseli',
+        changeImage: 'Görseli Değiştir',
+        noImage: 'Sertifika görseli yüklenmedi',
+        uploadButton: '📸 Sertifika Yükle',
+        detailsTitle: 'Sertifika Detayları',
+        levelLabel: 'Sertifika Seviyesi',
+        levelPlaceholder: 'örn. Seviye 2',
+        holderLabel: 'Sertifika Sahibi',
+        holderPlaceholder: 'Sertifikadaki tam ad',
+        numberLabel: 'Sertifika Numarası',
+        numberPlaceholder: 'Sertifika referans numarası',
+        issueDateLabel: 'Düzenleme Tarihi',
+        expiryDateLabel: 'Geçerlilik Tarihi',
+        datePlaceholder: 'YYYY-AA-GG',
+        hasCertificateLabel: 'Geçerli bir gıda hijyeni sertifikam var',
+        saveButton: '💾 Değişiklikleri Kaydet',
+        infoTitle: 'ℹ️ Gıda Hijyeni Sertifikası Hakkında',
+        infoItems: [
+          'Seviye 2 Gıda Güvenliği ve Hijyen eğitimi gıda çalışanları için standart gerekliliktir',
+          'Sertifikalar genellikle düzenleme tarihinden itibaren 3 yıl geçerlidir',
+          'Online eğitimler mevcuttur ve yaygın olarak kabul edilir',
+          'Sertifika müşteri güvenini artırır ve profesyonellik gösterir',
+          'Bazı belediyeler gıda işletmesi kaydı için bu sertifikayı isteyebilir',
+        ],
+      }
+    : {
+        title: '📜 Food Hygiene Certificate',
+        edit: 'Edit',
+        cancel: 'Cancel',
+        successTitle: 'Success',
+        successMessage: 'Food hygiene certificate details have been updated successfully.',
+        ok: 'OK',
+        uploadTitle: 'Upload Certificate',
+        uploadMessage: 'Please select your food hygiene certificate image.',
+        camera: 'Camera',
+        gallery: 'Gallery',
+        statusTitle: 'Certificate Status',
+        statusExpired: '❌ EXPIRED',
+        statusExpiring: '⚠️ EXPIRING SOON',
+        statusValid: '✅ VALID',
+        statusMessageExpired: 'Your certificate has expired. Please renew it immediately.',
+        statusMessageExpiring: 'Your certificate expires soon. Consider renewing it.',
+        statusMessageValid: 'Your food hygiene certificate is valid and up to date.',
+        trainingLinkLabel: '📜 Level 2 Certificate →',
+        uploadSectionTitle: '📸 Certificate Image',
+        changeImage: 'Change Image',
+        noImage: 'No certificate image uploaded',
+        uploadButton: '📸 Upload Certificate',
+        detailsTitle: 'Certificate Details',
+        levelLabel: 'Certificate Level',
+        levelPlaceholder: 'e.g. Level 2',
+        holderLabel: 'Certificate Holder Name',
+        holderPlaceholder: 'Full name on certificate',
+        numberLabel: 'Certificate Number',
+        numberPlaceholder: 'Certificate reference number',
+        issueDateLabel: 'Issue Date',
+        expiryDateLabel: 'Expiry Date',
+        datePlaceholder: 'YYYY-MM-DD',
+        hasCertificateLabel: 'I have a valid Food Hygiene certificate',
+        saveButton: '💾 Save Changes',
+        infoTitle: 'ℹ️ About Food Hygiene Certificates',
+        infoItems: [
+          'Level 2 Food Safety & Hygiene is the standard requirement for food handlers',
+          'Certificates are typically valid for 3 years from issue date',
+          'Online courses are available and widely accepted',
+          'Having a certificate builds customer trust and demonstrates professionalism',
+          'Some councils may require this certificate for food business registration',
+        ],
+      };
+
   const handleSave = () => {
     Alert.alert(
-      'Success',
-      'Food hygiene certificate details have been updated successfully.',
-      [{ text: 'OK', onPress: () => setIsEditing(false) }]
+      copy.successTitle,
+      copy.successMessage,
+      [{ text: copy.ok, onPress: () => setIsEditing(false) }]
     );
   };
 
@@ -40,12 +139,12 @@ export default function HygieneCertificate() {
 
   const uploadCertificate = () => {
     Alert.alert(
-      'Upload Certificate',
-      'Please select your food hygiene certificate image.',
+      copy.uploadTitle,
+      copy.uploadMessage,
       [
-        { text: 'Camera', onPress: () => console.log('Open camera') },
-        { text: 'Gallery', onPress: () => console.log('Open gallery') },
-        { text: 'Cancel', style: 'cancel' },
+        { text: copy.camera, onPress: () => console.log('Open camera') },
+        { text: copy.gallery, onPress: () => console.log('Open gallery') },
+        { text: copy.cancel, style: 'cancel' },
       ]
     );
   };
@@ -71,25 +170,22 @@ export default function HygieneCertificate() {
   };
 
   const getStatusText = () => {
-    if (isExpired()) return '❌ EXPIRED';
-    if (isExpiringSoon()) return '⚠️ EXPIRING SOON';
-    return '✅ VALID';
+    if (isExpired()) return copy.statusExpired;
+    if (isExpiringSoon()) return copy.statusExpiring;
+    return copy.statusValid;
   };
 
   return (
     <>
       <Stack.Screen 
         options={{
-          title: currentCountry.code === 'TR' ? '📜 Vergi Levhası' : '📜 Food Hygiene Certificate',
+          title: copy.title,
           headerBackVisible: false, // Otomatik geri butonunu gizle
           headerLeft: () => <HeaderBackButton />,
           headerRight: () => (
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
               <Text variant="body" color="primary">
-                {currentCountry.code === 'TR' 
-                  ? (isEditing ? 'İptal' : 'Düzenle')
-                  : (isEditing ? 'Cancel' : 'Edit')
-                }
+                {isEditing ? copy.cancel : copy.edit}
               </Text>
             </TouchableOpacity>
           ),
@@ -103,7 +199,7 @@ export default function HygieneCertificate() {
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              Certificate Status
+              {copy.statusTitle}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
@@ -114,12 +210,11 @@ export default function HygieneCertificate() {
           
           {formData.hasCertificate && (
             <Text variant="body" style={[styles.statusMessage, { color: getStatusColor() }]}>
-              {isExpired() 
-                ? 'Your certificate has expired. Please renew it immediately.'
+              {isExpired()
+                ? copy.statusMessageExpired
                 : isExpiringSoon()
-                ? 'Your certificate expires soon. Consider renewing it.'
-                : 'Your food hygiene certificate is valid and up to date.'
-              }
+                ? copy.statusMessageExpiring
+                : copy.statusMessageValid}
             </Text>
           )}
         </Card>
@@ -130,10 +225,16 @@ export default function HygieneCertificate() {
         <View style={styles.level2Container}>
           <TouchableOpacity 
             style={styles.level2Button}
-            onPress={() => Linking.openURL('https://www.food.gov.uk/business-guidance/food-safety-training')}
+            onPress={() =>
+              Linking.openURL(
+                isTR
+                  ? 'https://www.tarimorman.gov.tr/'
+                  : 'https://www.food.gov.uk/business-guidance/food-safety-training'
+              )
+            }
           >
             <Text variant="caption" color="primary" style={styles.level2ButtonText}>
-              📜 Level 2 Certificate →
+              {copy.trainingLinkLabel}
             </Text>
           </TouchableOpacity>
         </View>
@@ -141,7 +242,7 @@ export default function HygieneCertificate() {
         {/* Certificate Upload */}
         <Card variant="default" padding="md" style={styles.uploadCard}>
           <Text variant="body" weight="semibold" style={styles.uploadTitle}>
-            📸 Certificate Image
+            {copy.uploadSectionTitle}
           </Text>
           
           {formData.certificateImageUri ? (
@@ -149,18 +250,18 @@ export default function HygieneCertificate() {
               <Image source={{ uri: formData.certificateImageUri }} style={styles.certificateImage} />
               {isEditing && (
                 <Button variant="outline" onPress={uploadCertificate} style={styles.changeImageButton}>
-                  Change Image
+                  {copy.changeImage}
                 </Button>
               )}
             </View>
           ) : (
             <View style={styles.noImageContainer}>
               <Text variant="body" color="textSecondary" style={styles.noImageText}>
-                No certificate image uploaded
+                {copy.noImage}
               </Text>
               {isEditing && (
                 <Button variant="primary" onPress={uploadCertificate} style={styles.uploadButton}>
-                  📸 Upload Certificate
+                  {copy.uploadButton}
                 </Button>
               )}
             </View>
@@ -170,52 +271,52 @@ export default function HygieneCertificate() {
         {/* Certificate Details */}
         <Card variant="default" padding="md" style={styles.detailsCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            Certificate Details
+            {copy.detailsTitle}
           </Text>
 
           <FormField
-            label="Certificate Level"
+            label={copy.levelLabel}
             value={formData.certificateLevel}
             onChangeText={handleInputChange('certificateLevel')}
             editable={isEditing}
-            placeholder="e.g. Level 2"
+            placeholder={copy.levelPlaceholder}
           />
 
 
           <FormField
-            label="Certificate Holder Name"
+            label={copy.holderLabel}
             value={formData.holderName}
             onChangeText={handleInputChange('holderName')}
             editable={isEditing}
-            placeholder="Full name on certificate"
+            placeholder={copy.holderPlaceholder}
           />
 
           <FormField
-            label="Certificate Number"
+            label={copy.numberLabel}
             value={formData.certificateNumber}
             onChangeText={handleInputChange('certificateNumber')}
             editable={isEditing}
-            placeholder="Certificate reference number"
+            placeholder={copy.numberPlaceholder}
           />
 
           <FormField
-            label="Issue Date"
+            label={copy.issueDateLabel}
             value={formData.issueDate}
             onChangeText={handleInputChange('issueDate')}
             editable={isEditing}
-            placeholder="YYYY-MM-DD"
+            placeholder={copy.datePlaceholder}
           />
 
           <FormField
-            label="Expiry Date"
+            label={copy.expiryDateLabel}
             value={formData.expiryDate}
             onChangeText={handleInputChange('expiryDate')}
             editable={isEditing}
-            placeholder="YYYY-MM-DD"
+            placeholder={copy.datePlaceholder}
           />
 
           <Checkbox
-            label="I have a valid Food Hygiene certificate"
+            label={copy.hasCertificateLabel}
             checked={formData.hasCertificate}
             onPress={() => setFormData(prev => ({ ...prev, hasCertificate: !prev.hasCertificate }))}
             disabled={!isEditing}
@@ -227,7 +328,7 @@ export default function HygieneCertificate() {
               onPress={handleSave}
               style={styles.saveButton}
             >
-              💾 Save Changes
+              {copy.saveButton}
             </Button>
           )}
         </Card>
@@ -235,23 +336,13 @@ export default function HygieneCertificate() {
         {/* Information */}
         <Card variant="default" padding="md" style={styles.infoCard}>
           <Text variant="body" weight="semibold" style={styles.infoTitle}>
-            ℹ️ About Food Hygiene Certificates
+            {copy.infoTitle}
           </Text>
-          <Text variant="caption" style={styles.infoText}>
-            • Level 2 Food Safety & Hygiene is the standard requirement for food handlers
-          </Text>
-          <Text variant="caption" style={styles.infoText}>
-            • Certificates are typically valid for 3 years from issue date
-          </Text>
-          <Text variant="caption" style={styles.infoText}>
-            • Online courses are available and widely accepted
-          </Text>
-          <Text variant="caption" style={styles.infoText}>
-            • Having a certificate builds customer trust and demonstrates professionalism
-          </Text>
-          <Text variant="caption" style={styles.infoText}>
-            • Some councils may require this certificate for food business registration
-          </Text>
+          {copy.infoItems.map((item) => (
+            <Text key={item} variant="caption" style={styles.infoText}>
+              • {item}
+            </Text>
+          ))}
         </Card>
 
         <View style={styles.bottomSpace} />

@@ -44,10 +44,17 @@ const MOCK_ACCOUNTS: MockAccount[] = [
 
 class AuthService {
   private currentUser: User | null = null;
+  private async getLanguage(): Promise<'tr' | 'en'> {
+    const stored = await AsyncStorage.getItem('userLanguage');
+    return stored === 'en' ? 'en' : 'tr';
+  }
 
   async signIn(email: string, password: string): Promise<{ user: User; userData: UserData }> {
     const response = await apiClient.post('/auth/login', { email, password });
-    if (response.status !== 200) throw new Error(response.error || 'Giriş başarısız');
+    if (response.status !== 200) {
+      const language = await this.getLanguage();
+      throw new Error(response.error || (language === 'en' ? 'Sign in failed' : 'Giriş başarısız'));
+    }
     
     const rawUserData = response.data;
     this.currentUser = {
@@ -79,7 +86,10 @@ class AuthService {
         userType
     });
     
-    if (response.status !== 201) throw new Error(response.error || 'Kayıt başarısız');
+    if (response.status !== 201) {
+      const language = await this.getLanguage();
+      throw new Error(response.error || (language === 'en' ? 'Registration failed' : 'Kayıt başarısız'));
+    }
     
     const userData = response.data;
     this.currentUser = {
@@ -98,10 +108,15 @@ class AuthService {
       return null;
     }
 
+    const language = await this.getLanguage();
+    const displayName = language === 'en'
+      ? (match.userType === 'seller' ? 'Test Seller' : 'Test User')
+      : match.displayName;
+
     const userData: UserData = {
       uid: match.uid,
       email: match.email,
-      displayName: match.displayName,
+      displayName,
       userType: match.userType,
       createdAt: new Date(),
     };
@@ -109,14 +124,14 @@ class AuthService {
     const session: MockSession = {
       uid: match.uid,
       email: match.email,
-      displayName: match.displayName,
+      displayName,
       userType: match.userType,
     };
 
     await AsyncStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(session));
     await AsyncStorage.setItem(`user_${match.uid}`, JSON.stringify(userData));
 
-    const user = this.buildMockUser(match);
+    const user = this.buildMockUser({ ...match, displayName });
     return { user, userData };
   }
 

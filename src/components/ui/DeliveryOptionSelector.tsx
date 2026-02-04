@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from './Text';
 import { Colors, Spacing } from '../../theme';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface DeliveryOptionSelectorProps {
   selectedOption: 'pickup' | 'delivery' | null;
@@ -16,22 +17,27 @@ export const DeliveryOptionSelector: React.FC<DeliveryOptionSelectorProps> = ({
   availableOptions = ['pickup', 'delivery'],
   style,
 }) => {
+  const { t } = useTranslation();
   const getOptionIcon = (option: 'pickup' | 'delivery') => {
     return option === 'pickup' ? '🏪' : '🚚';
   };
 
   const getOptionTitle = (option: 'pickup' | 'delivery') => {
-    return option === 'pickup' ? 'Gel Al' : 'Teslimat';
+    return option === 'pickup'
+      ? t('deliveryOptionSelector.pickup')
+      : t('deliveryOptionSelector.delivery');
   };
 
   const getOptionDescription = (option: 'pickup' | 'delivery') => {
-    return option === 'pickup' ? 'Mağazadan al' : 'Adrese getir';
+    return option === 'pickup'
+      ? t('deliveryOptionSelector.pickupDesc')
+      : t('deliveryOptionSelector.deliveryDesc');
   };
 
   return (
     <View style={[styles.container, style]}>
       <Text variant="subheading" weight="semibold" style={styles.title}>
-        Teslimat Seçeneği
+        {t('deliveryOptionSelector.title')}
       </Text>
       
       <View style={styles.optionsContainer}>
@@ -150,4 +156,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

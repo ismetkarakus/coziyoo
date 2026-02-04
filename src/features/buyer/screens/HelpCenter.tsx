@@ -11,7 +11,21 @@ import { useTranslation } from '../../../hooks/useTranslation';
 export const HelpCenter: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
+
+  const contactValues = currentLanguage === 'en'
+    ? {
+        email: 'support@coziyoo.com',
+        phone: '+44 20 7946 0958',
+        phoneLink: 'tel:+442079460958',
+        whatsappLink: 'https://wa.me/447700900123',
+      }
+    : {
+        email: 'destek@coziyoo.com',
+        phone: '0850 123 45 67',
+        phoneLink: 'tel:08501234567',
+        whatsappLink: 'https://wa.me/905551234567',
+      };
 
   const faqItems = [
     {
@@ -48,21 +62,21 @@ export const HelpCenter: React.FC = () => {
     },
     {
       title: t('helpCenterScreen.contactOptions.email'),
-      description: 'destek@coziyoo.com',
+      description: contactValues.email,
       icon: '✉️',
-      action: () => Linking.openURL('mailto:destek@coziyoo.com'),
+      action: () => Linking.openURL(`mailto:${contactValues.email}`),
     },
     {
       title: t('helpCenterScreen.contactOptions.phone'),
-      description: '0850 123 45 67',
+      description: contactValues.phone,
       icon: '📞',
-      action: () => Linking.openURL('tel:08501234567'),
+      action: () => Linking.openURL(contactValues.phoneLink),
     },
     {
       title: t('helpCenterScreen.contactOptions.whatsapp'),
       description: t('helpCenterScreen.contactOptions.whatsappDesc'),
       icon: '📱',
-      action: () => Linking.openURL('https://wa.me/905551234567'),
+      action: () => Linking.openURL(contactValues.whatsappLink),
     },
   ];
 

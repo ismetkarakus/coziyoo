@@ -1,4 +1,5 @@
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface PaymentMethod {
   id: string;
@@ -34,6 +35,16 @@ export interface PaymentResult {
 class PaymentService {
   private apiKey: string = 'demo_api_key'; // Gerçek uygulamada environment variable'dan alınacak
   private baseUrl: string = 'https://api.demo-payment.com'; // Demo URL
+  private languageStorageKey = 'userLanguage';
+
+  private async getLanguage(): Promise<'tr' | 'en'> {
+    try {
+      const stored = await AsyncStorage.getItem(this.languageStorageKey);
+      return stored === 'en' ? 'en' : 'tr';
+    } catch {
+      return 'tr';
+    }
+  }
 
   // Ödeme yöntemlerini getir
   async getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
@@ -70,7 +81,8 @@ class PaymentService {
       ];
     } catch (error) {
       console.error('Error fetching payment methods:', error);
-      throw new Error('Ödeme yöntemleri alınamadı');
+      const language = await this.getLanguage();
+      throw new Error(language === 'en' ? 'Payment methods could not be fetched' : 'Ödeme yöntemleri alınamadı');
     }
   }
 
@@ -86,7 +98,8 @@ class PaymentService {
       return newMethod;
     } catch (error) {
       console.error('Error adding payment method:', error);
-      throw new Error('Ödeme yöntemi eklenemedi');
+      const language = await this.getLanguage();
+      throw new Error(language === 'en' ? 'Payment method could not be added' : 'Ödeme yöntemi eklenemedi');
     }
   }
 
@@ -97,7 +110,8 @@ class PaymentService {
       console.log('Removing payment method:', paymentMethodId);
     } catch (error) {
       console.error('Error removing payment method:', error);
-      throw new Error('Ödeme yöntemi silinemedi');
+      const language = await this.getLanguage();
+      throw new Error(language === 'en' ? 'Payment method could not be deleted' : 'Ödeme yöntemi silinemedi');
     }
   }
 
@@ -108,7 +122,8 @@ class PaymentService {
       console.log('Setting default payment method:', paymentMethodId);
     } catch (error) {
       console.error('Error setting default payment method:', error);
-      throw new Error('Varsayılan ödeme yöntemi ayarlanamadı');
+      const language = await this.getLanguage();
+      throw new Error(language === 'en' ? 'Default payment method could not be set' : 'Varsayılan ödeme yöntemi ayarlanamadı');
     }
   }
 
@@ -132,16 +147,22 @@ class PaymentService {
           transactionId: `txn_${Date.now()}`,
         };
       } else {
+        const language = await this.getLanguage();
         return {
           success: false,
-          error: 'Ödeme işlemi başarısız oldu. Lütfen tekrar deneyin.',
+          error: language === 'en'
+            ? 'Payment failed. Please try again.'
+            : 'Ödeme işlemi başarısız oldu. Lütfen tekrar deneyin.',
         };
       }
     } catch (error) {
       console.error('Error processing payment:', error);
+      const language = await this.getLanguage();
       return {
         success: false,
-        error: 'Ödeme işlemi sırasında bir hata oluştu.',
+        error: language === 'en'
+          ? 'An error occurred while processing the payment.'
+          : 'Ödeme işlemi sırasında bir hata oluştu.',
       };
     }
   }
@@ -158,7 +179,8 @@ class PaymentService {
       return 'completed';
     } catch (error) {
       console.error('Error checking payment status:', error);
-      throw new Error('Ödeme durumu kontrol edilemedi');
+      const language = await this.getLanguage();
+      throw new Error(language === 'en' ? 'Payment status could not be checked' : 'Ödeme durumu kontrol edilemedi');
     }
   }
 
@@ -176,9 +198,10 @@ class PaymentService {
       };
     } catch (error) {
       console.error('Error processing refund:', error);
+      const language = await this.getLanguage();
       return {
         success: false,
-        error: 'İade işlemi başarısız oldu.',
+        error: language === 'en' ? 'Refund failed.' : 'İade işlemi başarısız oldu.',
       };
     }
   }
@@ -285,39 +308,62 @@ class PaymentService {
   async getPaymentHistory(userId: string): Promise<any[]> {
     try {
       // Gerçek uygulamada API çağrısı yapılacak
-      return [
-        {
-          id: '1',
-          orderId: 'order_123',
-          amount: 45.50,
-          currency: 'TRY',
-          status: 'completed',
-          paymentMethod: 'Visa ****1234',
-          date: new Date('2024-01-15'),
-          description: 'Ev Yapımı Mantı - Ayşe Hanım',
-        },
-        {
-          id: '2',
-          orderId: 'order_124',
-          amount: 32.00,
-          currency: 'TRY',
-          status: 'completed',
-          paymentMethod: 'MasterCard ****5678',
-          date: new Date('2024-01-10'),
-          description: 'Karnıyarık - Mehmet Usta',
-        },
-      ];
+      const language = await this.getLanguage();
+      const isEN = language === 'en';
+      return isEN
+        ? [
+            {
+              id: '1',
+              orderId: 'order_123',
+              amount: 18.5,
+              currency: 'GBP',
+              status: 'completed',
+              paymentMethod: 'Visa ****1234',
+              date: new Date('2024-01-15'),
+              description: 'Homemade Manti - Ayse Hanim',
+            },
+            {
+              id: '2',
+              orderId: 'order_124',
+              amount: 13.0,
+              currency: 'GBP',
+              status: 'completed',
+              paymentMethod: 'MasterCard ****5678',
+              date: new Date('2024-01-10'),
+              description: 'Stuffed Eggplant - Mehmet Usta',
+            },
+          ]
+        : [
+            {
+              id: '1',
+              orderId: 'order_123',
+              amount: 45.5,
+              currency: 'TRY',
+              status: 'completed',
+              paymentMethod: 'Visa ****1234',
+              date: new Date('2024-01-15'),
+              description: 'Ev Yapımı Mantı - Ayşe Hanım',
+            },
+            {
+              id: '2',
+              orderId: 'order_124',
+              amount: 32.0,
+              currency: 'TRY',
+              status: 'completed',
+              paymentMethod: 'MasterCard ****5678',
+              date: new Date('2024-01-10'),
+              description: 'Karnıyarık - Mehmet Usta',
+            },
+          ];
     } catch (error) {
       console.error('Error fetching payment history:', error);
-      throw new Error('Ödeme geçmişi alınamadı');
+      const language = await this.getLanguage();
+      throw new Error(language === 'en' ? 'Payment history could not be fetched' : 'Ödeme geçmişi alınamadı');
     }
   }
 }
 
 export const paymentService = new PaymentService();
-
-
-
 
 
 

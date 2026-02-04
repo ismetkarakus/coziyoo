@@ -73,14 +73,14 @@ export const ChatScreen: React.FC = () => {
       await chatService.sendMessage(
         chatId,
         user.uid,
-        user.displayName || user.email || 'Kullanıcı',
+        user.displayName || user.email || t('chatScreen.defaultUser'),
         userType as 'buyer' | 'seller',
         message
       );
 
       // Send notification to other user
       await sendMessageNotification(
-        user.displayName || user.email || 'Kullanıcı',
+        user.displayName || user.email || t('chatScreen.defaultUser'),
         message,
         chatId
       );
@@ -205,7 +205,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 });
-
 
 
 

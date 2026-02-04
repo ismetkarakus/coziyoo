@@ -5,6 +5,7 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { PaymentMethod } from '../../services/paymentService';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface PaymentMethodCardProps {
   paymentMethod: PaymentMethod;
@@ -25,6 +26,7 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { t } = useTranslation();
 
   const getCardIcon = () => {
     switch (paymentMethod.brand?.toLowerCase()) {
@@ -99,7 +101,7 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
           {paymentMethod.isDefault && (
             <View style={[styles.defaultBadge, { backgroundColor: colors.success }]}>
               <Text variant="caption" style={{ color: colors.background }}>
-                Varsayılan
+                {t('paymentMethodCard.default')}
               </Text>
             </View>
           )}
@@ -114,7 +116,7 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
               >
                 <FontAwesome name="edit" size={14} color={colors.background} />
                 <Text variant="caption" style={{ color: colors.background, marginLeft: 4 }}>
-                  Düzenle
+                  {t('paymentMethodCard.edit')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -126,7 +128,7 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
               >
                 <FontAwesome name="trash" size={14} color={colors.background} />
                 <Text variant="caption" style={{ color: colors.background, marginLeft: 4 }}>
-                  Sil
+                  {t('paymentMethodCard.delete')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -199,7 +201,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-
 
 
 

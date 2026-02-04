@@ -11,15 +11,23 @@ export const BuyerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { signUp, loading } = useAuth();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
 
-  const testBuyerData = {
-    fullName: 'Test Buyer',
-    phone: '0555 111 22 33',
-    email: 'buyer@test.com',
-    password: 'Test1234!',
-    location: 'Kadıköy, İstanbul',
-  };
+  const testBuyerData = currentLanguage === 'en'
+    ? {
+        fullName: 'Test Buyer',
+        phone: '+44 7700 900123',
+        email: 'buyer@test.com',
+        password: 'Test1234!',
+        location: 'London, UK',
+      }
+    : {
+        fullName: 'Test Buyer',
+        phone: '0555 111 22 33',
+        email: 'buyer@test.com',
+        password: 'Test1234!',
+        location: 'Kadıköy, İstanbul',
+      };
 
   const [formData, setFormData] = useState(testBuyerData);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({});
@@ -91,7 +99,7 @@ export const BuyerRegister: React.FC = () => {
       // Kayıt başarılı - AuthContext otomatik olarak yönlendirecek
       Alert.alert(t('authBuyerRegister.successTitle'), t('authBuyerRegister.successMessage'));
     } catch (error: any) {
-      Alert.alert(t('authBuyerRegister.registerErrorTitle'), error.message);
+      Alert.alert(t('authBuyerRegister.registerErrorTitle'), t('authBuyerRegister.registerErrorMessage'));
     }
   };
 
@@ -110,7 +118,7 @@ export const BuyerRegister: React.FC = () => {
 
           <View style={styles.form}>
             <Checkbox
-              label="Otomatik test bilgileriyle doldur"
+              label={t('authBuyerRegister.autoFillLabel')}
               checked={autoFillEnabled}
               onPress={handleAutoFillToggle}
             />
@@ -208,7 +216,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
 
 
 

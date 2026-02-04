@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Text, Button, Card, Input } from '../../../components/ui';
@@ -13,6 +13,7 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export const SellerProfile: React.FC = () => {
+  const { section } = useLocalSearchParams<{ section?: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
@@ -78,6 +79,13 @@ export const SellerProfile: React.FC = () => {
   useEffect(() => {
     loadProfileData();
   }, []);
+
+  useEffect(() => {
+    if (section === 'bank') {
+      setBankDetailsExpanded(true);
+      setIsEditing(true);
+    }
+  }, [section]);
 
   // Debug avatar changes
   useEffect(() => {

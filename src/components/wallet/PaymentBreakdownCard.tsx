@@ -3,6 +3,8 @@ import { View, StyleSheet } from 'react-native';
 import { Card, Text } from '../ui';
 import { Colors, Spacing } from '../../theme';
 import { PaymentBreakdown } from '../../context/WalletContext';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useCountry } from '../../context/CountryContext';
 
 interface PaymentBreakdownCardProps {
   breakdown: PaymentBreakdown;
@@ -13,7 +15,8 @@ export const PaymentBreakdownCard: React.FC<PaymentBreakdownCardProps> = ({
   breakdown,
   showDetails = true,
 }) => {
-  const formatCurrency = (amount: number) => `₺${amount.toFixed(2)}`;
+  const { t } = useTranslation();
+  const { formatCurrency } = useCountry();
 
   const hasWalletPayment = breakdown.wallet > 0 || breakdown.earnings > 0;
   const hasCardPayment = breakdown.card > 0;
@@ -21,7 +24,7 @@ export const PaymentBreakdownCard: React.FC<PaymentBreakdownCardProps> = ({
   return (
     <Card variant="default" padding="md" style={styles.container}>
       <Text variant="subheading" weight="semibold" style={styles.title}>
-        Ödeme Dağılımı
+        {t('paymentBreakdown.title')}
       </Text>
 
       <View style={styles.breakdownContainer}>
@@ -31,7 +34,7 @@ export const PaymentBreakdownCard: React.FC<PaymentBreakdownCardProps> = ({
             <View style={styles.paymentLeft}>
               <Text style={styles.paymentIcon}>💰</Text>
               <Text variant="body" style={styles.paymentLabel}>
-                Cüzdan Bakiyesi
+                {t('paymentBreakdown.wallet')}
               </Text>
             </View>
             <Text variant="body" weight="medium" color="success">
@@ -46,7 +49,7 @@ export const PaymentBreakdownCard: React.FC<PaymentBreakdownCardProps> = ({
             <View style={styles.paymentLeft}>
               <Text style={styles.paymentIcon}>📈</Text>
               <Text variant="body" style={styles.paymentLabel}>
-                Çekilebilir Kazançlar
+                {t('paymentBreakdown.earnings')}
               </Text>
             </View>
             <Text variant="body" weight="medium" color="success">
@@ -61,7 +64,7 @@ export const PaymentBreakdownCard: React.FC<PaymentBreakdownCardProps> = ({
             <View style={styles.paymentLeft}>
               <Text style={styles.paymentIcon}>💳</Text>
               <Text variant="body" style={styles.paymentLabel}>
-                Kart ile Ödeme
+                {t('paymentBreakdown.card')}
               </Text>
             </View>
             <Text variant="body" weight="medium" color="error">
@@ -75,7 +78,7 @@ export const PaymentBreakdownCard: React.FC<PaymentBreakdownCardProps> = ({
           <View style={styles.successMessage}>
             <Text style={styles.successIcon}>✨</Text>
             <Text variant="caption" color="success" style={styles.successText}>
-              Tamamen cüzdanınızdan ödenecek!
+              {t('paymentBreakdown.allWallet')}
             </Text>
           </View>
         )}
@@ -84,7 +87,7 @@ export const PaymentBreakdownCard: React.FC<PaymentBreakdownCardProps> = ({
       {/* Total */}
       <View style={styles.totalRow}>
         <Text variant="subheading" weight="semibold">
-          Toplam
+          {t('paymentBreakdown.total')}
         </Text>
         <Text variant="subheading" weight="bold" color="primary">
           {formatCurrency(breakdown.total)}
@@ -96,8 +99,11 @@ export const PaymentBreakdownCard: React.FC<PaymentBreakdownCardProps> = ({
         <View style={styles.summaryContainer}>
           <Text variant="caption" color="textSecondary" style={styles.summaryText}>
             {hasCardPayment 
-              ? `Cüzdan: ${formatCurrency(breakdown.wallet + breakdown.earnings)} • Kart: ${formatCurrency(breakdown.card)}`
-              : 'Tüm tutar cüzdanınızdan ödenecek'
+              ? t('paymentBreakdown.summarySplit', {
+                  wallet: formatCurrency(breakdown.wallet + breakdown.earnings),
+                  card: formatCurrency(breakdown.card),
+                })
+              : t('paymentBreakdown.summaryAllWallet')
             }
           </Text>
         </View>

@@ -6,6 +6,7 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { useCountry } from '../../context/CountryContext';
 import { COUNTRIES } from '../../config/countries';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface CountrySelectorProps {
   showLabel?: boolean;
@@ -19,21 +20,20 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { currentCountry, countryCode, setCountry } = useCountry();
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
 
   const handleCountryChange = (newCountryCode: string) => {
     Alert.alert(
-      currentCountry.code === 'TR' ? 'Ülke Değiştir' : 'Change Country',
-      currentCountry.code === 'TR' 
-        ? `${COUNTRIES[newCountryCode].name} ülkesine geçilsin mi? Bu dil, para birimi ve uyumluluk gereksinimlerini değiştirecek.`
-        : `Switch to ${COUNTRIES[newCountryCode].name}? This will change language, currency, and compliance requirements.`,
+      t('countrySelector.changeTitle'),
+      t('countrySelector.changeMessage', { country: COUNTRIES[newCountryCode].name }),
       [
         { 
-          text: currentCountry.code === 'TR' ? 'İptal' : 'Cancel', 
+          text: t('countrySelector.cancel'),
           style: 'cancel' 
         },
         {
-          text: currentCountry.code === 'TR' ? 'Değiştir' : 'Change',
+          text: t('countrySelector.confirm'),
           onPress: () => {
             setCountry(newCountryCode);
             setShowModal(false);
@@ -78,7 +78,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
             <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
               <View style={styles.modalHeader}>
                 <Text variant="heading" weight="bold">
-                  {currentCountry.code === 'TR' ? 'Ülke Seçin' : 'Select Country'}
+                  {t('countrySelector.selectTitle')}
                 </Text>
                 <TouchableOpacity
                   onPress={() => setShowModal(false)}
@@ -110,7 +110,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                     </Text>
                     {country.businessCompliance.required && (
                       <Text variant="caption" color="warning">
-                        ⚠️ Business compliance required
+                        ⚠️ {t('countrySelector.businessComplianceRequired')}
                       </Text>
                     )}
                   </View>
@@ -130,7 +130,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
     <View style={styles.container}>
       {showLabel && (
         <Text variant="body" weight="medium" style={styles.label}>
-          Country / Ülke
+          {t('countrySelector.label')}
         </Text>
       )}
       
@@ -165,7 +165,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <View style={styles.modalHeader}>
               <Text variant="heading" weight="bold">
-                Select Country
+                {t('countrySelector.selectTitle')}
               </Text>
               <TouchableOpacity
                 onPress={() => setShowModal(false)}
@@ -197,7 +197,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                   </Text>
                   {country.businessCompliance.required && (
                     <Text variant="caption" color="warning">
-                      ⚠️ Business compliance required
+                      ⚠️ {t('countrySelector.businessComplianceRequired')}
                     </Text>
                   )}
                 </View>

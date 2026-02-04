@@ -218,14 +218,14 @@ export const ManageMeals: React.FC = () => {
 
   const handleMealPress = (meal: Meal) => {
     // Get seller name from profile (nickname preferred)
-    let cookName = 'Satıcı';
+    let cookName = t('manageMealsScreen.fallbackCookName');
     if (sellerProfile && sellerProfile.formData) {
       cookName = sellerProfile.formData.nickname || sellerProfile.formData.name || t('manageMealsScreen.fallbackCookName');
     }
 
     // Navigate to food detail page
     const foodImageUrl = meal.imageUrl || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=160&h=140&fit=crop';
-    const route = `/food-detail?id=${meal.id}&name=${encodeURIComponent(meal.name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}&deliveryType=Pickup&availableDates=${encodeURIComponent(meal.availableDates || '')}&currentStock=${meal.currentStock || 0}&dailyStock=${meal.dailyStock || 0}`;
+    const route = `/food-detail?id=${meal.id}&name=${encodeURIComponent(meal.name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}&deliveryType=${encodeURIComponent(t('manageMealsScreen.deliveryType.pickup'))}&availableDates=${encodeURIComponent(meal.availableDates || '')}&currentStock=${meal.currentStock || 0}&dailyStock=${meal.dailyStock || 0}`;
     router.push(route);
   };
 

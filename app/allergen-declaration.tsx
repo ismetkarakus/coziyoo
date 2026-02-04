@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { Text, Card, Button, Checkbox, HeaderBackButton } from '../src/components/ui';
 // TopBar kaldırıldı - Expo Router header kullanılacak
 import { Colors, Spacing } from '../src/theme';
 import { useColorScheme } from '../components/useColorScheme';
 import { UK_ALLERGENS, TR_ALLERGENS, AllergenId } from '../src/constants/allergens';
-import { useCountry } from '../src/context/CountryContext';
+import { useTranslation } from '../src/hooks/useTranslation';
 
 export default function AllergenDeclaration() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { currentCountry } = useCountry();
+  const { currentLanguage } = useTranslation();
+  const isTR = currentLanguage === 'tr';
   
   // Ülkeye göre alerjen listesi
-  const allergens = currentCountry.code === 'TR' ? TR_ALLERGENS : UK_ALLERGENS;
+  const allergens = isTR ? TR_ALLERGENS : UK_ALLERGENS;
   
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenId[]>([
     'cereals', 'eggs', 'milk', 'nuts'
@@ -37,19 +38,27 @@ export default function AllergenDeclaration() {
 
   const handleSave = () => {
     Alert.alert(
-      currentCountry.code === 'TR' ? 'Başarılı' : 'Success',
-      currentCountry.code === 'TR' 
+      isTR ? 'Başarılı' : 'Success',
+      isTR 
         ? 'Alerjen beyanı başarıyla güncellendi.'
         : 'Allergen declaration has been updated successfully.',
-      [{ text: currentCountry.code === 'TR' ? 'Tamam' : 'OK', onPress: () => setIsEditing(false) }]
+      [{ text: isTR ? 'Tamam' : 'OK', onPress: () => setIsEditing(false) }]
     );
   };
 
   const openAllergenGuidance = () => {
+    if (isTR) {
+      Linking.openURL('https://www.tarimorman.gov.tr/');
+      return;
+    }
     Linking.openURL('https://www.food.gov.uk/business-guidance/allergen-guidance-for-food-businesses');
   };
 
   const openNatashasLaw = () => {
+    if (isTR) {
+      Linking.openURL('https://www.mevzuat.gov.tr/');
+      return;
+    }
     Linking.openURL('https://www.food.gov.uk/business-guidance/natasha-s-law');
   };
 
@@ -57,13 +66,13 @@ export default function AllergenDeclaration() {
     <>
       <Stack.Screen 
         options={{
-          title: currentCountry.code === 'TR' ? '⚠️ Alerjen Beyanı' : '⚠️ Allergen Declaration',
+          title: isTR ? '⚠️ Alerjen Beyanı' : '⚠️ Allergen Declaration',
           headerBackVisible: false, // Otomatik geri butonunu gizle
           headerLeft: () => <HeaderBackButton />,
           headerRight: () => (
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
               <Text variant="body" color="primary">
-                {currentCountry.code === 'TR' 
+                {isTR 
                   ? (isEditing ? 'İptal' : 'Düzenle')
                   : (isEditing ? 'Cancel' : 'Edit')
                 }
@@ -80,11 +89,11 @@ export default function AllergenDeclaration() {
         <Card variant="default" padding="md" style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <Text variant="subheading" weight="semibold" style={styles.statusTitle}>
-              {currentCountry.code === 'TR' ? 'Alerjen Uyumluluk Durumu' : 'Allergen Compliance Status'}
+              {isTR ? 'Alerjen Uyumluluk Durumu' : 'Allergen Compliance Status'}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: allAllergensDeclared ? '#28A745' : '#FFC107' }]}>
               <Text variant="caption" style={{ color: 'white', fontWeight: 'bold' }}>
-                {currentCountry.code === 'TR' 
+                {isTR 
                   ? (allAllergensDeclared ? '✅ UYUMLU' : '⚠️ İNCELEME GEREKLİ')
                   : (allAllergensDeclared ? '✅ COMPLIANT' : '⚠️ REVIEW NEEDED')
                 }
@@ -93,7 +102,7 @@ export default function AllergenDeclaration() {
           </View>
           
           <Text variant="body" style={[styles.statusMessage, { color: allAllergensDeclared ? '#28A745' : '#856404' }]}>
-            {currentCountry.code === 'TR' 
+            {isTR 
               ? (allAllergensDeclared 
                   ? 'Tüm 14 temel alerjen gözden geçirildi ve ürünleriniz için beyan edildi.'
                   : 'Lütfen gıda ürünleriniz için ilgili tüm alerjenleri gözden geçirin ve beyan edin.'
@@ -109,14 +118,14 @@ export default function AllergenDeclaration() {
         {/* Quick Actions */}
         <Card variant="default" padding="md" style={styles.actionsCard}>
           <Text variant="body" weight="semibold" style={styles.actionsTitle}>
-            {currentCountry.code === 'TR' ? '📋 Yasal Bilgiler' : '📋 Legal Information'}
+            {isTR ? '📋 Yasal Bilgiler' : '📋 Legal Information'}
           </Text>
-          {currentCountry.code === 'TR' ? (
+          {isTR ? (
             <>
-              <TouchableOpacity style={styles.actionButton} onPress={() => {}}>
+              <TouchableOpacity style={styles.actionButton} onPress={openNatashasLaw}>
                 <Text variant="body" color="primary">⚖️ Gıda Güvenliği Kanunu →</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={() => {}}>
+              <TouchableOpacity style={styles.actionButton} onPress={openAllergenGuidance}>
                 <Text variant="body" color="primary">📖 Tarım Bakanlığı Alerjen Rehberi →</Text>
               </TouchableOpacity>
             </>
@@ -135,10 +144,10 @@ export default function AllergenDeclaration() {
         {/* Current Selection Summary */}
         <Card variant="default" padding="md" style={styles.summaryCard}>
           <Text variant="body" weight="semibold" style={styles.summaryTitle}>
-            {currentCountry.code === 'TR' ? '📊 Alerjen Beyan Özeti' : '📊 Your Allergen Declaration Summary'}
+            {isTR ? '📊 Alerjen Beyan Özeti' : '📊 Your Allergen Declaration Summary'}
           </Text>
           <Text variant="caption" color="textSecondary" style={styles.summarySubtitle}>
-            {currentCountry.code === 'TR' 
+            {isTR 
               ? 'Gıda ürünlerinizde bulunabilecek seçili alerjenler:'
               : 'Selected allergens that may be present in your food products:'
             }
@@ -159,7 +168,7 @@ export default function AllergenDeclaration() {
             </View>
           ) : (
             <Text variant="body" color="textSecondary" style={styles.noAllergensText}>
-              {currentCountry.code === 'TR' ? 'Şu anda beyan edilmiş alerjen yok' : 'No allergens currently declared'}
+              {isTR ? 'Şu anda beyan edilmiş alerjen yok' : 'No allergens currently declared'}
             </Text>
           )}
         </Card>
@@ -167,10 +176,10 @@ export default function AllergenDeclaration() {
         {/* Allergen Checklist */}
         <Card variant="default" padding="md" style={styles.allergenCard}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {currentCountry.code === 'TR' ? '🇹🇷 Türkiye\'nin 14 Temel Alerjeni' : '🇬🇧 14 Major Allergens'}
+            {isTR ? '🇹🇷 Türkiye\'nin 14 Temel Alerjeni' : '🇬🇧 14 Major Allergens'}
           </Text>
           <Text variant="caption" color="textSecondary" style={styles.sectionSubtitle}>
-            {currentCountry.code === 'TR' 
+            {isTR 
               ? 'Gıda ürünlerinizde bulunabilecek tüm alerjenleri seçin (çapraz bulaşma dahil):'
               : 'Select all allergens that may be present in your food products (including cross-contamination):'
             }
@@ -204,7 +213,7 @@ export default function AllergenDeclaration() {
           </View>
 
           <Checkbox
-            label={currentCountry.code === 'TR' 
+            label={isTR 
               ? 'Tüm 14 temel alerjeni gözden geçirdiğimi ve ürünlerimle ilgili olanları beyan ettiğimi onaylıyorum'
               : 'I confirm that I have reviewed all 14 major allergens and declared those relevant to my products'
             }
@@ -212,7 +221,7 @@ export default function AllergenDeclaration() {
             onPress={() => setAllAllergensDeclared(!allAllergensDeclared)}
             disabled={!isEditing}
             required
-            helperText={currentCountry.code === 'TR' 
+            helperText={isTR 
               ? 'Bu beyan Gıda Güvenliği Kanunu gereği zorunludur'
               : 'This declaration is required under Natasha\'s Law'
             }
@@ -224,7 +233,7 @@ export default function AllergenDeclaration() {
               onPress={handleSave}
               style={styles.saveButton}
             >
-              {currentCountry.code === 'TR' ? '💾 Alerjen Beyanını Kaydet' : '💾 Save Allergen Declaration'}
+              {isTR ? '💾 Alerjen Beyanını Kaydet' : '💾 Save Allergen Declaration'}
             </Button>
           )}
         </Card>
@@ -232,41 +241,41 @@ export default function AllergenDeclaration() {
         {/* Legal Warning */}
         <Card variant="default" padding="md" style={styles.warningCard}>
           <Text variant="body" weight="semibold" style={styles.warningTitle}>
-            {currentCountry.code === 'TR' ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
+            {isTR ? '⚖️ Yasal Gereklilikler' : '⚖️ Legal Requirements'}
           </Text>
-          {currentCountry.code === 'TR' ? (
+          {isTR ? (
             <>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Gıda Güvenliği Kanunu gereği, paketli gıdalar için alerjen bilgisi sağlamalısınız
               </Text>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Alerjen beyan etmemek ciddi sağlık sonuçları ve yasal işlem doğurabilir
               </Text>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Alerjen beyanı yaparken mutfağınızdaki çapraz bulaşmayı göz önünde bulundurun
               </Text>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Şüphe halinde, müşterilerinizi korumak için alerjeni beyan edin
               </Text>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Alerjen değerlendirmelerinizin ve tedarikçi kayıtlarınızın belgelerini saklayın
               </Text>
             </>
           ) : (
             <>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Under Natasha's Law, you must provide allergen information for prepacked food
               </Text>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Failure to declare allergens can result in serious health consequences and legal action
               </Text>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Consider cross-contamination in your kitchen when declaring allergens
               </Text>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • When in doubt, declare the allergen to protect your customers
               </Text>
-              <Text variant="caption" style={styles.warningText}>
+              <Text variant="caption" style={[styles.warningText, { color: colors.text }]}>
                 • Keep records of your allergen assessments and ingredient suppliers
               </Text>
             </>
@@ -437,7 +446,6 @@ const styles = StyleSheet.create({
   warningText: {
     marginBottom: Spacing.xs,
     lineHeight: 18,
-    color: Colors.light.text,
   },
   bottomSpace: {
     height: Spacing.xl,
