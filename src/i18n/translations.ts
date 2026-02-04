@@ -7,9 +7,6 @@ export const translations = {
       cart: 'Sepet',
       orders: 'Siparişler',
       profile: 'Profil',
-      messages: 'Mesajlar',
-      notifications: 'Bildirimler',
-      profileShortcut: 'Profil kısayolu',
     },
 
     // Auth
@@ -20,12 +17,6 @@ export const translations = {
       email: 'E-posta',
       password: 'Şifre',
       forgotPassword: 'Şifremi Unuttum',
-    },
-    authGuard: {
-      loading: 'Yükleniyor...',
-      loginRequired: '🔐 Giriş yapmanız gerekiyor...',
-      redirectingToLogin: 'Giriş sayfasına yönlendiriliyor...',
-      redirectingHome: 'Ana sayfaya yönlendiriliyor...',
     },
 
     authWelcome: {
@@ -212,7 +203,7 @@ export const translations = {
         },
         nearbyNotifications: {
           title: 'Yakın Mekan Bildirimleri',
-          desc: 'Yakınımda yeni restoranlar açıldığında bildir',
+          desc: 'Yakınımda yeni satıcı eklendiğinde bildir',
         },
       },
       privacy: {
@@ -2112,9 +2103,6 @@ export const translations = {
       cart: 'Cart',
       orders: 'Orders',
       profile: 'Profile',
-      messages: 'Messages',
-      notifications: 'Notifications',
-      profileShortcut: 'Profile shortcut',
     },
 
     // Auth
@@ -2125,12 +2113,6 @@ export const translations = {
       email: 'Email',
       password: 'Password',
       forgotPassword: 'Forgot Password',
-    },
-    authGuard: {
-      loading: 'Loading...',
-      loginRequired: '🔐 You need to sign in...',
-      redirectingToLogin: 'Redirecting to the sign-in page...',
-      redirectingHome: 'Redirecting to the home page...',
     },
 
     authWelcome: {
