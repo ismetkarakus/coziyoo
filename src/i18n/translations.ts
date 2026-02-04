@@ -43,6 +43,13 @@ export const translations = {
       signInErrorTitle: 'Giriş Hatası',
     },
 
+    authFormErrors: {
+      required: 'Bu alan zorunludur',
+      invalidEmail: 'Geçerli bir e-posta girin',
+      invalidPassword: 'Şifre en az 6 karakter olmalı',
+      invalidPhone: 'Geçerli bir telefon girin',
+    },
+
     authUserType: {
       title: 'Nasıl devam etmek istiyorsun?',
       buyer: 'Alıcı',
@@ -66,7 +73,9 @@ export const translations = {
       locationHelper: 'Konum bilgisi, sana en yakın ev yemeklerini göstermek için kullanılır.',
       submit: 'Devam Et',
       errorTitle: 'Hata',
-      errorMessage: 'Lütfen tüm alanları doldurun',
+      errorMessage: 'Lütfen boş veya hatalı alanları düzeltin.',
+      successTitle: 'Başarılı',
+      successMessage: 'Kaydınız başarıyla tamamlandı.',
       registerErrorTitle: 'Kayıt Hatası',
     },
 
@@ -130,6 +139,8 @@ export const translations = {
       },
       termsLink: '📄 Read Terms & Conditions →',
       submit: 'Satıcı Olarak Devam Et',
+      errorTitle: 'Hata',
+      errorMessage: 'Lütfen boş veya hatalı alanları düzeltin.',
       alerts: {
         ukLegalTitle: 'UK Legal Requirement',
         ukLegalMessage: 'You must be registered with your local council to sell food in the UK.',
@@ -145,6 +156,8 @@ export const translations = {
         termsRequiredMessage: 'You must read and accept the Terms & Conditions to proceed.',
         submittedTitle: 'Registration Submitted',
         submittedMessage: 'Your seller application has been submitted for review. You will be notified once approved.',
+        successTitle: 'Başarılı',
+        successMessage: 'Kaydınız başarıyla tamamlandı.',
         ok: 'OK',
       },
     },
@@ -838,6 +851,7 @@ export const translations = {
         category: 'Kategori:',
         name: 'Yemek Adı:',
         description: 'Açıklama:',
+        recipe: 'Tarif:',
         price: 'Fiyat:',
         dailyStock: 'Günlük Stok:',
         deliveryDistance: 'Teslimat Mesafesi:',
@@ -927,6 +941,7 @@ export const translations = {
         category: 'Kategori',
         name: 'Yemek Adı',
         description: 'Açıklama / Baharatlar',
+        recipe: 'Tarif',
         price: 'Fiyat (₺)',
         dailyStock: 'Günlük Stok',
         startDate: 'Başlangıç Tarihi',
@@ -945,6 +960,7 @@ export const translations = {
         category: 'Kategori seçin',
         name: 'Örn: Ev Yapımı Mantı',
         description: 'Yemeğinizin özelliklerini ve kullanılan baharatları açıklayın...',
+        recipe: 'Yemeğin hazırlanış tarifini buraya yazın...',
         price: '25',
         dailyStock: '10',
         date: 'DD/MM/YYYY',
@@ -1676,6 +1692,13 @@ export const translations = {
       signInErrorTitle: 'Sign In Error',
     },
 
+    authFormErrors: {
+      required: 'This field is required',
+      invalidEmail: 'Enter a valid email',
+      invalidPassword: 'Password must be at least 6 characters',
+      invalidPhone: 'Enter a valid phone number',
+    },
+
     authUserType: {
       title: 'How would you like to continue?',
       buyer: 'I want to buy food',
@@ -1699,7 +1722,9 @@ export const translations = {
       locationHelper: 'Location info is used to show meals near you.',
       submit: 'Continue',
       errorTitle: 'Error',
-      errorMessage: 'Please fill in all fields',
+      errorMessage: 'Please fix the empty or invalid fields.',
+      successTitle: 'Success',
+      successMessage: 'Your registration has been completed successfully.',
       registerErrorTitle: 'Registration Error',
     },
 
@@ -1763,6 +1788,8 @@ export const translations = {
       },
       termsLink: '📄 Read Terms & Conditions →',
       submit: 'Continue as Seller',
+      errorTitle: 'Error',
+      errorMessage: 'Please fix the empty or invalid fields.',
       alerts: {
         ukLegalTitle: 'UK Legal Requirement',
         ukLegalMessage: 'You must be registered with your local council to sell food in the UK.',
@@ -1778,6 +1805,8 @@ export const translations = {
         termsRequiredMessage: 'You must read and accept the Terms & Conditions to proceed.',
         submittedTitle: 'Registration Submitted',
         submittedMessage: 'Your seller application has been submitted for review. You will be notified once approved.',
+        successTitle: 'Success',
+        successMessage: 'Your registration has been completed successfully.',
         ok: 'OK',
       },
     },
@@ -2471,6 +2500,7 @@ export const translations = {
         category: 'Category:',
         name: 'Meal Name:',
         description: 'Description:',
+        recipe: 'Recipe:',
         price: 'Price:',
         dailyStock: 'Daily Stock:',
         deliveryDistance: 'Delivery Distance:',
@@ -2560,6 +2590,7 @@ export const translations = {
         category: 'Category',
         name: 'Meal Name',
         description: 'Description / Spices',
+        recipe: 'Recipe',
         price: 'Price (₺)',
         dailyStock: 'Daily Stock',
         startDate: 'Start Date',
@@ -2578,6 +2609,7 @@ export const translations = {
         category: 'Select a category',
         name: 'e.g. Homemade Manti',
         description: 'Describe your meal and the spices used...',
+        recipe: 'Write the recipe for preparing the meal here...',
         price: '25',
         dailyStock: '10',
         date: 'DD/MM/YYYY',

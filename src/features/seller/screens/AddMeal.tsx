@@ -56,6 +56,7 @@ export const AddMeal: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    recipe: '',
     price: '',
     dailyStock: '',
     deliveryFee: '',
@@ -79,6 +80,7 @@ export const AddMeal: React.FC = () => {
   const [filteredCountries, setFilteredCountries] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [descriptionHeight, setDescriptionHeight] = useState(60); // Başlangıç yüksekliği
+  const [recipeHeight, setRecipeHeight] = useState(60); // Başlangıç yüksekliği
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -123,6 +125,17 @@ export const AddMeal: React.FC = () => {
     // Yüksekliği sınırla ve padding ekle
     const newHeight = Math.max(minHeight, Math.min(height + padding, maxHeight));
     setDescriptionHeight(newHeight);
+  };
+
+  const handleRecipeContentSizeChange = (event: any) => {
+    const { height } = event.nativeEvent.contentSize;
+    const minHeight = 60; // 3 satır için minimum
+    const maxHeight = 220; // 10 satır için maksimum
+    const padding = 24; // Üst + alt padding
+    
+    // Yüksekliği sınırla ve padding ekle
+    const newHeight = Math.max(minHeight, Math.min(height + padding, maxHeight));
+    setRecipeHeight(newHeight);
   };
 
   const handleCategorySelect = (category: string) => {
@@ -181,6 +194,7 @@ export const AddMeal: React.FC = () => {
       const mealData = {
         id: foodId,
         ...formData,
+        recipe: formData.recipe,
         images: selectedImages,
         deliveryOptions,
         createdAt: new Date().toISOString(),
@@ -216,6 +230,7 @@ export const AddMeal: React.FC = () => {
               setFormData({
                 name: '',
                 description: '',
+                recipe: '',
                 price: '',
                 dailyStock: '',
                 deliveryFee: '',
@@ -536,6 +551,7 @@ export const AddMeal: React.FC = () => {
       category: formData.category,
       country: formData.country,
       description: formData.description,
+      recipe: formData.recipe,
       dailyStock: formData.dailyStock,
       maxDistance: formData.maxDistance,
       deliveryFee: formData.deliveryFee,
@@ -619,6 +635,7 @@ export const AddMeal: React.FC = () => {
       const mealData = {
         id: foodId,
         ...formData,
+        recipe: formData.recipe,
         images: selectedImages,
         deliveryOptions,
         createdAt: new Date().toISOString(),
@@ -654,6 +671,7 @@ export const AddMeal: React.FC = () => {
               setFormData({
                 name: '',
                 description: '',
+                recipe: '',
                 price: '',
                 dailyStock: '',
                 deliveryFee: '',
@@ -839,6 +857,34 @@ export const AddMeal: React.FC = () => {
                 {formData.description.length > 0 && (
                   <Text variant="caption" style={[styles.lineCounter, { color: colors.textSecondary }]}>
                     {t('addMealScreen.labels.lineCount', { count: formData.description.split('\n').length })}
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.descriptionContainer}>
+              <FormField
+                label={t('addMealScreen.fields.recipe')}
+                value={formData.recipe}
+                onChangeText={handleInputChange('recipe')}
+                placeholder={t('addMealScreen.placeholders.recipe')}
+                multiline={true}
+                numberOfLines={3}
+                textAlignVertical="top"
+                style={[styles.descriptionInput, { height: recipeHeight }]}
+                onContentSizeChange={handleRecipeContentSizeChange}
+              />
+              
+              {/* Karakter Sayacı */}
+              <View style={styles.characterCounter}>
+                <Text variant="caption" style={[styles.counterText, {
+                  color: colors.textSecondary
+                }]}>
+                  {t('addMealScreen.labels.characterCount', { count: formData.recipe.length })}
+                </Text>
+                {formData.recipe.length > 0 && (
+                  <Text variant="caption" style={[styles.lineCounter, { color: colors.textSecondary }]}>
+                    {t('addMealScreen.labels.lineCount', { count: formData.recipe.split('\n').length })}
                   </Text>
                 )}
               </View>
@@ -1436,33 +1482,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#E5E5E5',
     borderStyle: 'dashed',
-  },
-  imageNumber: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    color: 'white',
-    borderRadius: 8,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    fontSize: 10,
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FF4444',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  removeImageText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
   descriptionContainer: {
     marginBottom: Spacing.md,

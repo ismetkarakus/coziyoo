@@ -51,7 +51,7 @@ class ReviewService {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
       });
-      if (response.status !== 201) throw new Error(response.error);
+      if (response.status !== 201) throw new Error(response.error || 'Yorum eklenemedi');
       return id;
     } catch (error) {
       console.error('Yorum ekleme hatası:', error);
@@ -107,6 +107,31 @@ class ReviewService {
           totalReviews: stats.totalReviews,
           recentReviews: reviews.slice(0, 3)
       };
+  }
+  async markReviewHelpful(reviewId: string): Promise<void> {
+    try {
+      console.log('Marking review helpful:', reviewId);
+    } catch (error) {
+      console.error('Error marking review helpful:', error);
+    }
+  }
+
+  async reportReview(reviewId: string): Promise<void> {
+    try {
+      console.log('Reporting review:', reviewId);
+    } catch (error) {
+      console.error('Error reporting review:', error);
+    }
+  }
+
+  async hasUserReviewedFood(userId: string, foodId: string): Promise<boolean> {
+    try {
+      // Mock implementation
+      return false;
+    } catch (error) {
+      console.error('Error checking if user reviewed food:', error);
+      return false;
+    }
   }
 }
 

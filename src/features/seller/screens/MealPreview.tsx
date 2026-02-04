@@ -42,7 +42,7 @@ export const MealPreview: React.FC = () => {
   };
 
   // Parse preview data
-  let data = {};
+  let data: any = {};
   try {
     if (previewData) {
       const decodedData = decodeURIComponent(previewData as string);
@@ -169,6 +169,13 @@ export const MealPreview: React.FC = () => {
             <View style={styles.detailItem}>
               <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.description')}</Text>
               <Text variant="body" color="textSecondary">{data.description}</Text>
+            </View>
+          )}
+          
+          {data.recipe && (
+            <View style={styles.detailItem}>
+              <Text variant="body" weight="medium">{t('mealPreviewScreen.labels.recipe')}</Text>
+              <Text variant="body" color="textSecondary">{data.recipe}</Text>
             </View>
           )}
           

@@ -9,6 +9,7 @@ export interface Food {
   cookId: string;
   category: string;
   imageUrl: string;
+  recipe?: string;
   ingredients: string[];
   preparationTime: number;
   servingSize: number;
@@ -42,7 +43,7 @@ class FoodService {
           rating: 0,
           reviewCount: 0
       });
-      if (response.status !== 201) throw new Error(response.error);
+      if (response.status !== 201 || !response.data) throw new Error(response.error || 'Yemek eklenemedi');
       return response.data.id;
     } catch (error) {
       console.error('Yemek eklenirken hata:', error);
@@ -54,7 +55,7 @@ class FoodService {
   async getAllFoods(): Promise<Food[]> {
     try {
       const response = await apiClient.get<any[]>('/foods');
-      if (response.status !== 200) return [];
+      if (response.status !== 200 || !response.data) return [];
       
       return response.data.map(item => ({
           ...item,
@@ -72,7 +73,7 @@ class FoodService {
     try {
       // For now we use the general list and filter, or we could add a route /foods/seller/:id
       const response = await apiClient.get<any[]>('/foods');
-      if (response.status !== 200) return [];
+      if (response.status !== 200 || !response.data) return [];
       
       return response.data
         .filter(item => item.cookId === sellerId)
@@ -91,7 +92,7 @@ class FoodService {
   async getFoodsByCategory(category: string): Promise<Food[]> {
     try {
       const response = await apiClient.get<any[]>('/foods');
-      if (response.status !== 200) return [];
+      if (response.status !== 200 || !response.data) return [];
       
       return response.data
         .filter(item => item.category === category && item.isAvailable)
@@ -110,7 +111,7 @@ class FoodService {
   async getFoodById(foodId: string): Promise<Food | null> {
     try {
       const response = await apiClient.get(`/foods/${foodId}`);
-      if (response.status !== 200) return null;
+      if (response.status !== 200 || !response.data) return null;
       
       return {
           ...response.data,
@@ -132,7 +133,7 @@ class FoodService {
         id,
         orderDate: new Date().toISOString()
       });
-      if (response.status !== 201) throw new Error(response.error);
+      if (response.status !== 201 || !response.data) throw new Error(response.error || 'Sipariş oluşturulamadı');
       return response.data.id;
     } catch (error) {
       console.error('Sipariş oluşturulurken hata:', error);
@@ -144,7 +145,7 @@ class FoodService {
   async getUserOrders(userId: string): Promise<Order[]> {
     try {
       const response = await apiClient.get('/orders', { userId, type: 'buyer' });
-      if (response.status !== 200) return [];
+      if (response.status !== 200 || !response.data) return [];
       
       return response.data.map((item: any) => ({
           ...item,
@@ -161,7 +162,7 @@ class FoodService {
   async getSellerOrders(sellerId: string): Promise<Order[]> {
     try {
       const response = await apiClient.get('/orders', { userId: sellerId, type: 'seller' });
-      if (response.status !== 200) return [];
+      if (response.status !== 200 || !response.data) return [];
       
       return response.data.map((item: any) => ({
           ...item,
@@ -194,6 +195,17 @@ class FoodService {
   subscribeToFood(foodId: string, callback: (food: Food | null) => void): () => void {
     this.getFoodById(foodId).then(callback);
     return () => {};
+  }
+
+  async decreaseStock(foodId: string, quantity: number): Promise<boolean> {
+    try {
+      // Mock implementation: always succeed
+      console.log(`Mock stock decrease for ${foodId}: ${quantity}`);
+      return true;
+    } catch (error) {
+      console.error('Stock decrease error:', error);
+      return false;
+    }
   }
 }
 

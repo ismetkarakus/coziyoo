@@ -25,11 +25,13 @@ export const SellerRegister: React.FC = () => {
   };
 
   const [formData, setFormData] = useState(testSellerData);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({});
   const [autoFillEnabled, setAutoFillEnabled] = useState(true);
 
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => ({ ...prev, [field]: undefined }));
   };
 
   const handleAutoFillToggle = () => {
@@ -42,29 +44,69 @@ export const SellerRegister: React.FC = () => {
         password: '',
         kitchenLocation: '',
       });
+      setErrors({});
       return next;
     });
   };
 
+  const validate = () => {
+    const nextErrors: Partial<Record<keyof typeof formData, string>> = {};
+    const requiredFields: Array<keyof typeof formData> = [
+      'fullName',
+      'phone',
+      'email',
+      'password',
+      'kitchenLocation',
+    ];
+
+    requiredFields.forEach(field => {
+      if (!formData[field]?.trim()) {
+        nextErrors[field] = t('authFormErrors.required');
+      }
+    });
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email?.trim() && !emailRegex.test(formData.email.trim())) {
+      nextErrors.email = t('authFormErrors.invalidEmail');
+    }
+
+    if (formData.password?.trim() && formData.password.trim().length < 6) {
+      nextErrors.password = t('authFormErrors.invalidPassword');
+    }
+
+    const phoneDigits = formData.phone?.replace(/\D/g, '') ?? '';
+    if (formData.phone?.trim() && phoneDigits.length < 10) {
+      nextErrors.phone = t('authFormErrors.invalidPhone');
+    }
+
+    return nextErrors;
+  };
+
   const handleSubmit = async () => {
-    if (!formData.fullName || !formData.email || !formData.password || !formData.phone || !formData.kitchenLocation) {
-      Alert.alert('Missing Information', 'Please fill in all required fields.');
+    const nextErrors = validate();
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      Alert.alert(t('authSellerRegister.errorTitle'), t('authSellerRegister.errorMessage'));
       return;
     }
 
     const goToSeller = () => router.replace('/(seller)/dashboard');
 
+    const showSuccess = () => {
+      Alert.alert(
+        t('authSellerRegister.alerts.successTitle'),
+        t('authSellerRegister.alerts.successMessage'),
+        [{ text: t('authSellerRegister.alerts.ok'), onPress: goToSeller }]
+      );
+    };
+
     if (Platform.OS === 'web') {
-      goToSeller();
+      showSuccess();
       return;
     }
 
     // Mock registration - navigate to seller panel
-    Alert.alert(
-      t('authSellerRegister.alerts.submittedTitle'),
-      t('authSellerRegister.alerts.submittedMessage'),
-      [{ text: t('authSellerRegister.alerts.ok'), onPress: goToSeller }]
-    );
+    showSuccess();
   };
 
   return (
@@ -92,6 +134,7 @@ export const SellerRegister: React.FC = () => {
               value={formData.fullName}
               onChangeText={handleInputChange('fullName')}
               placeholder={t('authSellerRegister.fullNamePlaceholder')}
+              error={errors.fullName}
               required
             />
 
@@ -101,6 +144,7 @@ export const SellerRegister: React.FC = () => {
               onChangeText={handleInputChange('phone')}
               placeholder={t('authSellerRegister.phonePlaceholder')}
               keyboardType="phone-pad"
+              error={errors.phone}
               required
             />
 
@@ -111,6 +155,7 @@ export const SellerRegister: React.FC = () => {
               placeholder={t('authSellerRegister.emailPlaceholder')}
               keyboardType="email-address"
               autoCapitalize="none"
+              error={errors.email}
               required
             />
 
@@ -120,6 +165,7 @@ export const SellerRegister: React.FC = () => {
               onChangeText={handleInputChange('password')}
               placeholder={t('authSellerRegister.passwordPlaceholder')}
               secureTextEntry
+              error={errors.password}
               required
             />
 
@@ -128,6 +174,7 @@ export const SellerRegister: React.FC = () => {
               value={formData.kitchenLocation}
               onChangeText={handleInputChange('kitchenLocation')}
               placeholder={t('authSellerRegister.kitchenLocationPlaceholder')}
+              error={errors.kitchenLocation}
               required
             />
 
@@ -174,8 +221,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
-
 
 
 

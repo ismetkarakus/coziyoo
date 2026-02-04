@@ -44,8 +44,8 @@ class ChatService {
           lastMessage: '', lastMessageTime: new Date().toISOString(), lastMessageSender: '',
           buyerUnreadCount: 0, sellerUnreadCount: 0, isActive: true, createdAt: new Date().toISOString()
       });
-      if (response.status !== 200 && response.status !== 201) throw new Error(response.error);
-      return response.data.id;
+      if (response.status !== 200 && response.status !== 201) throw new Error(response.error || 'Chat oluşturulamadı');
+      return response.data?.id || id;
     } catch (error) {
       console.error('Chat oluşturma hatası:', error);
       throw new Error('Chat oluşturulamadı');
@@ -60,7 +60,7 @@ class ChatService {
           timestamp: new Date().toISOString(), isRead: false, orderData
       };
       const response = await apiClient.post(`/chats/${chatId}/messages`, messageData);
-      if (response.status !== 201) throw new Error(response.error);
+      if (response.status !== 201) throw new Error(response.error || 'Mesaj gönderilemedi');
       return id;
     } catch (error) {
       console.error('Mesaj gönderme hatası:', error);
@@ -113,6 +113,23 @@ class ChatService {
   async markMessagesAsRead(chatId: string, userId: string, userType: 'buyer' | 'seller'): Promise<void> {
       // Mock implementation for local DB
       console.log('Marking as read:', chatId);
+  }
+
+  async sendOrderUpdateMessage(
+    chatId: string,
+    orderId: string,
+    status: string,
+    foodName: string,
+    senderId: string,
+    senderName: string,
+    senderType: 'buyer' | 'seller'
+  ): Promise<string> {
+    const message = `${foodName} sipariş durumu: ${status}`;
+    return this.sendMessage(chatId, senderId, senderName, senderType, message, 'order_update', {
+      orderId,
+      status,
+      foodName,
+    });
   }
 }
 

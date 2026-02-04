@@ -258,6 +258,7 @@ export const FoodDetail: React.FC = () => {
     currentStock: 8,
     dailyStock: 10,
     description: 'Geleneksel yöntemlerle hazırlanan, ince açılmış hamur ile sarılmış, özel baharatlarla tatlandırılmış ev yapımı mantı. Yanında yoğurt ve tereyağlı sos ile servis edilir.',
+    recipe: '1. Hamur malzemelerini yoğurun ve ince açın.\n2. İç harcı hazırlayıp hamura yerleştirin ve kapatın.\n3. Haşlayıp sos ile servis edin.',
     hasPickup: true,
     hasDelivery: true,
     imageUrl: foodImageUrl || 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop',
@@ -806,6 +807,17 @@ export const FoodDetail: React.FC = () => {
             </Text>
           </Card>
 
+          {/* Recipe */}
+          {food.recipe && (
+            <Card variant="default" padding="md" style={styles.descriptionCard}>
+              <Text variant="subheading" weight="medium" style={styles.descriptionTitle}>
+                {t('foodDetailSimpleScreen.recipeTitle')}
+              </Text>
+              <Text variant="body" style={styles.description}>
+                {food.recipe}
+              </Text>
+            </Card>
+          )}
 
           {/* Reviews Section */}
           <Card variant="default" padding="md" style={styles.reviewsCard}>

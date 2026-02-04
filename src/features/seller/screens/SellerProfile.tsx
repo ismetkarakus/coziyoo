@@ -349,13 +349,15 @@ export const SellerProfile: React.FC = () => {
         }
         rightComponent={
           !isEditing ? (
-            <TouchableOpacity 
-              onPress={() => setIsEditing(true)}
-              style={styles.editButton}
-              activeOpacity={0.7}
-            >
-              <FontAwesome name="edit" size={20} color={colors.primary} />
-            </TouchableOpacity>
+            <View style={styles.headerRightAbsolute}>
+              <TouchableOpacity 
+                onPress={() => setIsEditing(true)}
+                style={styles.headerEditButton}
+                activeOpacity={0.7}
+              >
+                <FontAwesome name="edit" size={18} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
           ) : null
         }
       />
@@ -683,8 +685,13 @@ export const SellerProfile: React.FC = () => {
                 {t('sellerProfileScreen.identity.frontLabel')}
               </Text>
               <TouchableOpacity
-                style={[styles.identityImageContainer, { borderColor: colors.border }]}
-                onPress={() => handleIdentityImagePicker('front')}
+                style={[
+                  styles.identityImageContainer,
+                  { borderColor: colors.border },
+                  !isEditing && styles.identityImageDisabled,
+                ]}
+                onPress={isEditing ? () => handleIdentityImagePicker('front') : undefined}
+                activeOpacity={isEditing ? 0.7 : 1}
               >
                 {identityImages.front ? (
                   <Image source={{ uri: identityImages.front }} style={styles.identityImage} />
@@ -705,8 +712,13 @@ export const SellerProfile: React.FC = () => {
                 {t('sellerProfileScreen.identity.backLabel')}
               </Text>
               <TouchableOpacity
-                style={[styles.identityImageContainer, { borderColor: colors.border }]}
-                onPress={() => handleIdentityImagePicker('back')}
+                style={[
+                  styles.identityImageContainer,
+                  { borderColor: colors.border },
+                  !isEditing && styles.identityImageDisabled,
+                ]}
+                onPress={isEditing ? () => handleIdentityImagePicker('back') : undefined}
+                activeOpacity={isEditing ? 0.7 : 1}
               >
                 {identityImages.back ? (
                   <Image source={{ uri: identityImages.back }} style={styles.identityImage} />
@@ -723,7 +735,7 @@ export const SellerProfile: React.FC = () => {
           </View>
 
           {/* Submit Identity Verification */}
-          {identityImages.front && identityImages.back && identityVerification.status === 'pending' && (
+          {isEditing && identityImages.front && identityImages.back && identityVerification.status === 'pending' && (
             <View style={styles.submitSection}>
               <Button
                 variant="primary"
@@ -883,6 +895,18 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
   },
+  headerRightAbsolute: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+  },
+  headerEditButton: {
+    padding: Spacing.xs,
+    borderRadius: 16,
+    backgroundColor: Colors.light.surface,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1016,6 +1040,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 10,
+  },
+  identityImageDisabled: {
+    opacity: 0.6,
   },
   identityPlaceholder: {
     alignItems: 'center',

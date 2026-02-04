@@ -589,6 +589,7 @@ const styles = StyleSheet.create({
   },
   statsTitle: {
     marginBottom: Spacing.md,
+    textAlign: 'center',
   },
   statsGrid: {
     flexDirection: 'row',
