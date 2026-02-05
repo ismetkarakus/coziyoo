@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Text, Card } from '../../../components/ui';
+import { Text, Card, Button, Checkbox } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { FormField } from '../../../components/forms';
 
 interface Address {
   id: string;
@@ -21,6 +22,12 @@ export const Addresses: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    title: '',
+    address: '',
+    isDefault: false,
+  });
 
   useEffect(() => {
     loadAddresses();
@@ -83,6 +90,34 @@ export const Addresses: React.FC = () => {
     );
   };
 
+  const openAddModal = () => {
+    setNewAddress({ title: '', address: '', isDefault: false });
+    setAddModalVisible(true);
+  };
+
+  const handleAddAddress = async () => {
+    if (!newAddress.title.trim() || !newAddress.address.trim()) {
+      Alert.alert(t('addressesScreen.addErrorTitle'), t('addressesScreen.addErrorMessage'));
+      return;
+    }
+
+    const shouldBeDefault = newAddress.isDefault || addresses.every(addr => !addr.isDefault);
+    const createdAddress: Address = {
+      id: `addr_${Date.now()}`,
+      title: newAddress.title.trim(),
+      address: newAddress.address.trim(),
+      isDefault: shouldBeDefault,
+    };
+
+    const updatedAddresses = shouldBeDefault
+      ? [createdAddress, ...addresses.map(addr => ({ ...addr, isDefault: false }))]
+      : [createdAddress, ...addresses];
+
+    setAddresses(updatedAddresses);
+    await AsyncStorage.setItem('addresses', JSON.stringify(updatedAddresses));
+    setAddModalVisible(false);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
@@ -93,9 +128,11 @@ export const Addresses: React.FC = () => {
           </TouchableOpacity>
         }
         rightComponent={
-          <TouchableOpacity onPress={() => Alert.alert(t('addressesScreen.addSoonTitle'), t('addressesScreen.addSoonMessage'))}>
-            <WebSafeIcon name="plus" size={20} color={colors.primary} />
-          </TouchableOpacity>
+          <View style={styles.headerRight}>
+            <TouchableOpacity onPress={openAddModal}>
+              <WebSafeIcon name="plus" size={20} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -147,7 +184,58 @@ export const Addresses: React.FC = () => {
             </Text>
           </View>
         )}
+
       </ScrollView>
+
+      <Modal visible={addModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalContainer}
+          >
+            <Card variant="default" padding="md" style={styles.modalCard}>
+              <Text variant="subheading" weight="semibold" style={styles.modalTitle}>
+                {t('addressesScreen.addTitle')}
+              </Text>
+              <FormField
+                label={t('addressesScreen.addLabelTitle')}
+                value={newAddress.title}
+                onChangeText={(text) => setNewAddress(prev => ({ ...prev, title: text }))}
+                placeholder={t('addressesScreen.addPlaceholderTitle')}
+              />
+              <FormField
+                label={t('addressesScreen.addLabelAddress')}
+                value={newAddress.address}
+                onChangeText={(text) => setNewAddress(prev => ({ ...prev, address: text }))}
+                placeholder={t('addressesScreen.addPlaceholderAddress')}
+                multiline
+                numberOfLines={3}
+              />
+              <Checkbox
+                label={t('addressesScreen.addDefaultLabel')}
+                checked={newAddress.isDefault}
+                onPress={() => setNewAddress(prev => ({ ...prev, isDefault: !prev.isDefault }))}
+              />
+              <View style={styles.modalActions}>
+                <Button
+                  variant="ghost"
+                  onPress={() => setAddModalVisible(false)}
+                  style={styles.modalButton}
+                >
+                  {t('addressesScreen.addCancel')}
+                </Button>
+                <Button
+                  variant="primary"
+                  onPress={handleAddAddress}
+                  style={styles.modalButton}
+                >
+                  {t('addressesScreen.addSave')}
+                </Button>
+              </View>
+            </Card>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -192,6 +280,11 @@ const styles = StyleSheet.create({
   addressText: {
     lineHeight: 20,
   },
+  headerRight: {
+    width: '100%',
+    alignItems: 'flex-end',
+    paddingRight: Spacing.sm,
+  },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -200,13 +293,30 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    padding: Spacing.md,
+  },
+  modalContainer: {
+    width: '100%',
+  },
+  modalCard: {
+    borderRadius: 16,
+  },
+  modalTitle: {
+    marginBottom: Spacing.md,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  modalButton: {
+    minWidth: 100,
+  },
 });
-
-
-
-
-
-
-
 
 

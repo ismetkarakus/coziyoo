@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: Spacing['2xl'] + Spacing.sm,
+    right: Spacing['2xl'] + Spacing.sm,
     bottom: Spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',

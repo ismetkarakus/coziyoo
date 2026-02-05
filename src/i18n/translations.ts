@@ -21,7 +21,7 @@ export const translations = {
 
     authWelcome: {
       title: 'Coziyoo',
-      subtitle: 'Ev Yemekleri, Gerçek Lezzet',
+      subtitle: 'Ev Lezzetleri',
       description: 'Coziyoo\'ya Hoş Geldin. Evde yapılan taze yemekleri keşfet veya kendi yemeklerini sat.',
       signIn: 'Giriş Yap',
       signUp: 'Kayıt Ol',
@@ -29,7 +29,7 @@ export const translations = {
 
     authSignIn: {
       title: 'Giriş Yap',
-      subtitle: 'Hesabına giriş yap ve lezzetli yemekleri keşfet',
+      subtitle: 'Ev sıcaklığındaki lezzetleri keşfetmeye hazır mısın?',
       emailLabel: 'E-posta',
       emailPlaceholder: 'ornek@email.com',
       passwordLabel: 'Şifre',
@@ -172,6 +172,17 @@ export const translations = {
       title: 'Adreslerim',
       addSoonTitle: 'Yakında',
       addSoonMessage: 'Yeni adres ekleme özelliği yakında gelecek.',
+      addButton: 'Adres Ekle',
+      addTitle: 'Yeni Adres',
+      addLabelTitle: 'Adres Başlığı',
+      addPlaceholderTitle: 'Örn: Ev, İş',
+      addLabelAddress: 'Adres',
+      addPlaceholderAddress: 'Mahalle, sokak, bina no, daire no',
+      addDefaultLabel: 'Varsayılan adres olarak ayarla',
+      addCancel: 'Vazgeç',
+      addSave: 'Kaydet',
+      addErrorTitle: 'Eksik Bilgi',
+      addErrorMessage: 'Lütfen adres başlığı ve adres bilgisini girin.',
       deleteTitle: 'Adresi Sil',
       deleteMessage: 'Bu adresi silmek istediğinizden emin misiniz?',
       deleteCancel: 'İptal',
@@ -2117,7 +2128,7 @@ export const translations = {
 
     authWelcome: {
       title: 'Coziyoo',
-      subtitle: 'Home Meals, Real Taste',
+      subtitle: 'Home Flavors',
       description: 'Welcome to Coziyoo. Discover fresh home-cooked meals or sell your own dishes.',
       signIn: 'Sign In',
       signUp: 'Sign Up',
@@ -2125,7 +2136,7 @@ export const translations = {
 
     authSignIn: {
       title: 'Sign In',
-      subtitle: 'Sign in to your account and discover delicious meals',
+      subtitle: 'Ready to discover warm, home‑style flavors?',
       emailLabel: 'Email',
       emailPlaceholder: 'example@email.com',
       passwordLabel: 'Password',
@@ -2268,6 +2279,17 @@ export const translations = {
       title: 'My Addresses',
       addSoonTitle: 'Coming Soon',
       addSoonMessage: 'Adding new addresses is coming soon.',
+      addButton: 'Add Address',
+      addTitle: 'New Address',
+      addLabelTitle: 'Address Title',
+      addPlaceholderTitle: 'e.g., Home, Work',
+      addLabelAddress: 'Address',
+      addPlaceholderAddress: 'Street, building, apartment',
+      addDefaultLabel: 'Set as default address',
+      addCancel: 'Cancel',
+      addSave: 'Save',
+      addErrorTitle: 'Missing Info',
+      addErrorMessage: 'Please enter an address title and address.',
       deleteTitle: 'Delete Address',
       deleteMessage: 'Are you sure you want to delete this address?',
       deleteCancel: 'Cancel',

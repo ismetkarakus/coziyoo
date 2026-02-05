@@ -72,11 +72,11 @@ export const SignIn: React.FC = () => {
             <Text variant="title" center style={styles.appTitle}>
               {t('authWelcome.title')}
             </Text>
+            <Text variant="body" center color="textSecondary" style={styles.subtitle}>
+              {t('authWelcome.subtitle')}
+            </Text>
             <Text variant="heading" center style={styles.title}>
               {t('authSignIn.title')}
-            </Text>
-            <Text variant="body" center color="textSecondary" style={styles.subtitle}>
-              {t('authSignIn.subtitle')}
             </Text>
           </View>
 
@@ -170,23 +170,25 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing.lg,
   },
   appTitle: {
-    fontSize: 42,
+    fontSize: 56,
     fontWeight: 'bold',
     color: Colors.light.primary,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing['3xl'],
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     marginBottom: Spacing.sm,
+    marginTop: Spacing.lg,
   },
   subtitle: {
     textAlign: 'center',
-    lineHeight: 28,
-    fontSize: 18,
-    marginTop: Spacing.md,
+    lineHeight: 26,
+    fontSize: 22,
+    marginTop: 0,
   },
   form: {
     marginBottom: Spacing['2xl'],

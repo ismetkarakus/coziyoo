@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { authService, UserData } from '../services/authService';
-import { router } from 'expo-router';
+import { router, useRootNavigationState } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mock types and variables to fix "reds"
@@ -11,12 +11,6 @@ const onAuthStateChanged = (auth: any, callback: (user: any) => void) => {
 };
 const auth = {} as any;
 const getUserDataSafe = async (...args: any[]) => null;
-const handleAutoRedirect = (userData: any) => {
-  if (!userData) return;
-  const isSeller = userData.userType === 'seller' || userData.userType === 'both';
-  router.replace(isSeller ? '/(seller)/dashboard' : '/(tabs)');
-};
-
 interface AuthContextType {
   user: User | null;
   userData: UserData | null;
@@ -35,6 +29,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
+  const rootNavigationState = useRootNavigationState();
+  const pendingReplaceRef = useRef<string | null>(null);
+
+  const safeReplace = useCallback((path: string) => {
+    if (rootNavigationState?.key) {
+      router.replace(path);
+    } else {
+      pendingReplaceRef.current = path;
+    }
+  }, [rootNavigationState?.key]);
+
+  useEffect(() => {
+    if (rootNavigationState?.key && pendingReplaceRef.current) {
+      const pendingPath = pendingReplaceRef.current;
+      pendingReplaceRef.current = null;
+      router.replace(pendingPath);
+    }
+  }, [rootNavigationState?.key]);
 
   const refreshUserData = useCallback(async (uid: string) => {
       setProfileLoading(true);
@@ -92,15 +104,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await authService.signIn(email, password);
       setUser(result.user);
       setUserData(result.userData);
-      // State updates are async - wait for next tick before redirect
-      setTimeout(() => handleAutoRedirect(result.userData), 0);
+      if (result.userData) {
+        const isSeller = result.userData.userType === 'seller' || result.userData.userType === 'both';
+        safeReplace(isSeller ? '/(seller)/dashboard' : '/(tabs)');
+      }
     } catch (error) {
       const mockSession = await authService.signInWithMockCredentials(email, password);
       if (mockSession) {
         setUser(mockSession.user);
         setUserData(mockSession.userData);
-        // State updates are async - wait for next tick before redirect
-        setTimeout(() => handleAutoRedirect(mockSession.userData), 0);
+        if (mockSession.userData) {
+          const isSeller = mockSession.userData.userType === 'seller' || mockSession.userData.userType === 'both';
+          safeReplace(isSeller ? '/(seller)/dashboard' : '/(tabs)');
+        }
         return;
       }
       throw error;
@@ -117,7 +133,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await authService.signOut();
       setUser(null);
       setUserData(null);
-      router.replace('/(auth)/sign-in');
+      safeReplace('/(auth)/sign-in');
     } finally {
       setLoading(false);
     }

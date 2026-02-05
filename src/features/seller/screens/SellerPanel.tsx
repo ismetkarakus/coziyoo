@@ -672,10 +672,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   backButton: {
-    padding: Spacing.sm,
+    padding: Spacing.xs,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   signOutButton: {
     marginHorizontal: Spacing.md,

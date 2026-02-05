@@ -100,17 +100,17 @@ export const SellerWallet: React.FC = () => {
     ? wallet.transactions
         .filter(t => t.type === 'earning')
         .slice(0, 8)
-        .map((t: Transaction, index) => ({
-          id: t.id,
+      .map((tx: Transaction, index) => ({
+          id: tx.id,
           title: t('sellerWalletScreen.transactionTitle'),
           description: t('sellerWalletScreen.orderDescription', {
-            orderId: t.orderId ?? `ORD-00${index + 1}`,
-            description: t.description,
+            orderId: tx.orderId ?? `ORD-00${index + 1}`,
+            description: tx.description,
           }),
           customer: t('sellerWalletScreen.customerUnknown'),
-          amount: t.amount,
-          status: t.status === 'completed' ? 'completed' : 'pending',
-          date: formatDateShort(t.createdAt),
+          amount: tx.amount,
+          status: tx.status === 'completed' ? 'completed' : 'pending',
+          date: formatDateShort(tx.createdAt),
         }))
     : [
         {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { router, useSegments } from 'expo-router';
+import { router, useRootNavigationState, useSegments } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Text } from '../ui';
 import { Colors, Spacing } from '../../theme';
@@ -13,6 +13,7 @@ interface AuthGuardProps {
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, userData, loading, profileLoading } = useAuth();
   const segments = useSegments();
+  const rootNavigationState = useRootNavigationState();
   const group = segments[0];
   const { t } = useTranslation();
   
@@ -28,7 +29,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       currentPath: segments.join('/')
     });
 
-    if (loading) {
+    if (loading || !rootNavigationState?.key) {
       console.log('⏳ Auth still loading, waiting...');
       return; // Auth durumu henüz yükleniyor
     }
@@ -63,10 +64,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     } else if (!user && inAuthGroup) {
       console.log('👤 No user but in auth section - OK');
     }
-  }, [user, userData, loading, segments]);
+  }, [user, userData, loading, segments, rootNavigationState?.key]);
 
   // Loading state
-  if (loading) {
+  if (loading || !rootNavigationState?.key) {
     return (
       <View style={styles.loadingContainer}>
         <Text variant="body" color="textSecondary">
