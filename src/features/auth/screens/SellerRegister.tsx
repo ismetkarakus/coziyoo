@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, Button, Checkbox } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { Colors, Spacing } from '../../../theme';
@@ -105,8 +105,18 @@ export const SellerRegister: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.content}>
           <View style={styles.header}>
             <Text variant="heading" center style={styles.title}>
               {t('authSellerRegister.title')}
@@ -182,8 +192,9 @@ export const SellerRegister: React.FC = () => {
               {t('authSellerRegister.submit')}
             </Button>
           </View>
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -195,8 +206,12 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
     padding: Spacing.lg,
+    paddingTop: Spacing['3xl'],
   },
   header: {
     alignItems: 'center',
@@ -204,6 +219,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: Spacing.sm,
+    fontSize: 24,
   },
   subtitle: {
     textAlign: 'center',
@@ -215,8 +231,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
-
 
 
 
