@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, Alert, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
+import { FontAwesome } from '@expo/vector-icons';
 import { Text } from './Text';
-import { Button } from './Button';
 import { Card } from './Card';
 import { StarRating } from './StarRating';
 import { AllergenWarningModal } from './AllergenWarningModal';
@@ -111,8 +111,10 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
-  const { cartItems, addToCart, removeFromCart } = useCart();
+  const { cartItems, addToCart, updateQuantity, removeFromCart } = useCart();
   const resolvedCountry = country || (currentLanguage === 'en' ? 'Turkish' : 'Türk');
+  const { width: windowWidth } = useWindowDimensions();
+  const imageWidth = windowWidth < 768 ? '40%' : '30%';
   
   // Determine available options and set default selection
   const getAvailableOptions = () => {
@@ -146,6 +148,10 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   const cartItem = cartItems.find(item => item.id === id);
   const cartQuantity = cartItem ? cartItem.quantity : 0;
 
+  useEffect(() => {
+    setLocalQuantity(cartQuantity);
+  }, [cartQuantity]);
+
   const handlePress = () => {
     console.log('FoodCard pressed:', name, id, 'by', cookName);
     const foodImageUrl = imageUrl || getDefaultImage(name).uri;
@@ -154,7 +160,21 @@ export const FoodCard: React.FC<FoodCardProps> = ({
     router.push(route);
   };
 
+  const ensureDeliverySelection = () => {
+    if (availableOptions.length > 1 && selectedDeliveryType === null) {
+      Alert.alert(
+        t('foodCard.alerts.deliveryRequiredTitle'),
+        t('foodCard.alerts.deliveryRequiredMessage'),
+        [{ text: t('foodCard.alerts.ok') }]
+      );
+      return false;
+    }
+    return true;
+  };
+
   const incrementQuantity = () => {
+    if (!ensureDeliverySelection()) return;
+
     if (currentStock !== undefined && localQuantity >= currentStock) {
       Alert.alert(
         t('foodCard.alerts.stockInsufficientTitle'),
@@ -162,35 +182,27 @@ export const FoodCard: React.FC<FoodCardProps> = ({
       );
       return;
     }
-    
-    setLocalQuantity(prev => prev + 1);
-  };
 
-  const decrementQuantity = () => {
-    if (localQuantity > 0) {
-      setLocalQuantity(prev => prev - 1);
-    }
-  };
+    const nextQuantity = localQuantity + 1;
+    setLocalQuantity(nextQuantity);
 
-  const handleAddToCart = () => {
-    if (localQuantity > 0) {
-      // Alerjen uyarısı: Sepete eklemeden önce zorunlu göster
+    if (localQuantity === 0) {
       setShowAllergenModal(true);
-    } else {
-      Alert.alert(t('foodCard.alerts.warningTitle'), t('foodCard.alerts.selectQuantity'));
+      return;
+    }
+
+    updateQuantity(id, nextQuantity);
+  };
+
+  const removeItem = () => {
+    if (localQuantity > 0) {
+      removeFromCart(id);
+      setLocalQuantity(0);
     }
   };
 
   const proceedWithAddToCart = () => {
-    // Check if user needs to select delivery option
-    if (availableOptions.length > 1 && selectedDeliveryType === null) {
-      Alert.alert(
-        t('foodCard.alerts.deliveryRequiredTitle'),
-        t('foodCard.alerts.deliveryRequiredMessage'),
-        [{ text: t('foodCard.alerts.ok') }]
-      );
-      return;
-    }
+    if (!ensureDeliverySelection()) return;
     
     const deliveryText = selectedDeliveryType 
       ? `\n\n${t('foodCard.deliveryLabel')}: ${selectedDeliveryType === 'pickup' ? t('foodCard.pickupWithIcon') : t('foodCard.deliveryWithIcon')}`
@@ -220,11 +232,6 @@ export const FoodCard: React.FC<FoodCardProps> = ({
             
             // Call parent callback
             onAddToCart?.(id, localQuantity, selectedDeliveryType!);
-            
-            // Reset local quantity
-            setLocalQuantity(0);
-            
-            // No success dialog - just add to cart silently
           },
         },
       ]
@@ -238,180 +245,154 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
   const handleAllergenCancel = () => {
     setShowAllergenModal(false);
+    setLocalQuantity(cartQuantity);
   };
 
   return (
     <>
-    <Card variant="default" padding="none" style={[styles.card, isGridMode && styles.gridCard]}>
+    <Card
+      variant="default"
+      padding="none"
+      style={[styles.card, isGridMode && styles.gridCard, { backgroundColor: colors.card }]}
+    >
+      <View style={styles.headerFullWidth}>
+        <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.headerNameTouchable}>
+          <Text variant="subheading" weight="semibold" numberOfLines={1} style={styles.headerFoodName}>
+            {name}
+          </Text>
+        </TouchableOpacity>
+        <Text variant="subheading" weight="bold" color="primary" style={styles.headerPrice}>
+          {formatCurrency(price)}
+        </Text>
+      </View>
+
       <View style={[styles.content, isGridMode && styles.gridContent]}>
           {/* Clickable Food Image ONLY */}
-          <View style={[styles.imageContainer, isGridMode && styles.gridImageContainer]}>
-            <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.imageClickable}>
-              <Image 
-                source={(() => {
-                  // Önizleme modunda veya local file varsa kullan
-                  if (imageUrl && (isPreview || imageUrl.startsWith('file://') || imageUrl.startsWith('http'))) {
-                    return { uri: imageUrl };
-                  }
-                  
-                  // Kategori tabanlı resim kullan
-                  if (category) {
-                    return getCategoryImage(category);
-                  }
-                  
-                  // Fallback: yemek ismine göre resim kullan
-                  return getDefaultImage(name);
-                })()} 
-                style={[styles.image, isGridMode && styles.gridImage]}
-                resizeMode="cover"
-                defaultSource={{ uri: 'https://via.placeholder.com/160x140/f5f5f5/cccccc?text=📸' }}
-              />
+          <View
+            style={[
+              styles.imageContainer,
+              isGridMode && styles.gridImageContainer,
+              { backgroundColor: colors.card, width: imageWidth },
+            ]}
+          >
+            <View style={[styles.imageWrapper, { backgroundColor: colors.card }]}>
+              <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.imageClickable}>
+                <Image 
+                  source={(() => {
+                    // Önizleme modunda veya local file varsa kullan
+                    if (imageUrl && (isPreview || imageUrl.startsWith('file://') || imageUrl.startsWith('http'))) {
+                      return { uri: imageUrl };
+                    }
+                    
+                    // Kategori tabanlı resim kullan
+                    if (category) {
+                      return getCategoryImage(category);
+                    }
+                    
+                    // Fallback: yemek ismine göre resim kullan
+                    return getDefaultImage(name);
+                  })()} 
+                  style={[styles.image, isGridMode && styles.gridImage]}
+                  resizeMode="cover"
+                  defaultSource={{ uri: 'https://via.placeholder.com/160x140/f5f5f5/cccccc?text=📸' }}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              onPress={incrementQuantity}
+              activeOpacity={0.85}
+              style={[styles.floatingAddButton, { backgroundColor: '#FFFFFF' }]}
+            >
+              <FontAwesome name="plus" size={26} color={colors.primary} />
             </TouchableOpacity>
+
+            {localQuantity > 0 && (
+              <View style={styles.floatingQuantityBadge}>
+                <TouchableOpacity onPress={removeItem} style={styles.badgeIconButton}>
+                  <FontAwesome name="trash" size={12} color="#333333" />
+                </TouchableOpacity>
+                <Text variant="body" weight="bold" style={styles.badgeQuantityText}>
+                  {localQuantity}
+                </Text>
+              </View>
+            )}
           </View>
 
 
           {/* Food details column */}
           <View style={styles.detailsColumn}>
-            <View style={styles.detailsTopRow}>
-          {/* Food info - NOT clickable */}
-          <View style={[styles.info, isGridMode && styles.gridInfo]}>
-            <View style={styles.headerRow}>
-              <Text variant="subheading" weight="semibold" numberOfLines={1} style={styles.foodName}>
-                {name}
-              </Text>
-            </View>
-            
-                   <View style={styles.cookInfo}>
-                     <TouchableOpacity 
-                       onPress={() => {
-                         console.log('Cook name pressed:', cookName);
-                         router.push(`/seller-profile?cookName=${encodeURIComponent(cookName)}`);
-                       }}
-                       activeOpacity={0.7}
-                     >
-                       <Text variant="body" color="primary" style={[styles.cookName, { textDecorationLine: 'underline' }]}>
-                         {cookName} →
-                       </Text>
-                     </TouchableOpacity>
-                   </View>
-
-      <View style={styles.ratingDistance}>
-        <View style={styles.ratingsRow}>
-          <StarRating rating={rating} size="small" showNumber maxRating={1} />
-          <View style={styles.hygieneRatingInline}>
-            <StarRating 
-              rating={5} 
-              size="small" 
-              showNumber 
-              maxRating={1}
-              color="#2D5A4A"
-            />
-          </View>
-        </View>
-      </View>
-
-          </View>
-
-          {/* Right side controls - NOT clickable for navigation */}
-          <View style={[styles.rightControls, isGridMode && styles.gridRightControls]}>
-            {/* Price - aligned with quantity controls */}
-            <Text variant="subheading" weight="bold" color="primary" style={styles.priceAligned}>
-              {formatCurrency(price)}
-            </Text>
-            
-            {/* Quantity controls */}
-            <View style={[styles.quantityControls, isGridMode && styles.gridQuantityControls]}>
-              <TouchableOpacity 
-                onPress={decrementQuantity}
-                style={styles.quantityButton}
-              >
-                <Text variant="body" weight="semibold" style={styles.quantityButtonText}>−</Text>
-              </TouchableOpacity>
-              <Text variant="body" weight="bold" style={styles.quantityText}>
-                {localQuantity}
-              </Text>
-              <TouchableOpacity 
-                onPress={incrementQuantity}
-                style={styles.quantityButton}
-              >
-                <Text variant="body" weight="semibold" style={styles.quantityButtonText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-            </View>
 
           {/* Bottom meta info (near buttons) */}
           <View style={styles.bottomMetaRow}>
-            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.bottomMetaDate]}>
-              • {showAvailableDates
+            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.bottomMetaDate, styles.leftText]}>
+              <Text weight="bold">{t('foodCard.dateLabel')}:</Text>{' '}
+              {showAvailableDates
                 ? (availableDates || t('foodCard.unknownDate'))
                 : (maxDeliveryDistance ? t('foodCard.deliveryDistance', { distance: maxDeliveryDistance }) : distance)}
             </Text>
-            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText]}>
-              {t('foodCard.countryMeal', { country: resolvedCountry, count: currentStock || 0 })}
+            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.leftText]}>
+              <Text weight="bold">{t('foodCard.countryLabel')}:</Text> {resolvedCountry}
+            </Text>
+            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.leftText]}>
+              <Text weight="bold">{t('foodCard.quantityLabel')}:</Text>{' '}
+              {dailyStock !== undefined && currentStock !== undefined
+                ? `${Math.max(dailyStock - currentStock, 0)}/${dailyStock}`
+                : `${currentStock || 0}`}
             </Text>
           </View>
 
-          {/* Bottom actions row */}
-          <View style={styles.bottomActionsRow}>
+          {/* Delivery options row */}
+          <View style={styles.deliveryRow}>
+            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.leftText]}>
+              <Text weight="bold">{t('foodCard.deliveryOptionsLabel')}</Text>
+            </Text>
             <View style={styles.deliveryButtonsRow}>
-              {availableOptions.length > 1 ? (
-                availableOptions.map((option) => {
-                  const isSelected = selectedDeliveryType === option;
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      onPress={() => setSelectedDeliveryType(option)}
-                      style={[
-                        styles.deliveryButton,
-                        {
-                          backgroundColor: isSelected ? colors.primary : '#F5F5F5',
-                          borderWidth: 1,
-                          borderColor: isSelected ? colors.primary : '#E0E0E0',
-                        },
-                      ]}
-                    >
-                      <Text
-                        variant="body"
-                        weight="medium"
-                        style={{ color: isSelected ? 'white' : '#888888', fontSize: 11 }}
-                      >
-                        {option === 'pickup' ? t('foodDetailScreen.pickup') : t('foodDetailScreen.delivery')}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })
-              ) : (
-                availableOptions.length === 1 && (
+              {(['pickup', 'delivery'] as const).map((option) => {
+                const isAvailable = availableOptions.includes(option);
+                return (
                   <View
+                    key={option}
                     style={[
-                      styles.deliveryButton,
+                      styles.infoPill,
                       {
-                        backgroundColor: colors.primary,
-                        borderWidth: 0,
+                        backgroundColor: 'transparent',
+                        borderColor: isAvailable ? '#00C853' : '#FF1744',
                       },
                     ]}
                   >
-                    <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
-                      {availableOptions[0] === 'pickup'
-                        ? t('foodDetailScreen.pickup')
-                        : t('foodDetailScreen.delivery')}
+                    <Text
+                      variant="body"
+                      weight="medium"
+                      style={{ color: isAvailable ? '#00C853' : '#FF1744', fontSize: 13 }}
+                    >
+                      {option === 'pickup' ? t('foodDetailScreen.pickup') : t('foodDetailScreen.delivery')}
                     </Text>
                   </View>
-                )
-              )}
+                );
+              })}
             </View>
+          </View>
 
-            <TouchableOpacity
-              onPress={handleAddToCart}
-              style={[styles.addToCartButtonBottomRight, { backgroundColor: colors.primary }]}
-            >
-              <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
-                {t('foodCard.addToCart')}
-              </Text>
-            </TouchableOpacity>
+          {/* Bottom actions row */}
           </View>
-          </View>
+        </View>
+
+        {/* Cook row at bottom */}
+        <View style={styles.cookRow}>
+          <TouchableOpacity
+            onPress={() => {
+              console.log('Cook pill pressed:', cookName);
+              router.push(`/seller-profile?cookName=${encodeURIComponent(cookName)}`);
+            }}
+            activeOpacity={0.85}
+            style={[styles.cookPill, { borderColor: colors.textSecondary, backgroundColor: colors.card }]}
+          >
+            <Text variant="body" color="primary" weight="bold" style={styles.cookName}>
+              {cookName} →
+            </Text>
+            <StarRating rating={rating} size="large" showNumber maxRating={1} />
+          </TouchableOpacity>
         </View>
 
       </Card>
@@ -430,79 +411,95 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 8, // Back to previous spacing
+    marginBottom: 16,
     borderRadius: 16, // Back to original radius
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
-    overflow: 'hidden', // Ensure image can be flush to edge
+    overflow: 'visible',
+  },
+  headerFullWidth: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingBottom: 6,
+  },
+  headerNameTouchable: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  headerFoodName: {
+    fontSize: 20,
+  },
+  headerPrice: {
+    fontSize: 18,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'flex-start', // Back to flex-start
     position: 'relative', // Allow absolute positioning for button
-    minHeight: 160, // Back to original height
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
+    zIndex: 1,
   },
   detailsColumn: {
     flex: 1,
-    minHeight: 160,
-    justifyContent: 'space-between',
-  },
-  detailsTopRow: {
-    flexDirection: 'row',
+    paddingLeft: Spacing.sm,
   },
   imageContainer: {
-    width: 180, // Back to original size
-    height: 160, // Back to original size
+    aspectRatio: 4 / 3,
     borderRadius: 16, // Back to original radius
-    overflow: 'hidden', // Back to hidden
+    overflow: 'visible',
     position: 'relative', // Enable absolute positioning for child image
-    backgroundColor: '#f5f5f5', // Light background for loading state
+    zIndex: 2,
     margin: 0,
     padding: 0,
     justifyContent: 'center', // Center the image
     alignItems: 'center', // Center the image
   },
+  imageWrapper: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: 1,
+  },
   image: {
     width: '100%', // Full width like detail page
     height: '100%', // Full height like detail page
-    position: 'absolute', // Position absolute to fill container completely
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
     margin: 0,
     padding: 0,
-    borderRadius: 16, // Back to original radius
-  },
-  info: {
-    flex: 1,
-    paddingLeft: 10, // Back to original
-    paddingRight: 4, // Back to original
-    paddingVertical: 3, // Slightly lower to sit closer to buttons
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start', // Normal hizalama
-    alignItems: 'flex-start',
-    marginBottom: 1, // Minimal margin
-  },
-  foodName: {
-    flex: 1,
-    marginRight: Spacing.sm,
+    borderRadius: 12,
   },
   cookInfo: {
     marginTop: 4,
     marginBottom: 1, // Minimal margin
   },
   cookName: {
-    fontSize: 13, // Slightly larger
+    fontSize: 15,
   },
-  ratingDistance: {
-    marginTop: 4,
-    marginBottom: 0,
+  cookPill: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 0,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  ratingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  hygieneRatingInline: {
+    marginLeft: 4, // Daha yakın
   },
   availabilityInfo: {
     flexDirection: 'row',
@@ -514,26 +511,39 @@ const styles = StyleSheet.create({
   bottomMetaRow: {
     marginTop: 0,
     marginBottom: 0,
-    transform: [{ translateY: -12 }],
+    alignItems: 'flex-start',
   },
   bottomMetaText: {
-    fontSize: 13,
+    fontSize: 14,
   },
   bottomMetaDate: {
     transform: [{ translateY: -4 }],
   },
-  bottomActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  deliveryRow: {
+    marginTop: 6,
+    marginBottom: 4,
     paddingHorizontal: Spacing.sm,
-    paddingBottom: 2,
-    paddingTop: 0,
-    marginTop: -6,
+    alignItems: 'center',
+    gap: 4,
+  },
+  cookRow: {
+    marginTop: 4,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
   },
   deliveryButtonsRow: {
     flexDirection: 'row',
     gap: Spacing.xs,
+    justifyContent: 'center',
+  },
+  infoPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  leftText: {
+    textAlign: 'left',
   },
   deliveryButton: {
     paddingHorizontal: 4,
@@ -559,68 +569,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 2, // Minimal margin
   },
-  quantityControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4, // Reduced gap for compact design
-    backgroundColor: '#FFFFFF', // White background
-    borderRadius: 12, // Smaller radius for compact oval
-    paddingHorizontal: 4, // Reduced padding for smaller size
-    paddingVertical: 2, // Reduced padding for smaller size
-    marginTop: 38, // Increased margin to push down even closer to sepete ekle
-    marginBottom: 2, // Keep minimal bottom margin
-    marginLeft: 'auto', // Push to right side
-    alignSelf: 'flex-end', // Align to right
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2, // Reduced shadow
-    borderWidth: 1,
-    borderColor: '#E0E0E0', // Light border for definition
-  },
-  quantityButton: {
-    width: 16, // Smaller for compact design
-    height: 16, // Smaller for compact design
-    borderRadius: 8, // Circular buttons
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  quantityButtonText: {
-    fontSize: 13, // Slightly larger
-    fontWeight: 'bold',
-    color: '#333333', // Dark color for contrast
-    lineHeight: 13, // Better alignment
-  },
-  quantityText: {
-    minWidth: 12, // Smaller for compact design
-    textAlign: 'center',
-    fontSize: 12, // Slightly larger
-    color: '#333333', // Dark color
-    fontWeight: 'bold',
-  },
-  addToCartButton: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4, // Same as badge padding
-    borderRadius: 6, // Same as badge radius
-    minWidth: 70,
-    alignItems: 'center',
-  },
-  addToCartButtonBottomRight: {
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    borderRadius: 6,
-    minWidth: 56,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-  },
   compactDateText: {
-    fontSize: 12, // Slightly larger
+    fontSize: 13,
     paddingHorizontal: 4, // Narrower from sides
   },
   // Grid Mode Styles
@@ -657,30 +607,47 @@ const styles = StyleSheet.create({
     fontSize: 12, // Smaller price for grid
     marginBottom: 0,
   },
-  gridQuantityControls: {
-    gap: 2, // Tighter spacing for grid
-  },
   imageClickable: {
     width: '100%',
     height: '100%',
   },
-  priceAligned: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8, // Sayaç ile arasında boşluk
+  floatingAddButton: {
+    position: 'absolute',
+    right: -22,
+    bottom: -12,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 20,
+    zIndex: 999,
   },
-  ratingsRow: {
+  floatingQuantityBadge: {
+    position: 'absolute',
+    right: 8,
+    bottom: 0,
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  hygieneRatingInline: {
-    marginLeft: 4, // Daha yakın
+  badgeIconButton: {
+    marginRight: 6,
   },
-  hygienePending: {
-    fontSize: 10,
-    color: '#FF9500',
-    fontWeight: '600',
-    marginLeft: 4, // Daha yakın
+  badgeQuantityText: {
+    fontSize: 13,
+    color: '#333333',
   },
 });

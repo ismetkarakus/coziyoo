@@ -1,0 +1,27 @@
+ana menu mesaj hedefi ayarlanacak
+c butonuna sayfa yapilacak
+profil sayfasi icin ana menude bir yere ikon konacak
+profildeki mesaja tikladigimizda mesajlar neyin nesi
+mesaj bolumu duzenlenecek sbit texti ekleyecegiz
+satici ve alici direk mesjlasamayacak ordr bazli mesajlasacak
+iki bilsirim sistemi ollacak biri order bildirimi digeri sistem bikdirimi
+ana sayfada yemegin ismine tiklan bilir yapilsin
+gel al ve teslima t buton degil bilgi olacak secenekler diye biliriz
+yemek kartina turu : turkyrmrgi sayisi :3/8 adet eklenecek 
+
+yemegin resmi yada ismine tiklaninca yemek karti gelsin yemek kartinin altina arti eksi butonlariyla urun urun ekleme ozelligi eklensin
+yemek kartina favori kalp sembolu koyalim
+sayac bolumu assagi sepetin yanina alincak
+yemek kartina padding  gi artiracagiz
+yemek katagorisi menusunu biraz assagi alalim
+fyemek kartini yeniden dzayn edelim
+urun sayisi 0m sa sepete ekle butonu disable
+sepet onaylaninca bildirim gelmiyor
+ana menudeki sepet ikonunda urun sayisi eklensin
+ana menudeki mesajlarimi degistirip siparislerim yapiyoruz acilan sayfada su anki adi musteri mesajlari olan sayfayi kullanacagiz
+her bir siparis tiklandiginda bu siparisle ilgili mesajlara gider
+siparisle ilgili bildirinm geldiginde tiklanildiginda o siparisle ilgili mesaj sayfasi acilicak
+Yemek karti dizayn:
+card header div name of dish on the right than stars on the right
+card content dish image on the right add big float plus icon to right bottom corner of image , chef name with link than next row available dates next row type and quantity
+details of big plus icon:sepete ekle butoonu yerine buyuk arti isareti koy tiklayinca sayac gorunsun sayac degeri 1 olsun bir adet urun sepete eklensin sol tarafinda - ikonu  yerine sil ikonu olsun tiklayinca siparisi sepetten silsin

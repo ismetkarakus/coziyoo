@@ -8,6 +8,8 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useAuth } from '../../../context/AuthContext';
+import { useThemePreference } from '../../../context/ThemeContext';
+import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
 
 const getProfileSections = (t: (key: string) => string) => ([
   {
@@ -31,6 +33,7 @@ export const Profile: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const { signOut } = useAuth();
+  const { preference, setPreference } = useThemePreference();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
   const profileSections = getProfileSections(t);
@@ -271,6 +274,65 @@ export const Profile: React.FC = () => {
           </Card>
         </View>
 
+        {/* Theme */}
+        <View style={styles.section}>
+          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+            {t('profileScreen.sections.theme')}
+          </Text>
+          <Card variant="default" padding="md" style={styles.sectionCard}>
+            <View style={styles.themeToggleRow}>
+              <TouchableOpacity
+                onPress={() => setPreference('light')}
+                style={[
+                  styles.themeToggleButton,
+                  { borderColor: colors.border },
+                  preference === 'light' && { borderColor: colors.primary, backgroundColor: colors.surface },
+                ]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.themeToggleContent}>
+                  <WebSafeIcon name="sun-o" size={16} color={colors.text} />
+                  <Text variant="body" weight="semibold">
+                    {t('profileScreen.theme.light')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setPreference('dark')}
+                style={[
+                  styles.themeToggleButton,
+                  { borderColor: colors.border },
+                  preference === 'dark' && { borderColor: colors.primary, backgroundColor: colors.surface },
+                ]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.themeToggleContent}>
+                  <WebSafeIcon name="moon-o" size={16} color={colors.text} />
+                  <Text variant="body" weight="semibold">
+                    {t('profileScreen.theme.dark')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setPreference('system')}
+                style={[
+                  styles.themeToggleButton,
+                  { borderColor: colors.border },
+                  preference === 'system' && { borderColor: colors.primary, backgroundColor: colors.surface },
+                ]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.themeToggleContent}>
+                  <WebSafeIcon name="cog" size={16} color={colors.text} />
+                  <Text variant="body" weight="semibold">
+                    {t('profileScreen.theme.system')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </Card>
+        </View>
+
         {/* Sign Out */}
         <TouchableOpacity
           onPress={handleSignOut}
@@ -349,6 +411,24 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     marginHorizontal: Spacing.md,
+  },
+  themeToggleRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  themeToggleButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  themeToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   contactButton: {
     borderWidth: 1,

@@ -10,6 +10,8 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
 import { useCountry } from '../../../context/CountryContext';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useThemePreference } from '../../../context/ThemeContext';
+import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
 
 const getMenuItems = (t: (key: string) => string) => ([
   {
@@ -48,6 +50,7 @@ export const SellerPanel: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const [profileData, setProfileData] = useState(DEFAULT_SELLER_DATA);
   const [complianceExpanded, setComplianceExpanded] = useState(false);
+  const { preference, setPreference } = useThemePreference();
   
   // Hook'ları önce çağır
   const { currentCountry, isBusinessComplianceRequired } = useCountry();
@@ -241,6 +244,65 @@ export const SellerPanel: React.FC = () => {
             </View>
           </View>
         </Card>
+
+        {/* Theme */}
+        <View style={styles.section}>
+          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+            {t('profileScreen.sections.theme')}
+          </Text>
+          <Card variant="default" padding="md" style={styles.sectionCard}>
+            <View style={styles.themeToggleRow}>
+              <TouchableOpacity
+                onPress={() => setPreference('light')}
+                style={[
+                  styles.themeToggleButton,
+                  { borderColor: colors.border },
+                  preference === 'light' && { borderColor: colors.primary, backgroundColor: colors.surface },
+                ]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.themeToggleContent}>
+                  <WebSafeIcon name="sun-o" size={16} color={colors.text} />
+                  <Text variant="body" weight="semibold">
+                    {t('profileScreen.theme.light')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setPreference('dark')}
+                style={[
+                  styles.themeToggleButton,
+                  { borderColor: colors.border },
+                  preference === 'dark' && { borderColor: colors.primary, backgroundColor: colors.surface },
+                ]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.themeToggleContent}>
+                  <WebSafeIcon name="moon-o" size={16} color={colors.text} />
+                  <Text variant="body" weight="semibold">
+                    {t('profileScreen.theme.dark')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setPreference('system')}
+                style={[
+                  styles.themeToggleButton,
+                  { borderColor: colors.border },
+                  preference === 'system' && { borderColor: colors.primary, backgroundColor: colors.surface },
+                ]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.themeToggleContent}>
+                  <WebSafeIcon name="cog" size={16} color={colors.text} />
+                  <Text variant="body" weight="semibold">
+                    {t('profileScreen.theme.system')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </Card>
+        </View>
 
         {/* Business Compliance Status Card - Her Ülke İçin Göster */}
         {(
@@ -628,6 +690,34 @@ const styles = StyleSheet.create({
   },
   userDetails: {
     flex: 1,
+  },
+  section: {
+    marginBottom: Spacing.lg,
+  },
+  sectionTitle: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  sectionCard: {
+    marginHorizontal: Spacing.md,
+  },
+  themeToggleRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  themeToggleButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  themeToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   menuSectionsContainer: {
     paddingHorizontal: Spacing.md,

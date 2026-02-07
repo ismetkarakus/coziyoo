@@ -552,6 +552,10 @@ export const translations = {
 
     foodCard: {
       addToCart: 'Sepete Ekle',
+      dateLabel: 'Tarih',
+      countryLabel: 'Ülke',
+      quantityLabel: 'Adet',
+      deliveryOptionsLabel: 'Teslimat Seçenekleri',
       unknownDate: 'Tarih belirtilmemiş',
       deliveryDistance: '{{distance}} km teslimat',
       countryMeal: '{{country}} yemeği • {{count}} adet',
@@ -1774,6 +1778,12 @@ export const translations = {
         communication: 'İletişim',
         support: 'Yardım & Destek',
         language: 'Dil',
+        theme: 'Tema',
+      },
+      theme: {
+        light: 'Açık',
+        dark: 'Koyu',
+        system: 'Sistem',
       },
       items: {
         personalInfo: 'Kişisel Bilgiler',
@@ -2661,6 +2671,10 @@ export const translations = {
 
     foodCard: {
       addToCart: 'Add to Cart',
+      dateLabel: 'Date',
+      countryLabel: 'Country',
+      quantityLabel: 'Qty',
+      deliveryOptionsLabel: 'Delivery Options',
       unknownDate: 'Date not specified',
       deliveryDistance: '{{distance}} km delivery',
       countryMeal: '{{country}} food • {{count}} left',
@@ -3883,6 +3897,12 @@ export const translations = {
         communication: 'Communication',
         support: 'Help & Support',
         language: 'Language',
+        theme: 'Theme',
+      },
+      theme: {
+        light: 'Light',
+        dark: 'Dark',
+        system: 'System',
       },
       items: {
         personalInfo: 'Personal Info',

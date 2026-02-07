@@ -56,6 +56,10 @@ const webIconMap: { [key: string]: string } = {
   'star': '⭐',
   'heart': '❤️',
   'thumbs-up': '👍',
+
+  // Theme
+  'sun-o': '☀️',
+  'moon-o': '🌙',
   
   // Settings
   'cog': '⚙️',
