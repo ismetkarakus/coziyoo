@@ -18,10 +18,6 @@ export const DeliveryOptionSelector: React.FC<DeliveryOptionSelectorProps> = ({
   style,
 }) => {
   const { t } = useTranslation();
-  const getOptionIcon = (option: 'pickup' | 'delivery') => {
-    return option === 'pickup' ? '🏪' : '🚚';
-  };
-
   const getOptionTitle = (option: 'pickup' | 'delivery') => {
     return option === 'pickup'
       ? t('deliveryOptionSelector.pickup')
@@ -52,9 +48,6 @@ export const DeliveryOptionSelector: React.FC<DeliveryOptionSelectorProps> = ({
             activeOpacity={0.7}
           >
             <View style={styles.optionContent}>
-              <Text style={styles.optionIcon}>
-                {getOptionIcon(option)}
-              </Text>
               <View style={styles.optionText}>
                 <Text 
                   variant="body" 
@@ -116,10 +109,6 @@ const styles = StyleSheet.create({
   optionContent: {
     alignItems: 'center',
     position: 'relative',
-  },
-  optionIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.sm,
   },
   optionText: {
     alignItems: 'center',

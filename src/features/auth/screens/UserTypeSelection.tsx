@@ -26,10 +26,10 @@ export const UserTypeSelection: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
         <View style={styles.header}>
-          <Text variant="heading" weight="bold" style={styles.logoText}>
+          <Text variant="subheading" style={[styles.sloganText, { color: colors.text }]}>
             Coziyoo
           </Text>
-          <Text variant="subheading" style={styles.sloganText}>
+          <Text variant="body" style={[styles.subSloganText, { color: colors.textSecondary }]}>
             {t('homeScreen.slogan') || 'Ev Yemekleri'}
           </Text>
           <Text variant="body" center style={styles.title}>
@@ -84,17 +84,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing['2xl'],
   },
-  logoText: {
-    fontSize: 64,
-    fontWeight: 'bold',
-    lineHeight: 72, // Explicit line height to prevent clipping
-    marginBottom: Spacing.xs,
-    color: '#2E2E2E',
-  },
   sloganText: {
-    fontSize: 24,
-    color: '#8E8E93',
+    fontSize: 64,
+    lineHeight: 72,
+    fontWeight: 'bold',
     marginBottom: Spacing.xl,
+  },
+  subSloganText: {
+    fontSize: 22,
+    marginTop: -Spacing.md,
+    marginBottom: Spacing.lg,
   },
   title: {
     textAlign: 'center',
@@ -112,15 +111,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
-
-
-
-
-
-
-
-
 
 
 

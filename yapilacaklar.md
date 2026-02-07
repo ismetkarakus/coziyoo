@@ -22,3 +22,4 @@
 [x] tr gida isletmesi bolumundeki tum linkler turkiye sitelerine gidiyor
 [x] uygulama tr veya gb secilmis dil karisimi olmayacak
 [x] gece modunda gozukmeyean yazilar duzeldi 
+

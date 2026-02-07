@@ -394,8 +394,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                   >
                     <Text variant="body" weight="medium" style={{ color: 'white', fontSize: 11 }}>
                       {availableOptions[0] === 'pickup'
-                        ? t('foodCard.pickupWithIcon')
-                        : t('foodCard.deliveryWithIcon')}
+                        ? t('foodDetailScreen.pickup')
+                        : t('foodDetailScreen.delivery')}
                     </Text>
                   </View>
                 )

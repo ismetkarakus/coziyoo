@@ -7,6 +7,8 @@ export const translations = {
       cart: 'Sepet',
       orders: 'Siparişler',
       profile: 'Profil',
+      messages: 'Mesaj',
+      notifications: 'Bildirim',
     },
 
     // Auth
@@ -477,8 +479,8 @@ export const translations = {
       timeLabel: 'Saat',
       quantityLabel: 'Adet',
       deliveryType: 'Teslimat Türü',
-      pickup: '🏪 Gel Al',
-      delivery: '🚗 Teslimat',
+      pickup: 'Gel Al',
+      delivery: 'Teslimat',
       total: 'Toplam Tutar',
       submit: 'Sipariş Talebini Gönder',
       defaults: {
@@ -553,8 +555,8 @@ export const translations = {
       unknownDate: 'Tarih belirtilmemiş',
       deliveryDistance: '{{distance}} km teslimat',
       countryMeal: '{{country}} yemeği • {{count}} adet',
-      pickupWithIcon: '🏪 Gel Al',
-      deliveryWithIcon: '🚚 Teslimat',
+      pickupWithIcon: 'Gel Al',
+      deliveryWithIcon: 'Teslimat',
       deliveryLabel: 'Teslimat',
       alerts: {
         warningTitle: 'Uyarı',
@@ -2114,6 +2116,8 @@ export const translations = {
       cart: 'Cart',
       orders: 'Orders',
       profile: 'Profile',
+      messages: 'Messages',
+      notifications: 'Notifications',
     },
 
     // Auth
@@ -2584,8 +2588,8 @@ export const translations = {
       timeLabel: 'Time',
       quantityLabel: 'Quantity',
       deliveryType: 'Delivery Type',
-      pickup: '🏪 Pickup',
-      delivery: '🚗 Delivery',
+      pickup: 'Pickup',
+      delivery: 'Delivery',
       total: 'Total',
       submit: 'Send Order Request',
       defaults: {
@@ -2660,8 +2664,8 @@ export const translations = {
       unknownDate: 'Date not specified',
       deliveryDistance: '{{distance}} km delivery',
       countryMeal: '{{country}} food • {{count}} left',
-      pickupWithIcon: '🏪 Pickup',
-      deliveryWithIcon: '🚚 Delivery',
+      pickupWithIcon: 'Pickup',
+      deliveryWithIcon: 'Delivery',
       deliveryLabel: 'Delivery',
       alerts: {
         warningTitle: 'Warning',

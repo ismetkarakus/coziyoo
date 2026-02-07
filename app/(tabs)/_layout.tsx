@@ -221,7 +221,7 @@ export default function TabLayout() {
           title: t('tabs.notifications'),
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "bullhorn" : "bullhorn"} 
+              name={focused ? "bell" : "bell-o"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
             />
