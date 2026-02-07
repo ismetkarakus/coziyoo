@@ -325,16 +325,16 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
           {/* Bottom meta info (near buttons) */}
           <View style={styles.bottomMetaRow}>
-            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.bottomMetaDate, styles.leftText]}>
+            <Text variant="caption" color="textSecondary" style={[styles.metaText, styles.bottomMetaDate]}>
               <Text weight="bold">{t('foodCard.dateLabel')}:</Text>{' '}
               {showAvailableDates
                 ? (availableDates || t('foodCard.unknownDate'))
                 : (maxDeliveryDistance ? t('foodCard.deliveryDistance', { distance: maxDeliveryDistance }) : distance)}
             </Text>
-            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.leftText]}>
+            <Text variant="caption" color="textSecondary" style={styles.metaText}>
               <Text weight="bold">{t('foodCard.countryLabel')}:</Text> {resolvedCountry}
             </Text>
-            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.leftText]}>
+            <Text variant="caption" color="textSecondary" style={styles.metaText}>
               <Text weight="bold">{t('foodCard.quantityLabel')}:</Text>{' '}
               {dailyStock !== undefined && currentStock !== undefined
                 ? `${Math.max(dailyStock - currentStock, 0)}/${dailyStock}`
@@ -344,7 +344,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
 
           {/* Delivery options row */}
           <View style={styles.deliveryRow}>
-            <Text variant="caption" color="textSecondary" style={[styles.compactDateText, styles.bottomMetaText, styles.leftText]}>
+            <Text variant="caption" color="textSecondary" style={styles.metaText}>
               <Text weight="bold">{t('foodCard.deliveryOptionsLabel')}</Text>
             </Text>
             <View style={styles.deliveryButtonsRow}>
@@ -357,24 +357,30 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                       styles.infoPill,
                       {
                         backgroundColor: 'transparent',
-                        borderColor: isAvailable ? '#00C853' : '#FF1744',
+                        borderColor: isAvailable ? '#00C853' : '#8E8E93',
                       },
                     ]}
                   >
-                    <Text
-                      variant="body"
-                      weight="medium"
-                      style={{ color: isAvailable ? '#00C853' : '#FF1744', fontSize: 13 }}
-                    >
-                      {option === 'pickup' ? t('foodDetailScreen.pickup') : t('foodDetailScreen.delivery')}
-                    </Text>
+                    <View style={styles.infoPillContent}>
+                      <FontAwesome
+                        name={isAvailable ? 'check' : 'times'}
+                        size={12}
+                        color={isAvailable ? '#00C853' : '#8E8E93'}
+                      />
+                      <Text
+                        variant="body"
+                        weight="medium"
+                        style={{ color: isAvailable ? '#00C853' : '#8E8E93', fontSize: 13 }}
+                      >
+                        {option === 'pickup' ? t('foodDetailScreen.pickup') : t('foodDetailScreen.delivery')}
+                      </Text>
+                    </View>
                   </View>
                 );
               })}
             </View>
           </View>
 
-          {/* Bottom actions row */}
           </View>
         </View>
 
@@ -476,10 +482,6 @@ const styles = StyleSheet.create({
     padding: 0,
     borderRadius: 12,
   },
-  cookInfo: {
-    marginTop: 4,
-    marginBottom: 1, // Minimal margin
-  },
   cookName: {
     fontSize: 15,
   },
@@ -494,33 +496,22 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
   },
-  ratingsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  hygieneRatingInline: {
-    marginLeft: 4, // Daha yakın
-  },
-  availabilityInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: -6,
-    marginTop: 2,
-  },
   bottomMetaRow: {
     marginTop: 0,
     marginBottom: 0,
     alignItems: 'flex-start',
   },
-  bottomMetaText: {
-    fontSize: 14,
+  metaText: {
+    fontSize: 16,
+    lineHeight: 20,
+    paddingHorizontal: 4,
+    textAlign: 'left',
   },
   bottomMetaDate: {
     transform: [{ translateY: -4 }],
   },
   deliveryRow: {
-    marginTop: 6,
+    marginTop: 'auto',
     marginBottom: 4,
     paddingHorizontal: Spacing.sm,
     alignItems: 'center',
@@ -542,36 +533,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
-  leftText: {
-    textAlign: 'left',
-  },
-  deliveryButton: {
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    borderRadius: 5,
-    minWidth: 48,
+  infoPillContent: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  rightControls: {
-    alignItems: 'flex-end',
-    justifyContent: 'flex-start', // Changed from space-between to flex-start
-    minWidth: 80,
-    paddingVertical: 2, // Minimal vertical padding
-    paddingRight: 8,
-  },
-  price: {
-    fontSize: 14, // Further reduced font size
-    fontWeight: 'bold',
-    marginBottom: 2, // Minimal margin
-  },
-  compactDateText: {
-    fontSize: 13,
-    paddingHorizontal: 4, // Narrower from sides
+    gap: 6,
   },
   // Grid Mode Styles
   gridCard: {
@@ -588,24 +553,6 @@ const styles = StyleSheet.create({
   },
   gridImage: {
     borderRadius: 12,
-  },
-  gridInfo: {
-    paddingLeft: 8, // Reduced padding for grid
-    paddingRight: 8,
-    paddingVertical: 6,
-    flex: 0, // Don't flex in grid mode
-  },
-  gridRightControls: {
-    flexDirection: 'row', // Horizontal layout for grid
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 'auto',
-  },
-  gridPrice: {
-    fontSize: 12, // Smaller price for grid
-    marginBottom: 0,
   },
   imageClickable: {
     width: '100%',
