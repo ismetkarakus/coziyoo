@@ -4,6 +4,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import Toast, { BaseToast, ToastConfig } from 'react-native-toast-message';
 
 import { ThemePreferenceProvider } from '@/src/context/ThemeContext';
 import { CartProvider } from '@/src/context/CartContext';
@@ -57,6 +58,27 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const toastConfig: ToastConfig = {
+    success: (props) => (
+      <BaseToast
+        {...props}
+        style={{
+          borderLeftColor: 'transparent',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 14,
+          shadowColor: '#000',
+          shadowOpacity: 0.15,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 8,
+        }}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
+        text1Style={{ fontSize: 14, fontWeight: '700' }}
+        text2Style={{ fontSize: 12, color: '#6B7280' }}
+      />
+    ),
+  };
+
   return (
     <ThemePreferenceProvider>
       <CountryProvider>
@@ -95,6 +117,7 @@ function RootLayoutNav() {
           <Stack.Screen name="wallet" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="country-selection" options={{ headerShown: false }} />
               </Stack>
+              <Toast config={toastConfig} />
                   </CartProvider>
                 </WalletProvider>
               </AuthGuard>

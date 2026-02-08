@@ -7,9 +7,9 @@ import {
   StyleSheet,
   ImageSourcePropType,
   ViewStyle,
-  Alert,
   useWindowDimensions,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -231,7 +231,14 @@ export function FoodCard({
 
   const handleAddToCart = () => {
     onAddToCart?.(id, 1, deliveryMode);
-    Alert.alert(t("foodCard.alerts.addToCartTitle"), t("foodCard.alerts.addToCartMessage", { count: 1, name }));
+    Toast.show({
+      type: "success",
+      text1: t("foodCard.alerts.addToCartTitle"),
+      text2: t("foodCard.alerts.addToCartMessage", { count: 1, name }),
+      position: "bottom",
+      bottomOffset: 90,
+      visibilityTime: 2000,
+    });
   };
 
   return (
@@ -323,7 +330,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 14,
-    marginBottom: 20,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 12,
