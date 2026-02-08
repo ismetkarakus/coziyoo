@@ -9,6 +9,7 @@ export { AllergenWarningModal } from './AllergenWarningModal';
 export { CountrySelector } from './CountrySelector';
 export { HeaderBackButton } from './HeaderBackButton';
 export { FoodCard } from './FoodCard';
+export { FoodOrderCard } from './FoodOrderCard';
 export { WebSafeIcon } from './WebSafeIcon';
 export { ChatBubble } from './ChatBubble';
 export { ChatInput } from './ChatInput';

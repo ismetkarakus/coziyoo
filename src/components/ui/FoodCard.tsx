@@ -1,64 +1,52 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, Alert, useWindowDimensions } from 'react-native';
-import { router } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
-import { Text } from './Text';
-import { Card } from './Card';
-import { StarRating } from './StarRating';
-import { AllergenWarningModal } from './AllergenWarningModal';
-import { Colors, Spacing, commonStyles } from '../../theme';
-import { useColorScheme } from '../../../components/useColorScheme';
-import { useCart } from '../../context/CartContext';
-import { useCountry } from '../../context/CountryContext';
-import { AllergenId } from '../../constants/allergens';
-import { useTranslation } from '../../hooks/useTranslation';
+import React, { useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  StyleSheet,
+  ImageSourcePropType,
+  ViewStyle,
+  Alert,
+  useWindowDimensions,
+} from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useTranslation } from "../../hooks/useTranslation";
+import { useCountry } from "../../context/CountryContext";
+import { AllergenId } from "../../constants/allergens";
 
-// Category-based images for food items
-const getCategoryImage = (category: string) => {
+type DeliveryMode = "pickup" | "delivery";
+
+const getCategoryImage = (category?: string) => {
   const categoryImages: { [key: string]: string } = {
-    'Ana Yemek': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
-    'Main Dish': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
-    'Çorba': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=280&fit=crop',
-    'Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=280&fit=crop',
-    'Kahvaltı': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=320&h=280&fit=crop',
-    'Breakfast': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=320&h=280&fit=crop',
-    'Salata': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop',
-    'Salad': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop',
-    'Tatlı': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
-    'Tatlı/Kek': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
-    'Dessert': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
-    'Dessert/Cake': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
-    'Meze': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=280&fit=crop', // Meze tabağı
-    'Appetizer': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=280&fit=crop',
-    'Vejetaryen': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop', // Sebze yemekleri
-    'Vegetarian': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop',
-    'Gluten Free': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=320&h=280&fit=crop', // Glutensiz ekmek
-    'Glutensiz': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=320&h=280&fit=crop',
-    'İçecekler': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=320&h=280&fit=crop', // İçecekler
-    'Drinks': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=320&h=280&fit=crop',
+    "Ana Yemek": "https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop",
+    "Main Dish": "https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop",
+    Çorba: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=280&fit=crop",
+    Soup: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=280&fit=crop",
+    Kahvaltı: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=320&h=280&fit=crop",
+    Breakfast: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=320&h=280&fit=crop",
+    Salata: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop",
+    Salad: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop",
+    "Tatlı/Kek": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop",
+    "Dessert/Cake": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop",
+    Meze: "https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=280&fit=crop",
+    Appetizer: "https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=280&fit=crop",
+    Vejetaryen: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop",
+    Vegetarian: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=320&h=280&fit=crop",
+    Glutensiz: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=320&h=280&fit=crop",
+    "Gluten Free": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=320&h=280&fit=crop",
+    İçecekler: "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=320&h=280&fit=crop",
+    Drinks: "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=320&h=280&fit=crop",
   };
-  
-  return { uri: categoryImages[category] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=320&h=280&fit=crop' };
+
+  return category ? categoryImages[category] : undefined;
 };
 
-// Default images for food items (fallback)
-const getDefaultImage = (foodName: string) => {
-  const foodImages: { [key: string]: string } = {
-    'Ev Yapımı Mantı': 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=320&h=280&fit=crop',
-    'Homemade Manti': 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=320&h=280&fit=crop',
-    'Karnıyarık': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
-    'Stuffed Eggplant': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=320&h=280&fit=crop',
-    'Baklava': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
-    'Homemade Baklava': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=320&h=280&fit=crop',
-    'Kuru fasülye pilav': 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=320&h=280&fit=crop',
-    'Tavuk pilav': 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=320&h=280&fit=crop',
-    'Helva': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=320&h=280&fit=crop',
-  };
-  
-  return { uri: foodImages[foodName] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=320&h=280&fit=crop' };
-};
+const getDefaultImage = () =>
+  "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=320&h=280&fit=crop";
 
-interface FoodCardProps {
+type FoodCardProps = {
   id: string;
   name: string;
   cookName: string;
@@ -71,19 +59,102 @@ interface FoodCardProps {
   availableDates?: string;
   currentStock?: number;
   dailyStock?: number;
-  onAddToCart?: (id: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => void;
-  maxDeliveryDistance?: number; // Satıcının belirlediği maksimum teslimat mesafesi
-  country?: string; // Ülke bilgisi
-  category?: string; // Yemek kategorisi
-  isPreview?: boolean; // Önizleme modunda local resimlere izin ver
-  allergens?: AllergenId[]; // Alerjen bilgileri
-  hygieneRating?: string; // Hijyen puanı (0-5 or 'Pending')
-  availableDeliveryOptions?: ('pickup' | 'delivery')[];
-  isGridMode?: boolean; // Grid düzeni için kompakt mod
-  showAvailableDates?: boolean; // Ana sayfada tarih gösterimi için
+  onAddToCart?: (id: string, quantity: number, deliveryOption?: DeliveryMode) => void;
+  maxDeliveryDistance?: number;
+  country?: string;
+  category?: string;
+  isPreview?: boolean;
+  allergens?: AllergenId[];
+  hygieneRating?: string;
+  availableDeliveryOptions?: DeliveryMode[];
+  isGridMode?: boolean;
+  showAvailableDates?: boolean;
+  ingredients?: string[];
+  style?: ViewStyle;
+};
+
+function Stars({ value }: { value: number }) {
+  const full = Math.floor(value);
+  const half = value - full >= 0.5;
+  const empty = 5 - full - (half ? 1 : 0);
+
+  return (
+    <View style={styles.starsRow}>
+      {Array.from({ length: full }).map((_, i) => (
+        <MaterialIcons key={`f-${i}`} name="star" size={16} color={COLORS.star} />
+      ))}
+      {half && <MaterialIcons name="star-half" size={16} color={COLORS.star} />}
+      {Array.from({ length: empty }).map((_, i) => (
+        <MaterialIcons key={`e-${i}`} name="star-outline" size={16} color={COLORS.starMuted} />
+      ))}
+    </View>
+  );
 }
 
-export const FoodCard: React.FC<FoodCardProps> = ({
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue} numberOfLines={2}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function Segmented({
+  value,
+  onChange,
+  allowPickup,
+  allowDelivery,
+}: {
+  value: DeliveryMode;
+  onChange?: (v: DeliveryMode) => void;
+  allowPickup: boolean;
+  allowDelivery: boolean;
+}) {
+  return (
+    <View style={styles.segmentWrap}>
+      <Pressable
+        onPress={() => allowPickup && onChange?.("pickup")}
+        style={[
+          styles.segmentBtn,
+          value === "pickup" && styles.segmentBtnActive,
+          !allowPickup && styles.segmentBtnDisabled,
+        ]}
+      >
+        <MaterialIcons
+          name="shopping-bag"
+          size={16}
+          color={value === "pickup" ? COLORS.accent : COLORS.textMuted}
+        />
+        <Text style={[styles.segmentText, value === "pickup" && styles.segmentTextActive]}>
+          Alırım
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={() => allowDelivery && onChange?.("delivery")}
+        style={[
+          styles.segmentBtn,
+          value === "delivery" && styles.segmentBtnActive,
+          !allowDelivery && styles.segmentBtnDisabled,
+        ]}
+      >
+        <MaterialIcons
+          name="local-shipping"
+          size={16}
+          color={value === "delivery" ? COLORS.accent : COLORS.textMuted}
+        />
+        <Text style={[styles.segmentText, value === "delivery" && styles.segmentTextActive]}>
+          Gelsin
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+export function FoodCard({
   id,
   name,
   cookName,
@@ -99,502 +170,291 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   onAddToCart,
   maxDeliveryDistance,
   country,
-  category, // Yemek kategorisi
-  isPreview = false, // Default olarak false
-  allergens, // Alerjen bilgileri
-  hygieneRating, // Hijyen puanı
-  availableDeliveryOptions, // Mevcut teslimat seçenekleri
-  isGridMode = false, // Grid modu
+  category,
+  isPreview = false,
+  availableDeliveryOptions,
   showAvailableDates = false,
-}) => {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  style,
+}: FoodCardProps) {
   const { t, currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
-  const { cartItems, addToCart, updateQuantity, removeFromCart } = useCart();
-  const resolvedCountry = country || (currentLanguage === 'en' ? 'Turkish' : 'Türk');
-  const { width: windowWidth } = useWindowDimensions();
-  const imageWidth = windowWidth < 768 ? '40%' : '30%';
-  
-  // Determine available options and set default selection
-  const getAvailableOptions = () => {
+  const { width } = useWindowDimensions();
+  const isCompact = width < 380;
+
+  const resolvedCountry = country || (currentLanguage === "en" ? "Turkish" : "Türk");
+
+  const availableOptions = useMemo<DeliveryMode[]>(() => {
     if (availableDeliveryOptions && availableDeliveryOptions.length > 0) {
       return availableDeliveryOptions;
     }
-    // Fallback to hasPickup/hasDelivery for backward compatibility
-    const options: ('pickup' | 'delivery')[] = [];
-    if (hasPickup) options.push('pickup');
-    if (hasDelivery) options.push('delivery');
+    const options: DeliveryMode[] = [];
+    if (hasPickup) options.push("pickup");
+    if (hasDelivery) options.push("delivery");
     return options;
-  };
-  
-  const availableOptions = getAvailableOptions();
-  const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery' | null>(
-    availableOptions.length === 1 ? availableOptions[0] : null // Tek seçenek varsa otomatik seç, çift seçenek varsa null
-  );
-  
-  // Local quantity state (not in cart yet)
-  const [localQuantity, setLocalQuantity] = useState(0);
-  const [showAllergenModal, setShowAllergenModal] = useState(false);
-  
-  // Reset delivery selection when quantity becomes 0
-  useEffect(() => {
-    if (localQuantity === 0 && availableOptions.length > 1) {
-      setSelectedDeliveryType(null); // Reset selection when quantity is 0
-    }
-  }, [localQuantity, availableOptions.length]);
-  
-  // Get current quantity from cart (for display purposes)
-  const cartItem = cartItems.find(item => item.id === id);
-  const cartQuantity = cartItem ? cartItem.quantity : 0;
+  }, [availableDeliveryOptions, hasPickup, hasDelivery]);
 
-  useEffect(() => {
-    setLocalQuantity(cartQuantity);
-  }, [cartQuantity]);
+  const initialMode: DeliveryMode = availableOptions.includes("pickup")
+    ? "pickup"
+    : "delivery";
 
-  const handlePress = () => {
-    console.log('FoodCard pressed:', name, id, 'by', cookName);
-    const foodImageUrl = imageUrl || getDefaultImage(name).uri;
-    const route = `/food-detail-simple?id=${id}&name=${encodeURIComponent(name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}`;
-    console.log('Navigating to SIMPLE FOOD DETAIL (no getTime errors):', route);
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>(initialMode);
+
+  const dateText = showAvailableDates
+    ? availableDates || t("foodCard.unknownDate")
+    : maxDeliveryDistance
+      ? t("foodCard.deliveryDistance", { distance: maxDeliveryDistance })
+      : distance;
+
+  const qtyText =
+    dailyStock !== undefined && currentStock !== undefined
+      ? `${Math.max(dailyStock - currentStock, 0)}/${dailyStock}`
+      : `${currentStock || 0}`;
+
+  const priceText = formatCurrency(price);
+
+  const resolvedImage =
+    typeof imageUrl === "string" && imageUrl.length > 0
+      ? imageUrl
+      : getCategoryImage(category) || getDefaultImage();
+
+  const imgSource: ImageSourcePropType = { uri: resolvedImage };
+  const imageSize = isCompact ? 100 : 130;
+
+  const handleView = () => {
+    const route = `/food-detail-order?id=${id}&name=${encodeURIComponent(name)}&cookName=${encodeURIComponent(
+      cookName
+    )}&imageUrl=${encodeURIComponent(imgSource.uri || "")}&price=${encodeURIComponent(
+      String(price)
+    )}`;
     router.push(route);
   };
 
-  const ensureDeliverySelection = () => {
-    if (availableOptions.length > 1 && selectedDeliveryType === null) {
-      Alert.alert(
-        t('foodCard.alerts.deliveryRequiredTitle'),
-        t('foodCard.alerts.deliveryRequiredMessage'),
-        [{ text: t('foodCard.alerts.ok') }]
-      );
-      return false;
-    }
-    return true;
-  };
-
-  const incrementQuantity = () => {
-    if (!ensureDeliverySelection()) return;
-
-    if (currentStock !== undefined && localQuantity >= currentStock) {
-      Alert.alert(
-        t('foodCard.alerts.stockInsufficientTitle'),
-        t('foodCard.alerts.stockInsufficientMessage', { count: currentStock, name })
-      );
-      return;
-    }
-
-    const nextQuantity = localQuantity + 1;
-    setLocalQuantity(nextQuantity);
-
-    if (localQuantity === 0) {
-      setShowAllergenModal(true);
-      return;
-    }
-
-    updateQuantity(id, nextQuantity);
-  };
-
-  const removeItem = () => {
-    if (localQuantity > 0) {
-      removeFromCart(id);
-      setLocalQuantity(0);
-    }
-  };
-
-  const proceedWithAddToCart = () => {
-    if (!ensureDeliverySelection()) return;
-    
-    const deliveryText = selectedDeliveryType 
-      ? `\n\n${t('foodCard.deliveryLabel')}: ${selectedDeliveryType === 'pickup' ? t('foodCard.pickupWithIcon') : t('foodCard.deliveryWithIcon')}`
-      : '';
-    
-    Alert.alert(
-      t('foodCard.alerts.addToCartTitle'),
-      t('foodCard.alerts.addToCartMessage', { count: localQuantity, name }) + deliveryText,
-      [
-        {
-          text: t('foodCard.alerts.no'),
-          style: 'cancel',
-        },
-        {
-          text: t('foodCard.alerts.yes'),
-          onPress: () => {
-            // Add to actual cart
-            addToCart({
-              id,
-              name,
-              cookName,
-              price,
-              imageUrl,
-              availableOptions: availableOptions,
-              deliveryOption: selectedDeliveryType!, // selectedDeliveryType artık null olamaz bu noktada
-            }, localQuantity);
-            
-            // Call parent callback
-            onAddToCart?.(id, localQuantity, selectedDeliveryType!);
-          },
-        },
-      ]
-    );
-  };
-
-  const handleAllergenConfirm = () => {
-    setShowAllergenModal(false);
-    proceedWithAddToCart();
-  };
-
-  const handleAllergenCancel = () => {
-    setShowAllergenModal(false);
-    setLocalQuantity(cartQuantity);
+  const handleAddToCart = () => {
+    onAddToCart?.(id, 1, deliveryMode);
+    Alert.alert(t("foodCard.alerts.addToCartTitle"), t("foodCard.alerts.addToCartMessage", { count: 1, name }));
   };
 
   return (
-    <>
-    <Card
-      variant="default"
-      padding="none"
-      style={[styles.card, isGridMode && styles.gridCard, { backgroundColor: colors.card }]}
-    >
-      <View style={styles.headerFullWidth}>
-        <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.headerNameTouchable}>
-          <Text variant="subheading" weight="semibold" numberOfLines={1} style={styles.headerFoodName}>
-            {name}
-          </Text>
-        </TouchableOpacity>
-        <Text variant="subheading" weight="bold" color="primary" style={styles.headerPrice}>
-          {formatCurrency(price)}
-        </Text>
+    <View style={[styles.card, style]}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <Pressable onPress={handleView} style={styles.titlePressable}>
+            <Text style={styles.title} numberOfLines={2}>
+              {name}
+            </Text>
+          </Pressable>
+          <Pressable style={styles.heartInlineBtn}>
+            <MaterialIcons name="favorite-border" size={20} color={COLORS.textMuted} />
+          </Pressable>
+          <View style={styles.priceChipInline}>
+            <Text style={styles.priceText}>{priceText}</Text>
+          </View>
+        </View>
+
+        <View style={styles.headerRight} />
       </View>
 
-      <View style={[styles.content, isGridMode && styles.gridContent]}>
-          {/* Clickable Food Image ONLY */}
-          <View
-            style={[
-              styles.imageContainer,
-              isGridMode && styles.gridImageContainer,
-              { backgroundColor: colors.card, width: imageWidth },
-            ]}
-          >
-            <View style={[styles.imageWrapper, { backgroundColor: colors.card }]}>
-              <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.imageClickable}>
-                <Image 
-                  source={(() => {
-                    // Önizleme modunda veya local file varsa kullan
-                    if (imageUrl && (isPreview || imageUrl.startsWith('file://') || imageUrl.startsWith('http'))) {
-                      return { uri: imageUrl };
-                    }
-                    
-                    // Kategori tabanlı resim kullan
-                    if (category) {
-                      return getCategoryImage(category);
-                    }
-                    
-                    // Fallback: yemek ismine göre resim kullan
-                    return getDefaultImage(name);
-                  })()} 
-                  style={[styles.image, isGridMode && styles.gridImage]}
-                  resizeMode="cover"
-                  defaultSource={{ uri: 'https://via.placeholder.com/160x140/f5f5f5/cccccc?text=📸' }}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              onPress={incrementQuantity}
-              activeOpacity={0.85}
-              style={[styles.floatingAddButton, { backgroundColor: '#FFFFFF' }]}
-            >
-              <FontAwesome name="plus" size={26} color={colors.primary} />
-            </TouchableOpacity>
-
-            {localQuantity > 0 && (
-              <View style={styles.floatingQuantityBadge}>
-                <TouchableOpacity onPress={removeItem} style={styles.badgeIconButton}>
-                  <FontAwesome name="trash" size={12} color="#333333" />
-                </TouchableOpacity>
-                <Text variant="body" weight="bold" style={styles.badgeQuantityText}>
-                  {localQuantity}
-                </Text>
-              </View>
-            )}
-          </View>
-
-
-          {/* Food details column */}
-          <View style={styles.detailsColumn}>
-
-          {/* Bottom meta info (near buttons) */}
-          <View style={styles.bottomMetaRow}>
-            <Text variant="caption" color="textSecondary" style={[styles.metaText, styles.bottomMetaDate]}>
-              <Text weight="bold">{t('foodCard.dateLabel')}:</Text>{' '}
-              {showAvailableDates
-                ? (availableDates || t('foodCard.unknownDate'))
-                : (maxDeliveryDistance ? t('foodCard.deliveryDistance', { distance: maxDeliveryDistance }) : distance)}
-            </Text>
-            <Text variant="caption" color="textSecondary" style={styles.metaText}>
-              <Text weight="bold">{t('foodCard.countryLabel')}:</Text> {resolvedCountry}
-            </Text>
-            <Text variant="caption" color="textSecondary" style={styles.metaText}>
-              <Text weight="bold">{t('foodCard.quantityLabel')}:</Text>{' '}
-              {dailyStock !== undefined && currentStock !== undefined
-                ? `${Math.max(dailyStock - currentStock, 0)}/${dailyStock}`
-                : `${currentStock || 0}`}
-            </Text>
-          </View>
-
-          {/* Delivery options row */}
-          <View style={styles.deliveryRow}>
-            <Text variant="caption" color="textSecondary" style={styles.metaText}>
-              <Text weight="bold">{t('foodCard.deliveryOptionsLabel')}</Text>
-            </Text>
-            <View style={styles.deliveryButtonsRow}>
-              {(['pickup', 'delivery'] as const).map((option) => {
-                const isAvailable = availableOptions.includes(option);
-                return (
-                  <View
-                    key={option}
-                    style={[
-                      styles.infoPill,
-                      {
-                        backgroundColor: 'transparent',
-                        borderColor: isAvailable ? '#00C853' : '#8E8E93',
-                      },
-                    ]}
-                  >
-                    <View style={styles.infoPillContent}>
-                      <FontAwesome
-                        name={isAvailable ? 'check' : 'times'}
-                        size={12}
-                        color={isAvailable ? '#00C853' : '#8E8E93'}
-                      />
-                      <Text
-                        variant="body"
-                        weight="medium"
-                        style={{ color: isAvailable ? '#00C853' : '#8E8E93', fontSize: 13 }}
-                      >
-                        {option === 'pickup' ? t('foodDetailScreen.pickup') : t('foodDetailScreen.delivery')}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-
-          </View>
+      {/* BODY */}
+      <View style={styles.body}>
+        <View style={styles.imageWrap}>
+          <Pressable onPress={handleView}>
+            <Image source={imgSource} style={[styles.image, { width: imageSize, height: imageSize }]} />
+          </Pressable>
+          <Pressable onPress={handleAddToCart} style={styles.floatingAddBtn}>
+            <MaterialIcons name="add" size={26} color={COLORS.accent} />
+          </Pressable>
         </View>
 
-        {/* Cook row at bottom */}
-        <View style={styles.cookRow}>
-          <TouchableOpacity
-            onPress={() => {
-              console.log('Cook pill pressed:', cookName);
-              router.push(`/seller-profile?cookName=${encodeURIComponent(cookName)}`);
-            }}
-            activeOpacity={0.85}
-            style={[styles.cookPill, { borderColor: colors.textSecondary, backgroundColor: colors.card }]}
-          >
-            <Text variant="body" color="primary" weight="bold" style={styles.cookName}>
-              {cookName} →
-            </Text>
-            <StarRating rating={rating} size="large" showNumber maxRating={1} />
-          </TouchableOpacity>
+        <View style={styles.bodyRight}>
+          <View style={styles.infoGrid}>
+            <InfoRow label={t("foodCard.dateLabel")} value={dateText} />
+            <InfoRow label={t("foodCard.countryLabel")} value={resolvedCountry} />
+            <InfoRow label={t("foodCard.quantityLabel")} value={qtyText} />
+            <InfoRow
+              label={t("foodCard.deliveryLabel")}
+              value={
+                availableOptions.includes("pickup") && availableOptions.includes("delivery")
+                  ? t("foodCard.availablePickupDeliveryMultiline")
+                : availableOptions.includes("pickup")
+                  ? t("foodCard.availablePickupOnly")
+                  : t("foodCard.availableDeliveryOnly")
+              }
+            />
+          </View>
         </View>
+      </View>
 
-      </Card>
-      
-      {/* Alerjen Uyarı Modalı */}
-      <AllergenWarningModal
-        visible={showAllergenModal}
-        onClose={handleAllergenCancel}
-        onConfirm={handleAllergenConfirm}
-        allergens={allergens || []}
-        foodName={name}
-      />
-    </>
+      <View style={styles.footerMeta}>
+        <Pressable
+          onPress={() =>
+            router.push(`/seller-profile?cookName=${encodeURIComponent(cookName)}`)
+          }
+        >
+          <Text style={styles.seller} numberOfLines={1}>
+            {cookName} →
+          </Text>
+        </Pressable>
+        <View style={styles.footerRating}>
+          <Stars value={rating} />
+          <Text style={styles.footerRatingText}>{rating.toFixed(1)}</Text>
+        </View>
+      </View>
+    </View>
   );
+}
+
+const COLORS = {
+  bg: "#FFFFFF",
+  border: "#E8ECF2",
+  text: "#111827",
+  textMuted: "#6B7280",
+  accent: "#16A34A",
+  accentSoft: "#EAF7EF",
+  star: "#F5B301",
+  starMuted: "#E5E7EB",
+  danger: "#EF4444",
 };
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
-    borderRadius: 16, // Back to original radius
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    backgroundColor: COLORS.bg,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 14,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 3,
-    overflow: 'visible',
   },
-  headerFullWidth: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
-    paddingBottom: 6,
+
+  header: {
+    marginBottom: 0,
+    gap: 8,
   },
-  headerNameTouchable: {
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  titlePressable: {
     flex: 1,
-    marginRight: Spacing.sm,
   },
-  headerFoodName: {
+  title: {
     fontSize: 20,
+    fontWeight: "800",
+    color: COLORS.text,
+    lineHeight: 24,
   },
-  headerPrice: {
-    fontSize: 18,
+  headerRight: {
+    height: 0,
   },
-  content: {
-    flexDirection: 'row',
-    alignItems: 'flex-start', // Back to flex-start
-    position: 'relative', // Allow absolute positioning for button
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
-    zIndex: 1,
+  starsRow: { flexDirection: "row", alignItems: "center" },
+
+  priceChip: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  detailsColumn: {
-    flex: 1,
-    paddingLeft: Spacing.sm,
+  priceChipInline: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  imageContainer: {
-    aspectRatio: 4 / 3,
-    borderRadius: 16, // Back to original radius
-    overflow: 'visible',
-    position: 'relative', // Enable absolute positioning for child image
-    zIndex: 2,
-    margin: 0,
-    padding: 0,
-    justifyContent: 'center', // Center the image
-    alignItems: 'center', // Center the image
-  },
-  imageWrapper: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-    zIndex: 1,
+  priceText: { fontSize: 16, fontWeight: "800", color: "#4B5563" },
+
+  body: { flexDirection: "row", gap: 12 },
+  imageWrap: {
+    position: "relative",
+    alignSelf: "flex-start",
   },
   image: {
-    width: '100%', // Full width like detail page
-    height: '100%', // Full height like detail page
-    margin: 0,
-    padding: 0,
-    borderRadius: 12,
+    borderRadius: 16,
+    backgroundColor: "#F3F4F6",
   },
-  cookName: {
-    fontSize: 15,
+  floatingAddBtn: {
+    position: "absolute",
+    right: -10,
+    bottom: -10,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 10,
   },
-  cookPill: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.xs,
-    paddingHorizontal: 6,
-    paddingVertical: 0,
-    borderRadius: 999,
+  bodyRight: { flex: 1 },
+
+  infoGrid: {
     borderWidth: 1,
-  },
-  bottomMetaRow: {
-    marginTop: 0,
-    marginBottom: 0,
-    alignItems: 'flex-start',
-  },
-  metaText: {
-    fontSize: 16,
-    lineHeight: 20,
-    paddingHorizontal: 4,
-    textAlign: 'left',
-  },
-  bottomMetaDate: {
-    transform: [{ translateY: -4 }],
-  },
-  deliveryRow: {
-    marginTop: 'auto',
-    marginBottom: 4,
-    paddingHorizontal: Spacing.sm,
-    alignItems: 'center',
-    gap: 4,
-  },
-  cookRow: {
-    marginTop: 4,
-    marginBottom: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-  },
-  deliveryButtonsRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    justifyContent: 'center',
-  },
-  infoPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  infoPillContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderColor: COLORS.border,
+    borderRadius: 16,
+    padding: 10,
     gap: 6,
+    backgroundColor: "#FAFAFB",
   },
-  // Grid Mode Styles
-  gridCard: {
-    marginBottom: 4, // Reduced spacing for grid
-  },
-  gridContent: {
-    flexDirection: 'column', // Stack vertically for grid
-    minHeight: 200, // Compact height for grid
-  },
-  gridImageContainer: {
-    width: '100%', // Full width in grid
-    height: 100, // Compact height for grid
-    borderRadius: 12,
-  },
-  gridImage: {
-    borderRadius: 12,
-  },
-  imageClickable: {
-    width: '100%',
-    height: '100%',
-  },
-  floatingAddButton: {
-    position: 'absolute',
-    right: -22,
-    bottom: -12,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 20,
-    zIndex: 999,
-  },
-  floatingQuantityBadge: {
-    position: 'absolute',
-    right: 8,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  badgeIconButton: {
-    marginRight: 6,
-  },
-  badgeQuantityText: {
+  infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  infoLabel: { width: 60, fontSize: 13, color: COLORS.textMuted, fontWeight: "700" },
+  infoValue: { flex: 1, fontSize: 14, color: COLORS.text, fontWeight: "700", lineHeight: 20 },
+
+  sectionLabel: {
+    marginTop: 10,
+    marginBottom: 8,
     fontSize: 13,
-    color: '#333333',
+    color: COLORS.textMuted,
+    fontWeight: "800",
   },
+
+  segmentWrap: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#FFFFFF",
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  segmentBtnActive: { backgroundColor: COLORS.accentSoft },
+  segmentBtnDisabled: { opacity: 0.5 },
+  segmentText: { fontSize: 14, fontWeight: "800", color: COLORS.textMuted },
+  segmentTextActive: { color: COLORS.accent },
+
+
+  heartInlineBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+
+  footerMeta: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  seller: { color: COLORS.textMuted, fontSize: 14, fontWeight: "800" },
+  footerRating: { flexDirection: "row", alignItems: "center", gap: 6 },
+  footerRatingText: { fontSize: 14, fontWeight: "900", color: COLORS.text },
 });

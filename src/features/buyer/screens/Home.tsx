@@ -715,6 +715,12 @@ export const Home: React.FC = () => {
     }
   };
 
+  const handleFoodPress = (food: any) => {
+    const foodImageUrl = food.imageUrl || '';
+    const route = `/food-detail-order?id=${food.id}&name=${encodeURIComponent(food.name)}&cookName=${encodeURIComponent(food.cookName || '')}&imageUrl=${encodeURIComponent(foodImageUrl)}&price=${encodeURIComponent(String(food.price))}`;
+    router.push(route);
+  };
+
   const handleCategoryPress = (category: string) => {
     setSelectedCategory(category);
     // If we have active search or filters, re-run search with new category
@@ -1170,7 +1176,7 @@ export const Home: React.FC = () => {
                 setCookFilter('');
                 // Clear URL params
                 // @ts-ignore
-                router.replace('/(tabs)/home');
+                router.replace('/(tabs)');
               }}
               style={[styles.cookFilterCloseButton, { backgroundColor: colors.primary }]}
             >

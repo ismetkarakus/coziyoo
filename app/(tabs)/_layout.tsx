@@ -274,12 +274,6 @@ export default function TabLayout() {
           href: null, // Hide from tab bar
         }}
       />
-      <Tabs.Screen
-        name="food-detail-simple"
-        options={{
-          href: null, // Hide from tab bar
-        }}
-      />
     </Tabs>
   );
 }
