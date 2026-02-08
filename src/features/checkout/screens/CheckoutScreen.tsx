@@ -16,6 +16,8 @@ interface OrderItem {
   quantity: number;
   cookName: string;
   image?: string;
+  deliveryOption?: 'pickup' | 'delivery';
+  deliveryFee?: number;
 }
 
 export const CheckoutScreen: React.FC = () => {
@@ -30,6 +32,14 @@ export const CheckoutScreen: React.FC = () => {
   const [processing, setProcessing] = useState(false);
 
   // Calculate order details
+  const resolveDeliveryOption = (item: typeof cartItems[number]) => {
+    if (item.deliveryOption) return item.deliveryOption;
+    const options = item.availableOptions && item.availableOptions.length > 0
+      ? item.availableOptions
+      : (['pickup', 'delivery'] as ('pickup' | 'delivery')[]);
+    return options.includes('pickup') ? 'pickup' : options[0];
+  };
+
   const orderItems: OrderItem[] = cartItems.map(item => ({
     id: item.id,
     name: item.name,
@@ -37,10 +47,14 @@ export const CheckoutScreen: React.FC = () => {
     quantity: item.quantity,
     cookName: item.cookName || t('checkoutScreen.unknownCook'),
     image: item.image,
+    deliveryOption: resolveDeliveryOption(item),
+    deliveryFee: item.deliveryFee || 0,
   }));
 
   const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const deliveryFee = subtotal > 50 ? 0 : 5; // Free delivery over ₺50
+  const deliveryFee = orderItems.reduce((sum, item) => {
+    return item.deliveryOption === 'delivery' ? sum + (item.deliveryFee || 0) : sum;
+  }, 0);
   const total = subtotal + deliveryFee;
 
   // Calculate payment breakdown when total changes

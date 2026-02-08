@@ -11,25 +11,37 @@ export interface MockUser {
   displayName: string;
   userType: 'buyer' | 'seller' | 'both';
   password: string;
-  createdAt: string;
-  updatedAt: string;
+  allergicTo?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface MockFood {
   id: string;
   name: string;
-  description: string;
   price: number;
   cookName: string;
-  cookId: string;
+  cookId?: string;
   category: string;
-  imageUrl: string;
-  ingredients: string[];
-  preparationTime: number;
-  servingSize: number;
-  isAvailable: boolean;
   rating: number;
-  reviewCount: number;
+  reviewCount?: number;
+  description?: string;
+  imageUrl?: string;
+  ingredients?: string[];
+  preparationTime?: number;
+  servingSize?: number;
+  isAvailable?: boolean;
+  distance?: string;
+  hasPickup?: boolean;
+  hasDelivery?: boolean;
+  availableDeliveryOptions?: ('pickup' | 'delivery')[];
+  availableDates?: string;
+  currentStock?: number;
+  dailyStock?: number;
+  maxDeliveryDistance?: number;
+  allergens?: string[];
+  hygieneRating?: string;
+  deliveryFee?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Text, Button, Card } from '../../../components/ui';
@@ -7,16 +7,65 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCart } from '../../../context/CartContext';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useAuth } from '../../../context/AuthContext';
+import { mockUserService } from '../../../services/mockUserService';
 
 export const Cart: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { cartItems, updateQuantity, getTotalPrice } = useCart();
+  const { cartItems, updateQuantity, updateDeliveryOption, getTotalPrice } = useCart();
   const { t } = useTranslation();
-  const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
+  const { user, userData } = useAuth();
+  const [userAllergies, setUserAllergies] = React.useState<string[]>([]);
+
+  const getAvailableOptions = (item: typeof cartItems[number]) => {
+    if (item.availableOptions && item.availableOptions.length > 0) {
+      return item.availableOptions;
+    }
+    return ['pickup', 'delivery'] as ('pickup' | 'delivery')[];
+  };
+
+  const resolveDeliveryOption = (item: typeof cartItems[number]) => {
+    if (item.deliveryOption) return item.deliveryOption;
+    const options = getAvailableOptions(item);
+    return options.includes('pickup') ? 'pickup' : options[0];
+  };
+
+  useEffect(() => {
+    cartItems.forEach(item => {
+      if (!item.deliveryOption) {
+        updateDeliveryOption(item.id, resolveDeliveryOption(item));
+      }
+    });
+  }, [cartItems, updateDeliveryOption]);
+
+  useEffect(() => {
+    const loadAllergies = async () => {
+      const record =
+        (await mockUserService.getUserByUid(user?.uid || userData?.uid)) ||
+        (await mockUserService.getUserByEmail(userData?.email || user?.email));
+      setUserAllergies((record?.allergicTo || []).map(item => item.toLowerCase()));
+    };
+    loadAllergies();
+  }, [user?.uid, userData?.uid, user?.email, userData?.email]);
+
+  const getAllergenMatches = useMemo(() => {
+    return new Map(
+      cartItems.map(item => {
+        const allergens = (item as any).allergens || [];
+        const matches = allergens
+          .map((a: string) => a.toLowerCase())
+          .filter((a: string) => userAllergies.includes(a));
+        return [item.id, matches];
+      })
+    );
+  }, [cartItems, userAllergies]);
 
   const subtotal = getTotalPrice();
-  const deliveryFee = deliveryType === 'delivery' ? 5 : 0;
+  const deliveryFee = cartItems.reduce((sum, item) => {
+    const deliveryOption = resolveDeliveryOption(item);
+    return deliveryOption === 'delivery' ? sum + (item.deliveryFee || 0) : sum;
+  }, 0);
   const total = subtotal + deliveryFee;
 
   const handleCheckout = () => {
@@ -56,10 +105,6 @@ export const Cart: React.FC = () => {
           {cartItems.map((item) => (
             <Card key={item.id} variant="default" padding="md" style={styles.itemCard}>
               <View style={styles.itemContent}>
-                <View style={[styles.itemImage, { backgroundColor: colors.surface }]}>
-                  <Text variant="body">📸</Text>
-                </View>
-                
                 <View style={styles.itemInfo}>
                   <Text variant="subheading" weight="semibold" numberOfLines={1}>
                     {item.name}
@@ -94,33 +139,67 @@ export const Cart: React.FC = () => {
                   </Button>
                 </View>
               </View>
+
+              {getAllergenMatches.get(item.id)?.length ? (
+                <View style={styles.allergenCard}>
+                  <View style={styles.allergenBar} />
+                  <View style={styles.allergenContent}>
+                    <View style={styles.allergenHeader}>
+                      <View style={styles.allergenIcon}>
+                        <Text variant="caption" weight="bold" style={styles.allergenIconText}>!</Text>
+                      </View>
+                      <Text variant="body" weight="semibold" style={styles.allergenTitle}>
+                        Alerjen: {getAllergenMatches.get(item.id)?.join(', ')}
+                      </Text>
+                    </View>
+                    <Text variant="caption" style={styles.allergenSubtitle}>
+                      Alerjin varsa sipariş vermeden önce kontrol et.
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+
+              <View style={styles.itemDeliveryRow}>
+                <Text variant="caption" color="textSecondary">
+                  {t('cartScreen.deliveryTitle')}
+                </Text>
+                {getAvailableOptions(item).length === 1 ? (
+                  <Text variant="caption" color="textSecondary">
+                    {getAvailableOptions(item)[0] === 'pickup'
+                      ? t('cartScreen.onlyPickupNotice')
+                      : t('cartScreen.onlyDeliveryNotice', {
+                          fee: (item.deliveryFee || 0).toFixed(2),
+                        })}
+                  </Text>
+                ) : (
+                  <View style={styles.itemDeliveryOptions}>
+                    {getAvailableOptions(item).includes('pickup') && (
+                      <Button
+                        variant={resolveDeliveryOption(item) === 'pickup' ? 'primary' : 'outline'}
+                        size="sm"
+                        onPress={() => updateDeliveryOption(item.id, 'pickup')}
+                        style={styles.deliveryButton}
+                      >
+                        {t('cartScreen.pickup')}
+                      </Button>
+                    )}
+                    {getAvailableOptions(item).includes('delivery') && (
+                      <Button
+                        variant={resolveDeliveryOption(item) === 'delivery' ? 'primary' : 'outline'}
+                        size="sm"
+                        onPress={() => updateDeliveryOption(item.id, 'delivery')}
+                        style={styles.deliveryButton}
+                      >
+                        {t('cartScreen.delivery')}
+                        {item.deliveryFee ? ` +₺${item.deliveryFee.toFixed(2)}` : ''}
+                      </Button>
+                    )}
+                  </View>
+                )}
+              </View>
             </Card>
           ))}
         </View>
-
-        {/* Delivery Selection */}
-        <Card variant="default" padding="md" style={styles.deliveryCard}>
-          <Text variant="subheading" weight="semibold" style={styles.deliveryTitle}>
-            {t('cartScreen.deliveryTitle')}
-          </Text>
-          
-          <View style={styles.deliveryOptions}>
-            <Button
-              variant={deliveryType === 'pickup' ? 'primary' : 'outline'}
-              onPress={() => setDeliveryType('pickup')}
-              style={styles.deliveryButton}
-            >
-              {deliveryType === 'pickup' ? '✓ ' : ''}{t('cartScreen.pickup')}
-            </Button>
-            <Button
-              variant={deliveryType === 'delivery' ? 'primary' : 'outline'}
-              onPress={() => setDeliveryType('delivery')}
-              style={styles.deliveryButton}
-            >
-              {deliveryType === 'delivery' ? '✓ ' : ''}{t('cartScreen.delivery')}
-            </Button>
-          </View>
-        </Card>
 
         {/* Order Summary */}
         <Card variant="default" padding="md" style={styles.summaryCard}>
@@ -133,12 +212,10 @@ export const Cart: React.FC = () => {
             <Text variant="body">₺{subtotal.toFixed(2)}</Text>
           </View>
           
-          {deliveryType === 'delivery' && (
-            <View style={styles.summaryRow}>
-              <Text variant="body">{t('cartScreen.deliveryFee')}</Text>
-              <Text variant="body">₺{deliveryFee.toFixed(2)}</Text>
-            </View>
-          )}
+          <View style={styles.summaryRow}>
+            <Text variant="body">{t('cartScreen.deliveryFee')}</Text>
+            <Text variant="body">₺{deliveryFee.toFixed(2)}</Text>
+          </View>
           
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text variant="subheading" weight="semibold">{t('cartScreen.total')}</Text>
@@ -196,14 +273,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  itemImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-  },
   itemInfo: {
     flex: 1,
   },
@@ -219,19 +288,60 @@ const styles = StyleSheet.create({
     minWidth: 24,
     textAlign: 'center',
   },
-  deliveryCard: {
-    marginHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+  itemDeliveryRow: {
+    marginTop: Spacing.sm,
+    gap: Spacing.sm,
   },
-  deliveryTitle: {
-    marginBottom: Spacing.md,
-  },
-  deliveryOptions: {
+  itemDeliveryOptions: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   deliveryButton: {
     flex: 1,
+    minHeight: 36,
+  },
+  allergenCard: {
+    marginTop: Spacing.sm,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAECF0',
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  allergenBar: {
+    width: 4,
+    backgroundColor: '#B42318',
+  },
+  allergenContent: {
+    flex: 1,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+  },
+  allergenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: 2,
+  },
+  allergenIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: '#B42318',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  allergenIconText: {
+    color: '#B42318',
+    fontSize: 12,
+  },
+  allergenTitle: {
+    color: '#101828',
+  },
+  allergenSubtitle: {
+    color: '#475467',
   },
   summaryCard: {
     marginHorizontal: Spacing.md,

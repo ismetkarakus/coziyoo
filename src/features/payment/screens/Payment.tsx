@@ -15,7 +15,7 @@ export const Payment: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
-  const { getTotalPrice, clearCart } = useCart();
+  const { cartItems, getTotalPrice, clearCart } = useCart();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('card');
   const savedCards = [
     {
@@ -40,8 +40,18 @@ export const Payment: React.FC = () => {
   const defaultCardId = savedCards.find(card => card.isDefault)?.id || savedCards[0]?.id;
   const [selectedCard, setSelectedCard] = useState(defaultCardId);
 
+  const resolveDeliveryOption = (item: typeof cartItems[number]) => {
+    if (item.deliveryOption) return item.deliveryOption;
+    const options = item.availableOptions && item.availableOptions.length > 0
+      ? item.availableOptions
+      : (['pickup', 'delivery'] as ('pickup' | 'delivery')[]);
+    return options.includes('pickup') ? 'pickup' : options[0];
+  };
+
   const subtotal = getTotalPrice();
-  const deliveryFee = 5;
+  const deliveryFee = cartItems.reduce((sum, item) => {
+    return resolveDeliveryOption(item) === 'delivery' ? sum + (item.deliveryFee || 0) : sum;
+  }, 0);
   const total = subtotal + deliveryFee;
 
   const getCardIcon = (type: string) => {

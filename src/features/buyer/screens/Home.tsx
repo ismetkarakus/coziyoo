@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput, Alert, Modal } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Text, FoodCard, SearchBar, FilterModal } from '../../../components/ui';
+import { Text, FoodCard, SearchBar, FilterModal, Button } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -17,7 +17,9 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { foodService, Food } from '../../../services/foodService';
 import { searchService, SearchFilters } from '../../../services/searchService';
 import { seedSampleData, checkExistingData } from '../../../utils/seedData';
-import { AllergenId } from '../../../constants/allergens';
+import { mockFoodService } from '../../../services/mockFoodService';
+import { mockUserService } from '../../../services/mockUserService';
+import { MockFood } from '../../../mock/data';
 
 const getCategoriesForLanguage = (language: 'tr' | 'en') => {
   if (language === 'tr') {
@@ -137,363 +139,16 @@ const translateCookNameToEn = (name: string) => {
   return mapping[name] || name;
 };
 
-const MOCK_FOODS_TR = [
-  // Ana Yemek
-  {
-    id: '1',
-    name: 'Ev Yapımı Mantı',
-    cookName: 'Ayşe Hanım',
-    rating: 4.8,
-    price: 35,
-    distance: '3 km', // Satıcının belirlediği maksimum teslimat mesafesi
-    category: 'Ana Yemek',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '15-20 Ocak',
-    currentStock: 8,
-    dailyStock: 10,
-    maxDeliveryDistance: 3, // AddMeal'dan gelen değer
-    allergens: ['cereals', 'eggs'] as AllergenId[], // Mantı: un (gluten) ve yumurta
-    hygieneRating: '5', // UK Food Hygiene Rating
-    availableDeliveryOptions: ['pickup', 'delivery'] as ('pickup' | 'delivery')[] // İki seçenek
-  },
-  {
-    id: '2',
-    name: 'Karnıyarık',
-    cookName: 'Mehmet Usta',
-    rating: 4.6,
-    price: 28,
-    distance: '5 km', // Satıcının belirlediği maksimum teslimat mesafesi
-    category: 'Ana Yemek',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '16-22 Ocak',
-    currentStock: 5,
-    dailyStock: 12,
-    maxDeliveryDistance: 5, // AddMeal'dan gelen değer
-    availableDeliveryOptions: ['pickup'] as ('pickup' | 'delivery')[] // Sadece gel al
-  },
-  {
-    id: '4',
-    name: 'İskender Kebap',
-    cookName: 'Ali Usta',
-    rating: 4.7,
-    price: 42,
-    distance: '4 km', // Satıcının belirlediği maksimum teslimat mesafesi
-    category: 'Ana Yemek',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '18-25 Ocak',
-    currentStock: 3,
-    dailyStock: 8,
-    maxDeliveryDistance: 4, // AddMeal'dan gelen değer
-    availableDeliveryOptions: ['delivery'] as ('pickup' | 'delivery')[] // Sadece teslimat
-  },
-  // Çorba
-  {
-    id: '5',
-    name: 'Mercimek Çorbası',
-    cookName: 'Zeynep Hanım',
-    rating: 4.5,
-    price: 15,
-    distance: '2 km', // Satıcının belirlediği maksimum teslimat mesafesi
-    category: 'Çorba',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '15-30 Ocak',
-    currentStock: 15,
-    dailyStock: 20,
-    maxDeliveryDistance: 2, // AddMeal'dan gelen değer
-  },
-  {
-    id: '6',
-    name: 'Tarhana Çorbası',
-    cookName: 'Fatma Teyze',
-    rating: 4.8,
-    price: 18,
-    distance: '1 km', // Satıcının belirlediği maksimum teslimat mesafesi
-    category: 'Çorba',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '19-26 Ocak',
-    currentStock: 10,
-    dailyStock: 12,
-    maxDeliveryDistance: 1, // AddMeal'dan gelen değer
-  },
-  // Kahvaltı
-  {
-    id: '8',
-    name: 'Serpme Kahvaltı',
-    cookName: 'Hasan Usta',
-    rating: 4.9,
-    price: 55,
-    distance: '1.8 km',
-    category: 'Kahvaltı',
-    hasPickup: true,
-    hasDelivery: false,
-    availableDates: '21-28 Ocak',
-    currentStock: 3,
-    dailyStock: 5,
-    allergens: ['milk', 'cereals', 'eggs'] as AllergenId[], // Serpme kahvaltı: süt ürünleri, ekmek, yumurta
-    hygieneRating: '4', // UK Food Hygiene Rating
-  },
-  {
-    id: '9',
-    name: 'Menemen',
-    cookName: 'Ayşe Hanım',
-    rating: 4.6,
-    price: 22,
-    distance: '900 m',
-    category: 'Kahvaltı',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '17-24 Ocak',
-    currentStock: 7,
-    dailyStock: 10,
-    allergens: ['eggs'] as AllergenId[], // Menemen: yumurta
-    hygieneRating: 'Pending', // UK Food Hygiene Rating
-  },
-  // Salata
-  {
-    id: '11',
-    name: 'Çoban Salata',
-    cookName: 'Zehra Hanım',
-    rating: 4.4,
-    price: 18,
-    distance: '1.1 km',
-    category: 'Salata',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '15-22 Ocak',
-    currentStock: 9,
-    dailyStock: 10,
-  },
-  {
-    id: '12',
-    name: 'Mevsim Salata',
-    cookName: 'Gül Teyze',
-    rating: 4.6,
-    price: 20,
-    distance: '1.4 km',
-    category: 'Salata',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '23-30 Ocak',
-    currentStock: 6,
-    dailyStock: 8,
-  },
-  {
-    id: '13',
-    name: 'Roka Salata',
-    cookName: 'Elif Hanım',
-    rating: 4.5,
-    price: 25,
-    distance: '2.2 km',
-    category: 'Salata',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '16-23 Ocak',
-    currentStock: 4,
-    dailyStock: 5,
-  },
-  // Baklava'yı da bir kategoriye ekleyelim
-  {
-    id: '3',
-    name: 'Baklava',
-    cookName: 'Fatma Teyze',
-    rating: 4.9,
-    price: 45,
-    distance: '6 km', // Satıcının belirlediği maksimum teslimat mesafesi
-    category: 'Ana Yemek', // Tatlı kategorisi yok, Ana Yemek'e ekledim
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '17-24 Ocak',
-    currentStock: 2,
-    dailyStock: 3,
-    maxDeliveryDistance: 6, // AddMeal'dan gelen değer
-  },
-  // Meze
-  {
-    id: '14',
-    name: 'Karışık Meze Tabağı',
-    cookName: 'Elif Hanım',
-    rating: 4.7,
-    price: 28,
-    distance: '2.2 km',
-    category: 'Meze',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '16-23 Ocak',
-    currentStock: 5,
-    dailyStock: 8,
-    maxDeliveryDistance: 2.5,
-  },
-  {
-    id: '15',
-    name: 'Acılı Ezme',
-    cookName: 'Hasan Usta',
-    rating: 4.5,
-    price: 15,
-    distance: '1.8 km',
-    category: 'Meze',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '18-25 Ocak',
-    currentStock: 12,
-    dailyStock: 15,
-    maxDeliveryDistance: 2,
-  },
-  // Vejetaryen
-  {
-    id: '17',
-    name: 'Vejetaryen Köfte',
-    cookName: 'Ayşe Hanım',
-    rating: 4.6,
-    price: 24,
-    distance: '1.5 km',
-    category: 'Vejetaryen',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '17-24 Ocak',
-    currentStock: 8,
-    dailyStock: 10,
-    maxDeliveryDistance: 2,
-  },
-  {
-    id: '18',
-    name: 'Sebze Güveç',
-    cookName: 'Zehra Hanım',
-    rating: 4.8,
-    price: 26,
-    distance: '2.1 km',
-    category: 'Vejetaryen',
-    hasPickup: true,
-    hasDelivery: false,
-    availableDates: '19-26 Ocak',
-    currentStock: 6,
-    dailyStock: 8,
-    maxDeliveryDistance: 0,
-  },
-  // Gluten Free
-  {
-    id: '19',
-    name: 'Glutensiz Ekmek',
-    cookName: 'Fatma Teyze',
-    rating: 4.4,
-    price: 18,
-    distance: '1.3 km',
-    category: 'Glutensiz',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '15-22 Ocak',
-    currentStock: 10,
-    dailyStock: 12,
-    maxDeliveryDistance: 1.5,
-  },
-  {
-    id: '20',
-    name: 'Glutensiz Kurabiye',
-    cookName: 'Gül Teyze',
-    rating: 4.7,
-    price: 22,
-    distance: '2.8 km',
-    category: 'Glutensiz',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '20-27 Ocak',
-    currentStock: 15,
-    dailyStock: 20,
-    maxDeliveryDistance: 3,
-  },
-  // İçecekler
-  {
-    id: '21',
-    name: 'Ev Yapımı Ayran',
-    cookName: 'Mehmet Usta',
-    rating: 4.3,
-    price: 8,
-    distance: '900 m',
-    category: 'İçecekler',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '16-23 Ocak',
-    currentStock: 20,
-    dailyStock: 25,
-    maxDeliveryDistance: 1,
-  },
-  {
-    id: '22',
-    name: 'Taze Sıkılmış Portakal Suyu',
-    cookName: 'Elif Hanım',
-    rating: 4.6,
-    price: 12,
-    distance: '1.7 km',
-    category: 'İçecekler',
-    hasPickup: true,
-    hasDelivery: false,
-    availableDates: '17-24 Ocak',
-    currentStock: 18,
-    dailyStock: 20,
-    maxDeliveryDistance: 0,
-  },
-  // Tatlılar
-  {
-    id: '23',
-    name: 'Ev Yapımı Sütlaç',
-    cookName: 'Ayşe Hanım',
-    rating: 4.9,
-    price: 16,
-    distance: '1.2 km',
-    category: 'Tatlı/Kek',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '18-25 Ocak',
-    currentStock: 12,
-    dailyStock: 15,
-    maxDeliveryDistance: 1.5,
-  },
-  {
-    id: '26',
-    name: 'Profiterol',
-    cookName: 'Zehra Hanım',
-    rating: 4.8,
-    price: 32,
-    distance: '2.5 km',
-    category: 'Tatlı/Kek',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '19-26 Ocak',
-    currentStock: 8,
-    dailyStock: 10,
-    maxDeliveryDistance: 3,
-  },
-  {
-    id: '27',
-    name: 'Ev Yapımı Kek',
-    cookName: 'Fatma Teyze',
-    rating: 4.7,
-    price: 24,
-    distance: '1.9 km',
-    category: 'Tatlı/Kek',
-    hasPickup: true,
-    hasDelivery: true,
-    availableDates: '20-27 Ocak',
-    currentStock: 6,
-    dailyStock: 8,
-    maxDeliveryDistance: 2,
-  },
-];
-
-const getMockFoods = (language: 'tr' | 'en') => {
+const localizeMockFoods = (foods: MockFood[], language: 'tr' | 'en') => {
   if (language === 'tr') {
-    return MOCK_FOODS_TR;
+    return foods;
   }
-  return MOCK_FOODS_TR.map((food) => ({
+  return foods.map((food) => ({
     ...food,
     name: translateFoodNameToEn(food.name),
     cookName: translateCookNameToEn(food.cookName),
     category: translateCategoryToEn(food.category),
-    availableDates: translateDateRangeToEn(food.availableDates),
+    availableDates: food.availableDates ? translateDateRangeToEn(food.availableDates) : undefined,
   }));
 };
 
@@ -505,12 +160,16 @@ export const Home: React.FC = () => {
   const { t, currentLanguage } = useTranslation();
   const params = useLocalSearchParams();
   const { getTotalItems } = useCart();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const categories = useMemo(() => getCategoriesForLanguage(currentLanguage), [currentLanguage]);
   const defaultCategory = categories[0] ?? '';
   const [selectedCategory, setSelectedCategory] = useState(defaultCategory);
-  const mockFoods = getMockFoods(currentLanguage);
+  const [rawMockFoods, setRawMockFoods] = useState<MockFood[]>([]);
+  const mockFoods = useMemo(
+    () => localizeMockFoods(rawMockFoods, currentLanguage),
+    [rawMockFoods, currentLanguage]
+  );
   useEffect(() => {
     if (defaultCategory) {
       setSelectedCategory(defaultCategory);
@@ -531,6 +190,21 @@ export const Home: React.FC = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const { addToCart } = useCart();
   const { sendLowStockNotification } = useNotifications();
+  const [allergenModalVisible, setAllergenModalVisible] = useState(false);
+  const [allergenModalMatches, setAllergenModalMatches] = useState<string[]>([]);
+  const [allergenConfirmChecked, setAllergenConfirmChecked] = useState(false);
+  const [pendingAdd, setPendingAdd] = useState<{
+    food: any;
+    quantity: number;
+    deliveryOption?: 'pickup' | 'delivery';
+    availableOptions: ('pickup' | 'delivery')[];
+    parsedDeliveryFee: number;
+    originalId: string;
+    foodId: string;
+    currentStock: number;
+    newStock: number;
+    firebaseFood: Food | undefined;
+  } | null>(null);
 
   const nearbyTerms = [
     t('homeScreen.nearbyQuery'),
@@ -541,16 +215,25 @@ export const Home: React.FC = () => {
   const turkishKeywords = currentLanguage === 'tr' ? ['türk', 'türkiye'] : ['turkish', 'turkey'];
 
 
-  // Load Firebase foods
+  const loadMockFoods = async () => {
+    setLoading(true);
+    try {
+      const foods = await mockFoodService.getFoods();
+      setRawMockFoods(foods);
+    } catch (error) {
+      console.error('Error loading mock foods:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load mock foods (fake API)
   useEffect(() => {
-    // Firebase yüklemeyi skip et, sadece mockFoods kullan
-    console.log('🍽️ Using mockFoods only, skipping Firebase');
-    setLoading(false);
+    loadMockFoods();
   }, []);
 
   const loadFirebaseFoods = async () => {
-    // Firebase yükleme devre dışı - sadece mockFoods kullan
-    console.log('🍽️ Firebase loading disabled, using mockFoods only');
+    // Firebase loading disabled for now
     setFirebaseFoods([]);
     setLoading(false);
   };
@@ -623,7 +306,7 @@ export const Home: React.FC = () => {
 
       loadPublishedMeals();
       loadCookFilter();
-      loadFirebaseFoods(); // Reload Firebase data on focus
+      loadMockFoods(); // Reload mock data on focus
     }, [defaultCategory])
   );
 
@@ -644,6 +327,74 @@ export const Home: React.FC = () => {
     }
   };
 
+  const finalizeAddToCart = async (payload: {
+    food: any;
+    quantity: number;
+    deliveryOption?: 'pickup' | 'delivery';
+    availableOptions: ('pickup' | 'delivery')[];
+    parsedDeliveryFee: number;
+    originalId: string;
+    foodId: string;
+    currentStock: number;
+    newStock: number;
+    firebaseFood: Food | undefined;
+  }) => {
+    try {
+      const {
+        food,
+        quantity: finalQuantity,
+        deliveryOption: finalDeliveryOption,
+        availableOptions,
+        parsedDeliveryFee,
+        originalId,
+        foodId,
+        newStock,
+        firebaseFood,
+      } = payload;
+
+      // Update local stock state immediately for UI feedback
+      setFoodStocks(prev => ({
+        ...prev,
+        [originalId]: newStock,
+      }));
+
+      // If it's a Firebase food, update in Firebase too
+      if (firebaseFood) {
+        // @ts-ignore
+        await foodService.updateFoodStock(foodId, newStock, sendLowStockNotification);
+      }
+
+      addToCart({
+        id: food.id!,
+        name: food.name,
+        cookName: food.cookName,
+        price: food.price,
+        imageUrl: food.imageUrl || undefined,
+        currentStock: newStock,
+        dailyStock: food.dailyStock || 0,
+        deliveryOption: finalDeliveryOption,
+        availableOptions: availableOptions,
+        deliveryFee: food.hasDelivery ? (Number.isFinite(parsedDeliveryFee) ? parsedDeliveryFee : 0) : 0,
+        allergens: food.allergens || [],
+      }, finalQuantity);
+      
+      console.log(`Added ${finalQuantity} of ${food.name} to cart. Remaining stock: ${newStock}`);
+      
+      // Send low stock notification if needed
+      if (newStock <= 2) {
+        sendLowStockNotification(food.name, newStock);
+      }
+    } catch (error) {
+      console.error('Error updating stock:', error);
+      // Revert local stock change on error
+      setFoodStocks(prev => ({
+        ...prev,
+        [payload.originalId]: payload.currentStock
+      }));
+      Alert.alert(t('homeScreen.alerts.stockUpdateErrorTitle'), t('homeScreen.alerts.stockUpdateErrorMessage'));
+    }
+  };
+
   const handleAddToCart = async (foodId: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => {
     // ID prefix'ini temizle ve orijinal ID'yi bul
     const originalId = foodId.replace(/^(firebase_|mock_|published_)/, '');
@@ -660,46 +411,68 @@ export const Home: React.FC = () => {
       
       if (currentStock >= quantity) {
         try {
-          // Update local stock state immediately for UI feedback
           const newStock = currentStock - quantity;
-          setFoodStocks(prev => ({
-            ...prev,
-            [originalId]: newStock
-          }));
-          
-          // If it's a Firebase food, update in Firebase too
-          if (firebaseFood) {
-            // @ts-ignore
-            await foodService.updateFoodStock(foodId, newStock, sendLowStockNotification);
-          }
-          
+
+          // Allergen check
+          const userRecord =
+            (await mockUserService.getUserByUid(user?.uid || userData?.uid)) ||
+            (await mockUserService.getUserByEmail(userData?.email || user?.email));
+          const userAllergies = (userRecord?.allergicTo || []).map(item => item.toLowerCase());
+          const foodAllergens = (food.allergens || []).map((item: string) => item.toLowerCase());
+          const matches = foodAllergens.filter(allergen => userAllergies.includes(allergen));
+
           // Determine available options
-          const availableOptions: ('pickup' | 'delivery')[] = [];
-          if (food.hasPickup) availableOptions.push('pickup');
-          if (food.hasDelivery) availableOptions.push('delivery');
+          const availableOptions: ('pickup' | 'delivery')[] = Array.isArray((food as any).availableDeliveryOptions)
+            && (food as any).availableDeliveryOptions.length > 0
+              ? (food as any).availableDeliveryOptions
+              : [];
+          if (availableOptions.length === 0) {
+            if (food.hasPickup) availableOptions.push('pickup');
+            if (food.hasDelivery) availableOptions.push('delivery');
+          }
           
           // Set default delivery option if not provided
           const finalDeliveryOption = deliveryOption || (availableOptions.length === 1 ? availableOptions[0] : undefined);
           
-          addToCart({
-            id: food.id!,
-            name: food.name,
-            cookName: food.cookName,
-            price: food.price,
-            imageUrl: food.imageUrl || undefined,
-            currentStock: newStock,
-            dailyStock: food.dailyStock || 0,
-            deliveryOption: finalDeliveryOption,
-            availableOptions: availableOptions,
-          }, quantity);
-          
-          console.log(`Added ${quantity} of ${food.name} to cart. Remaining stock: ${newStock}`);
-          
-          // Send low stock notification if needed
-          if (newStock <= 2) {
-            sendLowStockNotification(food.name, newStock);
+          const rawDeliveryFee = (food as any).deliveryFee;
+          const parsedDeliveryFee =
+            typeof rawDeliveryFee === 'number'
+              ? rawDeliveryFee
+              : typeof rawDeliveryFee === 'string'
+                ? parseFloat(rawDeliveryFee)
+                : 0;
+
+          if (matches.length > 0) {
+            setAllergenModalMatches(matches);
+            setAllergenConfirmChecked(false);
+            setPendingAdd({
+              food,
+              quantity,
+              deliveryOption: finalDeliveryOption,
+              availableOptions,
+              parsedDeliveryFee,
+              originalId,
+              foodId,
+              currentStock,
+              newStock,
+              firebaseFood,
+            });
+            setAllergenModalVisible(true);
+            return;
           }
-          
+
+          await finalizeAddToCart({
+            food,
+            quantity,
+            deliveryOption: finalDeliveryOption,
+            availableOptions,
+            parsedDeliveryFee,
+            originalId,
+            foodId,
+            currentStock,
+            newStock,
+            firebaseFood,
+          });
         } catch (error) {
           console.error('Error updating stock:', error);
           // Revert local stock change on error
@@ -1051,6 +824,98 @@ export const Home: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
+      <Modal
+        visible={allergenModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { backgroundColor: '#FFFFFF' }]}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalIcon}>
+                <Text variant="caption" weight="bold" style={styles.modalIconText}>!</Text>
+              </View>
+              <Text variant="subheading" weight="bold" style={styles.modalTitle}>
+                {t('allergenWarning.title')}
+              </Text>
+            </View>
+            <View style={styles.modalWarningBox}>
+              <Text variant="body" style={styles.modalText}>
+                {t('allergenWarning.warningMessage', { allergen: allergenModalMatches.join(', ') })}
+              </Text>
+              <Text variant="body" weight="bold" style={styles.modalEmphasis}>
+                {t('allergenWarning.question')}
+              </Text>
+              <Text variant="caption" style={styles.modalSecondary}>
+                {t('allergenWarning.unsure')}
+              </Text>
+            </View>
+            <View style={styles.modalChip}>
+              <Text variant="caption" weight="bold" style={styles.modalChipText}>
+                {t('allergenWarning.chipLabel', { allergen: allergenModalMatches.join(', ') })}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.modalCheckboxRow}
+              onPress={() => setAllergenConfirmChecked(prev => !prev)}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.modalCheckbox, allergenConfirmChecked && styles.modalCheckboxChecked]}>
+                {allergenConfirmChecked && <Text style={styles.modalCheckboxCheck}>✓</Text>}
+              </View>
+              <Text variant="caption" style={styles.modalSecondary}>
+                {t('allergenWarning.acknowledge')}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalPrimaryButton}
+                onPress={() => {
+                  setAllergenModalVisible(false);
+                  setPendingAdd(null);
+                  setAllergenModalMatches([]);
+                  setAllergenConfirmChecked(false);
+                }}
+              >
+                <Text variant="body" weight="bold" style={styles.modalPrimaryButtonText}>
+                  {t('allergenWarning.cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalSecondaryButton,
+                  !allergenConfirmChecked && styles.modalSecondaryButtonDisabled,
+                ]}
+                onPress={async () => {
+                  if (!allergenConfirmChecked) return;
+                  const next = pendingAdd;
+                  setAllergenModalVisible(false);
+                  setPendingAdd(null);
+                  setAllergenModalMatches([]);
+                  setAllergenConfirmChecked(false);
+                  if (next) {
+                    await finalizeAddToCart(next);
+                  }
+                }}
+                activeOpacity={allergenConfirmChecked ? 0.8 : 1}
+              >
+                <Text
+                  variant="body"
+                  weight="bold"
+                  style={[
+                    styles.modalSecondaryButtonText,
+                    !allergenConfirmChecked && styles.modalSecondaryButtonTextDisabled,
+                  ]}
+                >
+                  {t('allergenWarning.confirm')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* TopBar */}
       <View style={[styles.topBar, {
         backgroundColor: colors.primary,
@@ -1493,5 +1358,137 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 22,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: '#EAECF0',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  modalIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#B42318',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalIconText: {
+    color: '#FFFFFF',
+  },
+  modalTitle: {
+    marginBottom: Spacing.sm,
+    color: '#101828',
+    fontSize: 18,
+  },
+  modalWarningBox: {
+    backgroundColor: '#FEF3F2',
+    borderRadius: 12,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#EAECF0',
+    marginBottom: Spacing.md,
+  },
+  modalText: {
+    marginBottom: Spacing.sm,
+    color: '#101828',
+  },
+  modalEmphasis: {
+    color: '#101828',
+    marginBottom: Spacing.xs,
+  },
+  modalSecondary: {
+    color: '#475467',
+  },
+  modalChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF3F2',
+    borderColor: '#FEE4E2',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  modalChipText: {
+    color: '#B42318',
+  },
+  modalCheckboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  modalCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#B42318',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCheckboxChecked: {
+    backgroundColor: '#B42318',
+  },
+  modalCheckboxCheck: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  modalPrimaryButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#B42318',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalPrimaryButtonText: {
+    color: '#FFFFFF',
+  },
+  modalSecondaryButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#B42318',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  modalSecondaryButtonDisabled: {
+    borderColor: '#D0D5DD',
+    backgroundColor: '#F9FAFB',
+  },
+  modalSecondaryButtonText: {
+    color: '#B42318',
+  },
+  modalSecondaryButtonTextDisabled: {
+    color: '#98A2B3',
   },
 });

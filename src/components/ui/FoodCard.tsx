@@ -94,7 +94,9 @@ function Stars({ value }: { value: number }) {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoLabel} numberOfLines={1}>
+        {label}
+      </Text>
       <Text style={styles.infoValue} numberOfLines={2}>
         {value}
       </Text>
@@ -199,16 +201,27 @@ export function FoodCard({
 
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>(initialMode);
 
+  const formatAvailableDates = (value?: string) => {
+    if (!value) return t("foodCard.unknownDate");
+    const parts = value.split("-").map((part) => part.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      const endDate = parts.slice(1).join("-").trim();
+      return t("foodCard.endDateInline", { date: endDate });
+    }
+    return value;
+  };
+
   const dateText = showAvailableDates
-    ? availableDates || t("foodCard.unknownDate")
+    ? formatAvailableDates(availableDates)
     : maxDeliveryDistance
       ? t("foodCard.deliveryDistance", { distance: maxDeliveryDistance })
       : distance;
 
-  const qtyText =
-    dailyStock !== undefined && currentStock !== undefined
-      ? `${Math.max(dailyStock - currentStock, 0)}/${dailyStock}`
-      : `${currentStock || 0}`;
+  const totalStock = dailyStock ?? currentStock ?? 0;
+  const remainingStock = currentStock ?? 0;
+  const qtyText = t("foodCard.remainingOnly", {
+    remaining: Math.max(remainingStock, 0),
+  });
 
   const priceText = formatCurrency(price);
 
@@ -274,7 +287,7 @@ export function FoodCard({
         </View>
 
         <View style={styles.bodyRight}>
-          <View style={styles.infoGrid}>
+          <View style={[styles.infoGrid, { minHeight: imageSize }]}>
             <InfoRow label={t("foodCard.dateLabel")} value={dateText} />
             <InfoRow label={t("foodCard.countryLabel")} value={resolvedCountry} />
             <InfoRow label={t("foodCard.quantityLabel")} value={qtyText} />
@@ -410,9 +423,21 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: "#FAFAFB",
   },
-  infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  infoLabel: { width: 60, fontSize: 13, color: COLORS.textMuted, fontWeight: "700" },
-  infoValue: { flex: 1, fontSize: 14, color: COLORS.text, fontWeight: "700", lineHeight: 20 },
+  infoRow: { flexDirection: "row", alignItems: "center", gap: 3 },
+  infoLabel: {
+    width: 70,
+    fontSize: 15,
+    color: COLORS.textMuted,
+    fontWeight: "700",
+    lineHeight: 20,
+  },
+  infoValue: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.text,
+    fontWeight: "700",
+    lineHeight: 20,
+  },
 
   sectionLabel: {
     marginTop: 10,

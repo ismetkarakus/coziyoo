@@ -11,12 +11,15 @@ export interface CartItem {
   dailyStock?: number;
   deliveryOption?: 'pickup' | 'delivery';
   availableOptions?: ('pickup' | 'delivery')[];
+  deliveryFee?: number;
+  allergens?: string[];
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: Omit<CartItem, 'quantity'>, quantity: number) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
+  updateDeliveryOption: (itemId: string, deliveryOption: 'pickup' | 'delivery') => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
   getTotalItems: () => number;
@@ -41,6 +44,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   const addToCart = (item: Omit<CartItem, 'quantity'>, quantity: number) => {
+    const availableOptions = item.availableOptions && item.availableOptions.length > 0
+      ? item.availableOptions
+      : (['pickup', 'delivery'] as ('pickup' | 'delivery')[]);
+    const fallbackDeliveryOption =
+      item.deliveryOption ??
+      (availableOptions.includes('pickup') ? 'pickup' : availableOptions[0]);
+
     setCartItems(prev => {
       const existingItem = prev.find(cartItem => cartItem.id === item.id);
       
@@ -48,12 +58,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         // Update existing item quantity
         return prev.map(cartItem =>
           cartItem.id === item.id
-            ? { ...cartItem, quantity }
+            ? { ...cartItem, quantity: cartItem.quantity + quantity }
             : cartItem
         );
       } else {
         // Add new item
-        return [...prev, { ...item, quantity }];
+        return [...prev, { ...item, deliveryOption: fallbackDeliveryOption, availableOptions, quantity }];
       }
     });
   };
@@ -68,6 +78,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         )
       );
     }
+  };
+
+  const updateDeliveryOption = (itemId: string, deliveryOption: 'pickup' | 'delivery') => {
+    setCartItems(prev =>
+      prev.map(item =>
+        item.id === itemId ? { ...item, deliveryOption } : item
+      )
+    );
   };
 
   const removeFromCart = (itemId: string) => {
@@ -91,6 +109,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     cartItems,
     addToCart,
     updateQuantity,
+    updateDeliveryOption,
     removeFromCart,
     clearCart,
     getTotalItems,

@@ -220,13 +220,26 @@ export default function SellerProfileScreen() {
         }));
         
         // Determine available options
-        const availableOptions: ('pickup' | 'delivery')[] = [];
-        if (food.hasPickup) availableOptions.push('pickup');
-        if (food.hasDelivery) availableOptions.push('delivery');
+        const availableOptions: ('pickup' | 'delivery')[] = Array.isArray((food as any).availableDeliveryOptions)
+          && (food as any).availableDeliveryOptions.length > 0
+            ? (food as any).availableDeliveryOptions
+            : [];
+        if (availableOptions.length === 0) {
+          if (food.hasPickup) availableOptions.push('pickup');
+          if (food.hasDelivery) availableOptions.push('delivery');
+        }
         
         // Set default delivery option if not provided
         const finalDeliveryOption = deliveryOption || (availableOptions.length === 1 ? availableOptions[0] : undefined);
         
+        const rawDeliveryFee = (food as any).deliveryFee;
+        const parsedDeliveryFee =
+          typeof rawDeliveryFee === 'number'
+            ? rawDeliveryFee
+            : typeof rawDeliveryFee === 'string'
+              ? parseFloat(rawDeliveryFee)
+              : 0;
+
         addToCart({
           id: food.id,
           name: food.name,
@@ -237,6 +250,8 @@ export default function SellerProfileScreen() {
           dailyStock: food.dailyStock,
           deliveryOption: finalDeliveryOption,
           availableOptions: availableOptions,
+          deliveryFee: food.hasDelivery ? (Number.isFinite(parsedDeliveryFee) ? parsedDeliveryFee : 0) : 0,
+          allergens: (food as any).allergens || [],
         }, quantity);
         
         console.log(`Added ${quantity} of ${food.name} to cart from seller profile. Remaining stock: ${newStock}`);
@@ -420,5 +435,3 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.md,
   },
 });
-
-

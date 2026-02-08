@@ -6,7 +6,10 @@
     "userType": "buyer",
     "password": "123456",
     "createdAt": "2026-01-04T12:00:00.000Z",
-    "updatedAt": "2026-02-01T12:00:00.000Z"
+    "updatedAt": "2026-02-01T12:00:00.000Z",
+    "allergicTo": [
+      "Süt"
+    ]
   },
   {
     "uid": "mock_seller_1",
@@ -24,7 +27,12 @@
     "userType": "buyer",
     "password": "123456",
     "createdAt": "2026-01-12T09:12:00.000Z",
-    "updatedAt": "2026-02-02T18:44:00.000Z"
+    "updatedAt": "2026-02-02T18:44:00.000Z",
+    "allergicTo": [
+      "Süt",
+      "Buğday (Gluten)",
+      "Yumurta"
+    ]
   },
   {
     "uid": "user_buyer_002",
@@ -33,7 +41,12 @@
     "userType": "buyer",
     "password": "123456",
     "createdAt": "2025-11-03T11:30:00.000Z",
-    "updatedAt": "2026-02-01T12:05:00.000Z"
+    "updatedAt": "2026-02-01T12:05:00.000Z",
+    "allergicTo": [
+      "Süt",
+      "Buğday (Gluten)",
+      "Yumurta"
+    ]
   },
   {
     "uid": "user_seller_001",
