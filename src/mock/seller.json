@@ -148,13 +148,6 @@
       },
       "menu": [
         {
-          "id": "add-meal",
-          "title": "Yemek Ekle",
-          "description": "Yeni yemek menüye ekle",
-          "icon": "🍽️",
-          "route": "/(seller)/add-meal"
-        },
-        {
           "id": "manage-meals",
           "title": "Yemeklerimi Yönet",
           "description": "Yemekleri düzenle, sil veya güncelle",
@@ -203,7 +196,7 @@
         "signOutMessage": "Hesabınızdan çıkış yapmak istiyor musunuz?",
         "signOutError": "Çıkış yapılamadı. Lütfen tekrar deneyin."
       },
-      "signOut": "🚪 Çıkış Yap"
+      "signOut": "Çıkış Yap"
     }
   },
   "en": {

@@ -1,0 +1,9 @@
+{
+  "route": "/(seller)/wallet",
+  "titleKey": "sellerWalletScreen.title",
+  "tabs": [
+    "sellerWalletScreen.tabs.overview",
+    "sellerWalletScreen.tabs.transactions",
+    "sellerWalletScreen.tabs.withdraw"
+  ]
+}

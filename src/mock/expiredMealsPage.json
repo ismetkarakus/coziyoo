@@ -1,0 +1,13 @@
+{
+  "route": "/(seller)/manage-meals",
+  "titleKey": "manageMealsScreen.title",
+  "tab": "expired",
+  "sections": [
+    {
+      "id": "expiredMeals",
+      "titleKey": "manageMealsScreen.tabs.expired",
+      "emptyTitleKey": "manageMealsScreen.emptyExpiredTitle",
+      "emptyDescriptionKey": "manageMealsScreen.emptyExpiredDesc"
+    }
+  ]
+}

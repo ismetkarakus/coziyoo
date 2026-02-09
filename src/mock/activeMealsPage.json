@@ -1,0 +1,20 @@
+{
+  "route": "/(seller)/manage-meals",
+  "titleKey": "manageMealsScreen.title",
+  "tab": "active",
+  "sections": [
+    {
+      "id": "activeMeals",
+      "titleKey": "manageMealsScreen.tabs.active",
+      "emptyTitleKey": "manageMealsScreen.emptyActiveTitle",
+      "emptyDescriptionKey": "manageMealsScreen.emptyActiveDesc",
+      "actions": [
+        {
+          "id": "addMeal",
+          "labelKey": "manageMealsScreen.addMeal",
+          "route": "/(seller)/add-meal"
+        }
+      ]
+    }
+  ]
+}

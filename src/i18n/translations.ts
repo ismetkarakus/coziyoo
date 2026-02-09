@@ -1688,7 +1688,7 @@ export const translations = {
           'Satıcı özelliklerini kullanabilmek için önce Birleşik Krallık Gıda İşletmesi Uygunluğu bölümünü tamamlamanız gerekiyor.',
         ok: 'Tamam',
       },
-      signOutButton: '🚪 Çıkış Yap',
+      signOutButton: 'Çıkış Yap',
     },
     sellerWalletScreen: {
       title: 'Cüzdanım',

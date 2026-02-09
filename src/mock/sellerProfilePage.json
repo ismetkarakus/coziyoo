@@ -1,0 +1,69 @@
+{
+  "route": "/(seller)/profile",
+  "titleKey": "sellerProfileScreen.title",
+  "sections": [
+    {
+      "id": "contact",
+      "titleKey": "sellerProfileScreen.sections.contact",
+      "fields": [
+        "sellerProfileScreen.fields.nickname",
+        "sellerProfileScreen.fields.firstName",
+        "sellerProfileScreen.fields.lastName",
+        "sellerProfileScreen.fields.email",
+        "sellerProfileScreen.fields.phone"
+      ]
+    },
+    {
+      "id": "location",
+      "titleKey": "sellerProfileScreen.sections.location",
+      "fields": [
+        "sellerProfileScreen.fields.city",
+        "sellerProfileScreen.fields.address"
+      ]
+    },
+    {
+      "id": "about",
+      "titleKey": "sellerProfileScreen.sections.about",
+      "fields": [
+        "sellerProfileScreen.fields.about",
+        "sellerProfileScreen.sections.specialties"
+      ]
+    },
+    {
+      "id": "identity",
+      "titleKey": "sellerProfileScreen.sections.identity",
+      "fields": [
+        "sellerProfileScreen.identity.frontLabel",
+        "sellerProfileScreen.identity.backLabel"
+      ]
+    },
+    {
+      "id": "bank",
+      "titleKey": "sellerProfileScreen.sections.bank",
+      "fields": [
+        "sellerProfileScreen.bankLabels.bankName",
+        "sellerProfileScreen.bankLabels.accountHolderName",
+        "sellerProfileScreen.bankLabels.iban",
+        "sellerProfileScreen.bankLabels.accountNumber"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "edit",
+      "labelKey": "sellerProfileScreen.actions.edit"
+    },
+    {
+      "id": "save",
+      "labelKey": "sellerProfileScreen.actions.save"
+    },
+    {
+      "id": "cancel",
+      "labelKey": "sellerProfileScreen.actions.cancel"
+    },
+    {
+      "id": "signOut",
+      "labelKey": "sellerPanel.signOutButton"
+    }
+  ]
+}

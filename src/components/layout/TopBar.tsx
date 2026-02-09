@@ -89,9 +89,9 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'flex-end', // Changed from center to flex-end (bottom alignment)
-    height: 48, // Reduced from 56 to 48 (8px shorter)
+    height: 64, // Taller to move header content further down
     paddingHorizontal: Spacing.sm, // Reduced from md to sm
-    paddingBottom: Spacing.xs, // Added bottom padding for buttons
+    paddingBottom: Spacing.md, // More bottom padding
   },
   side: {
     flex: 1,
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: Spacing['2xl'] + Spacing.sm,
     right: Spacing['2xl'] + Spacing.sm,
-    bottom: Spacing.xs,
+    bottom: Spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },

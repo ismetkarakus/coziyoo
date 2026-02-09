@@ -1,0 +1,14 @@
+{
+  "route": "/(seller)/orders",
+  "titleKey": "ordersScreen.title",
+  "sections": [
+    {
+      "id": "tabs",
+      "tabKeys": [
+        "ordersScreen.tabs.active",
+        "ordersScreen.tabs.completed",
+        "ordersScreen.tabs.cancelled"
+      ]
+    }
+  ]
+}

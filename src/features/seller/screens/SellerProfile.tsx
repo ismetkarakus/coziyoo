@@ -11,13 +11,18 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import sellerMock from '../../../mock/seller.json';
+import { useAuth } from '../../../context/AuthContext';
+import { useCountry } from '../../../context/CountryContext';
 
 export const SellerProfile: React.FC = () => {
   const { section } = useLocalSearchParams<{ section?: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
+  const { signOut } = useAuth();
+  const { currentCountry } = useCountry();
   const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
+  const complianceCopy = currentCountry.code === 'TR' ? localizedMock.panel.compliance.tr : localizedMock.panel.compliance.uk;
   const sellerData = {
     name: localizedMock.profile.name,
     email: localizedMock.profile.email,
@@ -56,6 +61,53 @@ export const SellerProfile: React.FC = () => {
   // Uzmanlık alanları state'i
   const [specialties, setSpecialties] = useState(sellerData.specialties);
   const [newSpecialty, setNewSpecialty] = useState('');
+  const [complianceExpanded, setComplianceExpanded] = useState(false);
+
+  const isComplianceComplete = () => {
+    const complianceStatus = {
+      councilRegistered: true,
+      hygieneCertificate: true,
+      allergensDeclared: true,
+      hygieneRating: true,
+      insurance: true,
+      termsAccepted: true,
+      approved: true,
+    };
+
+    return Object.values(complianceStatus).every(status => status === true);
+  };
+
+  const complianceComplete = isComplianceComplete();
+
+  const handleSignOut = () => {
+    const runSignOut = async () => {
+      try {
+        await signOut();
+        router.replace('/(auth)/sign-in');
+      } catch (error) {
+        console.error('Sign out error:', error);
+        Alert.alert(t('sellerPanel.alerts.signOutTitle'), t('sellerPanel.alerts.signOutError'));
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      runSignOut();
+      return;
+    }
+
+    Alert.alert(
+      t('sellerPanel.alerts.signOutTitle'),
+      t('sellerPanel.alerts.signOutMessage'),
+      [
+        { text: t('sellerPanel.alerts.ok'), style: 'cancel' },
+        {
+          text: t('sellerPanel.alerts.ok'),
+          style: 'destructive',
+          onPress: runSignOut,
+        },
+      ]
+    );
+  };
 
   // Kimlik ve banka bilgileri state'leri
   const [identityImages, setIdentityImages] = useState({
@@ -384,19 +436,7 @@ export const SellerProfile: React.FC = () => {
           </TouchableOpacity>
         }
         rightComponent={
-          isEditing ? (
-            <View style={styles.headerRightAbsolute}>
-              <TouchableOpacity
-                onPress={handleSave}
-                style={[styles.headerSaveButton, { backgroundColor: colors.primary }]}
-                activeOpacity={0.7}
-              >
-                <Text variant="body" weight="semibold" style={styles.headerSaveText}>
-                  {t('sellerProfileScreen.actions.save')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+          !isEditing ? (
             <View style={styles.headerRightAbsolute}>
               <TouchableOpacity 
                 onPress={() => setIsEditing(true)}
@@ -406,7 +446,7 @@ export const SellerProfile: React.FC = () => {
                 <FontAwesome name="edit" size={18} color={colors.primary} />
               </TouchableOpacity>
             </View>
-          )
+          ) : null
         }
       />
       
@@ -478,6 +518,80 @@ export const SellerProfile: React.FC = () => {
             </View>
           </View>
         </Card>
+
+        {currentCountry.code === 'TR' && (
+          <View style={styles.complianceWrapper}>
+            <TouchableOpacity
+              onPress={() => setComplianceExpanded(!complianceExpanded)}
+              activeOpacity={0.7}
+            >
+              <Card variant="default" padding="md" style={styles.complianceCard}>
+                <View style={styles.complianceHeader}>
+                  <Text
+                    variant="subheading"
+                    weight="semibold"
+                    style={[styles.complianceTitle, { color: colors.text }]}
+                  >
+                    {complianceCopy.title}
+                  </Text>
+                  <View style={styles.complianceHeaderRight}>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor: complianceComplete ? '#28A745' : '#17A2B8',
+                          color: 'white',
+                        },
+                      ]}
+                    >
+                      {complianceComplete ? complianceCopy.statusComplete : complianceCopy.statusOptional}
+                    </Text>
+                    <Text variant="body" style={[styles.expandIcon, { color: colors.textSecondary }]}>
+                      {complianceExpanded ? '▼' : '▶'}
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            </TouchableOpacity>
+
+            {complianceExpanded && (
+              <Card variant="default" padding="sm" style={[styles.complianceCard, styles.complianceExpandedCard]}>
+                <View style={styles.complianceItems}>
+                  {complianceCopy.items.map((item: any) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+                      onPress={() => router.push(item.route)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.complianceItemContent}>
+                        <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
+                          {item.title}
+                        </Text>
+                        <Text variant="caption" color="primary" style={styles.editLink}>
+                          {complianceCopy.edit}
+                        </Text>
+                      </View>
+                      <Text variant="caption" color="textSecondary">
+                        {item.sub}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+
+                  <TouchableOpacity
+                    style={[styles.complianceButton, { backgroundColor: colors.primary + '20' }]}
+                    onPress={() => router.push('/terms-and-conditions')}
+                  >
+                    <Text variant="body" color="primary" style={styles.complianceButtonText}>
+                      {complianceCopy.terms}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            )}
+          </View>
+        )}
 
         {/* Contact Information */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
@@ -932,6 +1046,18 @@ export const SellerProfile: React.FC = () => {
           </View>
         )}
 
+        {isEditing && (
+          <View style={styles.signOutContainer}>
+            <Button
+              variant="primary"
+              onPress={handleSignOut}
+              style={[styles.signOutButton, { backgroundColor: colors.error }]}
+            >
+              {t('sellerPanel.signOutButton')}
+            </Button>
+          </View>
+        )}
+
         <View style={styles.bottomSpace} />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -1043,6 +1169,78 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: Spacing.md,
   },
+  complianceWrapper: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  complianceCard: {
+    borderWidth: 2,
+    borderColor: '#28A745',
+    backgroundColor: 'rgba(40, 167, 69, 0.05)',
+  },
+  complianceExpandedCard: {
+    marginTop: 2,
+    borderTopWidth: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
+  complianceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  complianceHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  expandIcon: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  complianceTitle: {
+    flex: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: 12,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  complianceItems: {
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  complianceItem: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  complianceItemContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  editLink: {
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
+  complianceLabel: {
+    marginBottom: 2,
+  },
+  complianceButton: {
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(127, 175, 154, 0.1)',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  complianceButtonText: {
+    fontWeight: '500',
+  },
   formContainer: {
     gap: Spacing.md,
   },
@@ -1079,6 +1277,15 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
     gap: Spacing.md,
+  },
+  signOutContainer: {
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
+    alignItems: 'center',
+  },
+  signOutButton: {
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.md,
   },
   cancelButton: {
     flex: 1,

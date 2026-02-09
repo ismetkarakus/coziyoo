@@ -1,0 +1,80 @@
+{
+  "route": "/(seller)/add-meal",
+  "titleKey": "addMealScreen.title",
+  "sections": [
+    {
+      "id": "photos",
+      "titleKey": "addMealScreen.sections.photos",
+      "fields": [
+        "addMealScreen.photos.add",
+        "addMealScreen.photos.hint"
+      ]
+    },
+    {
+      "id": "basic",
+      "fields": [
+        "addMealScreen.fields.country",
+        "addMealScreen.fields.category",
+        "addMealScreen.fields.name",
+        "addMealScreen.fields.description",
+        "addMealScreen.fields.recipe",
+        "addMealScreen.fields.price",
+        "addMealScreen.fields.dailyStock"
+      ],
+      "placeholders": [
+        "addMealScreen.placeholders.country",
+        "addMealScreen.placeholders.category",
+        "addMealScreen.placeholders.name",
+        "addMealScreen.placeholders.description",
+        "addMealScreen.placeholders.recipe",
+        "addMealScreen.placeholders.price",
+        "addMealScreen.placeholders.dailyStock"
+      ]
+    },
+    {
+      "id": "dates",
+      "fields": [
+        "addMealScreen.fields.startDate",
+        "addMealScreen.fields.endDate"
+      ],
+      "placeholders": [
+        "addMealScreen.placeholders.date"
+      ]
+    },
+    {
+      "id": "delivery",
+      "titleKey": "addMealScreen.sections.deliveryOptions",
+      "fields": [
+        "addMealScreen.delivery.pickup",
+        "addMealScreen.delivery.delivery",
+        "addMealScreen.fields.maxDistance",
+        "addMealScreen.fields.deliveryFee"
+      ],
+      "placeholders": [
+        "addMealScreen.placeholders.maxDistance",
+        "addMealScreen.placeholders.deliveryFee"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "preview",
+      "labelKey": "addMealScreen.actions.preview"
+    },
+    {
+      "id": "publish",
+      "labelKey": "addMealScreen.actions.publish"
+    },
+    {
+      "id": "cancel",
+      "labelKey": "addMealScreen.actions.cancel"
+    }
+  ],
+  "modals": [
+    {
+      "id": "category",
+      "titleKey": "addMealScreen.modals.categoryTitle",
+      "subtitleKey": "addMealScreen.modals.categorySubtitle"
+    }
+  ]
+}

@@ -27,7 +27,11 @@ interface Meal {
   endDate?: string;
 }
 
-export const ManageMeals: React.FC = () => {
+interface ManageMealsProps {
+  embedded?: boolean;
+}
+
+export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
@@ -313,18 +317,20 @@ export const ManageMeals: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar 
-        title={t('manageMealsScreen.title')} 
-        leftComponent={
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            style={styles.backButton}
-            activeOpacity={0.7}
-          >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
-          </TouchableOpacity>
-        }
-      />
+      {!embedded && (
+        <TopBar 
+          title={t('manageMealsScreen.title')} 
+          leftComponent={
+            <TouchableOpacity 
+              onPress={() => router.back()}
+              style={styles.backButton}
+              activeOpacity={0.7}
+            >
+              <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            </TouchableOpacity>
+          }
+        />
+      )}
       
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
@@ -489,7 +495,7 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xl * 2,
+    paddingVertical: Spacing.lg,
     gap: Spacing.md,
   },
   emptyTitle: {

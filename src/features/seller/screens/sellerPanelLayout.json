@@ -1,0 +1,389 @@
+{
+  "type": "View",
+  "style": ["container", { "$": "rootBackgroundStyle" }],
+  "children": [
+    {
+      "type": "TopBar",
+      "props": { "title": { "$": "panel.title" } },
+      "children": [
+        {
+          "slot": "leftComponent",
+          "type": "TouchableOpacity",
+          "style": "backButton",
+          "props": {
+            "onPress": { "$": "handlers.onBackPress" },
+            "activeOpacity": 0.7
+          },
+          "children": [
+            {
+              "type": "FontAwesome",
+              "props": {
+                "name": "arrow-left",
+                "size": 20,
+                "color": { "$": "colors.text" }
+              }
+            }
+          ]
+        },
+        {
+          "slot": "rightComponent",
+          "type": "View",
+          "style": "themeMiniWrapperTop",
+          "children": [
+            {
+              "type": "TouchableOpacity",
+              "style": ["themeMiniButton", { "$": "themeMiniButtonBorderStyle" }],
+              "props": {
+                "onPress": { "$": "handlers.toggleThemeExpanded" },
+                "activeOpacity": 0.7
+              },
+              "children": [
+                {
+                  "type": "WebSafeIcon",
+                  "props": {
+                    "name": "moon-o",
+                    "size": 18,
+                    "color": { "$": "colors.text" }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "View",
+              "condition": "themeExpanded",
+              "style": ["themeDropdown", { "$": "themeDropdownBackgroundStyle" }],
+              "children": [
+                {
+                  "type": "View",
+                  "style": "themeDropdownColumn",
+                  "children": [
+                    {
+                      "type": "TouchableOpacity",
+                      "style": { "$fn": "themeOptionStyle", "args": ["light"] },
+                      "props": {
+                        "onPress": { "$fn": "handlers.setTheme", "args": ["light"] },
+                        "activeOpacity": 0.7
+                      },
+                      "children": [
+                        {
+                          "type": "View",
+                          "style": "themeToggleContent",
+                          "children": [
+                            {
+                              "type": "WebSafeIcon",
+                              "props": {
+                                "name": "sun-o",
+                                "size": 16,
+                                "color": { "$": "colors.text" }
+                              }
+                            },
+                            {
+                              "type": "Text",
+                              "props": { "variant": "body", "weight": "semibold" },
+                              "text": { "$": "panel.theme.light" }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "TouchableOpacity",
+                      "style": { "$fn": "themeOptionStyle", "args": ["dark"] },
+                      "props": {
+                        "onPress": { "$fn": "handlers.setTheme", "args": ["dark"] },
+                        "activeOpacity": 0.7
+                      },
+                      "children": [
+                        {
+                          "type": "View",
+                          "style": "themeToggleContent",
+                          "children": [
+                            {
+                              "type": "WebSafeIcon",
+                              "props": {
+                                "name": "moon-o",
+                                "size": 16,
+                                "color": { "$": "colors.text" }
+                              }
+                            },
+                            {
+                              "type": "Text",
+                              "props": { "variant": "body", "weight": "semibold" },
+                              "text": { "$": "panel.theme.dark" }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "TouchableOpacity",
+                      "style": { "$fn": "themeOptionStyle", "args": ["system"] },
+                      "props": {
+                        "onPress": { "$fn": "handlers.setTheme", "args": ["system"] },
+                        "activeOpacity": 0.7
+                      },
+                      "children": [
+                        {
+                          "type": "View",
+                          "style": "themeToggleContent",
+                          "children": [
+                            {
+                              "type": "WebSafeIcon",
+                              "props": {
+                                "name": "cog",
+                                "size": 16,
+                                "color": { "$": "colors.text" }
+                              }
+                            },
+                            {
+                              "type": "Text",
+                              "props": { "variant": "body", "weight": "semibold" },
+                              "text": { "$": "panel.theme.system" }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TouchableWithoutFeedback",
+      "condition": "themeExpanded",
+      "props": { "onPress": { "$": "handlers.closeTheme" } },
+      "children": [{ "type": "View", "style": "themeBackdrop" }]
+    },
+    {
+      "type": "ScrollView",
+      "style": "content",
+      "props": {
+        "showsVerticalScrollIndicator": false,
+        "contentContainerStyle": { "$": "styles.contentContainer" }
+      },
+      "children": [
+        {
+          "type": "TouchableWithoutFeedback",
+          "children": [
+            {
+              "type": "View",
+              "style": "statsContainer",
+              "children": [
+                {
+                  "type": "View",
+                  "style": "statsHeaderRow",
+                  "children": [
+                    {
+                      "type": "View",
+                      "style": "statsTitleColumn",
+                      "children": [
+                        {
+                          "type": "TouchableOpacity",
+                          "style": "statsAvatarButton",
+                          "props": {
+                            "onPress": { "$": "handlers.openProfile" },
+                            "activeOpacity": 0.7
+                          },
+                          "children": [
+                            {
+                              "type": "Image",
+                              "style": "statsAvatar",
+                              "props": {
+                                "source": { "uri": { "$": "profileData.avatar" } },
+                                "defaultSource": { "$": "defaultAvatarSource" }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "Text",
+                          "style": "statsTitle",
+                          "props": { "variant": "subheading", "weight": "semibold" },
+                          "text": { "$": "panel.statsTitle" }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "View",
+                  "style": "statsGrid",
+                  "children": [
+                    {
+                      "type": "TouchableOpacity",
+                      "style": "statCard",
+                      "props": {
+                        "onPress": { "$fn": "handlers.navigate", "args": ["/(seller)/orders"] }
+                      },
+                      "children": [
+                        {
+                          "type": "Card",
+                          "props": { "variant": "default", "padding": "sm" },
+                          "children": [
+                            {
+                              "type": "Text",
+                              "props": { "variant": "title", "weight": "bold", "color": "primary", "center": true },
+                              "text": { "$": "stats.orders" }
+                            },
+                            {
+                              "type": "Text",
+                              "props": { "variant": "caption", "center": true, "color": "textSecondary" },
+                              "text": { "$": "panel.statsLabels.orders" }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "TouchableOpacity",
+                      "style": "statCard",
+                      "props": {
+                        "onPress": { "$fn": "handlers.navigate", "args": ["/(seller)/wallet"] }
+                      },
+                      "children": [
+                        {
+                          "type": "Card",
+                          "props": { "variant": "default", "padding": "sm" },
+                          "children": [
+                            {
+                              "type": "Text",
+                              "props": { "variant": "title", "weight": "bold", "color": "success", "center": true },
+                              "text": { "$": "stats.wallet" }
+                            },
+                            {
+                              "type": "Text",
+                              "props": { "variant": "caption", "center": true, "color": "textSecondary" },
+                              "text": { "$": "panel.statsLabels.wallet" }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "TouchableOpacity",
+                      "style": "statCard",
+                      "props": {
+                        "onPress": { "$fn": "handlers.navigate", "args": ["/(seller)/messages"] }
+                      },
+                      "children": [
+                        {
+                          "type": "Card",
+                          "props": { "variant": "default", "padding": "sm" },
+                          "children": [
+                            {
+                              "type": "Text",
+                              "props": { "variant": "title", "weight": "bold", "color": "info", "center": true },
+                              "text": { "$": "stats.messages" }
+                            },
+                            {
+                              "type": "Text",
+                              "props": { "variant": "caption", "center": true, "color": "textSecondary" },
+                              "text": { "$": "panel.statsLabels.messages" }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Card",
+                      "style": "statCard",
+                      "props": { "variant": "default", "padding": "sm" },
+                      "children": [
+                        {
+                          "type": "Text",
+                          "props": { "variant": "title", "weight": "bold", "color": "warning", "center": true },
+                          "text": { "$": "stats.rating" }
+                        },
+                        {
+                          "type": "Text",
+                          "props": { "variant": "caption", "center": true, "color": "textSecondary" },
+                          "text": { "$": "panel.statsLabels.rating" }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "View",
+          "condition": "showManageMeals",
+          "style": "manageMealsEmbed",
+          "children": [
+            {
+              "type": "Text",
+              "style": "manageMealsHeader",
+              "props": { "variant": "subheading", "weight": "semibold" },
+              "text": { "$": "manageMealsTitle" }
+            },
+            { "type": "ManageMeals", "props": { "embedded": true } }
+          ]
+        },
+        {
+          "type": "TouchableWithoutFeedback",
+          "condition": "hasVisibleMenuItems",
+          "children": [
+            {
+              "type": "View",
+              "style": "menuSectionsContainer",
+              "children": [
+                {
+                  "type": "TouchableOpacity",
+                  "repeat": { "data": "visibleMenuItems", "itemName": "item", "key": "id" },
+                  "style": { "$fn": "menuCardStyle", "args": [{ "$": "item" }] },
+                  "props": {
+                    "onPress": { "$fn": "handlers.onMenuItemPress", "args": [{ "$": "item" }] },
+                    "activeOpacity": { "$fn": "menuCardActiveOpacity" }
+                  },
+                  "children": [
+                    {
+                      "type": "View",
+                      "style": "menuCardContent",
+                      "children": [
+                        {
+                          "type": "Text",
+                          "style": { "$fn": "menuCardIconStyle" },
+                          "text": { "$fn": "menuCardIconText", "args": [{ "$": "item" }] }
+                        },
+                        {
+                          "type": "View",
+                          "style": "menuCardTextContainer",
+                          "children": [
+                            {
+                              "type": "Text",
+                              "props": { "variant": "subheading", "weight": "semibold" },
+                              "style": { "$fn": "menuCardTitleStyle" },
+                              "text": { "$": "item.title" }
+                            },
+                            {
+                              "type": "Text",
+                              "props": { "variant": "caption" },
+                              "style": { "$fn": "menuCardDescriptionStyle" },
+                              "text": { "$fn": "menuCardDescriptionText", "args": [{ "$": "item" }] }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "Text",
+                          "style": { "$fn": "menuCardArrowStyle" },
+                          "text": { "$fn": "menuCardArrowText" }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        { "type": "View", "style": "bottomSpace" }
+      ]
+    }
+  ]
+}
