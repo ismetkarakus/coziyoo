@@ -50,6 +50,7 @@ type FoodCardProps = {
   id: string;
   name: string;
   cookName: string;
+  displayCookName?: string;
   rating: number;
   price: number;
   distance: string;
@@ -160,6 +161,7 @@ export function FoodCard({
   id,
   name,
   cookName,
+  displayCookName,
   rating,
   price,
   distance,
@@ -312,7 +314,7 @@ export function FoodCard({
           }
         >
           <Text style={styles.seller} numberOfLines={1}>
-            {cookName} →
+            {(displayCookName || cookName)} →
           </Text>
         </Pressable>
         <View style={styles.footerRating}>

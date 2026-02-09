@@ -20,6 +20,7 @@ import { seedSampleData, checkExistingData } from '../../../utils/seedData';
 import { mockFoodService } from '../../../services/mockFoodService';
 import { mockUserService } from '../../../services/mockUserService';
 import { MockFood } from '../../../mock/data';
+import sellerMock from '../../../mock/seller.json';
 
 const getCategoriesForLanguage = (language: 'tr' | 'en') => {
   if (language === 'tr') {
@@ -158,6 +159,9 @@ export const Home: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { currentCountry, formatCurrency } = useCountry();
   const { t, currentLanguage } = useTranslation();
+  const localizedSeller = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
+  const [sellerNickname, setSellerNickname] = useState<string>(localizedSeller.profile.nickname?.trim() || '');
+  const getDisplayCookName = (name: string) => (sellerNickname ? sellerNickname : name);
   const params = useLocalSearchParams();
   const { getTotalItems } = useCart();
   const { user, userData } = useAuth();
@@ -175,6 +179,26 @@ export const Home: React.FC = () => {
       setSelectedCategory(defaultCategory);
     }
   }, [defaultCategory]);
+
+  useEffect(() => {
+    const loadSellerNickname = async () => {
+      setSellerNickname(localizedSeller.profile.nickname?.trim() || '');
+      try {
+        const savedProfile = await AsyncStorage.getItem('sellerProfile');
+        if (savedProfile) {
+          const profile = JSON.parse(savedProfile);
+          const nickname = profile?.formData?.nickname?.trim();
+          if (nickname) {
+            setSellerNickname(nickname);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading seller nickname:', error);
+      }
+    };
+
+    loadSellerNickname();
+  }, [currentLanguage, localizedSeller.profile.nickname]);
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
   const [scrollY, setScrollY] = useState(0);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
@@ -1066,6 +1090,7 @@ export const Home: React.FC = () => {
               <FoodCard
                 key={food.id}
                 {...food}
+                displayCookName={getDisplayCookName(food.cookName)}
                 currentStock={foodStocks[food.id.replace(/^(firebase_|mock_|published_)/, '')] ?? food.currentStock}
                 onAddToCart={handleAddToCart}
                 maxDeliveryDistance={food.maxDeliveryDistance}

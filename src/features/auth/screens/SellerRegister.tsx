@@ -18,6 +18,7 @@ export const SellerRegister: React.FC = () => {
     phone: '0555 222 33 44',
     email: 'seller@test.com',
     password: 'Test1234!',
+    confirmPassword: 'Test1234!',
     kitchenLocation: 'Şişli, İstanbul',
   };
 
@@ -39,6 +40,7 @@ export const SellerRegister: React.FC = () => {
         phone: '',
         email: '',
         password: '',
+        confirmPassword: '',
         kitchenLocation: '',
       });
       setErrors({});
@@ -53,6 +55,7 @@ export const SellerRegister: React.FC = () => {
       'phone',
       'email',
       'password',
+      'confirmPassword',
       'kitchenLocation',
     ];
 
@@ -69,6 +72,10 @@ export const SellerRegister: React.FC = () => {
 
     if (formData.password?.trim() && formData.password.trim().length < 6) {
       nextErrors.password = t('authFormErrors.invalidPassword');
+    }
+
+    if (formData.confirmPassword?.trim() && formData.password?.trim() && formData.confirmPassword.trim() !== formData.password.trim()) {
+      nextErrors.confirmPassword = t('authFormErrors.passwordMismatch');
     }
 
     const phoneDigits = formData.phone?.replace(/\D/g, '') ?? '';
@@ -174,6 +181,16 @@ export const SellerRegister: React.FC = () => {
             />
 
             <FormField
+              label={t('authSellerRegister.confirmPasswordLabel')}
+              value={formData.confirmPassword}
+              onChangeText={handleInputChange('confirmPassword')}
+              placeholder={t('authSellerRegister.confirmPasswordPlaceholder')}
+              secureTextEntry
+              error={errors.confirmPassword}
+              required
+            />
+
+            <FormField
               label={t('authSellerRegister.kitchenLocationLabel')}
               value={formData.kitchenLocation}
               onChangeText={handleInputChange('kitchenLocation')}
@@ -231,7 +248,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
 
 
 

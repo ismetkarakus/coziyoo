@@ -7,30 +7,29 @@ import { Text, Button, Card, Input } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { translations } from '../../../i18n/translations';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import sellerMock from '../../../mock/seller.json';
 
 export const SellerProfile: React.FC = () => {
   const { section } = useLocalSearchParams<{ section?: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
+  const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
   const sellerData = {
-    name: t('sellerProfileScreen.mock.name'),
-    email: t('sellerProfileScreen.mock.email'),
-    phone: t('sellerProfileScreen.mock.phone'),
-    location: t('sellerProfileScreen.mock.location'),
-    address: t('sellerProfileScreen.mock.address'),
-    avatar: t('sellerProfileScreen.mock.avatar'),
-    description: t('sellerProfileScreen.mock.description'),
-    specialties:
-      (translations[currentLanguage]?.sellerProfileScreen?.mock?.specialties ??
-        translations.tr.sellerProfileScreen.mock.specialties) as string[],
-    rating: 4.8,
-    totalOrders: 156,
-    joinDate: t('sellerProfileScreen.mock.joinDate'),
+    name: localizedMock.profile.name,
+    email: localizedMock.profile.email,
+    phone: localizedMock.profile.phone,
+    location: localizedMock.profile.location,
+    address: localizedMock.profile.address,
+    avatar: localizedMock.profile.avatar,
+    description: localizedMock.profile.description,
+    specialties: localizedMock.profile.specialties,
+    rating: localizedMock.profile.rating,
+    totalOrders: localizedMock.profile.totalOrders,
+    joinDate: localizedMock.profile.joinDate,
   };
   const [isEditing, setIsEditing] = useState(false);
   const [identityExpanded, setIdentityExpanded] = useState(false);
@@ -38,14 +37,21 @@ export const SellerProfile: React.FC = () => {
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [formData, setFormData] = useState({
-    name: sellerData.name,
-    nickname: '', // Nickname alanı eklendi
+    firstName: sellerData.name.split(' ')[0] || sellerData.name,
+    lastName: sellerData.name.split(' ').slice(1).join(' ').trim(),
+    nickname: localizedMock.profile.nickname || '', // Nickname alanı eklendi
     email: sellerData.email,
     phone: sellerData.phone,
     location: sellerData.location,
     address: sellerData.address,
     description: sellerData.description,
   });
+
+  const getFullName = (data = formData) => {
+    const first = data.firstName?.trim() || '';
+    const last = data.lastName?.trim() || '';
+    return [first, last].filter(Boolean).join(' ') || sellerData.name;
+  };
 
   // Uzmanlık alanları state'i
   const [specialties, setSpecialties] = useState(sellerData.specialties);
@@ -102,7 +108,21 @@ export const SellerProfile: React.FC = () => {
       const savedProfile = await AsyncStorage.getItem('sellerProfile');
       if (savedProfile) {
         const profileData = JSON.parse(savedProfile);
-        setFormData(profileData.formData || formData);
+        if (profileData.formData) {
+          const incoming = profileData.formData;
+          setFormData({
+            firstName: incoming.firstName || incoming.name?.split(' ')[0] || sellerData.name.split(' ')[0],
+            lastName: incoming.lastName || incoming.name?.split(' ').slice(1).join(' ').trim() || sellerData.name.split(' ').slice(1).join(' '),
+            nickname: incoming.nickname || '',
+            email: incoming.email || sellerData.email,
+            phone: incoming.phone || sellerData.phone,
+            location: incoming.location || sellerData.location,
+            address: incoming.address || sellerData.address,
+            description: incoming.description || sellerData.description,
+          });
+        } else {
+          setFormData(formData);
+        }
         setAvatarUri(profileData.avatarUri || null);
         setSpecialties(profileData.specialties || sellerData.specialties);
         setBankDetails(profileData.bankDetails || bankDetails);
@@ -117,7 +137,10 @@ export const SellerProfile: React.FC = () => {
   const saveProfileData = async () => {
     try {
       const profileData = {
-        formData,
+        formData: {
+          ...formData,
+          name: getFullName(formData),
+        },
         avatarUri,
         specialties,
         bankDetails,
@@ -361,7 +384,19 @@ export const SellerProfile: React.FC = () => {
           </TouchableOpacity>
         }
         rightComponent={
-          !isEditing ? (
+          isEditing ? (
+            <View style={styles.headerRightAbsolute}>
+              <TouchableOpacity
+                onPress={handleSave}
+                style={[styles.headerSaveButton, { backgroundColor: colors.primary }]}
+                activeOpacity={0.7}
+              >
+                <Text variant="body" weight="semibold" style={styles.headerSaveText}>
+                  {t('sellerProfileScreen.actions.save')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
             <View style={styles.headerRightAbsolute}>
               <TouchableOpacity 
                 onPress={() => setIsEditing(true)}
@@ -371,7 +406,7 @@ export const SellerProfile: React.FC = () => {
                 <FontAwesome name="edit" size={18} color={colors.primary} />
               </TouchableOpacity>
             </View>
-          ) : null
+          )
         }
       />
       
@@ -404,15 +439,23 @@ export const SellerProfile: React.FC = () => {
             </View>
             
             <View style={styles.profileInfo}>
-              {/* Nickname Display */}
-              {formData.nickname && (
-                <Text variant="heading" weight="bold" style={styles.profileNickname}>
+              <Text variant="subheading" weight="semibold" style={styles.profileName}>
+                {getFullName()}
+              </Text>
+              {formData.nickname ? (
+                <Text variant="body" weight="semibold" style={styles.profileNickname}>
                   {formData.nickname}
                   {identityVerification.status === 'verified' && (
                     <Text style={styles.verifiedBadge}> ✓</Text>
                   )}
                 </Text>
-              )}
+              ) : null}
+              <Text variant="body" color="textSecondary">
+                {formData.email}
+              </Text>
+              <Text variant="caption" color="textSecondary">
+                {t('sellerPanel.user.role')} • {formData.location}
+              </Text>
               
               <Text variant="caption" color="textSecondary">
                 {t('sellerProfileScreen.joinedSince', { date: sellerData.joinDate })}
@@ -452,10 +495,17 @@ export const SellerProfile: React.FC = () => {
                 />
                 
                 <FormField
-                  label={t('sellerProfileScreen.fields.fullName')}
-                  value={formData.name}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-                  placeholder={t('sellerProfileScreen.placeholders.fullName')}
+                  label={t('sellerProfileScreen.fields.firstName')}
+                  value={formData.firstName}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, firstName: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.firstName')}
+                />
+
+                <FormField
+                  label={t('sellerProfileScreen.fields.lastName')}
+                  value={formData.lastName}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, lastName: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.lastName')}
                 />
                 
                 <FormField
@@ -478,7 +528,7 @@ export const SellerProfile: React.FC = () => {
                 <View style={styles.infoRow}>
                   <FontAwesome name="user" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>
-                    {formData.name}
+                    {getFullName()}
                     {identityVerification.status === 'verified' && (
                       <Text style={styles.verifiedBadge}> ✓ {t('sellerProfileScreen.identity.status.verified')}</Text>
                     )}
@@ -909,7 +959,7 @@ const styles = StyleSheet.create({
   },
   headerCard: {
     marginHorizontal: Spacing.md,
-    marginTop: Spacing.md,
+    marginTop: 0,
     marginBottom: Spacing.sm,
   },
   headerRightAbsolute: {
@@ -923,6 +973,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.surface,
     borderWidth: 1,
     borderColor: Colors.light.border,
+  },
+  headerSaveButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+  headerSaveText: {
+    color: 'white',
   },
   profileHeader: {
     flexDirection: 'row',

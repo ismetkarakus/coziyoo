@@ -12,53 +12,26 @@ import { useCountry } from '../../../context/CountryContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useThemePreference } from '../../../context/ThemeContext';
 import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
-
-const getMenuItems = (t: (key: string) => string) => ([
-  {
-    id: 'profile',
-    title: t('sellerPanel.menu.profile.title'),
-    description: t('sellerPanel.menu.profile.description'),
-    icon: '👤',
-    route: '/(seller)/profile',
-  },
-  {
-    id: 'add-meal',
-    title: t('sellerPanel.menu.addFood.title'),
-    description: t('sellerPanel.menu.addFood.description'),
-    icon: '🍽️',
-    route: '/(seller)/add-meal',
-  },
-  {
-    id: 'manage-meals',
-    title: t('sellerPanel.menu.manageFoods.title'),
-    description: t('sellerPanel.menu.manageFoods.description'),
-    icon: '📝',
-    route: '/(seller)/manage-meals',
-  },
-]);
-
-// Default seller data
-const DEFAULT_SELLER_DATA = {
-  name: 'Ayşe Hanım',
-  email: 'ayse@example.com',
-  location: 'Kadıköy, İstanbul',
-  avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-};
+import sellerMock from '../../../mock/seller.json';
 
 export const SellerPanel: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const [profileData, setProfileData] = useState(DEFAULT_SELLER_DATA);
+  const { t, currentLanguage } = useTranslation();
+  const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
+  const [profileData, setProfileData] = useState(localizedMock.profile);
+  const stats = localizedMock.stats;
   const [complianceExpanded, setComplianceExpanded] = useState(false);
   const { preference, setPreference } = useThemePreference();
   
   // Hook'ları önce çağır
   const { currentCountry, isBusinessComplianceRequired } = useCountry();
   const { signOut } = useAuth();
-  const { t } = useTranslation();
+  const panel = localizedMock.panel;
+  const menuItems = localizedMock.panel.menu;
+  const complianceCopy = currentCountry.code === 'TR' ? panel.compliance.tr : panel.compliance.uk;
   
-  // Ülkeye göre menü öğeleri
-  const menuItems = getMenuItems(t);
+  // Ülkeye göre menü öğeleri (JSON)
 
   // UK Compliance Status Check
   const isComplianceComplete = () => {
@@ -92,10 +65,10 @@ export const SellerPanel: React.FC = () => {
         const profile = JSON.parse(savedProfile);
         if (profile.formData) {
           setProfileData({
-            name: profile.formData.nickname || profile.formData.name || DEFAULT_SELLER_DATA.name, // Nickname öncelikli
-            email: profile.formData.email || DEFAULT_SELLER_DATA.email,
-            location: profile.formData.location || DEFAULT_SELLER_DATA.location,
-            avatar: profile.avatarUri || DEFAULT_SELLER_DATA.avatar,
+            name: profile.formData.nickname || profile.formData.name || localizedMock.profile.name, // Nickname öncelikli
+            email: profile.formData.email || localizedMock.profile.email,
+            location: profile.formData.location || localizedMock.profile.location,
+            avatar: profile.avatarUri || localizedMock.profile.avatar,
           });
         }
       }
@@ -120,7 +93,7 @@ export const SellerPanel: React.FC = () => {
         router.replace('/(auth)/sign-in');
       } catch (error) {
         console.error('Sign out error:', error);
-        Alert.alert(t('error'), t('sellerPanel.alerts.signOutError'));
+        Alert.alert(panel.alerts.signOutTitle, panel.alerts.signOutError);
       }
     };
 
@@ -130,12 +103,12 @@ export const SellerPanel: React.FC = () => {
     }
 
     Alert.alert(
-      t('sellerPanel.alerts.signOutTitle'),
-      t('sellerPanel.alerts.signOutMessage'),
+      panel.alerts.signOutTitle,
+      panel.alerts.signOutMessage,
       [
-        { text: t('profileScreen.alerts.signOutCancel'), style: 'cancel' },
+        { text: panel.alerts.ok, style: 'cancel' },
         {
-          text: t('profileScreen.alerts.signOutConfirm'),
+          text: panel.alerts.ok,
           style: 'destructive',
           onPress: runSignOut,
         },
@@ -146,7 +119,7 @@ export const SellerPanel: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title={t('sellerPanelText')} 
+        title={panel.title} 
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}
@@ -154,6 +127,19 @@ export const SellerPanel: React.FC = () => {
             activeOpacity={0.7}
           >
             <FontAwesome name="arrow-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+        }
+        rightComponent={
+          <TouchableOpacity
+            onPress={() => router.push('/(seller)/profile')}
+            style={styles.headerProfileButton}
+            activeOpacity={0.7}
+          >
+            <Image
+              source={{ uri: profileData.avatar }}
+              style={styles.headerAvatar}
+              defaultSource={{ uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' }}
+            />
           </TouchableOpacity>
         }
       />
@@ -172,17 +158,17 @@ export const SellerPanel: React.FC = () => {
         >
           <View style={styles.statsContainer}>
             <Text variant="subheading" weight="semibold" style={styles.statsTitle}>
-              {t('sellerPanel.stats.week')}
+              {panel.statsTitle}
             </Text>
           
           <View style={styles.statsGrid}>
             <TouchableOpacity onPress={() => handleMenuPress('/(seller)/orders')} style={styles.statCard}>
               <Card variant="default" padding="sm">
                 <Text variant="title" weight="bold" color="primary" center>
-                  12
+                  {stats.orders}
                 </Text>
                 <Text variant="caption" center color="textSecondary">
-                  {t('sellerPanel.stats.orders')}
+                  {panel.statsLabels.orders}
                 </Text>
               </Card>
             </TouchableOpacity>
@@ -190,10 +176,10 @@ export const SellerPanel: React.FC = () => {
             <TouchableOpacity onPress={() => handleMenuPress('/(seller)/wallet')} style={styles.statCard}>
               <Card variant="default" padding="sm">
                 <Text variant="title" weight="bold" color="success" center>
-                  ₺425
+                  {stats.wallet}
                 </Text>
                 <Text variant="caption" center color="textSecondary">
-                  {t('sellerPanel.stats.wallet')}
+                  {panel.statsLabels.wallet}
                 </Text>
               </Card>
             </TouchableOpacity>
@@ -201,54 +187,30 @@ export const SellerPanel: React.FC = () => {
             <TouchableOpacity onPress={() => handleMenuPress('/(seller)/messages')} style={styles.statCard}>
               <Card variant="default" padding="sm">
                 <Text variant="title" weight="bold" color="info" center>
-                  3
+                  {stats.messages}
                 </Text>
                 <Text variant="caption" center color="textSecondary">
-                  {t('sellerPanel.stats.messages')}
+                  {panel.statsLabels.messages}
                 </Text>
               </Card>
             </TouchableOpacity>
             
             <Card variant="default" padding="sm" style={styles.statCard}>
               <Text variant="title" weight="bold" color="warning" center>
-                4.8
+                {stats.rating}
               </Text>
               <Text variant="caption" center color="textSecondary">
-                {t('sellerPanel.stats.rating')}
+                {panel.statsLabels.rating}
               </Text>
             </Card>
           </View>
           </View>
         </TouchableWithoutFeedback>
 
-        {/* User Info Card - Like Profile */}
-        <Card variant="default" padding="md" style={styles.userCard}>
-          <View style={styles.userInfo}>
-            <View style={styles.avatarContainer}>
-              <Image
-                source={{ uri: profileData.avatar }}
-                style={styles.avatarImage}
-                defaultSource={{ uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' }}
-              />
-            </View>
-            <View style={styles.userDetails}>
-              <Text variant="subheading" weight="semibold">
-                {profileData.name}
-              </Text>
-              <Text variant="body" color="textSecondary">
-                {profileData.email}
-              </Text>
-              <Text variant="caption" color="textSecondary">
-                {t('sellerPanel.user.role')} • {profileData.location}
-              </Text>
-            </View>
-          </View>
-        </Card>
-
         {/* Theme */}
         <View style={styles.section}>
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {t('profileScreen.sections.theme')}
+            {panel.themeTitle}
           </Text>
           <Card variant="default" padding="md" style={styles.sectionCard}>
             <View style={styles.themeToggleRow}>
@@ -264,7 +226,7 @@ export const SellerPanel: React.FC = () => {
                 <View style={styles.themeToggleContent}>
                   <WebSafeIcon name="sun-o" size={16} color={colors.text} />
                   <Text variant="body" weight="semibold">
-                    {t('profileScreen.theme.light')}
+                    {panel.theme.light}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -280,7 +242,7 @@ export const SellerPanel: React.FC = () => {
                 <View style={styles.themeToggleContent}>
                   <WebSafeIcon name="moon-o" size={16} color={colors.text} />
                   <Text variant="body" weight="semibold">
-                    {t('profileScreen.theme.dark')}
+                    {panel.theme.dark}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -296,7 +258,7 @@ export const SellerPanel: React.FC = () => {
                 <View style={styles.themeToggleContent}>
                   <WebSafeIcon name="cog" size={16} color={colors.text} />
                   <Text variant="body" weight="semibold">
-                    {t('profileScreen.theme.system')}
+                    {panel.theme.system}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -318,10 +280,7 @@ export const SellerPanel: React.FC = () => {
                   weight="semibold"
                   style={[styles.complianceTitle, { color: colors.text }]}
                 >
-                    {currentCountry.code === 'TR' 
-                      ? t('sellerPanel.compliance.tr.title')
-                      : t('sellerPanel.compliance.uk.title')
-                    }
+                    {complianceCopy.title}
                   </Text>
                 <View style={styles.complianceHeaderRight}>
                   <Text variant="caption" style={[
@@ -334,8 +293,8 @@ export const SellerPanel: React.FC = () => {
                     }
                   ]}>
                     {currentCountry.code === 'TR' 
-                      ? (complianceComplete ? t('sellerPanel.compliance.tr.statusComplete') : t('sellerPanel.compliance.tr.statusOptional'))
-                      : (complianceComplete ? t('sellerPanel.compliance.uk.statusComplete') : t('sellerPanel.compliance.uk.statusOptional'))
+                      ? (complianceComplete ? panel.compliance.tr.statusComplete : panel.compliance.tr.statusOptional)
+                      : (complianceComplete ? panel.compliance.uk.statusComplete : panel.compliance.uk.statusOptional)
                     }
                   </Text>
                   <Text variant="body" style={[styles.expandIcon, { color: colors.textSecondary }]}>
@@ -349,160 +308,29 @@ export const SellerPanel: React.FC = () => {
           {complianceExpanded && (
             <Card variant="default" padding="md" style={[styles.complianceCard, styles.complianceExpandedCard]}>
               <View style={styles.complianceItems}>
-            <TouchableOpacity 
-              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={(e) => {
-                e?.stopPropagation?.();
-                if (currentCountry.code === 'TR') {
-                  router.push('/gida-isletme-belgesi');
-                } else {
-                  router.push('/council-registration');
-                }
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.complianceItemContent}>
-                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
-                  {currentCountry.code === 'TR' 
-                    ? t('sellerPanel.compliance.tr.license')
-                    : t('sellerPanel.compliance.uk.license')
-                  }
+            {complianceCopy.items.map((item: any) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={(e) => {
+                  e?.stopPropagation?.();
+                  router.push(item.route);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.complianceItemContent}>
+                  <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
+                    {item.title}
+                  </Text>
+                  <Text variant="caption" color="primary" style={styles.editLink}>
+                    {complianceCopy.edit}
+                  </Text>
+                </View>
+                <Text variant="caption" color="textSecondary">
+                  {item.sub}
                 </Text>
-                <Text variant="caption" color="primary" style={styles.editLink}>
-                  {t('sellerPanel.compliance.edit')}
-                </Text>
-              </View>
-              <Text variant="caption" color="textSecondary">
-                {currentCountry.code === 'TR' 
-                  ? t('sellerPanel.compliance.tr.licenseSub')
-                  : t('sellerPanel.compliance.uk.licenseSub')
-                }
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={(e) => {
-                e?.stopPropagation?.();
-                if (currentCountry.code === 'TR') {
-                  router.push('/vergi-levhasi');
-                } else {
-                  router.push('/hygiene-certificate');
-                }
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.complianceItemContent}>
-                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
-                  {currentCountry.code === 'TR' 
-                    ? t('sellerPanel.compliance.tr.tax')
-                    : t('sellerPanel.compliance.uk.tax')
-                  }
-                </Text>
-                <Text variant="caption" color="primary" style={styles.editLink}>
-                  {t('sellerPanel.compliance.edit')}
-                </Text>
-              </View>
-              <Text variant="caption" color="textSecondary">
-                {currentCountry.code === 'TR' 
-                  ? t('sellerPanel.compliance.tr.taxSub')
-                  : t('sellerPanel.compliance.uk.taxSub')
-                }
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={(e) => {
-                e?.stopPropagation?.();
-                if (currentCountry.code === 'TR') {
-                  router.push('/kvkk-uyumluluk');
-                } else {
-                  router.push('/hygiene-rating');
-                }
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.complianceItemContent}>
-                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
-                  {currentCountry.code === 'TR' 
-                    ? t('sellerPanel.compliance.tr.training')
-                    : t('sellerPanel.compliance.uk.training')
-                  }
-                </Text>
-                <Text variant="caption" color="primary" style={styles.editLink}>
-                  {t('sellerPanel.compliance.edit')}
-                </Text>
-              </View>
-              <Text variant="caption" color="textSecondary">
-                {currentCountry.code === 'TR' 
-                  ? t('sellerPanel.compliance.tr.trainingSub')
-                  : t('sellerPanel.compliance.uk.trainingSub')
-                }
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={(e) => {
-                e?.stopPropagation?.();
-                if (currentCountry.code === 'TR') {
-                  router.push('/gida-guvenligi-egitimi');
-                } else {
-                  router.push('/allergen-declaration');
-                }
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.complianceItemContent}>
-                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
-                  {currentCountry.code === 'TR' 
-                    ? t('sellerPanel.compliance.tr.kvkk')
-                    : t('sellerPanel.compliance.uk.kvkk')
-                  }
-                </Text>
-                <Text variant="caption" color="primary" style={styles.editLink}>
-                  {t('sellerPanel.compliance.edit')}
-                </Text>
-              </View>
-              <Text variant="caption" color="textSecondary">
-                {currentCountry.code === 'TR' 
-                  ? t('sellerPanel.compliance.tr.kvkkSub')
-                  : t('sellerPanel.compliance.uk.kvkkSub')
-                }
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={(e) => {
-                e?.stopPropagation?.();
-                if (currentCountry.code === 'TR') {
-                  router.push('/is-yeri-sigortasi');
-                } else {
-                  router.push('/insurance-details');
-                }
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.complianceItemContent}>
-                <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
-                  {currentCountry.code === 'TR' 
-                    ? t('sellerPanel.compliance.tr.insurance')
-                    : t('sellerPanel.compliance.uk.insurance')
-                  }
-                </Text>
-                <Text variant="caption" color="primary" style={styles.editLink}>
-                  {t('sellerPanel.compliance.edit')}
-                </Text>
-              </View>
-              <Text variant="caption" color="textSecondary">
-                {currentCountry.code === 'TR' 
-                  ? t('sellerPanel.compliance.tr.insuranceSub')
-                  : t('sellerPanel.compliance.uk.insuranceSub')
-                }
-              </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
               
                 <TouchableOpacity 
                   style={[styles.complianceButton, { backgroundColor: colors.primary + '20' }]}
@@ -513,8 +341,8 @@ export const SellerPanel: React.FC = () => {
                 >
                   <Text variant="body" color="primary" style={styles.complianceButtonText}>
                     {currentCountry.code === 'TR' 
-                      ? t('sellerPanel.compliance.tr.terms')
-                      : t('sellerPanel.compliance.uk.terms')
+                      ? panel.compliance.tr.terms
+                      : panel.compliance.uk.terms
                     }
                   </Text>
                 </TouchableOpacity>
@@ -545,12 +373,12 @@ export const SellerPanel: React.FC = () => {
                 } else {
                   Alert.alert(
                     currentCountry.code === 'TR' 
-                      ? t('sellerPanel.alerts.complianceTitleTr')
-                      : t('sellerPanel.alerts.complianceTitleUk'),
+                      ? panel.alerts.complianceTitleTr
+                      : panel.alerts.complianceTitleUk,
                     currentCountry.code === 'TR'
-                      ? t('sellerPanel.alerts.complianceMessageTr')
-                      : t('sellerPanel.alerts.complianceMessageUk'),
-                    [{ text: t('sellerPanel.alerts.ok') }]
+                      ? panel.alerts.complianceMessageTr
+                      : panel.alerts.complianceMessageUk,
+                    [{ text: panel.alerts.ok }]
                   );
                 }
               }}
@@ -590,7 +418,7 @@ export const SellerPanel: React.FC = () => {
                   >
                     {(!isBusinessComplianceRequired || complianceComplete)
                       ? item.description 
-                      : t('sellerPanel.menu.complianceLocked')
+                      : panel.menuLocked
                     }
                   </Text>
                 </View>
@@ -621,7 +449,7 @@ export const SellerPanel: React.FC = () => {
               activeOpacity={0.7}
             >
               <Text variant="body" weight="semibold" style={{ color: 'white' }}>
-                {t('sellerPanel.signOutButton')}
+                {panel.signOut}
               </Text>
             </TouchableOpacity>
           </View>
@@ -669,27 +497,6 @@ const styles = StyleSheet.create({
   },
   compactCard: {
     minHeight: 60, // Daha düşük yükseklik
-  },
-  userCard: {
-    marginHorizontal: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    marginRight: Spacing.md,
-  },
-  avatarImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: Colors.light.primary,
-  },
-  userDetails: {
-    flex: 1,
   },
   section: {
     marginBottom: Spacing.lg,
@@ -764,6 +571,20 @@ const styles = StyleSheet.create({
   backButton: {
     padding: Spacing.xs,
     borderRadius: 8,
+  },
+  headerProfileButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.xs,
+    alignSelf: 'flex-end',
+    marginRight: 4,
+  },
+  headerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: Colors.light.primary,
   },
   signOutButton: {
     marginHorizontal: Spacing.md,

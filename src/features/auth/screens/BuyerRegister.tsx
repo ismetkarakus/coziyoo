@@ -19,6 +19,7 @@ export const BuyerRegister: React.FC = () => {
         phone: '+44 7700 900123',
         email: 'buyer@test.com',
         password: 'Test1234!',
+        confirmPassword: 'Test1234!',
         location: 'London, UK',
       }
     : {
@@ -26,6 +27,7 @@ export const BuyerRegister: React.FC = () => {
         phone: '0555 111 22 33',
         email: 'buyer@test.com',
         password: 'Test1234!',
+        confirmPassword: 'Test1234!',
         location: 'Kadıköy, İstanbul',
       };
 
@@ -46,6 +48,7 @@ export const BuyerRegister: React.FC = () => {
         phone: '',
         email: '',
         password: '',
+        confirmPassword: '',
         location: '',
       });
       setErrors({});
@@ -60,6 +63,7 @@ export const BuyerRegister: React.FC = () => {
       'phone',
       'email',
       'password',
+      'confirmPassword',
       'location',
     ];
 
@@ -76,6 +80,10 @@ export const BuyerRegister: React.FC = () => {
 
     if (formData.password?.trim() && formData.password.trim().length < 6) {
       nextErrors.password = t('authFormErrors.invalidPassword');
+    }
+
+    if (formData.confirmPassword?.trim() && formData.password?.trim() && formData.confirmPassword.trim() !== formData.password.trim()) {
+      nextErrors.confirmPassword = t('authFormErrors.passwordMismatch');
     }
 
     const phoneDigits = formData.phone?.replace(/\D/g, '') ?? '';
@@ -174,6 +182,16 @@ export const BuyerRegister: React.FC = () => {
             />
 
             <FormField
+              label={t('authBuyerRegister.confirmPasswordLabel')}
+              value={formData.confirmPassword}
+              onChangeText={handleInputChange('confirmPassword')}
+              placeholder={t('authBuyerRegister.confirmPasswordPlaceholder')}
+              secureTextEntry
+              error={errors.confirmPassword}
+              required
+            />
+
+            <FormField
               label={t('authBuyerRegister.locationLabel')}
               value={formData.location}
               onChangeText={handleInputChange('location')}
@@ -232,6 +250,5 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
 
 

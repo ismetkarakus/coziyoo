@@ -7,109 +7,9 @@ import { Colors, Spacing } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useCart } from '@/src/context/CartContext';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-
-// Mock seller data
-const SELLER_DATA: { [key: string]: any } = {
-  'Ayşe Hanım': {
-    name: 'Ayşe Hanım',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-    rating: 4.7,
-    totalOrders: 156,
-    joinDate: 'Ocak 2023',
-    description: 'Ev yemekleri konusunda 15 yıllık deneyimim var. Geleneksel Türk mutfağının lezzetlerini sizlerle paylaşmaktan mutluluk duyuyorum.',
-    specialties: ['Türk Mutfağı', 'Ev Yemekleri', 'Hamur İşleri', 'Çorbalar'],
-    location: 'Kadıköy, İstanbul',
-    distance: '1.2 km',
-  },
-  'Mehmet Usta': {
-    name: 'Mehmet Usta',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    rating: 4.8,
-    totalOrders: 203,
-    joinDate: 'Mart 2023',
-    description: 'Profesyonel aşçı olarak 20 yıllık deneyimim var. Özellikle kebap ve ızgara yemeklerde uzmanım.',
-    specialties: ['Kebap', 'Izgara', 'Et Yemekleri', 'Pide'],
-    location: 'Üsküdar, İstanbul',
-    distance: '2.5 km',
-  },
-  'Fatma Teyze': {
-    name: 'Fatma Teyze',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-    rating: 4.6,
-    totalOrders: 89,
-    joinDate: 'Mayıs 2023',
-    description: 'Geleneksel ev yemeklerini modern dokunuşlarla hazırlıyorum. Her yemekte sevgi ve özen var.',
-    specialties: ['Ev Yemekleri', 'Sebze Yemekleri', 'Börek', 'Tatlılar'],
-    location: 'Beşiktaş, İstanbul',
-    distance: '3.1 km',
-  },
-  'Ali Usta': {
-    name: 'Ali Usta',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    rating: 4.5,
-    totalOrders: 124,
-    joinDate: 'Şubat 2023',
-    description: 'Döner ve kebap konusunda uzmanım. 10 yıllık esnaf deneyimim var.',
-    specialties: ['Döner', 'Kebap', 'Pide', 'Lahmacun'],
-    location: 'Fatih, İstanbul',
-    distance: '2.8 km',
-  },
-  'Zeynep Hanım': {
-    name: 'Zeynep Hanım',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-    rating: 4.9,
-    totalOrders: 178,
-    joinDate: 'Ocak 2023',
-    description: 'Sağlıklı ve lezzetli yemekler yapıyorum. Organik malzemeler kullanmaya özen gösteriyorum.',
-    specialties: ['Sağlıklı Yemekler', 'Salata', 'Smoothie', 'Vejetaryen'],
-    location: 'Şişli, İstanbul',
-    distance: '1.8 km',
-  },
-  'Hasan Usta': {
-    name: 'Hasan Usta',
-    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face',
-    rating: 4.4,
-    totalOrders: 95,
-    joinDate: 'Haziran 2023',
-    description: 'Geleneksel Türk mutfağından lezzetli yemekler hazırlıyorum. Özellikle çorbalar ve mezeler.',
-    specialties: ['Çorba', 'Meze', 'Pilav', 'Türk Mutfağı'],
-    location: 'Beyoğlu, İstanbul',
-    distance: '2.2 km',
-  },
-  'Zehra Hanım': {
-    name: 'Zehra Hanım',
-    avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face',
-    rating: 4.7,
-    totalOrders: 142,
-    joinDate: 'Nisan 2023',
-    description: 'Ev yapımı tatlılar ve kekler konusunda uzmanım. Her tarif ailemden gelen geleneksel tarifler.',
-    specialties: ['Tatlı', 'Kek', 'Kurabiye', 'Pasta'],
-    location: 'Bakırköy, İstanbul',
-    distance: '4.2 km',
-  },
-  'Gül Teyze': {
-    name: 'Gül Teyze',
-    avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=150&h=150&fit=crop&crop=face',
-    rating: 4.6,
-    totalOrders: 67,
-    joinDate: 'Temmuz 2023',
-    description: 'Kahvaltı hazırlıkları ve börek yapımında çok iyiyim. Taze malzemeler kullanırım.',
-    specialties: ['Kahvaltı', 'Börek', 'Reçel', 'Tereyağı'],
-    location: 'Maltepe, İstanbul',
-    distance: '5.1 km',
-  },
-  'Elif Hanım': {
-    name: 'Elif Hanım',
-    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face',
-    rating: 4.8,
-    totalOrders: 198,
-    joinDate: 'Aralık 2022',
-    description: 'Modern mutfak teknikleri ile geleneksel lezzetleri birleştiriyorum. Yaratıcı tariflerim var.',
-    specialties: ['Fusion Mutfak', 'Salata', 'Smoothie Bowl', 'Sağlıklı Atıştırmalık'],
-    location: 'Nişantaşı, İstanbul',
-    distance: '3.7 km',
-  },
-};
+import sellerMock from '@/src/mock/seller.json';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 // Import foods from Home.tsx (in real app, this would be from API)
 const getAllFoodsForSeller = (cookName: string) => {
@@ -191,10 +91,51 @@ export default function SellerProfileScreen() {
   const params = useLocalSearchParams();
   const { addToCart } = useCart();
   const [foodStocks, setFoodStocks] = useState<{ [key: string]: number }>({});
+  const { currentLanguage } = useTranslation();
+  const [overrideNickname, setOverrideNickname] = useState<string>('');
+  const [overrideName, setOverrideName] = useState<string>('');
+  const [overrideAvatar, setOverrideAvatar] = useState<string>('');
   
   const cookName = params.cookName as string;
-  const sellerData = SELLER_DATA[cookName];
-  const sellerFoods = getAllFoodsForSeller(cookName);
+  const localizedProfile = (sellerMock as any)[currentLanguage]?.profile || (sellerMock as any).tr?.profile;
+  const localizedSellers = (sellerMock as any)[currentLanguage]?.sellers || (sellerMock as any).tr?.sellers || [];
+  const sellerData =
+    localizedSellers.find((seller: any) => seller.name === cookName) ||
+    localizedSellers.find((seller: any) => seller.nickname === cookName);
+  const isCurrentSeller =
+    !!localizedProfile &&
+    (cookName === localizedProfile.name || (localizedProfile.nickname && cookName === localizedProfile.nickname));
+  const displayName = overrideName || sellerData?.name || cookName;
+  const displayNickname = overrideNickname || sellerData?.nickname || '';
+  const displayAvatar = overrideAvatar || sellerData?.avatar;
+  const headerTitle = displayNickname || displayName || cookName;
+  const sellerFoods = getAllFoodsForSeller(isCurrentSeller ? localizedProfile.name : cookName);
+
+  useEffect(() => {
+    const loadSellerProfileNickname = async () => {
+      try {
+        const savedProfile = await AsyncStorage.getItem('sellerProfile');
+        if (!savedProfile) return;
+        const profile = JSON.parse(savedProfile);
+        const fullName = profile?.formData?.name?.trim();
+        const nickname = profile?.formData?.nickname?.trim();
+        const avatarUri = profile?.avatarUri?.trim();
+        if (isCurrentSeller && fullName) {
+          setOverrideName(fullName);
+          if (nickname) {
+            setOverrideNickname(nickname);
+          }
+          if (avatarUri) {
+            setOverrideAvatar(avatarUri);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading seller profile nickname:', error);
+      }
+    };
+
+    loadSellerProfileNickname();
+  }, [cookName, isCurrentSeller]);
   
   // Group foods by category
   const foodsByCategory = sellerFoods.reduce((acc, food) => {
@@ -281,7 +222,7 @@ export default function SellerProfileScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar
-        title={sellerData.name}
+        title={headerTitle}
         leftComponent={<HeaderBackButton />}
       />
       
@@ -290,12 +231,12 @@ export default function SellerProfileScreen() {
         <Card variant="default" padding="lg" style={styles.sellerCard}>
           <View style={styles.sellerHeader}>
             <Image 
-              source={{ uri: sellerData.avatar }}
+              source={{ uri: displayAvatar }}
               style={styles.avatar}
             />
             <View style={styles.sellerInfo}>
               <Text variant="heading" weight="bold">
-                {sellerData.name}
+                {displayName}
               </Text>
               <View style={styles.ratingRow}>
                 <FontAwesome name="star" size={16} color="#FFD700" />
@@ -351,6 +292,7 @@ export default function SellerProfileScreen() {
                 <FoodCard
                   key={food.id}
                   {...food}
+                  displayCookName={displayNickname || displayName}
                   currentStock={foodStocks[food.id] ?? food.currentStock}
                   onAddToCart={handleAddToCart}
                   isPreview={false}
