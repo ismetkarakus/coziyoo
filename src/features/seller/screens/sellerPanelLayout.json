@@ -32,6 +32,12 @@
                       "style": "statsTitleColumn",
                       "children": [
                         {
+                          "type": "Text",
+                          "style": "avatarHint",
+                          "props": { "variant": "caption", "color": "textSecondary" },
+                          "text": { "$": "panel.avatarHint" }
+                        },
+                        {
                           "type": "TouchableOpacity",
                           "style": "statsAvatarButton",
                           "props": {

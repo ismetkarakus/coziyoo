@@ -250,6 +250,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     transform: [{ translateY: 2 }],
   },
+  avatarHint: {
+    textAlign: 'center',
+    marginBottom: Spacing.xs,
+    fontSize: 12,
+    opacity: 0.7,
+    fontWeight: '600',
+  },
   statsAvatar: {
     width: 122,
     height: 122,

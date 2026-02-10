@@ -1386,6 +1386,7 @@ export const translations = {
       actions: {
         preview: '👁️ Önizleme (Müşteri Görünümü)',
         publish: 'Yemeği Yayınla',
+        update: 'Yemeği Güncelle',
         uploading: 'Yükleniyor... %{{progress}}',
         cancel: 'İptal',
         confirm: 'Seç',
@@ -1435,6 +1436,7 @@ export const translations = {
         loginRequired: 'Giriş yapmalısınız.',
         successTitle: 'Başarılı!',
         successMessage: 'Yemeğiniz başarıyla eklendi ve satışa sunuldu.',
+        updateSuccessMessage: 'Yemeğiniz başarıyla güncellendi.',
         publishError: 'Yemek eklenirken bir hata oluştu.',
         publishErrorDetail: '{{message}}\n\nLütfen tekrar deneyin.',
         permissionTitle: 'İzin Gerekli',
@@ -3531,6 +3533,7 @@ export const translations = {
       actions: {
         preview: '👁️ Preview (Customer View)',
         publish: 'Publish Meal',
+        update: 'Update Meal',
         uploading: 'Uploading... %{{progress}}',
         cancel: 'Cancel',
         confirm: 'Select',
@@ -3580,6 +3583,7 @@ export const translations = {
         loginRequired: 'You need to be logged in.',
         successTitle: 'Success!',
         successMessage: 'Your meal was added and listed for sale.',
+        updateSuccessMessage: 'Your meal has been updated successfully.',
         publishError: 'There was an error adding the meal.',
         publishErrorDetail: '{{message}}\n\nPlease try again.',
         permissionTitle: 'Permission Required',

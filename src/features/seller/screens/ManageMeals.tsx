@@ -229,7 +229,8 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
 
     // Navigate to food detail page
     const foodImageUrl = meal.imageUrl || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=160&h=140&fit=crop';
-    const route = `/food-detail?id=${meal.id}&name=${encodeURIComponent(meal.name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}&deliveryType=${encodeURIComponent(t('manageMealsScreen.deliveryType.pickup'))}&availableDates=${encodeURIComponent(meal.availableDates || '')}&currentStock=${meal.currentStock || 0}&dailyStock=${meal.dailyStock || 0}`;
+    const mealData = encodeURIComponent(JSON.stringify(meal));
+    const route = `/food-detail?id=${meal.id}&name=${encodeURIComponent(meal.name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}&deliveryType=${encodeURIComponent(t('manageMealsScreen.deliveryType.pickup'))}&availableDates=${encodeURIComponent(meal.availableDates || '')}&currentStock=${meal.currentStock || 0}&dailyStock=${meal.dailyStock || 0}&mealData=${mealData}`;
     router.push(route);
   };
 
@@ -376,6 +377,15 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           </Text>
         </TouchableOpacity>
       </View>
+
+      {embedded && activeTab === 'expired' && (
+        <TouchableOpacity
+          onPress={() => setActiveTab('active')}
+          activeOpacity={1}
+          style={styles.collapseTapArea}
+          accessible={false}
+        />
+      )}
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {activeTab === 'active' ? (
@@ -404,7 +414,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
                   activeOpacity={0.7}
                   style={[styles.backIconButton, styles.backButtonUnderAdd]}
                 >
-                  <FontAwesome name="arrow-left" size={20} color={colors.text} />
+                  <FontAwesome name="home" size={24} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </View>
@@ -453,6 +463,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: 6,
     alignItems: 'center',
+  },
+  collapseTapArea: {
+    height: Spacing.sm,
   },
   content: {
     flex: 1,

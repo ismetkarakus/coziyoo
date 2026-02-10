@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Image, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
 import { TopBar } from '../../../components/layout';
@@ -23,6 +23,7 @@ export const AddMeal: React.FC = () => {
   const { t, currentLanguage } = useTranslation();
   const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
   const { user } = useAuth();
+  const params = useLocalSearchParams();
 
   // Countries list for autocomplete
   const COUNTRIES =
@@ -68,6 +69,9 @@ export const AddMeal: React.FC = () => {
     category: '',
     country: '',
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingMealId, setEditingMealId] = useState<string | null>(null);
+  const [editingCreatedAt, setEditingCreatedAt] = useState<string | null>(null);
 
   const [deliveryOptions, setDeliveryOptions] = useState({
     pickup: true,
@@ -120,6 +124,48 @@ export const AddMeal: React.FC = () => {
       }
     }
   };
+
+  useEffect(() => {
+    const raw = params.mealData as string | undefined;
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(decodeURIComponent(raw));
+      setIsEditing(true);
+      setEditingMealId(parsed.id ?? null);
+      setEditingCreatedAt(parsed.createdAt ?? null);
+      setFormData({
+        name: parsed.name ?? '',
+        description: parsed.description ?? '',
+        recipe: parsed.recipe ?? '',
+        price: parsed.price != null ? String(parsed.price) : '',
+        dailyStock: parsed.dailyStock != null ? String(parsed.dailyStock) : '',
+        deliveryFee: parsed.deliveryFee != null ? String(parsed.deliveryFee) : '',
+        maxDistance: parsed.maxDistance != null ? String(parsed.maxDistance) : '',
+        startDate: parsed.startDate ?? '',
+        endDate: parsed.endDate ?? '',
+        category: parsed.category ?? '',
+        country: parsed.country ?? '',
+      });
+      if (parsed.deliveryOptions) {
+        setDeliveryOptions({
+          pickup: !!parsed.deliveryOptions.pickup,
+          delivery: !!parsed.deliveryOptions.delivery,
+        });
+      } else {
+        setDeliveryOptions({
+          pickup: !!parsed.hasPickup,
+          delivery: !!parsed.hasDelivery,
+        });
+      }
+      if (Array.isArray(parsed.images) && parsed.images.length > 0) {
+        setSelectedImages(parsed.images);
+      } else if (parsed.imageUrl) {
+        setSelectedImages([parsed.imageUrl]);
+      }
+    } catch (error) {
+      console.error('Error parsing mealData for edit:', error);
+    }
+  }, [params.mealData]);
 
   const handleDescriptionContentSizeChange = (event: any) => {
     const { height } = event.nativeEvent.contentSize;
@@ -191,7 +237,7 @@ export const AddMeal: React.FC = () => {
       }
 
       // Firebase'i skip et, direkt local storage kullan
-      const foodId = 'local_' + Date.now();
+      const foodId = isEditing && editingMealId ? editingMealId : 'local_' + Date.now();
       console.log('Using local storage only, foodId:', foodId);
 
       // AsyncStorage'a da kaydet (backward compatibility için)
@@ -201,7 +247,7 @@ export const AddMeal: React.FC = () => {
         recipe: formData.recipe,
         images: selectedImages,
         deliveryOptions,
-        createdAt: new Date().toISOString(),
+        createdAt: isEditing && editingCreatedAt ? editingCreatedAt : new Date().toISOString(),
         sellerId: user.uid,
         sellerName: user.displayName || t('addMealScreen.defaults.sellerName'),
         cookName: user.displayName || t('addMealScreen.defaults.sellerName'), // Usta ismi için
@@ -220,12 +266,21 @@ export const AddMeal: React.FC = () => {
 
       const existingMeals = await AsyncStorage.getItem('publishedMeals');
       const meals = existingMeals ? JSON.parse(existingMeals) : [];
-      meals.push(mealData);
-      await AsyncStorage.setItem('publishedMeals', JSON.stringify(meals));
+      const updatedMeals = isEditing
+        ? meals.map((meal: any) => (meal.id === mealData.id ? { ...meal, ...mealData } : meal))
+        : [...meals, mealData];
+      await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
+
+      const existingExpired = await AsyncStorage.getItem('expiredMeals');
+      const expiredMeals = existingExpired ? JSON.parse(existingExpired) : [];
+      if (expiredMeals.length > 0) {
+        const updatedExpired = expiredMeals.map((meal: any) => (meal.id === mealData.id ? { ...meal, ...mealData } : meal));
+        await AsyncStorage.setItem('expiredMeals', JSON.stringify(updatedExpired));
+      }
 
       Alert.alert(
         t('addMealScreen.alerts.successTitle'),
-        t('addMealScreen.alerts.successMessage'),
+        isEditing ? t('addMealScreen.alerts.updateSuccessMessage') : t('addMealScreen.alerts.successMessage'),
         [
           {
             text: t('addMealScreen.alerts.ok'),
@@ -632,7 +687,7 @@ export const AddMeal: React.FC = () => {
       }
 
       // Firebase'i skip et, direkt local storage kullan
-      const foodId = 'local_' + Date.now();
+      const foodId = isEditing && editingMealId ? editingMealId : 'local_' + Date.now();
       console.log('Using local storage only, foodId:', foodId);
 
       // AsyncStorage'a da kaydet (backward compatibility için)
@@ -642,7 +697,7 @@ export const AddMeal: React.FC = () => {
         recipe: formData.recipe,
         images: selectedImages,
         deliveryOptions,
-        createdAt: new Date().toISOString(),
+        createdAt: isEditing && editingCreatedAt ? editingCreatedAt : new Date().toISOString(),
         sellerId: user.uid,
         sellerName: user.displayName || t('addMealScreen.defaults.sellerName'),
         cookName: user.displayName || t('addMealScreen.defaults.sellerName'), // Usta ismi için
@@ -661,12 +716,21 @@ export const AddMeal: React.FC = () => {
 
       const existingMeals = await AsyncStorage.getItem('publishedMeals');
       const meals = existingMeals ? JSON.parse(existingMeals) : [];
-      meals.push(mealData);
-      await AsyncStorage.setItem('publishedMeals', JSON.stringify(meals));
+      const updatedMeals = isEditing
+        ? meals.map((meal: any) => (meal.id === mealData.id ? { ...meal, ...mealData } : meal))
+        : [...meals, mealData];
+      await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
+
+      const existingExpired = await AsyncStorage.getItem('expiredMeals');
+      const expiredMeals = existingExpired ? JSON.parse(existingExpired) : [];
+      if (expiredMeals.length > 0) {
+        const updatedExpired = expiredMeals.map((meal: any) => (meal.id === mealData.id ? { ...meal, ...mealData } : meal));
+        await AsyncStorage.setItem('expiredMeals', JSON.stringify(updatedExpired));
+      }
 
       Alert.alert(
         t('addMealScreen.alerts.successTitle'),
-        t('addMealScreen.alerts.successMessage'),
+        isEditing ? t('addMealScreen.alerts.updateSuccessMessage') : t('addMealScreen.alerts.successMessage'),
         [
           {
             text: t('addMealScreen.alerts.ok'),
@@ -1008,7 +1072,7 @@ export const AddMeal: React.FC = () => {
           >
             {uploading
               ? t('addMealScreen.actions.uploading', { progress: uploadProgress.toFixed(0) })
-              : t('addMealScreen.actions.publish')}
+              : isEditing ? t('addMealScreen.actions.update') : t('addMealScreen.actions.publish')}
           </Button>
         </View>
         </ScrollView>

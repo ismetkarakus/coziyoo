@@ -177,7 +177,7 @@ export const FoodDetail: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const params = useLocalSearchParams();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { sendOrderNotification } = useNotifications();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sellerProfile, setSellerProfile] = useState<any>(null);
@@ -203,6 +203,8 @@ export const FoodDetail: React.FC = () => {
   const [showAllergenModal, setShowAllergenModal] = useState(false);
   const screenWidth = Dimensions.get('window').width;
   const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
+  const isSellerUser = userData?.userType === 'seller' || userData?.userType === 'both';
+  const encodedMealData = params.mealData as string | undefined;
 
   // Get food details from URL parameters
   const foodId = params.id as string;
@@ -967,27 +969,47 @@ export const FoodDetail: React.FC = () => {
       </ScrollView>
 
       {/* Fixed Bottom Buttons */}
-      <View style={[styles.bottomContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity
-          onPress={handleMessageSeller}
-          style={[styles.bottomButton, styles.messageButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
-          activeOpacity={0.8}
-        >
-          <Text variant="body" weight="semibold" style={[styles.bottomButtonText, { color: colors.primary }]}>
-            {t('foodDetailScreen.message')}
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          onPress={handleOrderPress}
-          style={[styles.bottomButton, styles.orderButton, { backgroundColor: colors.primary }]}
-          activeOpacity={0.8}
-        >
-          <Text variant="body" weight="semibold" style={styles.bottomButtonText}>
-            {t('foodDetailScreen.order')}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {!isSellerUser ? (
+        <View style={[styles.bottomContainer, { backgroundColor: colors.background }]}>
+          <TouchableOpacity
+            onPress={handleMessageSeller}
+            style={[styles.bottomButton, styles.messageButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
+            activeOpacity={0.8}
+          >
+            <Text variant="body" weight="semibold" style={[styles.bottomButtonText, { color: colors.primary }]}>
+              {t('foodDetailScreen.message')}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            onPress={handleOrderPress}
+            style={[styles.bottomButton, styles.orderButton, { backgroundColor: colors.primary }]}
+            activeOpacity={0.8}
+          >
+            <Text variant="body" weight="semibold" style={styles.bottomButtonText}>
+              {t('foodDetailScreen.order')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={[styles.bottomContainer, { backgroundColor: colors.background }]}>
+          <TouchableOpacity
+            onPress={() => {
+              if (encodedMealData) {
+                router.push(`/(seller)/edit-meal?mealData=${encodedMealData}`);
+                return;
+              }
+              router.push('/(seller)/manage-meals');
+            }}
+            style={[styles.bottomButton, styles.orderButton, { backgroundColor: colors.primary }]}
+            activeOpacity={0.8}
+          >
+            <Text variant="body" weight="semibold" style={styles.bottomButtonText}>
+              {t('edit')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Order Modal */}
       <Modal

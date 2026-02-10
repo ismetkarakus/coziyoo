@@ -16,6 +16,12 @@ export default function SellerLayout() {
         }} 
       />
       <Stack.Screen 
+        name="edit-meal" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
         name="orders" 
         options={{ 
           headerShown: false,

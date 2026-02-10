@@ -132,6 +132,7 @@
     ],
     "panel": {
       "title": "Satıcı Paneli",
+      "avatarHint": "Profil için resme dokunun",
       "statsTitle": "Bu Hafta Performansı",
       "statsLabels": {
         "orders": "Sipariş",
@@ -343,6 +344,7 @@
     ],
     "panel": {
       "title": "Seller Dashboard",
+      "avatarHint": "Tap the image to edit your profile",
       "statsTitle": "This Week Performance",
       "statsLabels": {
         "orders": "Orders",

@@ -29,8 +29,33 @@ export default function FoodDetailSimple() {
   const foodName = params.name as string || t('foodDetailSimpleScreen.defaults.foodName');
   const cookName = params.cookName as string || t('foodDetailSimpleScreen.defaults.cookName');
   const foodImageUrl = params.imageUrl as string || 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop';
+  const rawImagesParam = params.images as string | undefined;
+
+  const fallbackImages = [
+    foodImageUrl,
+    'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=400&fit=crop',
+  ];
+
+  const parseImageParam = (value?: string) => {
+    if (!value) return [];
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(item => typeof item === 'string');
+    } catch {
+      return value.split(',').map(item => item.trim()).filter(Boolean);
+    }
+    return [];
+  };
+
+  const extraImages = parseImageParam(rawImagesParam);
+  const foodImages = Array.from(new Set([...extraImages, ...fallbackImages])).slice(0, 5);
   const foodId = params.id as string | undefined;
   const [quantity, setQuantity] = useState(1);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const basePrice = Number(params.price) || 25;
   const totalPrice = formatCurrency(basePrice * quantity);
   const [ingredients, setIngredients] = useState<string[] | null>(null);
@@ -262,12 +287,57 @@ export default function FoodDetailSimple() {
       </View>
       
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {/* Food Image */}
-        <Image 
-          source={{ uri: foodImageUrl }} 
-          style={styles.image}
-          resizeMode="cover"
-        />
+        {/* Food Images Slider */}
+        <View style={styles.imageSliderContainer}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) => {
+              const index = Math.round(event.nativeEvent.contentOffset.x / width);
+              setCurrentImageIndex(index);
+            }}
+            style={styles.imageSlider}
+          >
+            {foodImages.map((imageUrl, index) => (
+              <View key={index} style={[styles.imageContainer, { width }]}>
+                <Image 
+                  source={{ uri: imageUrl }} 
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              </View>
+            ))}
+          </ScrollView>
+
+          <View style={styles.imageIndicators}>
+            {foodImages.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.indicator,
+                  { opacity: currentImageIndex === index ? 1 : 0.35 }
+                ]}
+              />
+            ))}
+          </View>
+
+          <View style={styles.imageCounter}>
+            <Text variant="caption" style={styles.imageCounterText}>
+              {currentImageIndex + 1}/{foodImages.length}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.chefStrip}>
+          <Image
+            source={{ uri: sellerAvatar }}
+            style={styles.chefAvatar}
+          />
+          <Text variant="body" weight="semibold" style={styles.chefName}>
+            {cookName}
+          </Text>
+        </View>
         
         {/* Food Info */}
         <View style={[styles.infoContainer, { backgroundColor: colors.surface }]}>
@@ -454,9 +524,60 @@ const styles = StyleSheet.create({
   headerRightSpacer: {
     width: 36,
   },
+  imageSliderContainer: {
+    position: 'relative',
+  },
+  imageSlider: {
+    width: '100%',
+  },
+  imageContainer: {
+    height: 250,
+  },
   image: {
     width: '100%',
     height: 250,
+  },
+  imageIndicators: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+  },
+  imageCounter: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  imageCounterText: {
+    color: '#FFFFFF',
+  },
+  chefStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  chefAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  chefName: {
+    fontSize: 14,
   },
   infoContainer: {
     padding: Spacing.lg,
