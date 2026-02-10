@@ -1050,6 +1050,7 @@ export const translations = {
       subtotal: 'Ara Toplam',
       deliveryFee: 'Teslimat Ücreti',
       total: 'Toplam Tutar',
+      cancel: 'İptal',
       methodTitle: 'Ödeme Yöntemi',
       methodCard: 'Kredi/Banka Kartı',
       methodApple: 'Apple Pay',
@@ -1101,6 +1102,13 @@ export const translations = {
         c3Time: 'Dün',
         c3OrderId: 'ORD-003',
       },
+    },
+    sellerRatingsScreen: {
+      title: 'Usta Yorumları',
+      summaryTitle: '{{name}} için puan özeti',
+      reviewsTitle: 'Yorumlar',
+      reviewsCount: '{{count}} yorum',
+      empty: 'Henüz yorum yok.',
     },
     manageMealsScreen: {
       title: 'Yemeklerimi Yönet',
@@ -1380,6 +1388,7 @@ export const translations = {
         publish: 'Yemeği Yayınla',
         uploading: 'Yükleniyor... %{{progress}}',
         cancel: 'İptal',
+        confirm: 'Seç',
       },
       modals: {
         categoryTitle: 'Kategori Seçin',
@@ -3186,6 +3195,7 @@ export const translations = {
       subtotal: 'Subtotal',
       deliveryFee: 'Delivery Fee',
       total: 'Total',
+      cancel: 'Cancel',
       methodTitle: 'Payment Method',
       methodCard: 'Credit/Debit Card',
       methodApple: 'Apple Pay',
@@ -3237,6 +3247,13 @@ export const translations = {
         c3Time: 'Yesterday',
         c3OrderId: 'ORD-003',
       },
+    },
+    sellerRatingsScreen: {
+      title: 'Chef Reviews',
+      summaryTitle: 'Rating summary for {{name}}',
+      reviewsTitle: 'Reviews',
+      reviewsCount: '{{count}} reviews',
+      empty: 'No reviews yet.',
     },
 
     sellerOrdersScreen: {
@@ -3516,6 +3533,7 @@ export const translations = {
         publish: 'Publish Meal',
         uploading: 'Uploading... %{{progress}}',
         cancel: 'Cancel',
+        confirm: 'Select',
       },
       modals: {
         categoryTitle: 'Select Category',

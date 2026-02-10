@@ -31,9 +31,13 @@ const getByPath = (obj: any, path: string) => {
   return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 };
 
-const resolveValue = (value: any, ctx: Record<string, any>): any => {
+const resolveValue = (
+  value: any,
+  ctx: Record<string, any>,
+  options: { deferFunctions?: boolean } = {}
+): any => {
   if (Array.isArray(value)) {
-    return value.map(item => resolveValue(item, ctx));
+    return value.map(item => resolveValue(item, ctx, options));
   }
   if (!isObject(value)) return value;
 
@@ -43,13 +47,16 @@ const resolveValue = (value: any, ctx: Record<string, any>): any => {
   if ('$fn' in value) {
     const fn = getByPath(ctx, value.$fn);
     if (typeof fn !== 'function') return undefined;
-    const args = (value.args ?? []).map((arg: any) => resolveValue(arg, ctx));
+    const args = (value.args ?? []).map((arg: any) => resolveValue(arg, ctx, options));
+    if (options.deferFunctions) {
+      return () => fn(...args);
+    }
     return fn(...args);
   }
 
   const resolved: Record<string, any> = {};
   Object.entries(value).forEach(([key, val]) => {
-    resolved[key] = resolveValue(val, ctx);
+    resolved[key] = resolveValue(val, ctx, options);
   });
   return resolved;
 };
@@ -64,7 +71,7 @@ const resolveStyle = (style: any, ctx: Record<string, any>): StyleProp<any> => {
   if (typeof style === 'string') {
     return ctx.styles?.[style] ?? undefined;
   }
-  return resolveValue(style, ctx);
+  return resolveValue(style, ctx, { deferFunctions: false });
 };
 
 const renderNode = (
@@ -90,24 +97,24 @@ const renderNode = (
   const Component = registry[node.type];
   if (!Component) return null;
 
-  const props = resolveValue(node.props ?? {}, ctx) ?? {};
+  const props = resolveValue(node.props ?? {}, ctx, { deferFunctions: true }) ?? {};
   const style = resolveStyle(node.style, ctx);
   if (style) {
     props.style = props.style ? [style, props.style] : style;
   }
 
   const slotChildren: Record<string, React.ReactNode> = {};
-  const children = (node.children ?? []).flatMap(child => {
+  const children = (node.children ?? []).flatMap((child, index) => {
     if (child === null || child === undefined) return [];
     if (typeof child === 'string' || typeof child === 'number' || typeof child === 'boolean') {
       return [child as any];
     }
     if ((child as JsonNode).slot) {
-      const rendered = renderNode(child as JsonNode, ctx, registry);
+      const rendered = renderNode(child as JsonNode, ctx, registry, index);
       if (rendered) slotChildren[(child as JsonNode).slot as string] = rendered;
       return [];
     }
-    const rendered = renderNode(child as JsonNode, ctx, registry);
+    const rendered = renderNode(child as JsonNode, ctx, registry, index);
     return rendered ? [rendered] : [];
   });
 
@@ -115,13 +122,40 @@ const renderNode = (
     props[slot] = value;
   });
 
+  let finalChildren = children;
   if (node.text !== undefined && children.length === 0) {
-    return <Component key={key} {...props}>{resolveValue(node.text, ctx)}</Component>;
+    const resolvedText = resolveValue(node.text, ctx, { deferFunctions: false });
+    if (resolvedText !== undefined && resolvedText !== null) {
+      finalChildren = [resolvedText];
+    }
+  }
+
+  const singleChildTypes = new Set(['TouchableWithoutFeedback']);
+  let renderedChildren: React.ReactNode;
+
+  if (singleChildTypes.has(node.type)) {
+    const onlyChild = finalChildren.length === 1 ? finalChildren[0] : null;
+    if (React.isValidElement(onlyChild)) {
+      renderedChildren = onlyChild;
+    } else {
+      const Wrapper = registry.View ?? React.Fragment;
+      renderedChildren = (
+        <Wrapper>
+          {finalChildren}
+        </Wrapper>
+      );
+    }
+  } else {
+    renderedChildren = finalChildren.length === 0 
+      ? null 
+      : finalChildren.length === 1 
+        ? finalChildren[0] 
+        : <>{finalChildren}</>;
   }
 
   return (
     <Component key={key} {...props}>
-      {children}
+      {renderedChildren}
     </Component>
   );
 };

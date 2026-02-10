@@ -394,9 +394,19 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
                 variant="primary"
                 onPress={() => router.push('/(seller)/add-meal')}
                 style={styles.addMealButton}
+                textStyle={styles.addMealButtonText}
               >
                 {t('manageMealsScreen.addMeal')}
               </Button>
+              {embedded && (
+                <TouchableOpacity
+                  onPress={() => router.push('/(tabs)')}
+                  activeOpacity={0.7}
+                  style={[styles.backIconButton, styles.backButtonUnderAdd]}
+                >
+                  <FontAwesome name="arrow-left" size={20} color={colors.text} />
+                </TouchableOpacity>
+              )}
             </View>
           )
         ) : (
@@ -509,6 +519,19 @@ const styles = StyleSheet.create({
   addMealButton: {
     marginTop: Spacing.md,
     paddingHorizontal: Spacing.xl,
+  },
+  addMealButtonText: {
+    fontSize: 16,
+  },
+  backButtonUnderAdd: {
+    marginTop: Spacing.sm,
+  },
+  backIconButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.xl * 2,
+    borderRadius: 8,
   },
   bottomSpace: {
     height: Spacing.xl,

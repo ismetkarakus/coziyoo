@@ -1,0 +1,39 @@
+{
+  "title": "🇹🇷 Türkiye Gıda İşletmesi Uygunluğu",
+  "statusComplete": "✅ TAMAMLANDI",
+  "statusOptional": "ℹ️ OPSİYONEL",
+  "edit": "Düzenle",
+  "items": [
+    {
+      "id": "license",
+      "title": "Gıda İşletme Belgesi",
+      "sub": "Belediye kayıt belgesi",
+      "route": "/gida-isletme-belgesi"
+    },
+    {
+      "id": "tax",
+      "title": "Vergi Levhası",
+      "sub": "Vergi kaydı gerekli",
+      "route": "/vergi-levhasi"
+    },
+    {
+      "id": "training",
+      "title": "KVKK Uyumluluk",
+      "sub": "Kişisel veri uyumu",
+      "route": "/kvkk-uyumluluk"
+    },
+    {
+      "id": "kvkk",
+      "title": "Gıda Güvenliği Eğitimi",
+      "sub": "Eğitim sertifikası",
+      "route": "/gida-guvenligi-egitimi"
+    },
+    {
+      "id": "insurance",
+      "title": "İş Yeri Sigortası",
+      "sub": "Opsiyonel ama önerilir",
+      "route": "/is-yeri-sigortasi"
+    }
+  ],
+  "terms": "Şartlar ve Koşullar"
+}

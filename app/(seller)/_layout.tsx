@@ -75,7 +75,12 @@ export default function SellerLayout() {
           headerShown: false,
         }} 
       />
+      <Stack.Screen 
+        name="ratings" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
     </Stack>
   );
 }
-

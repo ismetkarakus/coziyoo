@@ -15,6 +15,7 @@ interface ButtonProps extends TouchableOpacityProps {
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   fullWidth?: boolean;
+  textStyle?: ViewStyle;
   children: React.ReactNode;
 }
 
@@ -25,6 +26,7 @@ export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   disabled,
   style,
+  textStyle,
   children,
   ...props
 }) => {
@@ -111,7 +113,7 @@ export const Button: React.FC<ButtonProps> = ({
         <Text
           weight="medium"
           center
-          style={{ color: getTextColor() }}
+          style={[{ color: getTextColor() }, textStyle]}
         >
           {children}
         </Text>
@@ -133,7 +135,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 });
-
 
 
 

@@ -21,34 +21,11 @@ import { mockFoodService } from '../../../services/mockFoodService';
 import { mockUserService } from '../../../services/mockUserService';
 import { MockFood } from '../../../mock/data';
 import sellerMock from '../../../mock/seller.json';
+import categoriesData from '../../../mock/categories.json';
 
 const getCategoriesForLanguage = (language: 'tr' | 'en') => {
-  if (language === 'tr') {
-    return [
-      'Tümü',
-      'Ana Yemek',
-      'Çorba',
-      'Meze',
-      'Salata',
-      'Kahvaltı',
-      'Tatlı/Kek',
-      'İçecekler',
-      'Vejetaryen',
-      'Glutensiz',
-    ];
-  }
-  return [
-    'All',
-    'Main Dish',
-    'Soup',
-    'Appetizer',
-    'Salad',
-    'Breakfast',
-    'Dessert/Cake',
-    'Drinks',
-    'Vegetarian',
-    'Gluten Free',
-  ];
+  const items = categoriesData.items ?? [];
+  return items.map((item) => (language === 'tr' ? item.tr : item.en));
 };
 
 const MONTH_MAP_TR_TO_EN: Record<string, string> = {
@@ -75,17 +52,13 @@ const translateDateRangeToEn = (value: string) => {
 };
 
 const translateCategoryToEn = (category: string) => {
-  const mapping: Record<string, string> = {
-    'Ana Yemek': 'Main Dish',
-    'Çorba': 'Soup',
-    'Meze': 'Appetizer',
-    'Salata': 'Salad',
-    'Kahvaltı': 'Breakfast',
-    'Tatlı/Kek': 'Dessert/Cake',
-    'İçecekler': 'Drinks',
-    'Vejetaryen': 'Vegetarian',
-    'Glutensiz': 'Gluten Free',
-  };
+  const mapping: Record<string, string> = (categoriesData.items ?? []).reduce(
+    (acc: Record<string, string>, item) => {
+      acc[item.tr] = item.en;
+      return acc;
+    },
+    {}
+  );
   return mapping[category] || category;
 };
 

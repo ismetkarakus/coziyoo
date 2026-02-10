@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import { ThemeProvider } from '@mui/material/styles'
+import { CssBaseline } from '@mui/material'
+import { lightTheme, darkTheme } from './theme'
 import { db } from './lib/firebase'
 import {
   collection,
@@ -9,11 +13,28 @@ import {
   orderBy,
   query,
 } from 'firebase/firestore'
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import Buyers from './pages/Buyers'
 import Sellers from './pages/Sellers'
 import SellerProfile from './pages/SellerProfile'
 import BuyerProfile from './pages/BuyerProfile'
+
+// Dark mode desteğini ekle
+const initializeDarkMode = () => {
+  const stored = localStorage.getItem('darkMode')
+  if (stored !== null) {
+    return stored === 'true'
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
+const applyDarkMode = (isDark: boolean) => {
+  if (isDark) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+  localStorage.setItem('darkMode', isDark.toString())
+}
 
 type StatCard = {
   label: string
@@ -215,34 +236,59 @@ function Dashboard() {
 }
 
 function App() {
+  const [isDarkMode, setIsDarkMode] = useState(initializeDarkMode)
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode
+    setIsDarkMode(newMode)
+    applyDarkMode(newMode)
+  }
+
+  useEffect(() => {
+    applyDarkMode(isDarkMode)
+  }, [isDarkMode])
+
   return (
-    <BrowserRouter>
-      <div className="shell">
-        <header className="navbar">
-          <div className="brand">
-            <span className="brand-dot" />
-            <div>
-              <p className="brand-title">Cazi Admin</p>
-              <p className="brand-subtitle">Operations</p>
+    <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <div className="shell">
+          <header className="navbar">
+            <div className="navbar-left">
+              <div className="brand">
+                <span className="brand-dot" />
+                <div>
+                  <p className="brand-title">Cazi Admin</p>
+                  <p className="brand-subtitle">Operations</p>
+                </div>
+              </div>
+              <nav className="nav">
+                <Link to="/" className="nav-link">Dashboard</Link>
+                <Link to="/buyers" className="nav-link">Buyers</Link>
+                <Link to="/sellers" className="nav-link">Sellers</Link>
+              </nav>
             </div>
-          </div>
-          <nav className="nav">
-            <Link to="/" className="nav-link">Dashboard</Link>
-            <Link to="/buyers" className="nav-link">Buyers</Link>
-            <Link to="/sellers" className="nav-link">Sellers</Link>
-          </nav>
-        </header>
-        <main className="main">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/buyers" element={<Buyers />} />
-            <Route path="/sellers" element={<Sellers />} />
-            <Route path="/sellers/:id" element={<SellerProfile />} />
-            <Route path="/buyers/:id" element={<BuyerProfile />} />
-          </Routes>
-        </main>
-      </div>
-    </BrowserRouter>
+            <button 
+              className="theme-toggle"
+              onClick={toggleDarkMode}
+              aria-label="Toggle dark mode"
+              title={isDarkMode ? 'Light mode' : 'Dark mode'}
+            >
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+          </header>
+          <main className="main">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/buyers" element={<Buyers />} />
+              <Route path="/sellers" element={<Sellers />} />
+              <Route path="/sellers/:id" element={<SellerProfile />} />
+              <Route path="/buyers/:id" element={<BuyerProfile />} />
+            </Routes>
+          </main>
+        </div>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

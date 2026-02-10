@@ -186,6 +186,15 @@ export function FoodCard({
   const isCompact = width < 380;
 
   const resolvedCountry = country || (currentLanguage === "en" ? "Turkish" : "Türk");
+  const formatCuisine = (value: string) => {
+    const normalized = value.trim();
+    if (!normalized) return value;
+    if (currentLanguage === "en") {
+      return /cuisine$/i.test(normalized) ? normalized : `${normalized} cuisine`;
+    }
+    return /mutfağı$/i.test(normalized) ? normalized : `${normalized} mutfağı`;
+  };
+  const cuisineLabel = formatCuisine(resolvedCountry);
 
   const availableOptions = useMemo<DeliveryMode[]>(() => {
     if (availableDeliveryOptions && availableDeliveryOptions.length > 0) {
@@ -291,7 +300,7 @@ export function FoodCard({
         <View style={styles.bodyRight}>
           <View style={[styles.infoGrid, { minHeight: imageSize }]}>
             <InfoRow label={t("foodCard.dateLabel")} value={dateText} />
-            <InfoRow label={t("foodCard.countryLabel")} value={resolvedCountry} />
+            <InfoRow label={t("foodCard.countryLabel")} value={cuisineLabel} />
             <InfoRow label={t("foodCard.quantityLabel")} value={qtyText} />
             <InfoRow
               label={t("foodCard.deliveryLabel")}

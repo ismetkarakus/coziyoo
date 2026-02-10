@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Image, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
@@ -11,9 +11,11 @@ import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import * as ImagePicker from 'expo-image-picker';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../../../context/AuthContext';
 import { foodService } from '../../../services/foodService';
 import { storageService } from '../../../services/storageService';
+import categoriesData from '../../../mock/categories.json';
 
 export const AddMeal: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -84,9 +86,12 @@ export const AddMeal: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const CATEGORIES =
-    (translations[currentLanguage]?.addMealScreen?.categories ??
-      translations.tr.addMealScreen.categories) as string[];
+  const CATEGORIES = (categoriesData.items ?? [])
+    .filter((item) => item.id !== 'all')
+    .map((item) => ({
+      label: currentLanguage === 'tr' ? item.tr : item.en,
+      icon: item.icon,
+    }));
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
     // Açıklama alanı için karakter limiti kontrolü
@@ -140,7 +145,6 @@ export const AddMeal: React.FC = () => {
 
   const handleCategorySelect = (category: string) => {
     setFormData(prev => ({ ...prev, category }));
-    setCategoryModalVisible(false);
   };
 
   const handleCountrySelect = (country: string) => {
@@ -724,7 +728,8 @@ export const AddMeal: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
       >
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
           {/* Photo Upload */}
           <View style={styles.photoSection}>
@@ -1007,6 +1012,7 @@ export const AddMeal: React.FC = () => {
           </Button>
         </View>
         </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
       {/* Date Picker Modal */}
@@ -1116,41 +1122,21 @@ export const AddMeal: React.FC = () => {
               {t('addMealScreen.modals.categorySubtitle')}
             </Text>
 
-            <View style={styles.categoryList}>
-              {CATEGORIES.map((category) => (
-                <TouchableOpacity
-                  key={category}
-                  onPress={() => handleCategorySelect(category)}
-                  style={[
-                    styles.categoryOption,
-                    { 
-                      backgroundColor: formData.category === category ? colors.primary : colors.card,
-                      borderColor: colors.border 
-                    }
-                  ]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.categoryIcon}>
-                    {category === t('addMealScreen.categoryIcons.main') && '🍽️'}
-                    {category === t('addMealScreen.categoryIcons.soup') && '🍲'}
-                    {category === t('addMealScreen.categoryIcons.breakfast') && '🥐'}
-                    {category === t('addMealScreen.categoryIcons.salad') && '🥗'}
-                  </Text>
-                  <Text 
-                    variant="body" 
-                    weight="medium"
-                    style={[
-                      styles.categoryOptionText,
-                      { color: formData.category === category ? 'white' : colors.text }
-                    ]}
-                  >
-                    {category}
-                  </Text>
-                  {formData.category === category && (
-                    <Text style={styles.categoryCheckmark}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
+            <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+              <Picker
+                selectedValue={formData.category || CATEGORIES[0]?.label}
+                onValueChange={(value) => handleCategorySelect(String(value))}
+                style={[styles.categoryPicker, { color: colors.text }]}
+                itemStyle={[styles.categoryPickerItem, { color: colors.text }]}
+              >
+                {CATEGORIES.map((category) => (
+                  <Picker.Item
+                    key={category.label}
+                    label={category.label}
+                    value={category.label}
+                  />
+                ))}
+              </Picker>
             </View>
 
             <View style={styles.categoryModalActions}>
@@ -1160,6 +1146,13 @@ export const AddMeal: React.FC = () => {
                 style={styles.categoryCancelButton}
               >
                 {t('addMealScreen.actions.cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                onPress={() => setCategoryModalVisible(false)}
+                style={styles.categoryConfirmButton}
+              >
+                {t('addMealScreen.actions.confirm')}
               </Button>
             </View>
           </View>
@@ -1397,8 +1390,8 @@ const styles = StyleSheet.create({
   },
   categoryModalContainer: {
     width: '90%',
-    maxWidth: 400,
-    borderRadius: 16,
+    maxWidth: 420,
+    borderRadius: 20,
     padding: Spacing.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -1411,10 +1404,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   categoryModalTitle: {
     flex: 1,
+    textAlign: 'center',
     color: '#000000',
   },
   categoryCloseButton: {
@@ -1423,43 +1417,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
   },
   categoryModalSubtitle: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
     color: '#666666',
     textAlign: 'center',
   },
-  categoryList: {
-    gap: Spacing.sm,
+  pickerContainer: {
+    borderWidth: 1,
+    borderRadius: 24,
+    overflow: 'hidden',
     marginBottom: Spacing.lg,
   },
-  categoryOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: 12,
-    borderWidth: 1,
+  categoryPicker: {
+    width: '100%',
+    height: 220,
   },
-  categoryIcon: {
-    fontSize: 24,
-    marginRight: Spacing.md,
-    width: 32,
-  },
-  categoryOptionText: {
-    flex: 1,
-    fontSize: 16,
-  },
-  categoryCheckmark: {
+  categoryPickerItem: {
     fontSize: 18,
-    color: 'white',
-    fontWeight: 'bold',
   },
   categoryModalActions: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
   },
   categoryCancelButton: {
+    flex: 1,
     minWidth: 120,
+  },
+  categoryConfirmButton: {
+    flex: 1,
   },
   selectedImagesContainer: {
     flexDirection: 'row',

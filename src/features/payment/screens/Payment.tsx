@@ -282,6 +282,14 @@ export const Payment: React.FC = () => {
             : t('paymentScreen.payAmount', { amount: total.toFixed(2) })
           }
         </Button>
+        <Button
+          variant="outline"
+          fullWidth
+          onPress={() => router.back()}
+          style={styles.cancelButton}
+        >
+          {t('paymentScreen.cancel')}
+        </Button>
       </View>
     </View>
   );
@@ -399,5 +407,8 @@ const styles = StyleSheet.create({
   },
   payButton: {
     marginBottom: 0,
+  },
+  cancelButton: {
+    marginTop: Spacing.sm,
   },
 });

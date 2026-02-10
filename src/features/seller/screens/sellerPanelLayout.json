@@ -3,156 +3,6 @@
   "style": ["container", { "$": "rootBackgroundStyle" }],
   "children": [
     {
-      "type": "TopBar",
-      "props": { "title": { "$": "panel.title" } },
-      "children": [
-        {
-          "slot": "leftComponent",
-          "type": "TouchableOpacity",
-          "style": "backButton",
-          "props": {
-            "onPress": { "$": "handlers.onBackPress" },
-            "activeOpacity": 0.7
-          },
-          "children": [
-            {
-              "type": "FontAwesome",
-              "props": {
-                "name": "arrow-left",
-                "size": 20,
-                "color": { "$": "colors.text" }
-              }
-            }
-          ]
-        },
-        {
-          "slot": "rightComponent",
-          "type": "View",
-          "style": "themeMiniWrapperTop",
-          "children": [
-            {
-              "type": "TouchableOpacity",
-              "style": ["themeMiniButton", { "$": "themeMiniButtonBorderStyle" }],
-              "props": {
-                "onPress": { "$": "handlers.toggleThemeExpanded" },
-                "activeOpacity": 0.7
-              },
-              "children": [
-                {
-                  "type": "WebSafeIcon",
-                  "props": {
-                    "name": "moon-o",
-                    "size": 18,
-                    "color": { "$": "colors.text" }
-                  }
-                }
-              ]
-            },
-            {
-              "type": "View",
-              "condition": "themeExpanded",
-              "style": ["themeDropdown", { "$": "themeDropdownBackgroundStyle" }],
-              "children": [
-                {
-                  "type": "View",
-                  "style": "themeDropdownColumn",
-                  "children": [
-                    {
-                      "type": "TouchableOpacity",
-                      "style": { "$fn": "themeOptionStyle", "args": ["light"] },
-                      "props": {
-                        "onPress": { "$fn": "handlers.setTheme", "args": ["light"] },
-                        "activeOpacity": 0.7
-                      },
-                      "children": [
-                        {
-                          "type": "View",
-                          "style": "themeToggleContent",
-                          "children": [
-                            {
-                              "type": "WebSafeIcon",
-                              "props": {
-                                "name": "sun-o",
-                                "size": 16,
-                                "color": { "$": "colors.text" }
-                              }
-                            },
-                            {
-                              "type": "Text",
-                              "props": { "variant": "body", "weight": "semibold" },
-                              "text": { "$": "panel.theme.light" }
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "TouchableOpacity",
-                      "style": { "$fn": "themeOptionStyle", "args": ["dark"] },
-                      "props": {
-                        "onPress": { "$fn": "handlers.setTheme", "args": ["dark"] },
-                        "activeOpacity": 0.7
-                      },
-                      "children": [
-                        {
-                          "type": "View",
-                          "style": "themeToggleContent",
-                          "children": [
-                            {
-                              "type": "WebSafeIcon",
-                              "props": {
-                                "name": "moon-o",
-                                "size": 16,
-                                "color": { "$": "colors.text" }
-                              }
-                            },
-                            {
-                              "type": "Text",
-                              "props": { "variant": "body", "weight": "semibold" },
-                              "text": { "$": "panel.theme.dark" }
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "TouchableOpacity",
-                      "style": { "$fn": "themeOptionStyle", "args": ["system"] },
-                      "props": {
-                        "onPress": { "$fn": "handlers.setTheme", "args": ["system"] },
-                        "activeOpacity": 0.7
-                      },
-                      "children": [
-                        {
-                          "type": "View",
-                          "style": "themeToggleContent",
-                          "children": [
-                            {
-                              "type": "WebSafeIcon",
-                              "props": {
-                                "name": "cog",
-                                "size": 16,
-                                "color": { "$": "colors.text" }
-                              }
-                            },
-                            {
-                              "type": "Text",
-                              "props": { "variant": "body", "weight": "semibold" },
-                              "text": { "$": "panel.theme.system" }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
       "type": "TouchableWithoutFeedback",
       "condition": "themeExpanded",
       "props": { "onPress": { "$": "handlers.closeTheme" } },
@@ -191,10 +41,31 @@
                           "children": [
                             {
                               "type": "Image",
-                              "style": "statsAvatar",
+                              "style": ["statsAvatar", { "$": "statsAvatarBorderStyle" }],
                               "props": {
                                 "source": { "uri": { "$": "profileData.avatar" } },
                                 "defaultSource": { "$": "defaultAvatarSource" }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "Text",
+                          "style": "sellerLevelLabel",
+                          "props": { "variant": "body", "weight": "semibold", "color": "textSecondary" },
+                          "text": { "$": "sellerDisplayName" }
+                        },
+                        {
+                          "type": "View",
+                          "style": "sellerLevelStars",
+                          "children": [
+                            {
+                              "type": "FontAwesome",
+                              "repeat": { "data": "ratingStars", "itemName": "star", "key": "id" },
+                              "props": {
+                                "name": { "$": "star.name" },
+                                "size": 18,
+                                "color": { "$": "star.color" }
                               }
                             }
                           ]
@@ -289,19 +160,27 @@
                       ]
                     },
                     {
-                      "type": "Card",
+                      "type": "TouchableOpacity",
                       "style": "statCard",
-                      "props": { "variant": "default", "padding": "sm" },
+                      "props": {
+                        "onPress": { "$fn": "handlers.navigate", "args": ["/(seller)/ratings"] }
+                      },
                       "children": [
                         {
-                          "type": "Text",
-                          "props": { "variant": "title", "weight": "bold", "color": "warning", "center": true },
-                          "text": { "$": "stats.rating" }
-                        },
-                        {
-                          "type": "Text",
-                          "props": { "variant": "caption", "center": true, "color": "textSecondary" },
-                          "text": { "$": "panel.statsLabels.rating" }
+                          "type": "Card",
+                          "props": { "variant": "default", "padding": "sm" },
+                          "children": [
+                            {
+                              "type": "Text",
+                              "props": { "variant": "title", "weight": "bold", "color": "warning", "center": true },
+                              "text": { "$": "stats.rating" }
+                            },
+                            {
+                              "type": "Text",
+                              "props": { "variant": "caption", "center": true, "color": "textSecondary" },
+                              "text": { "$": "panel.statsLabels.rating" }
+                            }
+                          ]
                         }
                       ]
                     }
@@ -355,6 +234,58 @@
                           "type": "View",
                           "style": "menuCardTextContainer",
                           "children": [
+                            {
+                              "type": "View",
+                              "condition": "item.isManageMeals",
+                              "style": "menuSummaryRow",
+                              "children": [
+                                {
+                                  "type": "View",
+                                  "style": "menuSummaryItem",
+                                  "children": [
+                                    {
+                                      "type": "FontAwesome",
+                                      "props": { "name": "user", "size": 12, "color": "white" }
+                                    },
+                                    {
+                                      "type": "Text",
+                                      "style": "menuSummaryText",
+                                      "text": { "$": "manageMealsSummary.orders" }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "View",
+                                  "style": "menuSummaryItem",
+                                  "children": [
+                                    {
+                                      "type": "FontAwesome",
+                                      "props": { "name": "money", "size": 12, "color": "white" }
+                                    },
+                                    {
+                                      "type": "Text",
+                                      "style": "menuSummaryText",
+                                      "text": { "$": "manageMealsSummary.earnings" }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "View",
+                                  "style": "menuSummaryItem",
+                                  "children": [
+                                    {
+                                      "type": "FontAwesome",
+                                      "props": { "name": "star", "size": 12, "color": "white" }
+                                    },
+                                    {
+                                      "type": "Text",
+                                      "style": "menuSummaryText",
+                                      "text": { "$": "manageMealsSummary.change" }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
                             {
                               "type": "Text",
                               "props": { "variant": "subheading", "weight": "semibold" },

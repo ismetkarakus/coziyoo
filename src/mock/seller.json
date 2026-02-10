@@ -132,12 +132,23 @@
     ],
     "panel": {
       "title": "Satıcı Paneli",
-      "statsTitle": "Bu Hafta",
+      "statsTitle": "Bu Hafta Performansı",
       "statsLabels": {
         "orders": "Sipariş",
         "wallet": "Cüzdan",
         "messages": "Mesaj",
         "rating": "Puan"
+      },
+      "statsFooter": "Bugün",
+      "statsHighlights": {
+        "orders": "+3 sipariş",
+        "earnings": "₺120 kazanç",
+        "change": "0.2 artış"
+      },
+      "manageMealsSummary": {
+        "orders": "+3 sipariş",
+        "earnings": "₺120 kazanç",
+        "change": "0.2 artış"
       },
       "userRole": "Satıcı",
       "themeTitle": "Tema",
@@ -332,12 +343,23 @@
     ],
     "panel": {
       "title": "Seller Dashboard",
-      "statsTitle": "This Week",
+      "statsTitle": "This Week Performance",
       "statsLabels": {
         "orders": "Orders",
         "wallet": "Wallet",
         "messages": "Messages",
         "rating": "Rating"
+      },
+      "statsFooter": "Today",
+      "statsHighlights": {
+        "orders": "+3 orders",
+        "earnings": "£120 earnings",
+        "change": "0.2 increase"
+      },
+      "manageMealsSummary": {
+        "orders": "+3 orders",
+        "earnings": "£120 earnings",
+        "change": "0.2 increase"
       },
       "userRole": "Seller",
       "themeTitle": "Theme",

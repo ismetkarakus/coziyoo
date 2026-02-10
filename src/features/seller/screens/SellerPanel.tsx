@@ -6,7 +6,6 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
-import { useColorScheme } from '../../../../components/useColorScheme';
 import { useCountry } from '../../../context/CountryContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useThemePreference } from '../../../context/ThemeContext';
@@ -18,20 +17,24 @@ import { ManageMeals } from './ManageMeals';
 const layout = require('./sellerPanelLayout.json');
 
 export const SellerPanel: React.FC = () => {
-  const colorScheme = useColorScheme();
+  const { preference, setPreference, colorScheme } = useThemePreference();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
   const [profileData, setProfileData] = useState(localizedMock.profile);
   const stats = localizedMock.stats;
+  const sellerDisplayName =
+    (profileData.nickname && profileData.nickname.trim()) || profileData.name;
   
   const [themeExpanded, setThemeExpanded] = useState(false);
-  const { preference, setPreference } = useThemePreference();
   
   // Hook'ları önce çağır
   const { currentCountry, isBusinessComplianceRequired } = useCountry();
   const panel = localizedMock.panel;
-  const menuItems = localizedMock.panel.menu;
+  const menuItems = localizedMock.panel.menu.map((item: any) => ({
+    ...item,
+    isManageMeals: item.id === 'manage-meals',
+  }));
   const visibleMenuItems =
     currentCountry.code === 'TR' ? menuItems.filter((item: any) => item.id !== 'manage-meals') : menuItems;
   
@@ -54,6 +57,15 @@ export const SellerPanel: React.FC = () => {
   };
 
   const complianceComplete = isComplianceComplete();
+  const ratingValue = typeof profileData?.rating === 'number' ? profileData.rating : 4.8;
+  const ratingStars = Array.from({ length: 5 }, (_, index) => {
+    const filled = index < Math.floor(ratingValue);
+    return {
+      id: index,
+      name: filled ? 'star' : 'star-o',
+      color: filled ? colors.primary : colors.border,
+    };
+  });
 
   // Load profile data when screen comes into focus
   useFocusEffect(
@@ -147,7 +159,10 @@ export const SellerPanel: React.FC = () => {
     panel,
     stats,
     profileData,
+    sellerDisplayName,
+    ratingStars,
     currentCountry,
+    manageMealsSummary: panel.manageMealsSummary,
     themeExpanded,
     visibleMenuItems,
     showManageMeals: currentCountry.code === 'TR',
@@ -156,6 +171,7 @@ export const SellerPanel: React.FC = () => {
     rootBackgroundStyle: { backgroundColor: colors.background },
     themeMiniButtonBorderStyle: { borderColor: colors.border },
     themeDropdownBackgroundStyle: { backgroundColor: colors.card },
+    statsAvatarBorderStyle: { borderColor: colors.primary },
     defaultAvatarSource: { uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' },
     menuCardStyle,
     menuCardIconStyle,
@@ -213,6 +229,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     paddingHorizontal: 12,
     paddingVertical: Spacing.sm,
+    paddingTop: Spacing.xl * 2,
     paddingBottom: Spacing.md,
     marginTop: Spacing.sm,
   },
@@ -231,12 +248,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
-    transform: [{ translateY: -8 }],
+    transform: [{ translateY: 2 }],
   },
   statsAvatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 122,
+    height: 122,
+    borderRadius: 61,
     borderWidth: 2,
     borderColor: Colors.light.primary,
   },
@@ -257,8 +274,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
     fontSize: 18,
-    marginTop: 0,
-    transform: [{ translateY: 6 }],
+    marginTop: 8,
+    transform: [{ translateY: 18 }],
+  },
+  sellerLevelLabel: {
+    marginTop: Spacing.md,
+    textAlign: 'center',
+    fontSize: 16,
+    transform: [{ translateY: -4 }],
+  },
+  sellerLevelStars: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: Spacing.xs,
   },
   themeMiniButton: {
     paddingHorizontal: Spacing.sm,
@@ -293,7 +322,7 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     gap: 6,
-    marginTop: 0,
+    marginTop: Spacing.md,
   },
   statCard: {
     flex: 1,
@@ -347,6 +376,21 @@ const styles = StyleSheet.create({
   menuCardTextContainer: {
     flex: 1,
   },
+  menuSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  menuSummaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  menuSummaryText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
   menuCardTitle: {
     fontSize: 18,
     color: 'white',
@@ -369,12 +413,12 @@ const styles = StyleSheet.create({
     height: Spacing.xl,
   },
   manageMealsEmbed: {
-    marginTop: 0,
+    marginTop: Spacing.sm,
   },
   manageMealsHeader: {
     marginHorizontal: Spacing.md,
     marginBottom: Spacing.sm,
-    marginTop: Spacing.lg * 2,
+    marginTop: Spacing.sm,
     textAlign: 'center',
     fontSize: 20,
   },
