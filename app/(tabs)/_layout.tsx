@@ -42,7 +42,7 @@ export default function TabLayout() {
       router.push('/(seller)/dashboard' as any);
       return;
     }
-    router.push('/(tabs)/profile' as any);
+    router.push('/(tabs)/buyer-profile' as any);
   };
 
   const renderCompactTabButton = (props: any, onPressOverride?: () => void) => {
@@ -152,7 +152,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="buyer-profile"
         options={{
           title: 'C',
           tabBarLabel: () => null,

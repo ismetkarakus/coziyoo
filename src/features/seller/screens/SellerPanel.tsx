@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TouchableWithoutFeedback, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useCountry } from '../../../context/CountryContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useThemePreference } from '../../../context/ThemeContext';
+import { useAuth } from '../../../context/AuthContext';
 import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
 import { JsonRenderer } from '../../../components/json/JsonRenderer';
 import sellerMock from '../../../mock/seller.json';
@@ -20,6 +22,7 @@ export const SellerPanel: React.FC = () => {
   const { preference, setPreference, colorScheme } = useThemePreference();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
+  const { signOut } = useAuth();
   const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
   const [profileData, setProfileData] = useState(localizedMock.profile);
   const stats = localizedMock.stats;
@@ -63,7 +66,7 @@ export const SellerPanel: React.FC = () => {
     return {
       id: index,
       name: filled ? 'star' : 'star-o',
-      color: filled ? colors.primary : colors.border,
+      color: filled ? colors.warning : colors.border,
     };
   });
 
@@ -100,6 +103,36 @@ export const SellerPanel: React.FC = () => {
   const handleBackPress = () => {
     console.log('Back button pressed - navigating to home'); // Debug log
     router.push('/(tabs)'); // Navigate to home/main screen
+  };
+
+  const handleSignOut = () => {
+    const runSignOut = async () => {
+      try {
+        await signOut();
+        router.replace('/(auth)/sign-in');
+      } catch (error) {
+        console.error('Sign out error:', error);
+        Alert.alert(t('sellerPanel.alerts.signOutTitle'), t('sellerPanel.alerts.signOutError'));
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      runSignOut();
+      return;
+    }
+
+    Alert.alert(
+      t('sellerPanel.alerts.signOutTitle'),
+      t('sellerPanel.alerts.signOutMessage'),
+      [
+        { text: t('sellerPanel.alerts.ok'), style: 'cancel' },
+        {
+          text: t('sellerPanel.alerts.ok'),
+          style: 'destructive',
+          onPress: runSignOut,
+        },
+      ]
+    );
   };
 
   const isMenuEnabled = !isBusinessComplianceRequired || complianceComplete;
@@ -172,6 +205,11 @@ export const SellerPanel: React.FC = () => {
     themeMiniButtonBorderStyle: { borderColor: colors.border },
     themeDropdownBackgroundStyle: { backgroundColor: colors.card },
     statsAvatarBorderStyle: { borderColor: colors.primary },
+    editProfileButtonBackgroundStyle: { backgroundColor: colors.primary },
+    signOutButtonBackgroundStyle: { backgroundColor: colors.error },
+    heroGradientColors: colorScheme === 'dark'
+      ? ['#3F4A3E', colors.surface]
+      : ['#DDE6DD', colors.surface],
     defaultAvatarSource: { uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' },
     menuCardStyle,
     menuCardIconStyle,
@@ -185,7 +223,8 @@ export const SellerPanel: React.FC = () => {
     themeOptionStyle,
     handlers: {
       onBackPress: handleBackPress,
-      openProfile: () => router.push('/(seller)/profile'),
+      signOut: handleSignOut,
+      openProfile: () => router.push('/(seller)/seller-profile'),
       navigate: handleMenuPress,
       onMenuItemPress: handleMenuItemPress,
       toggleThemeExpanded: () => setThemeExpanded(prev => !prev),
@@ -209,9 +248,15 @@ export const SellerPanel: React.FC = () => {
     WebSafeIcon,
     ManageMeals,
     FontAwesome,
+    LinearGradient,
   };
 
-  return <JsonRenderer node={layout} context={context} registry={registry} />;
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <TopBar title={t('sellerPanelText')} onBack={handleBackPress} />
+      <JsonRenderer node={layout} context={context} registry={registry} />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -229,40 +274,57 @@ const styles = StyleSheet.create({
   statsContainer: {
     paddingHorizontal: 12,
     paddingVertical: Spacing.sm,
-    paddingTop: Spacing.xl * 2,
+    paddingTop: 0,
     paddingBottom: Spacing.md,
     marginTop: Spacing.sm,
   },
-  statsHeaderRow: {
+  heroHeader: {
+    position: 'relative',
+    borderRadius: 20,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  heroRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
+    gap: Spacing.md,
   },
-  statsTitleColumn: {
+  heroAvatarButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroAvatar: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    borderWidth: 2,
+  },
+  heroCenter: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statsAvatarButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-    transform: [{ translateY: 2 }],
-  },
-  avatarHint: {
+  heroName: {
     textAlign: 'center',
     marginBottom: Spacing.xs,
-    fontSize: 12,
-    opacity: 0.7,
-    fontWeight: '600',
   },
-  statsAvatar: {
-    width: 122,
-    height: 122,
-    borderRadius: 61,
-    borderWidth: 2,
-    borderColor: Colors.light.primary,
+  heroStars: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  heroRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  editProfileButton: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  editProfileButtonText: {
+    color: '#FFFFFF',
   },
   themeMiniWrapper: {
     position: 'relative',
@@ -281,20 +343,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
     fontSize: 18,
-    marginTop: 8,
-    transform: [{ translateY: 18 }],
-  },
-  sellerLevelLabel: {
-    marginTop: Spacing.md,
-    textAlign: 'center',
-    fontSize: 16,
-    transform: [{ translateY: -4 }],
-  },
-  sellerLevelStars: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 4,
     marginTop: Spacing.xs,
+    transform: [{ translateY: 0 }],
   },
   themeMiniButton: {
     paddingHorizontal: Spacing.sm,
@@ -358,6 +408,18 @@ const styles = StyleSheet.create({
   menuSectionsContainer: {
     paddingHorizontal: Spacing.md,
     gap: Spacing.md,
+  },
+  signOutContainer: {
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  signOutButton: {
+    paddingVertical: Spacing.sm,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  signOutButtonText: {
+    color: '#FFFFFF',
   },
   menuCard: {
     borderRadius: 16,

@@ -63,7 +63,6 @@ export const AddMeal: React.FC = () => {
     price: '',
     dailyStock: '',
     deliveryFee: '',
-    maxDistance: '',
     startDate: '',
     endDate: '',
     category: '',
@@ -77,6 +76,7 @@ export const AddMeal: React.FC = () => {
     pickup: true,
     delivery: false,
   });
+  const [sellerDeliveryDistance, setSellerDeliveryDistance] = useState('');
 
   const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [selectedDateField, setSelectedDateField] = useState<'startDate' | 'endDate'>('startDate');
@@ -140,7 +140,6 @@ export const AddMeal: React.FC = () => {
         price: parsed.price != null ? String(parsed.price) : '',
         dailyStock: parsed.dailyStock != null ? String(parsed.dailyStock) : '',
         deliveryFee: parsed.deliveryFee != null ? String(parsed.deliveryFee) : '',
-        maxDistance: parsed.maxDistance != null ? String(parsed.maxDistance) : '',
         startDate: parsed.startDate ?? '',
         endDate: parsed.endDate ?? '',
         category: parsed.category ?? '',
@@ -157,6 +156,9 @@ export const AddMeal: React.FC = () => {
           delivery: !!parsed.hasDelivery,
         });
       }
+      if (!sellerDeliveryDistance && parsed.maxDistance != null) {
+        setSellerDeliveryDistance(String(parsed.maxDistance));
+      }
       if (Array.isArray(parsed.images) && parsed.images.length > 0) {
         setSelectedImages(parsed.images);
       } else if (parsed.imageUrl) {
@@ -166,6 +168,23 @@ export const AddMeal: React.FC = () => {
       console.error('Error parsing mealData for edit:', error);
     }
   }, [params.mealData]);
+
+  useEffect(() => {
+    const loadSellerDeliveryDistance = async () => {
+      try {
+        const savedProfile = await AsyncStorage.getItem('sellerProfile');
+        if (!savedProfile) return;
+        const profile = JSON.parse(savedProfile);
+        const distance = profile?.formData?.deliveryDistance;
+        if (distance != null && String(distance).trim().length > 0) {
+          setSellerDeliveryDistance(String(distance));
+        }
+      } catch (error) {
+        console.error('Error loading seller delivery distance:', error);
+      }
+    };
+    loadSellerDeliveryDistance();
+  }, []);
 
   const handleDescriptionContentSizeChange = (event: any) => {
     const { height } = event.nativeEvent.contentSize;
@@ -252,6 +271,7 @@ export const AddMeal: React.FC = () => {
         sellerName: user.displayName || t('addMealScreen.defaults.sellerName'),
         cookName: user.displayName || t('addMealScreen.defaults.sellerName'), // Usta ismi için
         imageUrl,
+        maxDistance: sellerDeliveryDistance,
         // Tarih bilgileri
         availableDates: formData.startDate && formData.endDate ? 
           formatDateRange(formData.startDate, formData.endDate) : 
@@ -293,7 +313,6 @@ export const AddMeal: React.FC = () => {
                 price: '',
                 dailyStock: '',
                 deliveryFee: '',
-                maxDistance: '',
                 startDate: '',
                 endDate: '',
                 category: '',
@@ -574,7 +593,7 @@ export const AddMeal: React.FC = () => {
     console.log('Preview button pressed'); // Debug log
     
     // Basic validation for preview
-    if (!formData.name || !formData.price || !formData.category) {
+    if (!formData.name || !formData.price || !formData.category || !formData.description) {
       Alert.alert(
         t('addMealScreen.alerts.missingInfoTitle'),
         t('addMealScreen.alerts.missingInfoMessage'),
@@ -594,7 +613,7 @@ export const AddMeal: React.FC = () => {
     }
 
     // Delivery seçilmişse teslimat mesafesi gerekli
-    if (deliveryOptions.delivery && !formData.maxDistance) {
+    if (deliveryOptions.delivery && !sellerDeliveryDistance) {
       Alert.alert(
         t('addMealScreen.alerts.distanceRequiredTitle'),
         t('addMealScreen.alerts.distanceRequiredMessage'),
@@ -612,7 +631,7 @@ export const AddMeal: React.FC = () => {
       description: formData.description,
       recipe: formData.recipe,
       dailyStock: formData.dailyStock,
-      maxDistance: formData.maxDistance,
+      maxDistance: sellerDeliveryDistance,
       deliveryFee: formData.deliveryFee,
       startDate: formData.startDate,
       endDate: formData.endDate,
@@ -743,7 +762,6 @@ export const AddMeal: React.FC = () => {
                 price: '',
                 dailyStock: '',
                 deliveryFee: '',
-                maxDistance: '',
                 startDate: '',
                 endDate: '',
                 category: '',
@@ -1033,15 +1051,6 @@ export const AddMeal: React.FC = () => {
 
             {deliveryOptions.delivery && (
               <View style={styles.deliverySettings}>
-                <FormField
-                  label={t('addMealScreen.fields.maxDistance')}
-                  value={formData.maxDistance}
-                  onChangeText={handleInputChange('maxDistance')}
-                  placeholder={t('addMealScreen.placeholders.maxDistance')}
-                  keyboardType="numeric"
-                  required
-                />
-
                 <FormField
                   label={t('addMealScreen.fields.deliveryFee')}
                   value={formData.deliveryFee}

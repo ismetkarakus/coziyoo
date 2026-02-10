@@ -414,7 +414,7 @@ export const SellerWallet: React.FC = () => {
               <TouchableOpacity
                 style={styles.editBank}
                 activeOpacity={0.8}
-                onPress={() => router.push({ pathname: '/(seller)/profile', params: { section: 'bank' } })}
+                onPress={() => router.push({ pathname: '/(seller)/seller-profile', params: { section: 'bank' } })}
               >
                 <FontAwesome name="pencil" size={14} color={colors.textSecondary} />
                 <Text variant="caption" color="textSecondary">{t('sellerWalletScreen.editBankDetails')}</Text>

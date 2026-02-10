@@ -19,6 +19,7 @@ export default function SellerLayout() {
         name="edit-meal" 
         options={{ 
           headerShown: false,
+          animation: 'slide_from_right',
         }} 
       />
       <Stack.Screen 
@@ -46,7 +47,7 @@ export default function SellerLayout() {
         }} 
       />
       <Stack.Screen 
-        name="profile" 
+        name="seller-profile" 
         options={{ 
           headerShown: false,
         }} 

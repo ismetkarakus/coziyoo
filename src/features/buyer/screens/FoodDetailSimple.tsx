@@ -4,7 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Text, Button, Card } from '../../../components/ui';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Text, Button, Card, StarRating } from '../../../components/ui';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -25,6 +26,7 @@ export default function FoodDetailSimple() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const showIngredients = width >= 768;
+  const showSideBySideCards = width >= 768;
 
   const foodName = params.name as string || t('foodDetailSimpleScreen.defaults.foodName');
   const cookName = params.cookName as string || t('foodDetailSimpleScreen.defaults.cookName');
@@ -64,11 +66,24 @@ export default function FoodDetailSimple() {
   const [allergenModalMatches, setAllergenModalMatches] = useState<string[]>([]);
   const [allergenConfirmChecked, setAllergenConfirmChecked] = useState(false);
   const [pendingFood, setPendingFood] = useState<any | null>(null);
-  
-  // Satıcı profil resmi için state
-  const [sellerAvatar, setSellerAvatar] = useState('https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face');
+  const [foodMeta, setFoodMeta] = useState({
+    rating: 4.8,
+    reviewCount: 24,
+    distance: '1.2 km',
+    prepTime: '30 dk',
+    availableDates: '15-20 Ocak',
+    currentStock: 8,
+    dailyStock: 10,
+    deliveryType: 'pickup' as 'pickup' | 'delivery',
+  });
+  const endDate = foodMeta.availableDates.includes('-')
+    ? foodMeta.availableDates.split('-').pop()?.trim() || foodMeta.availableDates
+    : foodMeta.availableDates;
+  const [sellerAvatar, setSellerAvatar] = useState(
+    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face'
+  );
+  const [sellerAvatarError, setSellerAvatarError] = useState(false);
 
-  // Satıcı profil verilerini yükle
   useEffect(() => {
     const loadSellerProfile = async () => {
       try {
@@ -86,7 +101,7 @@ export default function FoodDetailSimple() {
 
     loadSellerProfile();
   }, []);
-
+  
   const handleBackPress = () => {
     router.back();
   };
@@ -101,6 +116,18 @@ export default function FoodDetailSimple() {
       const food = foods.find(item => item.id === resolvedId);
       setIngredients(food?.ingredients ?? null);
       setAllergens(food?.allergens ?? null);
+      if (food) {
+        setFoodMeta({
+          rating: typeof food.rating === 'number' ? food.rating : 4.8,
+          reviewCount: typeof food.reviewCount === 'number' ? food.reviewCount : 24,
+          distance: food.distance || '1.2 km',
+          prepTime: food.prepTime || '30 dk',
+          availableDates: food.availableDates || '15-20 Ocak',
+          currentStock: typeof food.currentStock === 'number' ? food.currentStock : 8,
+          dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 10,
+          deliveryType: food.hasDelivery && !food.hasPickup ? 'delivery' : 'pickup',
+        });
+      }
     };
 
     loadDetails();
@@ -327,69 +354,116 @@ export default function FoodDetailSimple() {
               {currentImageIndex + 1}/{foodImages.length}
             </Text>
           </View>
+
+          <TouchableOpacity
+            style={styles.imageFavorite}
+            onPress={() => {
+              alert(t('foodDetailSimpleScreen.addFavoriteToast'));
+            }}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="favorite-border" size={20} color={colors.text} />
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.chefStrip}>
-          <Image
-            source={{ uri: sellerAvatar }}
-            style={styles.chefAvatar}
-          />
-          <Text variant="body" weight="semibold" style={styles.chefName}>
-            {cookName}
+        <View style={styles.titleRowOutside}>
+          <Text variant="heading" weight="semibold" style={styles.foodNameOutside} numberOfLines={2}>
+            {foodName}
+          </Text>
+          <Text variant="heading" weight="semibold" color="primary" style={styles.priceTextOutside}>
+            {formatCurrency(basePrice)}
           </Text>
         </View>
-        
-        {/* Food Info */}
-        <View style={[styles.infoContainer, { backgroundColor: colors.surface }]}>
-          <View style={styles.titleRow}>
-            <Text variant="heading" weight="bold" style={styles.title}>
-              {foodName}
-            </Text>
-            <View style={styles.priceCorner}>
-              <Text variant="subheading" weight="bold" color="primary">
-                ₺25 <Text variant="caption" color="textSecondary">{t('foodDetailSimpleScreen.portion')}</Text>
-              </Text>
-            </View>
-          </View>
-          
-          {/* Satıcı Profil Kartı - Satıcı Panelinden */}
-          <Card variant="default" padding="md" style={styles.sellerCard}>
-            <View style={styles.sellerInfo}>
-              <View style={styles.sellerAvatarContainer}>
+
+        <View style={[styles.cardsRow, showSideBySideCards ? styles.cardsRowSide : styles.cardsRowStack]}>
+          <Card variant="default" padding="md" style={styles.cookInfoCard}>
+          <View style={styles.cookInfo}>
+            <View style={styles.cookProfile}>
+              {sellerAvatar && !sellerAvatarError ? (
                 <Image
                   source={{ uri: sellerAvatar }}
-                  style={styles.sellerAvatarImage}
-                  defaultSource={{ uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' }}
+                  style={styles.cookAvatar}
+                  onError={() => setSellerAvatarError(true)}
                 />
+              ) : (
+                <View style={styles.cookAvatarFallback}>
+                  <Text variant="body" weight="bold" style={styles.cookAvatarFallbackText}>
+                    {cookName?.trim()?.charAt(0) || 'C'}
+                  </Text>
+                </View>
+              )}
+                <View style={styles.cookDetails}>
+                <View style={styles.cookNameRow}>
+                  <Text variant="body" color="textSecondary" style={styles.cookName} numberOfLines={1}>
+                    {cookName}
+                  </Text>
+                  <Text variant="caption" color="textSecondary" style={styles.cookDistance}>
+                    {foodMeta.distance}
+                  </Text>
+                </View>
+                <View style={styles.rating}>
+                  <StarRating rating={foodMeta.rating} size="small" showNumber />
+                  <Text variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
+                    {t('foodDetailScreen.reviewCount', { count: foodMeta.reviewCount })}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.sellerDetails}>
-                <Text variant="subheading" weight="semibold">
-                  {cookName}
-                </Text>
-                <Text variant="caption" color="textSecondary">
-                  {t('foodDetailSimpleScreen.sellerMeta')}
+            </View>
+          </View>
+
+          <View style={styles.viewAllRow}>
+            <TouchableOpacity
+              style={styles.viewAllLink}
+              onPress={async () => {
+                try {
+                  await AsyncStorage.setItem('cookFilter', cookName);
+                  router.push('/(tabs)');
+                } catch (error) {
+                  console.error('Error setting cook filter:', error);
+                  router.push('/(tabs)');
+                }
+              }}
+            >
+              <Text variant="body" style={{ color: colors.primary }}>
+                {t('foodDetailScreen.viewAllCook')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          </Card>
+
+          <Card variant="default" padding="md" style={styles.metaInfoCard}>
+            <View style={styles.metaInfo}>
+              <View style={styles.metaItem}>
+                <Text variant="caption" color="textSecondary">{t('foodDetailScreen.prep')}</Text>
+                <Text variant="body" weight="medium">{foodMeta.prepTime}</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Text variant="body" weight="medium" color="primary">
+                  {foodMeta.deliveryType === 'delivery' ? t('foodDetailScreen.delivery') : t('foodDetailScreen.pickup')}
                 </Text>
               </View>
-              {/* Yıldız Değerlendirme - Sağ Üst Köşe */}
-              <View style={styles.ratingCorner}>
-                <Text variant="body" weight="bold" color="text">
-                  ⭐ 4.8
+            </View>
+
+            <View style={styles.availabilitySection}>
+              <View style={styles.availabilityItem}>
+                <Text variant="caption" color="textSecondary">{t('foodDetailSimpleScreen.endDateLabel')}</Text>
+                <Text variant="body" weight="medium" color="primary">📅 {endDate}</Text>
+              </View>
+              <View style={styles.availabilityItem}>
+                <Text variant="caption" color="textSecondary">{t('foodDetailSimpleScreen.remainingLabel')}</Text>
+                <Text
+                  variant="body"
+                  weight="medium"
+                  color={foodMeta.currentStock > 0 ? 'primary' : 'error'}
+                >
+                  {foodMeta.currentStock} {t('foodDetailSimpleScreen.remainingValue')}
                 </Text>
               </View>
             </View>
           </Card>
+        </View>
 
-          {/* Favoriye Ekle Butonu - Çerçevesiz */}
-          <TouchableOpacity 
-            style={[styles.favoriteButton, { backgroundColor: colors.surface }]}
-            onPress={() => {
-              // Favorilere ekle
-              alert(t('foodDetailSimpleScreen.addFavoriteToast'));
-            }}
-          >
-            <Text variant="body" color="primary">{t('foodDetailSimpleScreen.addFavorite')}</Text>
-          </TouchableOpacity>
-          
+        <View style={[styles.infoContainer, { backgroundColor: colors.surface }]}>
           {/* İçindekiler */}
           <View style={styles.ingredientsSection}>
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
@@ -441,8 +515,6 @@ export default function FoodDetailSimple() {
               </Text>
             </View>
           </View>
-          
-          
         </View>
       </ScrollView>
 
@@ -554,48 +626,167 @@ const styles = StyleSheet.create({
   },
   imageCounter: {
     position: 'absolute',
-    top: 12,
+    bottom: 12,
     right: 12,
     backgroundColor: 'rgba(0,0,0,0.6)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
   },
+  imageFavorite: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
   imageCounterText: {
     color: '#FFFFFF',
   },
-  chefStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  chefAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-  chefName: {
-    fontSize: 14,
-  },
-  infoContainer: {
-    padding: Spacing.lg,
-    margin: Spacing.md,
-    borderRadius: 12,
-  },
-  titleRow: {
+  titleRowOutside: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
+    gap: Spacing.md,
+  },
+  foodNameOutside: {
+    flex: 1,
+    color: '#2E2E2E',
+  },
+  priceTextOutside: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  infoContainer: {
+    padding: Spacing.lg,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    borderRadius: 12,
+  },
+  cookInfoCard: {
+    marginBottom: Spacing.md,
+    flex: 1,
+  },
+  metaInfoCard: {
+    marginBottom: Spacing.md,
+    flex: 1,
+  },
+  cardsRow: {
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.md,
+  },
+  cardsRowSide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  cardsRowStack: {
+    flexDirection: 'column',
+  },
+  foodNameContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: Spacing.sm,
   },
-  title: {
+  foodName: {
     flex: 1,
+    marginRight: Spacing.sm,
+  },
+  priceText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  cookInfo: {
+    marginBottom: Spacing.md,
+  },
+  cookProfile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cookAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     marginRight: Spacing.md,
   },
-  priceCorner: {
-    alignItems: 'flex-end',
+  cookAvatarFallback: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: Spacing.md,
+    backgroundColor: '#E8E6E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cookAvatarFallbackText: {
+    color: '#8B9D8A',
+  },
+  cookDetails: {
+    flex: 1,
+  },
+  cookNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    justifyContent: 'space-between',
+  },
+  cookName: {
+    flexShrink: 1,
+    marginRight: Spacing.sm,
+  },
+  cookDistance: {
+    color: '#8E8E93',
+  },
+  rating: {
+    marginTop: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewAllRow: {
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+  },
+  viewAllLink: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#8B9D8A',
+    backgroundColor: '#F5F4F0',
+  },
+  metaInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  metaItem: {
+    alignItems: 'center',
+  },
+  availabilitySection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  availabilityItem: {
+    alignItems: 'center',
+    flex: 1,
   },
   description: {
     marginBottom: Spacing.lg,
@@ -617,38 +808,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: Spacing.md,
-  },
-  favoriteButton: {
-    padding: Spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  sellerCard: {
-    marginBottom: Spacing.md,
-  },
-  sellerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  sellerAvatarContainer: {
-    marginRight: Spacing.md,
-  },
-  sellerAvatarImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: '#7FAF9A',
-  },
-  sellerDetails: {
-    flex: 1,
-  },
-  ratingCorner: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
   },
   ingredientsSection: {
     marginBottom: Spacing.lg,

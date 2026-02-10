@@ -17,7 +17,7 @@ Bottom tab navigation for buyers:
 - **Explore** (`explore.tsx`) - Product discovery
 - **Cart** (`cart.tsx`) - Shopping cart
 - **Notifications** (`notifications.tsx`) - User notifications
-- **Profile** (`profile.tsx`) - User profile and settings
+- **Buyer Profile** (`buyer-profile.tsx`) - Buyer profile and settings
 
 #### 2. Authentication Stack - `app/(auth)/`
 Authentication flow:
@@ -31,6 +31,7 @@ Bottom tab navigation for sellers:
 - **Products** (`products.tsx`) - Product management
 - **Orders** (`orders.tsx`) - Order management
 - **Analytics** (`analytics.tsx`) - Sales analytics
+- **Seller Profile** (`seller-profile.tsx`) - Seller profile and settings
 
 ## Navigation Features
 
@@ -70,7 +71,7 @@ app/
 │   ├── explore.tsx      # Explore
 │   ├── cart.tsx         # Cart
 │   ├── notifications.tsx # Notifications
-│   └── profile.tsx      # Profile
+│   └── buyer-profile.tsx # Buyer profile
 ├── (auth)/              # Authentication
 │   ├── _layout.tsx      # Auth stack
 │   ├── sign-in.tsx      # Sign in
@@ -81,11 +82,11 @@ app/
 │   ├── dashboard.tsx    # Dashboard
 │   ├── products.tsx     # Products
 │   ├── orders.tsx       # Orders
-│   └── analytics.tsx    # Analytics
+│   ├── analytics.tsx    # Analytics
+│   └── seller-profile.tsx # Seller profile
 ├── modal.tsx            # Modal screen
 └── +not-found.tsx       # 404 screen
 ```
-
 
 
 

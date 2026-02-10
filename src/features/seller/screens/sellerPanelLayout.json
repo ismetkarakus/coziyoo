@@ -24,22 +24,21 @@
               "style": "statsContainer",
               "children": [
                 {
-                  "type": "View",
-                  "style": "statsHeaderRow",
+                  "type": "LinearGradient",
+                  "style": "heroHeader",
+                  "props": {
+                    "colors": { "$": "heroGradientColors" },
+                    "start": { "x": 0, "y": 0 },
+                    "end": { "x": 1, "y": 1 }
+                  },
                   "children": [
                     {
                       "type": "View",
-                      "style": "statsTitleColumn",
+                      "style": "heroRow",
                       "children": [
                         {
-                          "type": "Text",
-                          "style": "avatarHint",
-                          "props": { "variant": "caption", "color": "textSecondary" },
-                          "text": { "$": "panel.avatarHint" }
-                        },
-                        {
                           "type": "TouchableOpacity",
-                          "style": "statsAvatarButton",
+                          "style": "heroAvatarButton",
                           "props": {
                             "onPress": { "$": "handlers.openProfile" },
                             "activeOpacity": 0.7
@@ -47,7 +46,7 @@
                           "children": [
                             {
                               "type": "Image",
-                              "style": ["statsAvatar", { "$": "statsAvatarBorderStyle" }],
+                              "style": ["heroAvatar", { "$": "statsAvatarBorderStyle" }],
                               "props": {
                                 "source": { "uri": { "$": "profileData.avatar" } },
                                 "defaultSource": { "$": "defaultAvatarSource" }
@@ -56,31 +55,50 @@
                           ]
                         },
                         {
-                          "type": "Text",
-                          "style": "sellerLevelLabel",
-                          "props": { "variant": "body", "weight": "semibold", "color": "textSecondary" },
-                          "text": { "$": "sellerDisplayName" }
-                        },
-                        {
                           "type": "View",
-                          "style": "sellerLevelStars",
+                          "style": "heroCenter",
                           "children": [
                             {
-                              "type": "FontAwesome",
-                              "repeat": { "data": "ratingStars", "itemName": "star", "key": "id" },
-                              "props": {
-                                "name": { "$": "star.name" },
-                                "size": 18,
-                                "color": { "$": "star.color" }
-                              }
+                              "type": "Text",
+                              "style": "heroName",
+                              "props": { "variant": "subheading", "weight": "semibold", "color": "text" },
+                              "text": { "$": "sellerDisplayName" }
+                            },
+                            {
+                              "type": "View",
+                              "style": "heroStars",
+                              "children": [
+                                {
+                                  "type": "FontAwesome",
+                                  "repeat": { "data": "ratingStars", "itemName": "star", "key": "id" },
+                                  "props": {
+                                    "name": { "$": "star.name" },
+                                    "size": 18,
+                                    "color": { "$": "star.color" }
+                                  }
+                                }
+                              ]
                             }
                           ]
                         },
                         {
-                          "type": "Text",
-                          "style": "statsTitle",
-                          "props": { "variant": "subheading", "weight": "semibold" },
-                          "text": { "$": "panel.statsTitle" }
+                          "type": "View",
+                          "style": "heroRight",
+                          "children": [
+                            {
+                              "type": "TouchableOpacity",
+                              "style": ["editProfileButton", { "$": "editProfileButtonBackgroundStyle" }],
+                              "props": { "onPress": { "$": "handlers.openProfile" }, "activeOpacity": 0.7 },
+                              "children": [
+                                {
+                                  "type": "Text",
+                                  "style": "editProfileButtonText",
+                                  "props": { "variant": "caption", "weight": "semibold" },
+                                  "text": { "$": "panel.editProfileButton" }
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }
@@ -103,7 +121,16 @@
                           "children": [
                             {
                               "type": "Text",
-                              "props": { "variant": "title", "weight": "bold", "color": "primary", "center": true },
+                              "props": {
+                                "variant": "title",
+                                "weight": "bold",
+                                "color": "primary",
+                                "center": true,
+                                "size": "xl",
+                                "numberOfLines": 1,
+                                "adjustsFontSizeToFit": true,
+                                "minimumFontScale": 0.7
+                              },
                               "text": { "$": "stats.orders" }
                             },
                             {
@@ -128,7 +155,16 @@
                           "children": [
                             {
                               "type": "Text",
-                              "props": { "variant": "title", "weight": "bold", "color": "success", "center": true },
+                              "props": {
+                                "variant": "title",
+                                "weight": "bold",
+                                "color": "success",
+                                "center": true,
+                                "size": "xl",
+                                "numberOfLines": 1,
+                                "adjustsFontSizeToFit": true,
+                                "minimumFontScale": 0.7
+                              },
                               "text": { "$": "stats.wallet" }
                             },
                             {
@@ -153,7 +189,16 @@
                           "children": [
                             {
                               "type": "Text",
-                              "props": { "variant": "title", "weight": "bold", "color": "info", "center": true },
+                              "props": {
+                                "variant": "title",
+                                "weight": "bold",
+                                "color": "info",
+                                "center": true,
+                                "size": "xl",
+                                "numberOfLines": 1,
+                                "adjustsFontSizeToFit": true,
+                                "minimumFontScale": 0.7
+                              },
                               "text": { "$": "stats.messages" }
                             },
                             {
@@ -178,7 +223,16 @@
                           "children": [
                             {
                               "type": "Text",
-                              "props": { "variant": "title", "weight": "bold", "color": "warning", "center": true },
+                              "props": {
+                                "variant": "title",
+                                "weight": "bold",
+                                "color": "warning",
+                                "center": true,
+                                "size": "xl",
+                                "numberOfLines": 1,
+                                "adjustsFontSizeToFit": true,
+                                "minimumFontScale": 0.7
+                              },
                               "text": { "$": "stats.rating" }
                             },
                             {
@@ -201,12 +255,6 @@
           "condition": "showManageMeals",
           "style": "manageMealsEmbed",
           "children": [
-            {
-              "type": "Text",
-              "style": "manageMealsHeader",
-              "props": { "variant": "subheading", "weight": "semibold" },
-              "text": { "$": "manageMealsTitle" }
-            },
             { "type": "ManageMeals", "props": { "embedded": true } }
           ]
         },
@@ -314,6 +362,25 @@
                       ]
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "View",
+          "style": "signOutContainer",
+          "children": [
+            {
+              "type": "TouchableOpacity",
+              "style": ["signOutButton", { "$": "signOutButtonBackgroundStyle" }],
+              "props": { "onPress": { "$": "handlers.signOut" }, "activeOpacity": 0.8 },
+              "children": [
+                {
+                  "type": "Text",
+                  "style": "signOutButtonText",
+                  "props": { "variant": "body", "weight": "semibold" },
+                  "text": { "$": "panel.signOutButton" }
                 }
               ]
             }

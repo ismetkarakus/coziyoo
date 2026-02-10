@@ -5,6 +5,8 @@ import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { Text } from '../ui/Text';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { router } from 'expo-router';
+import { useThemePreference } from '../../context/ThemeContext';
 
 interface TopBarProps {
   title?: string;
@@ -12,6 +14,8 @@ interface TopBarProps {
   rightComponent?: React.ReactNode;
   transparent?: boolean;
   onBack?: () => void;
+  showBack?: boolean;
+  showThemeToggle?: boolean;
   titleStyle?: object;
 }
 
@@ -21,19 +25,22 @@ export const TopBar: React.FC<TopBarProps> = ({
   rightComponent,
   transparent = false,
   onBack,
+  showBack = false,
+  showThemeToggle = true,
   titleStyle,
 }) => {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { setPreference } = useThemePreference();
 
   // Create back button if onBack is provided and no leftComponent exists
   const renderLeftComponent = () => {
     if (leftComponent) return leftComponent;
-    if (onBack) {
+    if (onBack || showBack) {
       return (
         <TouchableOpacity
-          onPress={onBack}
+          onPress={onBack ?? (() => router.back())}
           style={styles.backButton}
           activeOpacity={0.7}
         >
@@ -74,7 +81,22 @@ export const TopBar: React.FC<TopBarProps> = ({
           </View>
           
           <View style={styles.side}>
-            {rightComponent}
+            <View style={styles.rightContainer}>
+              {rightComponent}
+              {showThemeToggle && (
+                <TouchableOpacity
+                  onPress={() => setPreference(colorScheme === 'dark' ? 'light' : 'dark')}
+                  style={styles.themeToggle}
+                  activeOpacity={0.7}
+                >
+                  <FontAwesome
+                    name={colorScheme === 'dark' ? 'sun-o' : 'moon-o'}
+                    size={18}
+                    color={colors.text}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
       </View>
@@ -88,20 +110,25 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
-    alignItems: 'flex-end', // Changed from center to flex-end (bottom alignment)
-    height: 64, // Taller to move header content further down
-    paddingHorizontal: Spacing.sm, // Reduced from md to sm
-    paddingBottom: Spacing.md, // More bottom padding
+    alignItems: 'center',
+    height: 56,
+    paddingHorizontal: 4,
+    paddingBottom: Spacing.xs,
   },
   side: {
-    flex: 1,
+    width: 48,
     zIndex: 1,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  rightContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   centerContainer: {
-    position: 'absolute',
-    left: Spacing['2xl'] + Spacing.sm,
-    right: Spacing['2xl'] + Spacing.sm,
-    bottom: Spacing.md,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -110,5 +137,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  themeToggle: {
+    padding: Spacing.xs,
+    borderRadius: 8,
   },
 });

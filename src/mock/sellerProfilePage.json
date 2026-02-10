@@ -1,5 +1,5 @@
 {
-  "route": "/(seller)/profile",
+  "route": "/(seller)/seller-profile",
   "titleKey": "sellerProfileScreen.title",
   "sections": [
     {

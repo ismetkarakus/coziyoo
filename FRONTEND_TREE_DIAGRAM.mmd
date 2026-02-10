@@ -1,0 +1,244 @@
+%% Coziyoo (Cazi) Frontend Architecture - Mermaid Diagram
+%% This file can be rendered by GitHub/GitLab/VS Code Mermaid extensions
+
+graph TB
+    subgraph Root["🌳 ROOT LAYOUT (app/_layout.tsx)"]
+        Providers["Provider Stack:<br/>Theme → Country → Language → Auth → Notification → AuthGuard → Wallet → Cart"]
+    end
+
+    subgraph AuthGroup["🔐 Auth Route Group (app/(auth)/)"]
+        AuthLayout["AuthLayout (Stack)"]
+        Welcome["Welcome.tsx<br/>index"]
+        UserType["UserTypeSelection.tsx<br/>user-type-selection"]
+        BuyerReg["BuyerRegister.tsx<br/>buyer-register"]
+        SellerReg["SellerRegister.tsx<br/>seller-register"]
+        SignIn["SignIn.tsx<br/>sign-in"]
+        SignUp["SignUp.tsx<br/>sign-up"]
+        ForgotPwd["ForgotPassword.tsx<br/>forgot-password"]
+    end
+
+    subgraph BuyerTabs["🛒 Buyer Tab Group (app/(tabs)/)"]
+        TabLayout["TabLayout (Tabs)"]
+        
+        subgraph VisibleTabs["Visible Tabs"]
+            Home["Home.tsx<br/>index<br/>├─ Food feed<br/>├─ Search<br/>├─ Filters<br/>└─ Categories"]
+            Cart["Cart.tsx<br/>cart<br/>├─ Cart items<br/>├─ Quantity<br/>└─ Promo codes"]
+            Messages["ChatList.tsx<br/>messages<br/>└─ Conversation list"]
+            Notifications["Notifications.tsx<br/>notifications<br/>└─ Push notifications"]
+            Profile["Profile.tsx<br/>buyer-profile<br/>└─ Buyer menu"]
+        end
+        
+        subgraph HiddenTabs["Hidden Screens"]
+            Explore["explore"]
+            OrderConfirm["order-confirmation"]
+            OrderTrack["order-tracking"]
+            ChatDetail["ChatDetail.tsx<br/>chat-detail"]
+            Payment["Payment.tsx<br/>payment"]
+            Orders["Orders.tsx<br/>orders"]
+        end
+    end
+
+    subgraph SellerStack["🍳 Seller Stack (app/(seller)/)"]
+        SellerLayout["SellerLayout (Stack)"]
+        
+        subgraph SellerMain["Main Screens"]
+            Dashboard["SellerPanel.tsx<br/>dashboard"]
+            Products["ManageMeals.tsx<br/>products/manage-meals"]
+            AddMeal["AddMeal.tsx<br/>add-meal"]
+            EditMeal["AddMeal.tsx<br/>edit-meal"]
+            MealPreview["MealPreview.tsx<br/>meal-preview"]
+        end
+        
+        subgraph SellerMgmt["Management"]
+            SellerOrders["SellerOrders.tsx<br/>orders"]
+            Analytics["analytics"]
+            DeliverySettings["DeliverySettings.tsx<br/>delivery-settings"]
+        end
+        
+        subgraph SellerProfile["Profile & Finance"]
+            SellerWallet["SellerWallet.tsx<br/>wallet"]
+            Earnings["SellerEarnings.tsx<br/>earnings"]
+            Ratings["SellerRatings.tsx<br/>ratings"]
+            SellerProfileScreen["SellerProfile.tsx<br/>seller-profile"]
+            SellerMessages["SellerMessages.tsx<br/>messages"]
+        end
+    end
+
+    subgraph Standalone["📄 Standalone Stack Screens"]
+        subgraph BuyerFlows["Buyer Flows"]
+            FoodDetail["FoodDetail.tsx<br/>food-detail"]
+            FoodDetailOrder["food-detail-order"]
+            Checkout["CheckoutScreen.tsx<br/>checkout"]
+            Wallet["WalletDashboard.tsx<br/>wallet/buyer-wallet"]
+            OrderHistory["OrderHistory.tsx<br/>order-history"]
+        end
+        
+        subgraph ProfileSub["Profile Sub-screens"]
+            PersonalInfo["PersonalInfo.tsx<br/>personal-info"]
+            ChangePwd["ChangePassword.tsx<br/>change-password"]
+            Addresses["Addresses.tsx<br/>addresses"]
+            Favorites["Favorites.tsx<br/>favorites"]
+            LocSettings["LocationSettings.tsx<br/>location-settings"]
+            NotifSettings["notification-settings"]
+        end
+        
+        subgraph UKCompliance["🇬🇧 UK Compliance"]
+            CouncilReg["council-registration"]
+            HygieneRating["hygiene-rating"]
+            HygieneCert["hygiene-certificate"]
+            AllergenDecl["allergen-declaration"]
+            Insurance["insurance-details"]
+        end
+        
+        subgraph TRCompliance["🇹🇷 Turkey Compliance"]
+            GidaBelgesi["gida-isletme-belgesi"]
+            VergiLevhasi["vergi-levhasi"]
+            GidaEgitim["gida-guvenligi-egitimi"]
+            KVKK["kvkk-uyumluluk"]
+            IsYeriSigorta["is-yeri-sigortasi"]
+        end
+        
+        subgraph Support["Help & Support"]
+            HelpCenter["HelpCenter.tsx<br/>help-center"]
+            Contact["Contact.tsx<br/>contact"]
+            About["About.tsx<br/>about"]
+            Terms["TermsAndConditions.tsx<br/>terms-and-conditions"]
+        end
+        
+        subgraph Admin["Admin"]
+            AdminPanel["AdminPanel.tsx<br/>admin-panel"]
+            CountrySelect["CountrySelection.tsx<br/>country-selection"]
+        end
+    end
+
+    subgraph Components["🧩 Reusable Components"]
+        subgraph UI["UI Components (src/components/ui/)"]
+            Button["Button.tsx"]
+            Text["Text.tsx"]
+            Input["Input.tsx"]
+            Card["Card.tsx"]
+            FoodCard["FoodCard.tsx"]
+            StarRating["StarRating.tsx"]
+            ChatBubble["ChatBubble.tsx"]
+            SearchBar["SearchBar.tsx"]
+            FilterModal["FilterModal.tsx"]
+            PaymentModal["PaymentModal.tsx"]
+        end
+        
+        subgraph Layout["Layout Components"]
+            TopBar["TopBar.tsx"]
+            AuthGuard["AuthGuard.tsx"]
+        end
+        
+        subgraph WalletComp["Wallet Components"]
+            PaymentMethod["PaymentMethodSelector.tsx"]
+            PaymentBreakdown["PaymentBreakdownCard.tsx"]
+        end
+    end
+
+    subgraph Contexts["🔄 Context Providers (src/context/)"]
+        ThemeCtx["ThemeContext.tsx"]
+        CountryCtx["CountryContext.tsx"]
+        LangCtx["LanguageContext.tsx"]
+        AuthCtx["AuthContext.tsx"]
+        NotifCtx["NotificationContext.tsx"]
+        WalletCtx["WalletContext.tsx"]
+        CartCtx["CartContext.tsx"]
+    end
+
+    subgraph Services["🛠️ Services (src/services/)"]
+        AuthSvc["authService.ts"]
+        FoodSvc["foodService.ts"]
+        ChatSvc["chatService.ts"]
+        PaymentSvc["paymentService.ts"]
+        ReviewSvc["reviewService.ts"]
+        SearchSvc["searchService.ts"]
+        StorageSvc["storageService.ts"]
+        NotifSvc["notificationService.ts"]
+    end
+
+    %% Root connections
+    Providers --> AuthLayout
+    Providers --> TabLayout
+    Providers --> SellerLayout
+    Providers --> Standalone
+
+    %% Auth flow
+    AuthLayout --> Welcome
+    Welcome --> UserType
+    UserType --> BuyerReg
+    UserType --> SellerReg
+    Welcome --> SignIn
+    SignIn --> SignUp
+    SignIn --> ForgotPwd
+
+    %% Buyer tabs
+    TabLayout --> Home
+    TabLayout --> Cart
+    TabLayout --> Messages
+    TabLayout --> Notifications
+    TabLayout --> Profile
+    TabLayout -.-> Explore
+    TabLayout -.-> OrderConfirm
+    TabLayout -.-> OrderTrack
+    TabLayout -.-> ChatDetail
+    TabLayout -.-> Payment
+    TabLayout -.-> Orders
+
+    %% Seller stack
+    SellerLayout --> Dashboard
+    Dashboard --> Products
+    Products --> AddMeal
+    Products --> EditMeal
+    Products --> MealPreview
+    Dashboard --> SellerOrders
+    Dashboard --> Analytics
+    Dashboard --> DeliverySettings
+    Dashboard --> SellerWallet
+    Dashboard --> Earnings
+    Dashboard --> Ratings
+    Dashboard --> SellerProfileScreen
+    Dashboard --> SellerMessages
+
+    %% Context hierarchy
+    Providers -.-> ThemeCtx
+    ThemeCtx -.-> CountryCtx
+    CountryCtx -.-> LangCtx
+    LangCtx -.-> AuthCtx
+    AuthCtx -.-> NotifCtx
+    NotifCtx -.-> WalletCtx
+    WalletCtx -.-> CartCtx
+
+    %% Services usage
+    AuthCtx -.-> AuthSvc
+    Home -.-> FoodSvc
+    Home -.-> SearchSvc
+    Cart -.-> FoodSvc
+    Messages -.-> ChatSvc
+    ChatDetail -.-> ChatSvc
+    Payment -.-> PaymentSvc
+    Checkout -.-> PaymentSvc
+    Dashboard -.-> FoodSvc
+    Dashboard -.-> ReviewSvc
+    Products -.-> StorageSvc
+
+    %% Styling
+    classDef root fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    classDef auth fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef buyer fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef seller fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef standalone fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef components fill:#fff8e1,stroke:#ff8f00,stroke-width:2px
+    classDef context fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    classDef services fill:#efebe9,stroke:#5d4037,stroke-width:2px
+    classDef hidden fill:#fafafa,stroke:#9e9e9e,stroke-dasharray: 5 5
+
+    class Root,Providers root
+    class AuthGroup,AuthLayout,Welcome,UserType,BuyerReg,SellerReg,SignIn,SignUp,ForgotPwd auth
+    class BuyerTabs,TabLayout,Home,Cart,Messages,Notifications,Profile buyer
+    class Explore,OrderConfirm,OrderTrack,ChatDetail,Payment,Orders hidden
+    class SellerStack,SellerLayout,Dashboard,Products,AddMeal,EditMeal,MealPreview,SellerOrders,Analytics,DeliverySettings,SellerWallet,Earnings,Ratings,SellerProfileScreen,SellerMessages seller
+    class Standalone,BuyerFlows,ProfileSub,UKCompliance,TRCompliance,Support,Admin,FoodDetail,FoodDetailOrder,Checkout,Wallet,OrderHistory,PersonalInfo,ChangePwd,Addresses,Favorites,LocSettings,NotifSettings,CouncilReg,HygieneRating,HygieneCert,AllergenDecl,Insurance,GidaBelgesi,VergiLevhasi,GidaEgitim,KVKK,IsYeriSigorta,HelpCenter,Contact,About,Terms,AdminPanel,CountrySelect standalone
+    class Components,UI,Layout,WalletComp,Button,Text,Input,Card,FoodCard,StarRating,ChatBubble,SearchBar,FilterModal,PaymentModal,TopBar,AuthGuard,PaymentMethod,PaymentBreakdown components
+    class Contexts,ThemeCtx,CountryCtx,LangCtx,AuthCtx,NotifCtx,WalletCtx,CartCtx context
+    class Services,AuthSvc,FoodSvc,ChatSvc,PaymentSvc,ReviewSvc,SearchSvc,StorageSvc,NotifSvc services

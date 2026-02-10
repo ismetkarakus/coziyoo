@@ -810,7 +810,7 @@ export const Home: React.FC = () => {
   const topBarOpacity = Math.max(0.3, Math.min(1, 1 - scrollY / 100));
 
   const handleProfilePress = () => {
-    router.push('/(tabs)/profile');
+    router.push('/(tabs)/buyer-profile');
   };
 
 

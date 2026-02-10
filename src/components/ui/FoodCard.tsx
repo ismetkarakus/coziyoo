@@ -319,7 +319,7 @@ export function FoodCard({
       <View style={styles.footerMeta}>
         <Pressable
           onPress={() =>
-            router.push(`/seller-profile?cookName=${encodeURIComponent(cookName)}`)
+            router.push(`/seller-public-profile?cookName=${encodeURIComponent(cookName)}`)
           }
         >
           <Text style={styles.seller} numberOfLines={1}>

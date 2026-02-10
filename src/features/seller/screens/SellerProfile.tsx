@@ -11,7 +11,6 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import sellerMock from '../../../mock/seller.json';
-import { useAuth } from '../../../context/AuthContext';
 import { useCountry } from '../../../context/CountryContext';
 
 export const SellerProfile: React.FC = () => {
@@ -19,7 +18,6 @@ export const SellerProfile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
-  const { signOut } = useAuth();
   const { currentCountry } = useCountry();
   const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
   const complianceCopy = currentCountry.code === 'TR' ? localizedMock.panel.compliance.tr : localizedMock.panel.compliance.uk;
@@ -36,9 +34,9 @@ export const SellerProfile: React.FC = () => {
     totalOrders: localizedMock.profile.totalOrders,
     joinDate: localizedMock.profile.joinDate,
   };
-  const [isEditing, setIsEditing] = useState(false);
-  const [identityExpanded, setIdentityExpanded] = useState(false);
-  const [bankDetailsExpanded, setBankDetailsExpanded] = useState(false);
+  const [editingSection, setEditingSection] = useState<
+    null | 'contact' | 'location' | 'about' | 'identity' | 'bank'
+  >(null);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [formData, setFormData] = useState({
@@ -50,6 +48,7 @@ export const SellerProfile: React.FC = () => {
     location: sellerData.location,
     address: sellerData.address,
     description: sellerData.description,
+    deliveryDistance: '',
   });
 
   const getFullName = (data = formData) => {
@@ -62,6 +61,11 @@ export const SellerProfile: React.FC = () => {
   const [specialties, setSpecialties] = useState(sellerData.specialties);
   const [newSpecialty, setNewSpecialty] = useState('');
   const [complianceExpanded, setComplianceExpanded] = useState(false);
+  const isContactEditing = editingSection === 'contact';
+  const isLocationEditing = editingSection === 'location';
+  const isAboutEditing = editingSection === 'about';
+  const isIdentityEditing = editingSection === 'identity';
+  const isBankEditing = editingSection === 'bank';
 
   const isComplianceComplete = () => {
     const complianceStatus = {
@@ -78,36 +82,6 @@ export const SellerProfile: React.FC = () => {
   };
 
   const complianceComplete = isComplianceComplete();
-
-  const handleSignOut = () => {
-    const runSignOut = async () => {
-      try {
-        await signOut();
-        router.replace('/(auth)/sign-in');
-      } catch (error) {
-        console.error('Sign out error:', error);
-        Alert.alert(t('sellerPanel.alerts.signOutTitle'), t('sellerPanel.alerts.signOutError'));
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      runSignOut();
-      return;
-    }
-
-    Alert.alert(
-      t('sellerPanel.alerts.signOutTitle'),
-      t('sellerPanel.alerts.signOutMessage'),
-      [
-        { text: t('sellerPanel.alerts.ok'), style: 'cancel' },
-        {
-          text: t('sellerPanel.alerts.ok'),
-          style: 'destructive',
-          onPress: runSignOut,
-        },
-      ]
-    );
-  };
 
   // Kimlik ve banka bilgileri state'leri
   const [identityImages, setIdentityImages] = useState({
@@ -138,17 +112,9 @@ export const SellerProfile: React.FC = () => {
 
   useEffect(() => {
     if (section === 'bank') {
-      setIsEditing(true);
-      setBankDetailsExpanded(true);
+      setEditingSection('bank');
     }
   }, [section]);
-
-  useEffect(() => {
-    if (!isEditing) {
-      setIdentityExpanded(false);
-      setBankDetailsExpanded(false);
-    }
-  }, [isEditing]);
 
   // Debug avatar changes
   useEffect(() => {
@@ -171,6 +137,7 @@ export const SellerProfile: React.FC = () => {
             location: incoming.location || sellerData.location,
             address: incoming.address || sellerData.address,
             description: incoming.description || sellerData.description,
+            deliveryDistance: incoming.deliveryDistance || '',
           });
         } else {
           setFormData(formData);
@@ -213,13 +180,14 @@ export const SellerProfile: React.FC = () => {
     router.back(); // Go back to previous page
   };
 
-  const handleSave = async () => {
+  const handleSaveSection = async () => {
     try {
       await saveProfileData();
+      setEditingSection(null);
       Alert.alert(
         t('sellerProfileScreen.alerts.profileUpdatedTitle'),
         t('sellerProfileScreen.alerts.profileUpdatedMessage'),
-        [{ text: t('sellerProfileScreen.alerts.ok'), onPress: () => setIsEditing(false) }]
+        [{ text: t('sellerProfileScreen.alerts.ok') }]
       );
     } catch (error) {
       Alert.alert(
@@ -230,10 +198,10 @@ export const SellerProfile: React.FC = () => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancelSection = () => {
     // Reset form data
     loadProfileData(); // Reload saved data
-    setIsEditing(false);
+    setEditingSection(null);
   };
 
   // Avatar image picker
@@ -379,7 +347,7 @@ export const SellerProfile: React.FC = () => {
 
   // Kimlik doğrulama gönderme
   const handleSubmitIdentityVerification = () => {
-    if (!formData.name.trim()) {
+    if (!getFullName(formData).trim()) {
       Alert.alert(t('sellerProfileScreen.alerts.errorTitle'), t('sellerProfileScreen.alerts.realNameRequired'));
       return;
     }
@@ -435,19 +403,7 @@ export const SellerProfile: React.FC = () => {
             <FontAwesome name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
         }
-        rightComponent={
-          !isEditing ? (
-            <View style={styles.headerRightAbsolute}>
-              <TouchableOpacity 
-                onPress={() => setIsEditing(true)}
-                style={styles.headerEditButton}
-                activeOpacity={0.7}
-              >
-                <FontAwesome name="edit" size={18} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          ) : null
-        }
+        rightComponent={null}
       />
       
       <ScrollView 
@@ -457,8 +413,8 @@ export const SellerProfile: React.FC = () => {
         keyboardShouldPersistTaps="handled"
       >
         {/* Profile Header */}
-        <Card variant="default" padding="lg" style={styles.headerCard}>
-          <View style={styles.profileHeader}>
+        <View style={styles.avatarHero}>
+          <View style={styles.avatarOnlyContainer}>
             <View style={styles.avatarContainer}>
               <Image
                 key={`${avatarUri || 'default'}-${forceUpdate}`} // Force re-render when avatar changes
@@ -468,60 +424,21 @@ export const SellerProfile: React.FC = () => {
                 onLoad={() => console.log('Avatar loaded:', avatarUri)}
                 onError={(error) => console.log('Avatar error:', error)}
               />
-              {isEditing && (
-                <TouchableOpacity 
-                  style={styles.avatarEditButton}
-                  onPress={handleAvatarImagePicker}
-                >
-                  <FontAwesome name="camera" size={16} color="white" />
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            <View style={styles.profileInfo}>
-              <Text variant="subheading" weight="semibold" style={styles.profileName}>
-                {getFullName()}
-              </Text>
-              {formData.nickname ? (
-                <Text variant="body" weight="semibold" style={styles.profileNickname}>
-                  {formData.nickname}
-                  {identityVerification.status === 'verified' && (
-                    <Text style={styles.verifiedBadge}> ✓</Text>
-                  )}
-                </Text>
-              ) : null}
-              <Text variant="body" color="textSecondary">
-                {formData.email}
-              </Text>
-              <Text variant="caption" color="textSecondary">
-                {t('sellerPanel.user.role')} • {formData.location}
-              </Text>
-              
-              <Text variant="caption" color="textSecondary">
-                {t('sellerProfileScreen.joinedSince', { date: sellerData.joinDate })}
-              </Text>
-              
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text variant="subheading" weight="bold" color="primary">
-                    ⭐ {sellerData.rating}
-                  </Text>
-                  <Text variant="caption" color="textSecondary">{t('sellerProfileScreen.stats.rating')}</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text variant="subheading" weight="bold" color="primary">
-                    {sellerData.totalOrders}
-                  </Text>
-                  <Text variant="caption" color="textSecondary">{t('sellerProfileScreen.stats.orders')}</Text>
-                </View>
-              </View>
+              <TouchableOpacity 
+                style={styles.avatarEditButton}
+                onPress={handleAvatarImagePicker}
+              >
+                <FontAwesome name="camera" size={16} color="white" />
+              </TouchableOpacity>
             </View>
           </View>
-        </Card>
+        </View>
 
         {currentCountry.code === 'TR' && (
           <View style={styles.complianceWrapper}>
             <TouchableOpacity
+              nativeID="mandatory-documents"
+              testID="mandatory-documents"
               onPress={() => setComplianceExpanded(!complianceExpanded)}
               activeOpacity={0.7}
             >
@@ -595,11 +512,22 @@ export const SellerProfile: React.FC = () => {
 
         {/* Contact Information */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              {t('sellerProfileScreen.sections.contact')}
-            </Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+                {t('sellerProfileScreen.sections.contact')}
+              </Text>
+              {!isContactEditing && (
+                <TouchableOpacity
+                  onPress={() => setEditingSection('contact')}
+                  style={styles.sectionEditButton}
+                  activeOpacity={0.7}
+                >
+                  <FontAwesome name="edit" size={16} color={colors.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
             
-            {isEditing ? (
+            {isContactEditing ? (
               <View style={styles.formContainer}>
                 <FormField
                   label={t('sellerProfileScreen.fields.nickname')}
@@ -658,15 +586,44 @@ export const SellerProfile: React.FC = () => {
                 </View>
               </View>
             )}
+            {isContactEditing && (
+              <View style={styles.sectionActions}>
+                <Button
+                  variant="outline"
+                  onPress={handleCancelSection}
+                  style={styles.cancelButton}
+                >
+                  {t('sellerProfileScreen.actions.cancel')}
+                </Button>
+                <Button
+                  variant="primary"
+                  onPress={handleSaveSection}
+                  style={styles.saveButton}
+                >
+                  {t('sellerProfileScreen.actions.save')}
+                </Button>
+              </View>
+            )}
         </Card>
 
         {/* Location Information */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              {t('sellerProfileScreen.sections.location')}
-            </Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+                {t('sellerProfileScreen.sections.location')}
+              </Text>
+              {!isLocationEditing && (
+                <TouchableOpacity
+                  onPress={() => setEditingSection('location')}
+                  style={styles.sectionEditButton}
+                  activeOpacity={0.7}
+                >
+                  <FontAwesome name="edit" size={16} color={colors.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
             
-            {isEditing ? (
+            {isLocationEditing ? (
               <View style={styles.formContainer}>
                 <FormField
                   label={t('sellerProfileScreen.fields.city')}
@@ -682,6 +639,13 @@ export const SellerProfile: React.FC = () => {
                   multiline
                   numberOfLines={3}
                 />
+                <FormField
+                  label={t('sellerProfileScreen.fields.deliveryDistance')}
+                  value={formData.deliveryDistance}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, deliveryDistance: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.deliveryDistance')}
+                  keyboardType="numeric"
+                />
               </View>
             ) : (
               <View style={styles.infoContainer}>
@@ -693,6 +657,32 @@ export const SellerProfile: React.FC = () => {
                   <FontAwesome name="home" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{formData.address}</Text>
                 </View>
+                {formData.deliveryDistance ? (
+                  <View style={styles.infoRow}>
+                    <FontAwesome name="truck" size={16} color={colors.textSecondary} />
+                    <Text variant="body" style={styles.infoText}>
+                      {t('sellerProfileScreen.fields.deliveryDistance')}: {formData.deliveryDistance} km
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            )}
+            {isLocationEditing && (
+              <View style={styles.sectionActions}>
+                <Button
+                  variant="outline"
+                  onPress={handleCancelSection}
+                  style={styles.cancelButton}
+                >
+                  {t('sellerProfileScreen.actions.cancel')}
+                </Button>
+                <Button
+                  variant="primary"
+                  onPress={handleSaveSection}
+                  style={styles.saveButton}
+                >
+                  {t('sellerProfileScreen.actions.save')}
+                </Button>
               </View>
             )}
         </Card>
@@ -700,11 +690,22 @@ export const SellerProfile: React.FC = () => {
 
         {/* About Section */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {t('sellerProfileScreen.sections.about')}
-          </Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              {t('sellerProfileScreen.sections.about')}
+            </Text>
+            {!isAboutEditing && (
+              <TouchableOpacity
+                onPress={() => setEditingSection('about')}
+                style={styles.sectionEditButton}
+                activeOpacity={0.7}
+              >
+                <FontAwesome name="edit" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
           
-          {isEditing ? (
+          {isAboutEditing ? (
             <View style={styles.aboutEditContainer}>
               <FormField
                 label={t('sellerProfileScreen.fields.about')}
@@ -800,263 +801,289 @@ export const SellerProfile: React.FC = () => {
               )}
             </View>
           )}
+          {isAboutEditing && (
+            <View style={styles.sectionActions}>
+              <Button
+                variant="outline"
+                onPress={handleCancelSection}
+                style={styles.cancelButton}
+              >
+                {t('sellerProfileScreen.actions.cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                onPress={handleSaveSection}
+                style={styles.saveButton}
+              >
+                {t('sellerProfileScreen.actions.save')}
+              </Button>
+            </View>
+          )}
         </Card>
 
 
         {/* Identity Documents */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-          <TouchableOpacity
-            onPress={isEditing ? () => setIdentityExpanded(!identityExpanded) : undefined}
-            style={styles.collapsibleHeader}
-            activeOpacity={isEditing ? 0.7 : 1}
-            disabled={!isEditing}
-          >
-            <View style={styles.identityHeader}>
-              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                {t('sellerProfileScreen.sections.identity')}
+          {!isIdentityEditing && (
+            <TouchableOpacity
+              onPress={() => setEditingSection('identity')}
+              style={styles.sectionEditFloating}
+              activeOpacity={0.7}
+            >
+              <FontAwesome name="edit" size={16} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.identityHeader}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              {t('sellerProfileScreen.sections.identity')}
+            </Text>
+          </View>
+          
+          {identityVerification.status === 'rejected' && identityVerification.rejectionReason && (
+            <View style={[styles.rejectionNote, { backgroundColor: colors.error + '10', borderColor: colors.error }]}>
+              <Text variant="caption" color="error">
+                {t('sellerProfileScreen.identity.rejectionReason', { reason: identityVerification.rejectionReason })}
               </Text>
-              <View style={styles.headerRight}>
-                <View style={[
-                  styles.verificationStatus,
-                  {
-                    backgroundColor: identityVerification.status === 'verified' ? colors.success + '20' :
-                                   identityVerification.status === 'rejected' ? colors.error + '20' :
-                                   colors.warning + '20'
-                  }
-                ]}>
-                  <Text variant="caption" style={{
-                    color: identityVerification.status === 'verified' ? colors.success :
-                           identityVerification.status === 'rejected' ? colors.error :
-                           colors.warning
-                  }}>
-                    {identityVerification.status === 'verified'
-                      ? `✓ ${t('sellerProfileScreen.identity.status.verified')}`
-                      : identityVerification.status === 'rejected'
-                      ? `✗ ${t('sellerProfileScreen.identity.status.rejected')}`
-                      : `⏳ ${t('sellerProfileScreen.identity.status.pending')}`}
-                  </Text>
-                </View>
-                <FontAwesome 
-                  name={identityExpanded ? "chevron-up" : "chevron-down"} 
-                  size={16} 
-                  color={colors.textSecondary}
-                  style={{ marginLeft: 8 }}
-                />
+            </View>
+          )}
+      
+          {isIdentityEditing ? (
+            <View style={styles.identityContainer}>
+              {/* Kimlik Ön Yüz */}
+              <View style={styles.identitySection}>
+                <Text variant="body" weight="medium" style={styles.identityLabel}>
+                  {t('sellerProfileScreen.identity.frontLabel')}
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.identityImageContainer,
+                    { borderColor: colors.border },
+                  ]}
+                  onPress={() => handleIdentityImagePicker('front')}
+                  activeOpacity={0.7}
+                >
+                  {identityImages.front ? (
+                    <Image source={{ uri: identityImages.front }} style={styles.identityImage} />
+                  ) : (
+                    <View style={styles.identityPlaceholder}>
+                      <FontAwesome name="id-card" size={40} color={colors.textSecondary} />
+                      <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
+                        {t('sellerProfileScreen.identity.addFront')}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Kimlik Arka Yüz */}
+              <View style={styles.identitySection}>
+                <Text variant="body" weight="medium" style={styles.identityLabel}>
+                  {t('sellerProfileScreen.identity.backLabel')}
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.identityImageContainer,
+                    { borderColor: colors.border },
+                  ]}
+                  onPress={() => handleIdentityImagePicker('back')}
+                  activeOpacity={0.7}
+                >
+                  {identityImages.back ? (
+                    <Image source={{ uri: identityImages.back }} style={styles.identityImage} />
+                  ) : (
+                    <View style={styles.identityPlaceholder}>
+                      <FontAwesome name="id-card-o" size={40} color={colors.textSecondary} />
+                      <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
+                        {t('sellerProfileScreen.identity.addBack')}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
-          </TouchableOpacity>
-          
-          {identityExpanded && (
-            <>
-              {identityVerification.status === 'rejected' && identityVerification.rejectionReason && (
-                <View style={[styles.rejectionNote, { backgroundColor: colors.error + '10', borderColor: colors.error }]}>
-                  <Text variant="caption" color="error">
-                    {t('sellerProfileScreen.identity.rejectionReason', { reason: identityVerification.rejectionReason })}
-                  </Text>
-                </View>
-              )}
-          
-              <View style={styles.identityContainer}>
-                {/* Kimlik Ön Yüz */}
-                <View style={styles.identitySection}>
-                  <Text variant="body" weight="medium" style={styles.identityLabel}>
-                    {t('sellerProfileScreen.identity.frontLabel')}
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.identityImageContainer,
-                      { borderColor: colors.border },
-                      !isEditing && styles.identityImageDisabled,
-                    ]}
-                    onPress={isEditing ? () => handleIdentityImagePicker('front') : undefined}
-                    activeOpacity={isEditing ? 0.7 : 1}
-                    disabled={!isEditing}
-                  >
-                    {identityImages.front ? (
-                      <Image source={{ uri: identityImages.front }} style={styles.identityImage} />
-                    ) : (
-                      <View style={styles.identityPlaceholder}>
-                        <FontAwesome name="id-card" size={40} color={colors.textSecondary} />
-                        <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
-                          {t('sellerProfileScreen.identity.addFront')}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </View>
-
-                {/* Kimlik Arka Yüz */}
-                <View style={styles.identitySection}>
-                  <Text variant="body" weight="medium" style={styles.identityLabel}>
-                    {t('sellerProfileScreen.identity.backLabel')}
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.identityImageContainer,
-                      { borderColor: colors.border },
-                      !isEditing && styles.identityImageDisabled,
-                    ]}
-                    onPress={isEditing ? () => handleIdentityImagePicker('back') : undefined}
-                    activeOpacity={isEditing ? 0.7 : 1}
-                    disabled={!isEditing}
-                  >
-                    {identityImages.back ? (
-                      <Image source={{ uri: identityImages.back }} style={styles.identityImage} />
-                    ) : (
-                      <View style={styles.identityPlaceholder}>
-                        <FontAwesome name="id-card-o" size={40} color={colors.textSecondary} />
-                        <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
-                          {t('sellerProfileScreen.identity.addBack')}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Submit Identity Verification */}
-              {isEditing && identityImages.front && identityImages.back && identityVerification.status === 'pending' && (
-                <View style={styles.submitSection}>
-                  <Button
-                    variant="primary"
-                    onPress={handleSubmitIdentityVerification}
-                    style={styles.submitButton}
-                  >
-                    {t('sellerProfileScreen.identity.submit')}
-                  </Button>
-                </View>
-              )}
-
-              <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
-                <FontAwesome name="info-circle" size={16} color={colors.warning} />
-                <Text variant="caption" color="warning" style={styles.warningText}>
-                  {t('sellerProfileScreen.identity.warning')}
+          ) : (
+            <View style={styles.identityStatusRow}>
+              <Text variant="body" style={styles.infoText}>
+                Kimlik Bilgileri
+              </Text>
+              <View
+                style={[
+                  styles.identityStatusPill,
+                  {
+                    backgroundColor:
+                      identityVerification.status === 'verified'
+                        ? colors.success + '20'
+                        : identityImages.front && identityImages.back
+                        ? colors.warning + '20'
+                        : colors.textSecondary + '20',
+                  },
+                ]}
+              >
+                <Text
+                  variant="caption"
+                  style={{
+                    color:
+                      identityVerification.status === 'verified'
+                        ? colors.success
+                        : identityImages.front && identityImages.back
+                        ? colors.warning
+                        : colors.textSecondary,
+                  }}
+                >
+                  {identityVerification.status === 'verified'
+                    ? 'Onaylandı'
+                    : identityImages.front && identityImages.back
+                    ? 'Onay Bekleniyor'
+                    : 'Yükleme Bekleniyor'}
                 </Text>
               </View>
-            </>
+            </View>
+          )}
+          {!isIdentityEditing && (
+            <Text variant="caption" color="textSecondary" style={styles.identityNote}>
+              Düzenle butonuna tıklayarak ekleyebilirsiniz.
+            </Text>
+          )}
+
+          {/* Submit Identity Verification */}
+          {isIdentityEditing && identityImages.front && identityImages.back && identityVerification.status === 'pending' && (
+            <View style={styles.submitSection}>
+              <Button
+                variant="primary"
+                onPress={handleSubmitIdentityVerification}
+                style={styles.submitButton}
+              >
+                {t('sellerProfileScreen.identity.submit')}
+              </Button>
+            </View>
+          )}
+
+          <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
+            <FontAwesome name="info-circle" size={16} color={colors.warning} />
+            <Text variant="caption" color="warning" style={styles.warningText}>
+              {t('sellerProfileScreen.identity.warning')}
+            </Text>
+          </View>
+          {isIdentityEditing && (
+            <View style={styles.sectionActions}>
+              <Button
+                variant="outline"
+                onPress={handleCancelSection}
+                style={styles.cancelButton}
+              >
+                {t('sellerProfileScreen.actions.cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                onPress={handleSaveSection}
+                style={styles.saveButton}
+              >
+                {t('sellerProfileScreen.actions.save')}
+              </Button>
+            </View>
           )}
         </Card>
 
         {/* Bank Details */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
-          <TouchableOpacity
-            onPress={isEditing ? () => setBankDetailsExpanded(!bankDetailsExpanded) : undefined}
-            style={styles.collapsibleHeader}
-            activeOpacity={isEditing ? 0.7 : 1}
-            disabled={!isEditing}
-          >
-            <View style={styles.bankHeader}>
-              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                {t('sellerProfileScreen.sections.bank')}
-              </Text>
-              <FontAwesome 
-                name={bankDetailsExpanded ? "chevron-up" : "chevron-down"} 
-                size={16} 
-                color={colors.textSecondary}
+          <View style={styles.bankHeader}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              {t('sellerProfileScreen.sections.bank')}
+            </Text>
+            <View style={styles.headerRight}>
+              {!isBankEditing && (
+                <TouchableOpacity
+                  onPress={() => setEditingSection('bank')}
+                  style={styles.sectionEditButton}
+                  activeOpacity={0.7}
+                >
+                  <FontAwesome name="edit" size={16} color={colors.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+          
+          {isBankEditing ? (
+            <View style={styles.formContainer}>
+              <FormField
+                label={t('sellerProfileScreen.fields.bankName')}
+                value={bankDetails.bankName}
+                onChangeText={(text) => setBankDetails(prev => ({ ...prev, bankName: text }))}
+                placeholder={t('sellerProfileScreen.placeholders.bankName')}
+              />
+              <FormField
+                label={t('sellerProfileScreen.fields.accountHolder')}
+                value={bankDetails.accountHolderName}
+                onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountHolderName: text }))}
+                placeholder={t('sellerProfileScreen.placeholders.accountHolder')}
+              />
+              <FormField
+                label={t('sellerProfileScreen.fields.iban')}
+                value={bankDetails.iban}
+                onChangeText={(text) => setBankDetails(prev => ({ ...prev, iban: text }))}
+                placeholder={t('sellerProfileScreen.placeholders.iban')}
+                maxLength={32}
+              />
+              <FormField
+                label={t('sellerProfileScreen.fields.accountNumber')}
+                value={bankDetails.accountNumber}
+                onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountNumber: text }))}
+                placeholder={t('sellerProfileScreen.placeholders.accountNumber')}
+                keyboardType="numeric"
               />
             </View>
-          </TouchableOpacity>
-          
-          {bankDetailsExpanded && (
-            <>
-              {isEditing ? (
-                <View style={styles.formContainer}>
-                  <FormField
-                    label={t('sellerProfileScreen.fields.bankName')}
-                    value={bankDetails.bankName}
-                    onChangeText={(text) => setBankDetails(prev => ({ ...prev, bankName: text }))}
-                    placeholder={t('sellerProfileScreen.placeholders.bankName')}
-                  />
-                  <FormField
-                    label={t('sellerProfileScreen.fields.accountHolder')}
-                    value={bankDetails.accountHolderName}
-                    onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountHolderName: text }))}
-                    placeholder={t('sellerProfileScreen.placeholders.accountHolder')}
-                  />
-                  <FormField
-                    label={t('sellerProfileScreen.fields.iban')}
-                    value={bankDetails.iban}
-                    onChangeText={(text) => setBankDetails(prev => ({ ...prev, iban: text }))}
-                    placeholder={t('sellerProfileScreen.placeholders.iban')}
-                    maxLength={32}
-                  />
-                  <FormField
-                    label={t('sellerProfileScreen.fields.accountNumber')}
-                    value={bankDetails.accountNumber}
-                    onChangeText={(text) => setBankDetails(prev => ({ ...prev, accountNumber: text }))}
-                    placeholder={t('sellerProfileScreen.placeholders.accountNumber')}
-                    keyboardType="numeric"
-                  />
+          ) : (
+            <View style={styles.infoContainer}>
+              {bankDetails.bankName ? (
+                <View style={styles.infoRow}>
+                  <FontAwesome name="bank" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{bankDetails.bankName}</Text>
                 </View>
-              ) : (
-                <View style={styles.infoContainer}>
-                  {bankDetails.bankName ? (
-                    <View style={styles.infoRow}>
-                      <FontAwesome name="bank" size={16} color={colors.textSecondary} />
-                      <Text variant="body" style={styles.infoText}>{bankDetails.bankName}</Text>
-                    </View>
-                  ) : null}
-                  {bankDetails.accountHolderName ? (
-                    <View style={styles.infoRow}>
-                      <FontAwesome name="user" size={16} color={colors.textSecondary} />
-                      <Text variant="body" style={styles.infoText}>{bankDetails.accountHolderName}</Text>
-                    </View>
-                  ) : null}
-                  {bankDetails.iban ? (
-                    <View style={styles.infoRow}>
-                      <FontAwesome name="credit-card" size={16} color={colors.textSecondary} />
-                      <Text variant="body" style={styles.infoText}>{bankDetails.iban}</Text>
-                    </View>
-                  ) : null}
-                  {bankDetails.accountNumber ? (
-                    <View style={styles.infoRow}>
-                      <FontAwesome name="hashtag" size={16} color={colors.textSecondary} />
-                      <Text variant="body" style={styles.infoText}>{bankDetails.accountNumber}</Text>
-                    </View>
-                  ) : null}
-                  {!bankDetails.bankName && !bankDetails.accountHolderName && !bankDetails.iban && !bankDetails.accountNumber && (
-                    <Text variant="body" color="textSecondary" style={styles.emptyStateText}>
-                      {t('sellerProfileScreen.bankEmpty')}
-                    </Text>
-                  )}
+              ) : null}
+              {bankDetails.accountHolderName ? (
+                <View style={styles.infoRow}>
+                  <FontAwesome name="user" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{bankDetails.accountHolderName}</Text>
                 </View>
+              ) : null}
+              {bankDetails.iban ? (
+                <View style={styles.infoRow}>
+                  <FontAwesome name="credit-card" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{bankDetails.iban}</Text>
+                </View>
+              ) : null}
+              {bankDetails.accountNumber ? (
+                <View style={styles.infoRow}>
+                  <FontAwesome name="hashtag" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{bankDetails.accountNumber}</Text>
+                </View>
+              ) : null}
+              {!bankDetails.bankName && !bankDetails.accountHolderName && !bankDetails.iban && !bankDetails.accountNumber && (
+                <Text variant="body" color="textSecondary" style={styles.emptyStateText}>
+                  {t('sellerProfileScreen.bankEmpty')}
+                </Text>
               )}
-            </>
+            </View>
           )}
-
+          {isBankEditing && (
+            <View style={styles.sectionActions}>
+              <Button
+                variant="outline"
+                onPress={handleCancelSection}
+                style={styles.cancelButton}
+              >
+                {t('sellerProfileScreen.actions.cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                onPress={handleSaveSection}
+                style={styles.saveButton}
+              >
+                {t('sellerProfileScreen.actions.save')}
+              </Button>
+            </View>
+          )}
         </Card>
-
-        {/* Action Buttons */}
-        {isEditing && (
-          <View style={styles.actionButtons}>
-            <Button
-              variant="outline"
-              onPress={handleCancel}
-              style={styles.cancelButton}
-            >
-              {t('sellerProfileScreen.actions.cancel')}
-            </Button>
-            <Button
-              variant="primary"
-              onPress={handleSave}
-              style={styles.saveButton}
-            >
-              {t('sellerProfileScreen.actions.save')}
-            </Button>
-          </View>
-        )}
-
-        {isEditing && (
-          <View style={styles.signOutContainer}>
-            <Button
-              variant="primary"
-              onPress={handleSignOut}
-              style={[styles.signOutButton, { backgroundColor: colors.error }]}
-            >
-              {t('sellerPanel.signOutButton')}
-            </Button>
-          </View>
-        )}
 
         <View style={styles.bottomSpace} />
       </ScrollView>
@@ -1083,34 +1110,15 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
     borderRadius: 8,
   },
-  headerCard: {
-    marginHorizontal: Spacing.md,
-    marginTop: 0,
-    marginBottom: Spacing.sm,
-  },
-  headerRightAbsolute: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-  },
-  headerEditButton: {
-    padding: Spacing.xs,
-    borderRadius: 16,
-    backgroundColor: Colors.light.surface,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-  },
-  headerSaveButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  headerSaveText: {
-    color: 'white',
-  },
-  profileHeader: {
-    flexDirection: 'row',
+  avatarHero: {
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarOnlyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarContainer: {
     position: 'relative',
@@ -1136,38 +1144,36 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'white',
   },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    marginBottom: Spacing.xs,
-  },
-  profileNickname: {
-    marginBottom: Spacing.xs,
-    color: Colors.light.primary,
-  },
-  realName: {
-    fontSize: 14,
-    marginBottom: Spacing.xs,
-  },
-  verifiedBadge: {
-    color: Colors.light.success,
-    fontWeight: 'bold',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginTop: Spacing.md,
-    gap: Spacing.lg,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
   sectionCard: {
     marginHorizontal: Spacing.md,
     marginBottom: Spacing.sm,
   },
-  sectionTitle: {
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: Spacing.md,
+  },
+  sectionTitle: {
+    marginBottom: 0,
+  },
+  sectionEditButton: {
+    padding: Spacing.xs,
+    borderRadius: 12,
+    backgroundColor: Colors.light.surface,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  sectionEditFloating: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    padding: Spacing.xs,
+    borderRadius: 12,
+    backgroundColor: Colors.light.surface,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    zIndex: 2,
   },
   complianceWrapper: {
     marginHorizontal: Spacing.md,
@@ -1272,20 +1278,10 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '500',
   },
-  actionButtons: {
+  sectionActions: {
     flexDirection: 'row',
-    marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
     gap: Spacing.md,
-  },
-  signOutContainer: {
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.md,
-    alignItems: 'center',
-  },
-  signOutButton: {
-    alignSelf: 'center',
-    paddingHorizontal: Spacing.md,
   },
   cancelButton: {
     flex: 1,
@@ -1488,6 +1484,10 @@ const styles = StyleSheet.create({
   realNameSection: {
     marginBottom: Spacing.md,
   },
+  verifiedBadge: {
+    color: Colors.light.success,
+    fontWeight: 'bold',
+  },
   privacyNote: {
     padding: Spacing.sm,
     borderRadius: 6,
@@ -1500,7 +1500,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
-  verificationStatus: {
+  identityStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  identityNote: {
+    marginTop: Spacing.xs,
+  },
+  identityStatusPill: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: 12,
@@ -1517,10 +1526,6 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: Colors.light.primary,
-  },
-  // Katlanabilir bölüm stilleri
-  collapsibleHeader: {
-    marginBottom: Spacing.sm,
   },
   headerRight: {
     flexDirection: 'row',

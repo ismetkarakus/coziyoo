@@ -105,7 +105,7 @@ function RootLayoutNav() {
           <Stack.Screen name="contact" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="about" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="order-history" options={{ headerShown: false, presentation: 'card' }} />
-          <Stack.Screen name="seller-profile" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="seller-public-profile" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="admin-panel" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="terms-and-conditions" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="council-registration" options={{ headerShown: true, presentation: 'card' }} />

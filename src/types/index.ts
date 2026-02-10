@@ -129,7 +129,7 @@ export type TabsParamList = {
   cart: undefined;
   messages: undefined;
   notifications: undefined;
-  profile: undefined;
+  'buyer-profile': undefined;
 };
 
 export type AuthStackParamList = {
@@ -143,8 +143,8 @@ export type SellerStackParamList = {
   products: undefined;
   orders: undefined;
   analytics: undefined;
+  'seller-profile': undefined;
 };
-
 
 
 

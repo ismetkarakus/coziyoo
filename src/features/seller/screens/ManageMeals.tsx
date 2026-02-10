@@ -215,28 +215,13 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   };
 
   const handleEditMeal = (meal: Meal) => {
-    // Navigate to edit meal screen with meal data
     const mealData = encodeURIComponent(JSON.stringify(meal));
     router.push(`/(seller)/edit-meal?mealData=${mealData}`);
   };
 
-  const handleMealPress = (meal: Meal) => {
-    // Get seller name from profile (nickname preferred)
-    let cookName = t('manageMealsScreen.fallbackCookName');
-    if (sellerProfile && sellerProfile.formData) {
-      cookName = sellerProfile.formData.nickname || sellerProfile.formData.name || t('manageMealsScreen.fallbackCookName');
-    }
-
-    // Navigate to food detail page
-    const foodImageUrl = meal.imageUrl || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=160&h=140&fit=crop';
-    const mealData = encodeURIComponent(JSON.stringify(meal));
-    const route = `/food-detail?id=${meal.id}&name=${encodeURIComponent(meal.name)}&cookName=${encodeURIComponent(cookName)}&imageUrl=${encodeURIComponent(foodImageUrl)}&deliveryType=${encodeURIComponent(t('manageMealsScreen.deliveryType.pickup'))}&availableDates=${encodeURIComponent(meal.availableDates || '')}&currentStock=${meal.currentStock || 0}&dailyStock=${meal.dailyStock || 0}&mealData=${mealData}`;
-    router.push(route);
-  };
 
   const renderMealCard = (meal: Meal, isExpired: boolean = false) => (
-    <TouchableOpacity key={meal.id} onPress={() => handleMealPress(meal)} activeOpacity={0.7}>
-      <Card variant="default" padding="md" style={styles.mealCard}>
+    <Card key={meal.id} variant="default" padding="md" style={styles.mealCard}>
         <View style={styles.mealHeader}>
           <View style={styles.mealImageContainer}>
             <Image
@@ -249,71 +234,65 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
               defaultSource={{ uri: 'https://via.placeholder.com/80x80/f5f5f5/cccccc?text=📸' }}
             />
           </View>
-        
-        <View style={styles.mealInfo}>
-          <Text variant="subheading" weight="semibold" numberOfLines={1}>
-            {meal.name}
-          </Text>
-          <Text variant="body" color="primary" weight="semibold">
-            ₺{meal.price}
-          </Text>
-          <Text variant="caption" color="textSecondary">
-            {meal.category} • {meal.availableDates}
-          </Text>
-          <Text variant="caption" color="textSecondary">
-            {t('manageMealsScreen.stockLabel')} {meal.currentStock}/{meal.dailyStock}
-          </Text>
+
+          <View style={styles.mealInfo}>
+            <Text variant="subheading" weight="semibold" numberOfLines={1}>
+              {meal.name}
+            </Text>
+            <Text variant="body" color="primary" weight="semibold">
+              ₺{meal.price}
+            </Text>
+            <Text variant="caption" color="textSecondary">
+              {meal.category} • {meal.availableDates}
+            </Text>
+            <Text variant="caption" color="textSecondary">
+              {t('manageMealsScreen.stockLabel')} {meal.currentStock}/{meal.dailyStock}
+            </Text>
+          </View>
         </View>
-        
-        {!isExpired && (
-          <View style={styles.mealActions}>
-            <TouchableOpacity
-              onPress={() => handleEditMeal(meal)}
-              style={[styles.actionButton, { backgroundColor: colors.primary }]}
-            >
-              <FontAwesome name="edit" size={16} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleDeleteMeal(meal.id)}
-              style={[styles.actionButton, { backgroundColor: colors.error }]}
-            >
-              <FontAwesome name="trash" size={16} color="white" />
-            </TouchableOpacity>
-          </View>
+        <TouchableOpacity
+          onPress={() => handleEditMeal(meal)}
+          style={styles.editFloatingButton}
+        >
+          <FontAwesome name="edit" size={16} color={colors.primary} />
+        </TouchableOpacity>
+
+        {meal.description && (
+          <Text variant="caption" color="textSecondary" style={styles.mealDescription} numberOfLines={2}>
+            {meal.description}
+          </Text>
         )}
-      </View>
-      
-      {meal.description && (
-        <Text variant="caption" color="textSecondary" style={styles.mealDescription} numberOfLines={2}>
-          {meal.description}
-        </Text>
-      )}
-      
-      <View style={styles.mealTags}>
-        {meal.hasPickup && (
-          <View style={[styles.tag, { backgroundColor: colors.success + '20' }]}>
-            <Text variant="caption" style={{ color: colors.success }}>
-              {t('manageMealsScreen.tags.pickup')}
-            </Text>
-          </View>
-        )}
-        {meal.hasDelivery && (
-          <View style={[styles.tag, { backgroundColor: colors.primary + '20' }]}>
-            <Text variant="caption" style={{ color: colors.primary }}>
-              {t('manageMealsScreen.tags.delivery')}
-            </Text>
-          </View>
-        )}
-        {isExpired && (
-          <View style={[styles.tag, { backgroundColor: colors.error + '20' }]}>
-            <Text variant="caption" style={{ color: colors.error }}>
-              {t('manageMealsScreen.tags.expired')}
-            </Text>
-          </View>
-        )}
-      </View>
+
+        <View style={styles.mealTags}>
+          {meal.hasPickup && (
+            <View style={[styles.tag, { backgroundColor: colors.success + '20' }]}>
+              <Text variant="caption" style={{ color: colors.success }}>
+                {t('manageMealsScreen.tags.pickup')}
+              </Text>
+            </View>
+          )}
+          {meal.hasDelivery && (
+            <View style={[styles.tag, { backgroundColor: colors.primary + '20' }]}>
+              <Text variant="caption" style={{ color: colors.primary }}>
+                {t('manageMealsScreen.tags.delivery')}
+              </Text>
+            </View>
+          )}
+          {isExpired && (
+            <View style={[styles.tag, { backgroundColor: colors.error + '20' }]}>
+              <Text variant="caption" style={{ color: colors.error }}>
+                {t('manageMealsScreen.tags.expired')}
+              </Text>
+            </View>
+          )}
+        </View>
+        <TouchableOpacity
+          onPress={() => handleDeleteMeal(meal.id)}
+          style={styles.deleteFloatingButton}
+        >
+          <FontAwesome name="trash" size={16} color="white" />
+        </TouchableOpacity>
     </Card>
-    </TouchableOpacity>
   );
 
   return (
@@ -332,7 +311,18 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           }
         />
       )}
-      
+
+      <View style={styles.manageMealsActions}>
+        <Button
+          variant="primary"
+          onPress={() => router.push('/(seller)/add-meal')}
+          style={[styles.addMealButtonTop, { backgroundColor: colors.secondary }]}
+          textStyle={styles.addMealButtonText}
+        >
+          {t('manageMealsScreen.addMeal')}
+        </Button>
+      </View>
+
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -340,8 +330,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           style={[
             styles.tab,
             {
-              backgroundColor: activeTab === 'active' ? colors.primary : 'transparent',
-              borderBottomColor: activeTab === 'active' ? colors.primary : colors.border,
+              borderBottomColor: activeTab === 'active' ? colors.primary : 'transparent',
             }
           ]}
         >
@@ -349,7 +338,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
             variant="body"
             weight="medium"
             style={{
-              color: activeTab === 'active' ? 'white' : colors.textSecondary,
+              color: activeTab === 'active' ? colors.text : colors.textSecondary,
             }}
           >
             {t('manageMealsScreen.tabs.active', { count: meals.length })}
@@ -361,8 +350,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           style={[
             styles.tab,
             {
-              backgroundColor: activeTab === 'expired' ? colors.primary : 'transparent',
-              borderBottomColor: activeTab === 'expired' ? colors.primary : colors.border,
+              borderBottomColor: activeTab === 'expired' ? colors.primary : 'transparent',
             }
           ]}
         >
@@ -370,7 +358,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
             variant="body"
             weight="medium"
             style={{
-              color: activeTab === 'expired' ? 'white' : colors.textSecondary,
+              color: activeTab === 'expired' ? colors.text : colors.textSecondary,
             }}
           >
             {t('manageMealsScreen.tabs.expired', { count: expiredMeals.length })}
@@ -400,23 +388,6 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
               <Text variant="body" color="textSecondary" style={styles.emptyDescription}>
                 {t('manageMealsScreen.emptyActiveDesc')}
               </Text>
-              <Button
-                variant="primary"
-                onPress={() => router.push('/(seller)/add-meal')}
-                style={styles.addMealButton}
-                textStyle={styles.addMealButtonText}
-              >
-                {t('manageMealsScreen.addMeal')}
-              </Button>
-              {embedded && (
-                <TouchableOpacity
-                  onPress={() => router.push('/(tabs)')}
-                  activeOpacity={0.7}
-                  style={[styles.backIconButton, styles.backButtonUnderAdd]}
-                >
-                  <FontAwesome name="home" size={24} color={colors.primary} />
-                </TouchableOpacity>
-              )}
             </View>
           )
         ) : (
@@ -451,18 +422,22 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: Colors.light.surface,
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  manageMealsActions: {
     marginHorizontal: Spacing.md,
     marginTop: Spacing.sm,
-    borderRadius: 8,
-    padding: 4,
+    alignItems: 'stretch',
   },
   tab: {
     flex: 1,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderRadius: 6,
     alignItems: 'center',
+    borderBottomWidth: 2,
   },
   collapseTapArea: {
     height: Spacing.sm,
@@ -473,10 +448,11 @@ const styles = StyleSheet.create({
   },
   mealCard: {
     marginBottom: Spacing.md,
+    position: 'relative',
   },
   mealHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: Spacing.sm,
   },
   mealImageContainer: {
@@ -491,16 +467,26 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.xs,
   },
-  mealActions: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
+  editFloatingButton: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    padding: Spacing.xs,
+    borderRadius: 12,
+    backgroundColor: Colors.light.surface,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
   },
-  actionButton: {
+  deleteFloatingButton: {
+    position: 'absolute',
+    right: Spacing.sm,
+    bottom: Spacing.sm,
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.light.error,
   },
   mealDescription: {
     marginBottom: Spacing.sm,
@@ -533,18 +519,13 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     paddingHorizontal: Spacing.xl,
   },
+  addMealButtonTop: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    width: '100%',
+  },
   addMealButtonText: {
     fontSize: 16,
-  },
-  backButtonUnderAdd: {
-    marginTop: Spacing.sm,
-  },
-  backIconButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.xl * 2,
-    borderRadius: 8,
   },
   bottomSpace: {
     height: Spacing.xl,
