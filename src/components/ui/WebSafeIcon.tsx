@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, Text } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 // Comprehensive web-safe icon mapping
 const webIconMap: { [key: string]: string } = {
@@ -8,62 +8,71 @@ const webIconMap: { [key: string]: string } = {
   'home': '🏠',        // Ana sayfa için
   'store': '🏪',       // Satıcı sayfası için
   'dashboard': '📊',   // Dashboard için alternatif
-  'th-large': '▦',
-  'arrow-left': '←',
-  'arrow-right': '→',
+  'grid-view': '▦',
+  'arrow-back': '←',
+  'arrow-forward': '→',
   'chevron-left': '‹',
   'chevron-right': '›',
   
   // User & Profile
-  'user': '👤',
-  'user-circle': '👤',
+  'person': '👤',
+  'account-circle': '👤',
   'users': '👥',
   
   // Shopping & Commerce
   'shopping-cart': '🛒',
-  'plus': '+',
-  'minus': '−',
+  'local-mall': '🛍️',
+  'add': '+',
+  'remove': '−',
   
   // Communication
   'bell': '🔔',
   'bell-o': '🔔',
-  'envelope': '✉️',
-  'envelope-o': '✉️',
+  'email': '✉️',
   'bullhorn': '📣',
   'phone': '📞',
   
   // Actions
-  'times': '✕',
+  'close': '✕',
   'check': '✓',
   'edit': '✏️',
-  'trash': '🗑️',
+  'delete': '🗑️',
   'search': '🔍',
   
   // Food & Restaurant
-  'cutlery': '🍴',
+  'restaurant': '🍴',
   'coffee': '☕',
   
   // Location & Time
-  'map-marker': '📍',
-  'clock-o': '🕐',
-  'calendar': '📅',
+  'location-on': '📍',
+  'schedule': '🕐',
+  'calendar-today': '📅',
+  'event-available': '📅',
   
   // Media
-  'camera': '📷',
+  'photo-camera': '📷',
   'image': '🖼️',
   
   // Status
   'star': '⭐',
   'heart': '❤️',
-  'thumbs-up': '👍',
+  'thumb-up': '👍',
 
   // Theme
-  'sun-o': '☀️',
-  'moon-o': '🌙',
+  'light-mode': '☀️',
+  'dark-mode': '🌙',
   
   // Settings
-  'cog': '⚙️',
-  'gear': '⚙️',
+  'settings': '⚙️',
+  
+  // Other commonly used
+  'info': 'ℹ️',
+  'account-balance': '🏦',
+  'credit-card': '💳',
+  'badge': '🪪',
+  'local-shipping': '🚚',
+  'emoji-events': '🏆',
+  'label': '🏷️',
   
   // Default fallback
   'default': '📱'
@@ -97,6 +106,6 @@ export const WebSafeIcon: React.FC<WebSafeIconProps> = ({
     );
   }
   
-  // Mobile'da FontAwesome kullan
-  return <FontAwesome name={name as any} size={size} color={color} style={style} />;
+  // Mobile'da MaterialIcons kullan
+  return <MaterialIcons name={name as any} size={size} color={color} style={style} />;
 };

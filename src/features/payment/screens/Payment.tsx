@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -128,7 +128,7 @@ export const Payment: React.FC = () => {
           {title}
         </Text>
         {selectedPaymentMethod === method && (
-          <FontAwesome name="check-circle" size={20} color="white" />
+          <MaterialIcons name="check-circle" size={20} color="white" />
         )}
       </View>
     </TouchableOpacity>
@@ -168,7 +168,7 @@ export const Payment: React.FC = () => {
           </Text>
         </View>
         {selectedCard === card.id && (
-          <FontAwesome name="check-circle" size={20} color="white" />
+          <MaterialIcons name="check-circle" size={20} color="white" />
         )}
         {card.isDefault && (
           <View style={[styles.defaultBadge, { backgroundColor: colors.success }]}>
@@ -185,7 +185,7 @@ export const Payment: React.FC = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
         title={t('paymentScreen.title')} 
-        leftIcon="arrow-left"
+        leftIcon="arrow-back"
         onLeftPress={() => router.back()}
       />
       
@@ -239,7 +239,7 @@ export const Payment: React.FC = () => {
             </View>
             
             <TouchableOpacity style={styles.addCardButton}>
-              <FontAwesome name="plus" size={16} color={colors.primary} />
+              <MaterialIcons name="add" size={16} color={colors.primary} />
               <Text variant="body" color="primary" style={{ marginLeft: Spacing.sm }}>
                 {t('paymentScreen.addCard')}
               </Text>

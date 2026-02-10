@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -57,7 +57,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onPress={handleSend}
           disabled={!message.trim() || disabled}
         >
-          <FontAwesome
+          <MaterialIcons
             name="send"
             size={16}
             color={message.trim() && !disabled ? colors.background : colors.textSecondary}

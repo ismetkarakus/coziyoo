@@ -11,7 +11,7 @@ import {
 import { Text } from './Text';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from '../../hooks/useTranslation';
 
 interface SearchBarProps {
@@ -111,7 +111,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       style={[styles.suggestionItem, { backgroundColor: colors.background }]}
       onPress={() => handleSuggestionPress(item)}
     >
-      <FontAwesome name="search" size={14} color={colors.textSecondary} />
+      <MaterialIcons name="search" size={14} color={colors.textSecondary} />
       <Text variant="body" style={[styles.suggestionText, { color: colors.text }]}>
         {item}
       </Text>
@@ -127,7 +127,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           borderColor: isFocused ? colors.primary : colors.border,
         }
       ]}>
-        <FontAwesome name="search" size={16} color={colors.textSecondary} style={styles.searchIcon} />
+        <MaterialIcons name="search" size={16} color={colors.textSecondary} style={styles.searchIcon} />
         
         <TextInput
           ref={inputRef}
@@ -146,7 +146,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
         {value.length > 0 && (
           <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
-            <FontAwesome name="times-circle" size={16} color={colors.textSecondary} />
+            <MaterialIcons name="cancel" size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
 
@@ -160,7 +160,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               }
             ]}
           >
-            <FontAwesome
+            <MaterialIcons
               name="filter"
               size={16}
               color={filterCount > 0 ? colors.background : colors.textSecondary}

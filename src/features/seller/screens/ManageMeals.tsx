@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -258,7 +258,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           onPress={() => handleEditMeal(meal)}
           style={styles.editFloatingButton}
         >
-          <FontAwesome name="edit" size={16} color={colors.primary} />
+          <MaterialIcons name="edit" size={16} color={colors.primary} />
         </TouchableOpacity>
 
         {meal.description && (
@@ -294,7 +294,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           onPress={() => handleDeleteMeal(meal.id)}
           style={styles.deleteFloatingButton}
         >
-          <FontAwesome name="trash" size={16} color="white" />
+          <MaterialIcons name="delete" size={16} color="white" />
         </TouchableOpacity>
     </Card>
   );
@@ -310,7 +310,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
               style={styles.backButton}
               activeOpacity={0.7}
             >
-              <FontAwesome name="arrow-left" size={20} color={colors.text} />
+              <MaterialIcons name="arrow-back" size={20} color={colors.text} />
             </TouchableOpacity>
           }
         />
@@ -385,7 +385,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
             meals.map(meal => renderMealCard(meal))
           ) : (
             <View style={styles.emptyState}>
-              <FontAwesome name="cutlery" size={48} color={colors.textSecondary} />
+              <MaterialIcons name="restaurant" size={48} color={colors.textSecondary} />
               <Text variant="subheading" weight="semibold" color="textSecondary" style={styles.emptyTitle}>
                 {t('manageMealsScreen.emptyActiveTitle')}
               </Text>
@@ -399,7 +399,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
             expiredMeals.map(meal => renderMealCard(meal, true))
           ) : (
             <View style={styles.emptyState}>
-              <FontAwesome name="clock-o" size={48} color={colors.textSecondary} />
+              <MaterialIcons name="schedule" size={48} color={colors.textSecondary} />
               <Text variant="subheading" weight="semibold" color="textSecondary" style={styles.emptyTitle}>
                 {t('manageMealsScreen.emptyExpiredTitle')}
               </Text>

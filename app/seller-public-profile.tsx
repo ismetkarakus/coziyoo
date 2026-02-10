@@ -6,7 +6,7 @@ import { TopBar } from '@/src/components/layout';
 import { Colors, Spacing } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useCart } from '@/src/context/CartContext';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import sellerMock from '@/src/mock/seller.json';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -239,7 +239,7 @@ export default function SellerProfileScreen() {
                 {displayName}
               </Text>
               <View style={styles.ratingRow}>
-                <FontAwesome name="star" size={16} color="#FFD700" />
+                <MaterialIcons name="star" size={16} color="#FFD700" />
                 <Text variant="body" weight="medium" style={{ marginLeft: 4 }}>
                   {sellerData.rating}
                 </Text>

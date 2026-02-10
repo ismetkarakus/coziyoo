@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, Modal, Alert, Animated, Platform } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card, WebSafeIcon, StarRating, ReviewCard, RatingStats, ReviewModal, PaymentModal, AllergenWarningModal } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
@@ -705,7 +705,7 @@ export const FoodDetail: React.FC = () => {
               style={styles.backButton}
               activeOpacity={0.7}
             >
-              <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
+              <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
             </TouchableOpacity>
           }
         />
@@ -728,7 +728,7 @@ export const FoodDetail: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />
@@ -1027,7 +1027,7 @@ export const FoodDetail: React.FC = () => {
               onPress={() => setShowOrderModal(false)}
               style={styles.closeButton}
             >
-              <FontAwesome name="times" size={24} color={colors.text} />
+              <MaterialIcons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -1053,7 +1053,7 @@ export const FoodDetail: React.FC = () => {
               {/* Date Counter */}
               <View style={[styles.counterContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={styles.counterHeader}>
-                  <FontAwesome name="calendar" size={18} color={colors.primary} />
+                  <MaterialIcons name="calendar-today" size={18} color={colors.primary} />
                   <Text variant="caption" color="textSecondary">
                     {t('foodDetailScreen.monthLabel')}
                   </Text>
@@ -1066,7 +1066,7 @@ export const FoodDetail: React.FC = () => {
                       console.log('Önceki gün seçildi');
                     }}
                   >
-                    <FontAwesome name="minus" size={14} color="white" />
+                    <MaterialIcons name="remove" size={14} color="white" />
                   </TouchableOpacity>
                   
                   <View style={styles.counterValue}>
@@ -1082,7 +1082,7 @@ export const FoodDetail: React.FC = () => {
                       console.log('Sonraki gün seçildi');
                     }}
                   >
-                    <FontAwesome name="plus" size={14} color="white" />
+                    <MaterialIcons name="add" size={14} color="white" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1090,7 +1090,7 @@ export const FoodDetail: React.FC = () => {
               {/* Time Counter */}
               <View style={[styles.counterContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={styles.counterHeader}>
-                  <FontAwesome name="clock-o" size={18} color={colors.primary} />
+                  <MaterialIcons name="schedule" size={18} color={colors.primary} />
                   <Text variant="caption" color="textSecondary">{t('foodDetailScreen.timeLabel')}</Text>
                 </View>
                 <View style={styles.counterControls}>
@@ -1104,7 +1104,7 @@ export const FoodDetail: React.FC = () => {
                       }
                     }}
                   >
-                    <FontAwesome name="minus" size={14} color="white" />
+                    <MaterialIcons name="remove" size={14} color="white" />
                   </TouchableOpacity>
                   
                   <View style={styles.counterValue}>
@@ -1123,7 +1123,7 @@ export const FoodDetail: React.FC = () => {
                       }
                     }}
                   >
-                    <FontAwesome name="plus" size={14} color="white" />
+                    <MaterialIcons name="add" size={14} color="white" />
                   </TouchableOpacity>
                 </View>
                 
@@ -1140,7 +1140,7 @@ export const FoodDetail: React.FC = () => {
                       setSelectedTime(timeString);
                     }}
                   >
-                    <FontAwesome name="chevron-left" size={12} color="white" />
+                    <MaterialIcons name="chevron-left" size={12} color="white" />
                   </TouchableOpacity>
                   
                   <View style={styles.minuteValue}>
@@ -1160,7 +1160,7 @@ export const FoodDetail: React.FC = () => {
                       setSelectedTime(timeString);
                     }}
                   >
-                    <FontAwesome name="chevron-right" size={12} color="white" />
+                    <MaterialIcons name="chevron-right" size={12} color="white" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1177,7 +1177,7 @@ export const FoodDetail: React.FC = () => {
                   style={[styles.quantityButton, { backgroundColor: colors.surface }]}
                   onPress={() => setQuantity(Math.max(1, quantity - 1))}
                 >
-                  <FontAwesome name="minus" size={16} color={colors.text} />
+                  <MaterialIcons name="remove" size={16} color={colors.text} />
                 </TouchableOpacity>
                 <Text variant="subheading" weight="semibold" style={styles.quantityText}>
                   {quantity}
@@ -1186,7 +1186,7 @@ export const FoodDetail: React.FC = () => {
                   style={[styles.quantityButton, { backgroundColor: colors.surface }]}
                   onPress={() => setQuantity(quantity + 1)}
                 >
-                  <FontAwesome name="plus" size={16} color={colors.text} />
+                  <MaterialIcons name="add" size={16} color={colors.text} />
                 </TouchableOpacity>
               </View>
             </View>

@@ -10,7 +10,7 @@ import { translations } from '../../../i18n/translations';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import * as ImagePicker from 'expo-image-picker';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../../../context/AuthContext';
 import { foodService } from '../../../services/foodService';
@@ -768,7 +768,7 @@ export const AddMeal: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />

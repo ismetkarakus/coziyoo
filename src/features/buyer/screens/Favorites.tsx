@@ -108,7 +108,7 @@ export const Favorites: React.FC = () => {
         title={t('favoritesScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
-            <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />
@@ -154,7 +154,7 @@ export const Favorites: React.FC = () => {
                   removeFavorite(item.id);
                 }}
               >
-                <WebSafeIcon name="trash" size={18} color={colors.error} />
+                <WebSafeIcon name="delete" size={18} color={colors.error} />
               </TouchableOpacity>
             </TouchableOpacity>
           </Card>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Text } from './Text';
 import { Card } from './Card';
 import { StarRating } from './StarRating';
@@ -127,7 +127,7 @@ export const FoodOrderCard: React.FC<FoodOrderCardProps> = ({
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionButton, styles.actionGhost]} onPress={onToggleFavorite}>
-          <FontAwesome
+          <MaterialIcons
             name={isFavorite ? 'heart' : 'heart-o'}
             size={22}
             color={isFavorite ? '#F05A28' : '#6B6B6B'}

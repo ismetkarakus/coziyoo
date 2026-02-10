@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -225,7 +225,7 @@ export const WalletDashboard: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={
@@ -234,7 +234,7 @@ export const WalletDashboard: React.FC = () => {
             style={styles.refreshButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="refresh" size={18} color={colors.primary} />
+            <MaterialIcons name="refresh" size={18} color={colors.primary} />
           </TouchableOpacity>
         }
       />

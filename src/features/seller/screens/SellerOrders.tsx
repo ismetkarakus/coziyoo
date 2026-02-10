@@ -7,7 +7,7 @@ import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 const getMockOrders = (t: (key: string, params?: Record<string, string | number>) => string) => ([
   {
@@ -199,7 +199,7 @@ export const SellerOrders: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />

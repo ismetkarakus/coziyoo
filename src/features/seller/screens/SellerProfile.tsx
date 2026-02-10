@@ -9,7 +9,7 @@ import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import sellerMock from '../../../mock/seller.json';
 import { useCountry } from '../../../context/CountryContext';
 
@@ -400,7 +400,7 @@ export const SellerProfile: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={null}
@@ -428,7 +428,7 @@ export const SellerProfile: React.FC = () => {
                 style={styles.avatarEditButton}
                 onPress={handleAvatarImagePicker}
               >
-                <FontAwesome name="camera" size={16} color="white" />
+                <MaterialIcons name="photo-camera" size={16} color="white" />
               </TouchableOpacity>
             </View>
           </View>
@@ -522,7 +522,7 @@ export const SellerProfile: React.FC = () => {
                   style={styles.sectionEditButton}
                   activeOpacity={0.7}
                 >
-                  <FontAwesome name="edit" size={16} color={colors.primary} />
+                  <MaterialIcons name="edit" size={16} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </View>
@@ -568,7 +568,7 @@ export const SellerProfile: React.FC = () => {
             ) : (
               <View style={styles.infoContainer}>
                 <View style={styles.infoRow}>
-                  <FontAwesome name="user" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="person" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>
                     {getFullName()}
                     {identityVerification.status === 'verified' && (
@@ -577,11 +577,11 @@ export const SellerProfile: React.FC = () => {
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <FontAwesome name="envelope" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="email" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{formData.email}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <FontAwesome name="phone" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="phone" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{formData.phone}</Text>
                 </View>
               </View>
@@ -618,7 +618,7 @@ export const SellerProfile: React.FC = () => {
                   style={styles.sectionEditButton}
                   activeOpacity={0.7}
                 >
-                  <FontAwesome name="edit" size={16} color={colors.primary} />
+                  <MaterialIcons name="edit" size={16} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </View>
@@ -650,16 +650,16 @@ export const SellerProfile: React.FC = () => {
             ) : (
               <View style={styles.infoContainer}>
                 <View style={styles.infoRow}>
-                  <FontAwesome name="map-marker" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="location-on" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{formData.location}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <FontAwesome name="home" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="home" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{formData.address}</Text>
                 </View>
                 {formData.deliveryDistance ? (
                   <View style={styles.infoRow}>
-                    <FontAwesome name="truck" size={16} color={colors.textSecondary} />
+                    <MaterialIcons name="local-shipping" size={16} color={colors.textSecondary} />
                     <Text variant="body" style={styles.infoText}>
                       {t('sellerProfileScreen.fields.deliveryDistance')}: {formData.deliveryDistance} km
                     </Text>
@@ -700,7 +700,7 @@ export const SellerProfile: React.FC = () => {
                 style={styles.sectionEditButton}
                 activeOpacity={0.7}
               >
-                <FontAwesome name="edit" size={16} color={colors.primary} />
+                <MaterialIcons name="edit" size={16} color={colors.primary} />
               </TouchableOpacity>
             )}
           </View>
@@ -735,7 +735,7 @@ export const SellerProfile: React.FC = () => {
                         onPress={() => handleRemoveSpecialty(specialty)}
                         style={[styles.removeSpecialtyPlainButton, { backgroundColor: colors.error }]}
                       >
-                        <FontAwesome name="times" size={10} color="white" />
+                        <MaterialIcons name="close" size={10} color="white" />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -769,7 +769,7 @@ export const SellerProfile: React.FC = () => {
                       ]}
                       disabled={!newSpecialty.trim()}
                     >
-                      <FontAwesome name="plus" size={14} color="white" />
+                      <MaterialIcons name="add" size={14} color="white" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -790,7 +790,7 @@ export const SellerProfile: React.FC = () => {
                   <View style={styles.specialtiesViewGrid}>
                     {specialties.map((specialty, index) => (
                       <View key={index} style={styles.specialtyViewPlainItem}>
-                        <FontAwesome name="check-circle" size={14} color={colors.primary} />
+                        <MaterialIcons name="check-circle" size={14} color={colors.primary} />
                         <Text style={[styles.specialtyViewPlainText, { color: colors.text }]}>
                           {specialty}
                         </Text>
@@ -830,7 +830,7 @@ export const SellerProfile: React.FC = () => {
               style={styles.sectionEditFloating}
               activeOpacity={0.7}
             >
-              <FontAwesome name="edit" size={16} color={colors.primary} />
+              <MaterialIcons name="edit" size={16} color={colors.primary} />
             </TouchableOpacity>
           )}
           <View style={styles.identityHeader}>
@@ -866,7 +866,7 @@ export const SellerProfile: React.FC = () => {
                     <Image source={{ uri: identityImages.front }} style={styles.identityImage} />
                   ) : (
                     <View style={styles.identityPlaceholder}>
-                      <FontAwesome name="id-card" size={40} color={colors.textSecondary} />
+                      <MaterialIcons name="badge" size={40} color={colors.textSecondary} />
                       <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
                         {t('sellerProfileScreen.identity.addFront')}
                       </Text>
@@ -892,7 +892,7 @@ export const SellerProfile: React.FC = () => {
                     <Image source={{ uri: identityImages.back }} style={styles.identityImage} />
                   ) : (
                     <View style={styles.identityPlaceholder}>
-                      <FontAwesome name="id-card-o" size={40} color={colors.textSecondary} />
+                      <MaterialIcons name="badge" size={40} color={colors.textSecondary} />
                       <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
                         {t('sellerProfileScreen.identity.addBack')}
                       </Text>
@@ -959,7 +959,7 @@ export const SellerProfile: React.FC = () => {
           )}
 
           <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
-            <FontAwesome name="info-circle" size={16} color={colors.warning} />
+            <MaterialIcons name="info" size={16} color={colors.warning} />
             <Text variant="caption" color="warning" style={styles.warningText}>
               {t('sellerProfileScreen.identity.warning')}
             </Text>
@@ -997,7 +997,7 @@ export const SellerProfile: React.FC = () => {
                   style={styles.sectionEditButton}
                   activeOpacity={0.7}
                 >
-                  <FontAwesome name="edit" size={16} color={colors.primary} />
+                  <MaterialIcons name="edit" size={16} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </View>
@@ -1036,25 +1036,25 @@ export const SellerProfile: React.FC = () => {
             <View style={styles.infoContainer}>
               {bankDetails.bankName ? (
                 <View style={styles.infoRow}>
-                  <FontAwesome name="bank" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="account-balance" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{bankDetails.bankName}</Text>
                 </View>
               ) : null}
               {bankDetails.accountHolderName ? (
                 <View style={styles.infoRow}>
-                  <FontAwesome name="user" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="person" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{bankDetails.accountHolderName}</Text>
                 </View>
               ) : null}
               {bankDetails.iban ? (
                 <View style={styles.infoRow}>
-                  <FontAwesome name="credit-card" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="credit-card" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{bankDetails.iban}</Text>
                 </View>
               ) : null}
               {bankDetails.accountNumber ? (
                 <View style={styles.infoRow}>
-                  <FontAwesome name="hashtag" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="label" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{bankDetails.accountNumber}</Text>
                 </View>
               ) : null}

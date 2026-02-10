@@ -5,7 +5,7 @@ import { StarRating } from './StarRating';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { Review } from '../../services/reviewService';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from '../../hooks/useTranslation';
 
 interface ReviewCardProps {
@@ -98,7 +98,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
               </Text>
               {review.isVerifiedPurchase && (
                 <View style={[styles.verifiedBadge, { backgroundColor: colors.success }]}>
-                  <FontAwesome name="check" size={10} color={colors.background} />
+                  <MaterialIcons name="check" size={10} color={colors.background} />
                   <Text variant="caption" style={{ color: colors.background, marginLeft: 2 }}>
                     {t('reviewCard.verified')}
                   </Text>
@@ -141,7 +141,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
           onPress={onHelpfulPress}
           style={styles.actionButton}
         >
-          <FontAwesome name="thumbs-up" size={14} color={colors.textSecondary} />
+          <MaterialIcons name="thumb-up" size={14} color={colors.textSecondary} />
           <Text variant="caption" style={{ color: colors.textSecondary, marginLeft: 4 }}>
             {t('reviewCard.helpful', { count: review.helpfulCount })}
           </Text>
@@ -151,7 +151,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
           onPress={onReportPress}
           style={styles.actionButton}
         >
-          <FontAwesome name="flag" size={14} color={colors.textSecondary} />
+          <MaterialIcons name="flag" size={14} color={colors.textSecondary} />
           <Text variant="caption" style={{ color: colors.textSecondary, marginLeft: 4 }}>
             {t('reviewCard.report')}
           </Text>

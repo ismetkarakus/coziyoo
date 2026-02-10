@@ -80,7 +80,7 @@ export const About: React.FC = () => {
         title={t('aboutScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
-            <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />

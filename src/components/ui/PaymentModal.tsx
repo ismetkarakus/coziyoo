@@ -6,7 +6,7 @@ import { PaymentMethodCard } from './PaymentMethodCard';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { PaymentMethod, PaymentRequest, paymentService } from '../../services/paymentService';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useCountry } from '../../context/CountryContext';
 
@@ -180,7 +180,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <FontAwesome name="times" size={20} color={colors.text} />
+            <MaterialIcons name="close" size={20} color={colors.text} />
           </TouchableOpacity>
           <Text variant="heading" style={styles.title}>
             {t('paymentModal.title')}
@@ -214,7 +214,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 onPress={handleAddPaymentMethod}
                 style={[styles.addButton, { backgroundColor: colors.primary }]}
               >
-                <FontAwesome name="plus" size={12} color={colors.background} />
+                <MaterialIcons name="add" size={12} color={colors.background} />
                 <Text variant="caption" style={{ color: colors.background, marginLeft: 4 }}>
                   {t('paymentModal.add')}
                 </Text>
@@ -255,7 +255,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Security Info */}
           <View style={[styles.securityInfo, { backgroundColor: colors.surface }]}>
-            <FontAwesome name="shield" size={16} color={colors.success} />
+            <MaterialIcons name="shield" size={16} color={colors.success} />
             <Text variant="caption" style={{ color: colors.textSecondary, flex: 1, marginLeft: 8 }}>
               {t('paymentModal.securityNote')}
             </Text>

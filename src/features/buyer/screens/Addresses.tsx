@@ -124,13 +124,13 @@ export const Addresses: React.FC = () => {
         title={t('addressesScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
-            <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={
           <View style={styles.headerRight}>
             <TouchableOpacity onPress={openAddModal}>
-              <WebSafeIcon name="plus" size={20} color={colors.primary} />
+              <WebSafeIcon name="add" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
         }
@@ -167,7 +167,7 @@ export const Addresses: React.FC = () => {
                   onPress={() => deleteAddress(address.id)}
                   style={styles.deleteButton}
                 >
-                  <WebSafeIcon name="trash" size={18} color={colors.error} />
+                  <WebSafeIcon name="delete" size={18} color={colors.error} />
                 </TouchableOpacity>
               </View>
             </View>

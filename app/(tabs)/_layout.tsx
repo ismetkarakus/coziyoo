@@ -36,10 +36,12 @@ export default function TabLayout() {
     userData?.userType === 'seller' ||
     userData?.userType === 'both' ||
     (userData as any)?.sellerEnabled === true;
+  const buttonBg = colors.primary;
+  const buttonText = colors.card;
 
   const handleProfilePress = () => {
     if (isSeller) {
-      router.push('/(seller)/dashboard' as any);
+      router.push('/(seller)/seller-profile' as any);
       return;
     }
     router.push('/(tabs)/buyer-profile' as any);
@@ -85,15 +87,29 @@ export default function TabLayout() {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: 0.5,
-          paddingTop: 12,
-          paddingBottom: 12,
+          paddingTop: 0,
+          paddingBottom: 0,
           height: 85,
+          overflow: 'visible',
           shadowColor: colors.text,
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 4,
           elevation: 8,
         },
+        tabBarBackground: () => (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 12,
+              backgroundColor: 'transparent',
+            }}
+          />
+        ),
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
@@ -118,7 +134,7 @@ export default function TabLayout() {
           title: t('tabs.home'),
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "th-large" : "th-large"} 
+              name={focused ? "grid-view" : "grid-view"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
             />
@@ -157,44 +173,57 @@ export default function TabLayout() {
           title: 'C',
           tabBarLabel: () => null,
           tabBarButton: (props) => {
-            const content = (
-              <View
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 28,
-                  backgroundColor: colors.primary,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 2,
-                  borderColor: colors.card,
-                  shadowColor: colors.text,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 6,
-                  elevation: 8,
-                  transform: [{ translateY: -10 }],
-                }}
-              >
-                <Text
-                  style={{
-                    color: colors.card,
-                    fontSize: 22,
-                    fontWeight: '700',
-                  }}
-                >
-                  C
-                </Text>
-              </View>
-            );
+            const {
+              onLongPress,
+              accessibilityState,
+              accessibilityLabel,
+              testID,
+              style,
+            } = props;
 
-            return renderCompactTabButton(
-              {
-                ...props,
-                children: content,
-                accessibilityLabel: t('tabs.profileShortcut'),
-              },
-              handleProfilePress
+            return (
+              <View style={[style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
+                <TouchableOpacity
+                  onPress={handleProfilePress}
+                  onLongPress={onLongPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={accessibilityLabel || t('tabs.profileShortcut')}
+                  accessibilityState={accessibilityState}
+                  testID={testID}
+                  activeOpacity={0.8}
+                  style={{ alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
+                >
+                  <View
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 28,
+                      backgroundColor: buttonBg,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: colors.card,
+                      shadowColor: colors.text,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.12,
+                      shadowRadius: 6,
+                      elevation: 6,
+                      transform: [{ translateY: -18 }],
+                      zIndex: 10,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: buttonText,
+                        fontSize: 22,
+                        fontWeight: '700',
+                      }}
+                    >
+                      C
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
             );
           },
         }}
@@ -205,7 +234,7 @@ export default function TabLayout() {
           title: t('tabs.messages'),
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "envelope" : "envelope-o"} 
+              name={focused ? "email" : "email"} 
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
                   />
@@ -218,16 +247,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="notifications"
         options={{
-          title: t('tabs.notifications'),
+          title: t('tabs.profile'),
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon 
-              name={focused ? "bell" : "bell-o"} 
+              name="person" 
               color={color}
-              style={{ fontSize: focused ? 22 : 20 }}
+              style={{ fontSize: focused ? 22 : 20, transform: [{ translateY: -4 }] }}
             />
           ),
           tabBarButton: (props) => (
-            renderCompactTabButton(props)
+            renderCompactTabButton(props, handleProfilePress)
           ),
         }}
       />

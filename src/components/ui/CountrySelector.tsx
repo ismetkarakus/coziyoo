@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card } from './index';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
@@ -84,7 +84,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                   onPress={() => setShowModal(false)}
                   style={styles.closeButton}
                 >
-                  <FontAwesome name="times" size={20} color={colors.textSecondary} />
+                  <MaterialIcons name="close" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
@@ -115,7 +115,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                     )}
                   </View>
                   {code === countryCode && (
-                    <FontAwesome name="check" size={16} color={colors.primary} />
+                    <MaterialIcons name="check" size={16} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -152,7 +152,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
             </Text>
           </View>
         </View>
-        <FontAwesome name="chevron-down" size={16} color={colors.textSecondary} />
+        <MaterialIcons name="chevron-down" size={16} color={colors.textSecondary} />
       </TouchableOpacity>
 
       <Modal
@@ -171,7 +171,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                 onPress={() => setShowModal(false)}
                 style={styles.closeButton}
               >
-                <FontAwesome name="times" size={20} color={colors.textSecondary} />
+                <MaterialIcons name="close" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -202,7 +202,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                   )}
                 </View>
                 {code === countryCode && (
-                  <FontAwesome name="check" size={16} color={colors.primary} />
+                  <MaterialIcons name="check" size={16} color={colors.primary} />
                 )}
               </TouchableOpacity>
             ))}

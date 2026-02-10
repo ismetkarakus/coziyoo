@@ -7,7 +7,7 @@ import { Card } from './Card';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { SearchFilters } from '../../services/searchService';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useCountry } from '../../context/CountryContext';
 
@@ -147,7 +147,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <FontAwesome name="times" size={20} color={colors.text} />
+            <MaterialIcons name="close" size={20} color={colors.text} />
           </TouchableOpacity>
           <Text variant="heading" style={styles.title}>
             {t('filterModal.title')}

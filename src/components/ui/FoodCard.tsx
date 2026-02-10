@@ -127,7 +127,7 @@ function Segmented({
         ]}
       >
         <MaterialIcons
-          name="shopping-bag"
+          name="local-mall"
           size={16}
           color={value === "pickup" ? COLORS.accent : COLORS.textMuted}
         />

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -94,7 +94,7 @@ export const BuyerWallet: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />
@@ -157,7 +157,7 @@ export const BuyerWallet: React.FC = () => {
         {/* Security Note */}
         <Card variant="default" padding="md" style={[styles.securityCard, { backgroundColor: colors.success + '10', borderColor: colors.success }]}>
           <View style={styles.securityHeader}>
-            <FontAwesome name="shield" size={20} color={colors.success} />
+            <MaterialIcons name="shield" size={20} color={colors.success} />
             <Text variant="body" weight="semibold" color="success" style={styles.securityTitle}>
               {t('buyerWalletScreen.securityTitle')}
             </Text>

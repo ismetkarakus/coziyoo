@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TouchableWithoutFeedback, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -247,7 +247,7 @@ export const SellerPanel: React.FC = () => {
     TopBar,
     WebSafeIcon,
     ManageMeals,
-    FontAwesome,
+    MaterialIcons,
     LinearGradient,
   };
 

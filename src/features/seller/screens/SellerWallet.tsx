@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import { Text, Card, Button } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -157,7 +157,7 @@ export const SellerWallet: React.FC = () => {
         title={t('sellerWalletScreen.title')}
         leftComponent={(
           <TouchableOpacity onPress={() => router.back()} style={styles.iconButton} activeOpacity={0.7}>
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         )}
       />
@@ -168,7 +168,7 @@ export const SellerWallet: React.FC = () => {
           style={[styles.tabItem, activeTab === 'overview' && styles.tabItemActive]}
           activeOpacity={0.8}
         >
-          <FontAwesome name="dashboard" size={16} color={activeTab === 'overview' ? '#fff' : colors.text} />
+          <MaterialIcons name="dashboard" size={16} color={activeTab === 'overview' ? '#fff' : colors.text} />
           <Text variant="caption" weight="medium" style={activeTab === 'overview' ? styles.tabTextActive : styles.tabText}>
             {t('sellerWalletScreen.tabs.overview')}
           </Text>
@@ -179,7 +179,7 @@ export const SellerWallet: React.FC = () => {
           style={[styles.tabItem, activeTab === 'transactions' && styles.tabItemActive]}
           activeOpacity={0.8}
         >
-          <FontAwesome name="list" size={16} color={activeTab === 'transactions' ? '#fff' : colors.text} />
+          <MaterialIcons name="list" size={16} color={activeTab === 'transactions' ? '#fff' : colors.text} />
           <Text variant="caption" weight="medium" style={activeTab === 'transactions' ? styles.tabTextActive : styles.tabText}>
             {t('sellerWalletScreen.tabs.transactions')}
           </Text>
@@ -190,7 +190,7 @@ export const SellerWallet: React.FC = () => {
           style={[styles.tabItem, activeTab === 'withdraw' && styles.tabItemActive]}
           activeOpacity={0.8}
         >
-          <FontAwesome name="bank" size={16} color={activeTab === 'withdraw' ? '#fff' : colors.text} />
+          <MaterialIcons name="account-balance" size={16} color={activeTab === 'withdraw' ? '#fff' : colors.text} />
           <Text variant="caption" weight="medium" style={activeTab === 'withdraw' ? styles.tabTextActive : styles.tabText}>
             {t('sellerWalletScreen.tabs.withdraw')}
           </Text>
@@ -212,7 +212,7 @@ export const SellerWallet: React.FC = () => {
           <>
             <Card variant="default" padding="lg" style={styles.balanceCard}>
               <View style={styles.balanceHeader}>
-                <FontAwesome name="credit-card" size={18} color="#fff" />
+                <MaterialIcons name="credit-card" size={18} color="#fff" />
                 <Text variant="body" weight="medium" style={styles.balanceTitle}>
                   {t('sellerWalletScreen.balanceTitle')}
                 </Text>
@@ -222,7 +222,7 @@ export const SellerWallet: React.FC = () => {
               </Text>
               <View style={styles.balanceFooter}>
                 <View style={styles.pendingRow}>
-                  <FontAwesome name="clock-o" size={14} color="#fff" />
+                  <MaterialIcons name="schedule" size={14} color="#fff" />
                   <Text variant="caption" style={styles.pendingText}>
                     {t('sellerWalletScreen.pendingLabel', { amount: formatCurrency(wallet.pendingEarnings) })}
                   </Text>
@@ -244,21 +244,21 @@ export const SellerWallet: React.FC = () => {
             </Text>
             <View style={styles.statsRow}>
               <Card variant="default" padding="md" style={styles.statCard}>
-                <FontAwesome name="calendar-check-o" size={18} color={colors.success} />
+                <MaterialIcons name="event-available" size={18} color={colors.success} />
                 <Text variant="caption" style={styles.statLabel}>{t('sellerWalletScreen.stats.week')}</Text>
                 <Text variant="body" weight="bold" color="success">
                   {formatCurrency(weeklyEarnings)}
                 </Text>
               </Card>
               <Card variant="default" padding="md" style={styles.statCard}>
-                <FontAwesome name="calendar" size={18} color={colors.textSecondary} />
+                <MaterialIcons name="calendar-today" size={18} color={colors.textSecondary} />
                 <Text variant="caption" style={styles.statLabel}>{t('sellerWalletScreen.stats.month')}</Text>
                 <Text variant="body" weight="bold" color="textSecondary">
                   {formatCurrency(monthlyEarnings)}
                 </Text>
               </Card>
               <Card variant="default" padding="md" style={styles.statCard}>
-                <FontAwesome name="trophy" size={18} color={colors.warning} />
+                <MaterialIcons name="emoji-events" size={18} color={colors.warning} />
                 <Text variant="caption" style={styles.statLabel}>{t('sellerWalletScreen.stats.total')}</Text>
                 <Text variant="body" weight="bold" color="warning">
                   {formatCurrency(totalEarnings)}
@@ -268,7 +268,7 @@ export const SellerWallet: React.FC = () => {
 
             <Card variant="default" padding="md" style={styles.infoCard}>
               <View style={styles.infoHeader}>
-                <FontAwesome name="info-circle" size={16} color={colors.textSecondary} />
+                <MaterialIcons name="info" size={16} color={colors.textSecondary} />
                 <Text variant="body" weight="semibold" style={styles.infoTitle}>
                   {t('sellerWalletScreen.paymentInfoTitle')}
                 </Text>
@@ -382,7 +382,7 @@ export const SellerWallet: React.FC = () => {
 
               <View style={styles.infoBox}>
                 <View style={styles.infoBoxHeader}>
-                  <FontAwesome name="info-circle" size={16} color={colors.textSecondary} />
+                  <MaterialIcons name="info" size={16} color={colors.textSecondary} />
                   <Text variant="body" weight="medium" style={styles.infoBoxTitle}>{t('sellerWalletScreen.infoBoxTitle')}</Text>
                 </View>
                 <Text variant="body" color="textSecondary">{t('sellerWalletScreen.infoItems.minAmount')}</Text>
@@ -403,7 +403,7 @@ export const SellerWallet: React.FC = () => {
 
             <Card variant="default" padding="md" style={styles.bankCard}>
               <View style={styles.bankHeader}>
-                <FontAwesome name="bank" size={18} color={colors.primary} />
+                <MaterialIcons name="account-balance" size={18} color={colors.primary} />
                 <Text variant="body" weight="semibold" style={styles.bankTitle}>
                   {t('sellerWalletScreen.bankDetailsTitle')}
                 </Text>
@@ -416,7 +416,7 @@ export const SellerWallet: React.FC = () => {
                 activeOpacity={0.8}
                 onPress={() => router.push({ pathname: '/(seller)/seller-profile', params: { section: 'bank' } })}
               >
-                <FontAwesome name="pencil" size={14} color={colors.textSecondary} />
+                <MaterialIcons name="edit" size={14} color={colors.textSecondary} />
                 <Text variant="caption" color="textSecondary">{t('sellerWalletScreen.editBankDetails')}</Text>
               </TouchableOpacity>
             </Card>

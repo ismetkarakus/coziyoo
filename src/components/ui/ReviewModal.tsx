@@ -5,7 +5,7 @@ import { Button } from './Button';
 import { StarRating } from './StarRating';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -107,7 +107,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <FontAwesome name="times" size={20} color={colors.text} />
+            <MaterialIcons name="close" size={20} color={colors.text} />
           </TouchableOpacity>
           <Text variant="heading" style={styles.title}>
             {t('reviewModal.title')}
@@ -188,7 +188,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                     onPress={() => removeImage(index)}
                     style={[styles.removeImageButton, { backgroundColor: colors.error }]}
                   >
-                    <FontAwesome name="times" size={12} color={colors.background} />
+                    <MaterialIcons name="close" size={12} color={colors.background} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -198,7 +198,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                   onPress={pickImage}
                   style={[styles.addImageButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 >
-                  <FontAwesome name="camera" size={20} color={colors.textSecondary} />
+                  <MaterialIcons name="photo-camera" size={20} color={colors.textSecondary} />
                   <Text variant="caption" style={{ color: colors.textSecondary, marginTop: 4 }}>
                     {t('reviewModal.addPhoto')}
                   </Text>

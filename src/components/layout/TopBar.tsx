@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { Text } from '../ui/Text';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import { useThemePreference } from '../../context/ThemeContext';
 
@@ -44,7 +44,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <FontAwesome name="arrow-left" size={20} color={colors.text} />
+          <MaterialIcons name="arrow-back" size={20} color={colors.text} />
         </TouchableOpacity>
       );
     }
@@ -89,8 +89,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                   style={styles.themeToggle}
                   activeOpacity={0.7}
                 >
-                  <FontAwesome
-                    name={colorScheme === 'dark' ? 'sun-o' : 'moon-o'}
+                  <MaterialIcons
+                    name={colorScheme === 'dark' ? 'light-mode' : 'dark-mode'}
                     size={18}
                     color={colors.text}
                   />

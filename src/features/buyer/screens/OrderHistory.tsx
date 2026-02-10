@@ -149,7 +149,7 @@ export const OrderHistory: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <WebSafeIcon name="arrow-left" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
       />

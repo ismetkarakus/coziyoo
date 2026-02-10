@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from './Text';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 interface StarRatingProps {
   rating: number;
@@ -63,14 +63,14 @@ export const StarRating: React.FC<StarRatingProps> = ({
       >
         {isHalfFilled ? (
           <View style={styles.halfStarContainer}>
-            <FontAwesome
+            <MaterialIcons
               name="star"
               size={starSize}
               color={emptyStarColor}
               style={styles.starBase}
             />
             <View style={[styles.halfStarOverlay, { width: starSize * 0.5 }]}>
-              <FontAwesome
+              <MaterialIcons
                 name="star"
                 size={starSize}
                 color={starColor}
@@ -78,7 +78,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
             </View>
           </View>
         ) : (
-          <FontAwesome
+          <MaterialIcons
             name={isFilled ? "star" : "star-o"}
             size={starSize}
             color={isFilled ? starColor : emptyStarColor}

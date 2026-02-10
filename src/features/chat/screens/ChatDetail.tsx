@@ -5,7 +5,7 @@ import { Text, Input, Button } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from '../../../hooks/useTranslation';
 
 const getMockMessages = (language: 'tr' | 'en') => {
@@ -208,7 +208,7 @@ export const ChatDetail: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <FontAwesome name="arrow-left" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={
@@ -271,7 +271,7 @@ export const ChatDetail: React.FC = () => {
             disabled={!message.trim()}
             activeOpacity={0.7}
           >
-            <FontAwesome 
+            <MaterialIcons 
               name="send" 
               size={16} 
               color={message.trim() ? 'white' : colors.textSecondary} 

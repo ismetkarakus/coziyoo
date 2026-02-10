@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 
@@ -29,7 +29,7 @@ export const HeaderBackButton: React.FC<HeaderBackButtonProps> = ({
       style={styles.backButton}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
-      <FontAwesome 
+      <MaterialIcons 
         name="chevron-left" 
         size={18} 
         color={colors.primary} 

@@ -69,7 +69,7 @@
                               "style": "heroStars",
                               "children": [
                                 {
-                                  "type": "FontAwesome",
+                                  "type": "MaterialIcons",
                                   "repeat": { "data": "ratingStars", "itemName": "star", "key": "id" },
                                   "props": {
                                     "name": { "$": "star.name" },
@@ -298,8 +298,8 @@
                                   "style": "menuSummaryItem",
                                   "children": [
                                     {
-                                      "type": "FontAwesome",
-                                      "props": { "name": "user", "size": 12, "color": "white" }
+                                      "type": "MaterialIcons",
+                                      "props": { "name": "person", "size": 12, "color": "white" }
                                     },
                                     {
                                       "type": "Text",
@@ -313,7 +313,7 @@
                                   "style": "menuSummaryItem",
                                   "children": [
                                     {
-                                      "type": "FontAwesome",
+                                      "type": "MaterialIcons",
                                       "props": { "name": "money", "size": 12, "color": "white" }
                                     },
                                     {
@@ -328,7 +328,7 @@
                                   "style": "menuSummaryItem",
                                   "children": [
                                     {
-                                      "type": "FontAwesome",
+                                      "type": "MaterialIcons",
                                       "props": { "name": "star", "size": 12, "color": "white" }
                                     },
                                     {

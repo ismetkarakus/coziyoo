@@ -3,8 +3,7 @@ import { View, StyleSheet, ScrollView, Image, TouchableOpacity, useWindowDimensi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { MaterialIcons } from '@expo/vector-icons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card, StarRating } from '../../../components/ui';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -302,7 +301,7 @@ export default function FoodDetailSimple() {
             accessibilityLabel="close"
             activeOpacity={0.7}
           >
-            <FontAwesome name="times" size={20} color={colors.text} />
+            <MaterialIcons name="close" size={20} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
             <Text variant="heading" weight="bold" style={styles.headerTitle}>
@@ -531,8 +530,8 @@ export default function FoodDetailSimple() {
             style={styles.counterButton}
             accessibilityLabel="decrease-quantity"
           >
-            <FontAwesome
-              name={quantity === 1 ? 'trash' : 'minus'}
+            <MaterialIcons
+              name={quantity === 1 ? 'delete' : 'remove'}
               size={18}
               color={quantity === 1 ? '#E53935' : colors.text}
             />
@@ -547,7 +546,7 @@ export default function FoodDetailSimple() {
             style={styles.counterButton}
             accessibilityLabel="increase-quantity"
           >
-            <FontAwesome name="plus" size={18} color="#2E7D32" />
+            <MaterialIcons name="add" size={18} color="#2E7D32" />
           </TouchableOpacity>
         </View>
 

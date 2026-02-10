@@ -4,7 +4,7 @@ import { Text } from './Text';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { PaymentMethod } from '../../services/paymentService';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from '../../hooks/useTranslation';
 
 interface PaymentMethodCardProps {
@@ -114,7 +114,7 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
                 onPress={onEdit}
                 style={[styles.actionButton, { backgroundColor: colors.primary }]}
               >
-                <FontAwesome name="edit" size={14} color={colors.background} />
+                <MaterialIcons name="edit" size={14} color={colors.background} />
                 <Text variant="caption" style={{ color: colors.background, marginLeft: 4 }}>
                   {t('paymentMethodCard.edit')}
                 </Text>
@@ -126,7 +126,7 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
                 onPress={onDelete}
                 style={[styles.actionButton, { backgroundColor: colors.error }]}
               >
-                <FontAwesome name="trash" size={14} color={colors.background} />
+                <MaterialIcons name="delete" size={14} color={colors.background} />
                 <Text variant="caption" style={{ color: colors.background, marginLeft: 4 }}>
                   {t('paymentMethodCard.delete')}
                 </Text>
@@ -138,7 +138,7 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
 
       {isSelected && (
         <View style={[styles.selectedIndicator, { backgroundColor: colors.primary }]}>
-          <FontAwesome name="check" size={12} color={colors.background} />
+          <MaterialIcons name="check" size={12} color={colors.background} />
         </View>
       )}
     </TouchableOpacity>

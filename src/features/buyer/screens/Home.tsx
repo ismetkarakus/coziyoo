@@ -4,7 +4,7 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, FoodCard, SearchBar, FilterModal, Button } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -1029,7 +1029,7 @@ export const Home: React.FC = () => {
         {/* Cook Filter Indicator */}
         {cookFilter.trim() && (
           <View style={[styles.cookFilterContainer, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}>
-            <FontAwesome name="user-circle" size={16} color={colors.primary} />
+            <MaterialIcons name="account-circle" size={16} color={colors.primary} />
             <Text variant="body" style={{ color: colors.primary, flex: 1 }}>
               {t('homeScreen.cookFilter', { cook: cookFilter })}
             </Text>
@@ -1042,7 +1042,7 @@ export const Home: React.FC = () => {
               }}
               style={[styles.cookFilterCloseButton, { backgroundColor: colors.primary }]}
             >
-              <FontAwesome name="times" size={12} color="white" />
+              <MaterialIcons name="close" size={12} color="white" />
             </TouchableOpacity>
           </View>
         )}

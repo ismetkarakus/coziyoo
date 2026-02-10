@@ -291,7 +291,7 @@ export const Profile: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <View style={styles.themeToggleContent}>
-                  <WebSafeIcon name="sun-o" size={16} color={colors.text} />
+                  <WebSafeIcon name="light-mode" size={16} color={colors.text} />
                   <Text variant="body" weight="semibold">
                     {t('profileScreen.theme.light')}
                   </Text>
@@ -307,7 +307,7 @@ export const Profile: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <View style={styles.themeToggleContent}>
-                  <WebSafeIcon name="moon-o" size={16} color={colors.text} />
+                  <WebSafeIcon name="dark-mode" size={16} color={colors.text} />
                   <Text variant="body" weight="semibold">
                     {t('profileScreen.theme.dark')}
                   </Text>
@@ -323,7 +323,7 @@ export const Profile: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <View style={styles.themeToggleContent}>
-                  <WebSafeIcon name="cog" size={16} color={colors.text} />
+                  <WebSafeIcon name="settings" size={16} color={colors.text} />
                   <Text variant="body" weight="semibold">
                     {t('profileScreen.theme.system')}
                   </Text>
