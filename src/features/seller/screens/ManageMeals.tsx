@@ -235,19 +235,23 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
             />
           </View>
 
-          <View style={styles.mealInfo}>
-            <Text variant="subheading" weight="semibold" numberOfLines={1}>
+        <View style={styles.mealInfo}>
+          <View style={styles.mealTitleRow}>
+            <Text variant="subheading" weight="semibold" numberOfLines={1} style={styles.mealTitle}>
               {meal.name}
             </Text>
-            <Text variant="body" color="primary" weight="semibold">
+            <Text variant="body" color="primary" weight="semibold" numberOfLines={1}>
               ₺{meal.price}
             </Text>
+          </View>
+          <View style={styles.mealMetaRow}>
             <Text variant="caption" color="textSecondary">
               {meal.category} • {meal.availableDates}
             </Text>
             <Text variant="caption" color="textSecondary">
               {t('manageMealsScreen.stockLabel')} {meal.currentStock}/{meal.dailyStock}
             </Text>
+          </View>
           </View>
         </View>
         <TouchableOpacity
@@ -454,6 +458,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.sm,
+    marginTop: Spacing.sm,
   },
   mealImageContainer: {
     marginRight: Spacing.md,
@@ -466,6 +471,20 @@ const styles = StyleSheet.create({
   mealInfo: {
     flex: 1,
     gap: Spacing.xs,
+    paddingTop: Spacing.sm,
+  },
+  mealTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  mealMetaRow: {
+    marginTop: Spacing.xs,
+    gap: 2,
+  },
+  mealTitle: {
+    flex: 1,
   },
   editFloatingButton: {
     position: 'absolute',
@@ -476,6 +495,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.surface,
     borderWidth: 1,
     borderColor: Colors.light.border,
+    zIndex: 2,
   },
   deleteFloatingButton: {
     position: 'absolute',
