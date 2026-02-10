@@ -301,7 +301,7 @@ export const AddMeal: React.FC = () => {
               setDeliveryOptions({ pickup: true, delivery: false });
               
               // Ana sayfaya dön
-              router.replace('/(seller)/dashboard');
+              router.replace('/(seller)/seller-panel');
             }
           }
         ]
@@ -739,7 +739,7 @@ export const AddMeal: React.FC = () => {
               setDeliveryOptions({ pickup: true, delivery: false });
               
               // Ana sayfaya dön
-              router.replace('/(seller)/dashboard');
+              router.replace('/(seller)/seller-panel');
             }
           }
         ]

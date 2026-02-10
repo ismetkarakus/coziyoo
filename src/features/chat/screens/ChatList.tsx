@@ -198,7 +198,7 @@ export const ChatList: React.FC = () => {
   const chats = getChats();
 
   const handleChatPress = (chatId: string, orderId: string, foodName: string, orderStatus: string) => {
-    router.push(`/(tabs)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(orderStatus)}`);
+    router.push(`/(buyer)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(orderStatus)}`);
   };
 
   const handleBackPress = () => {

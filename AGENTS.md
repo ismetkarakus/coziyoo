@@ -49,8 +49,8 @@
 /Users/drascom/Work Folder/coziyoo/
 ├── app/                          # Expo Router screens (file-based routing)
 │   ├── (auth)/                   # Auth route group (sign-in, sign-up, etc.)
-│   ├── (tabs)/                   # Buyer tab navigation (home, explore, cart, etc.)
-│   ├── (seller)/                 # Seller route group (dashboard, products, etc.)
+│   ├── (buyer)/                   # Buyer tab navigation (home, explore, cart, etc.)
+│   ├── (seller)/                 # Seller route group (seller-panel, products, etc.)
 │   ├── _layout.tsx               # Root layout with providers
 │   └── *.tsx                     # Other screens (modal, checkout, etc.)
 ├── src/
@@ -206,20 +206,20 @@ Uses **expo-router** with file-based routing and route groups:
 
 ### Route Groups
 - `(auth)/` - Authentication stack (sign-in, sign-up, forgot-password)
-- `(tabs)/` - Buyer bottom tab navigation (home, explore, cart, notifications, profile)
-- `(seller)/` - Seller bottom tab navigation (dashboard, products, orders, analytics)
+- `(buyer)/` - Buyer bottom tab navigation (home, explore, cart, notifications, profile)
+- `(seller)/` - Seller bottom tab navigation (seller-panel, products, orders, analytics)
 
 ### Key Route Files
 - `app/_layout.tsx` - Root layout with all providers (AuthProvider, CartProvider, etc.)
-- `app/(tabs)/_layout.tsx` - Buyer tab bar configuration
+- `app/(buyer)/_layout.tsx` - Buyer tab bar configuration
 - `app/(seller)/_layout.tsx` - Seller tab bar configuration
 - `app/(auth)/_layout.tsx` - Auth stack configuration
 
 ### Navigation Flow
 1. App starts at `(auth)` group (configured in `unstable_settings.initialRouteName`)
 2. AuthGuard redirects authenticated users to appropriate group:
-   - Sellers → `/(seller)/dashboard`
-   - Buyers → `/(tabs)/`
+   - Sellers → `/(seller)/seller-panel`
+   - Buyers → `/(buyer)/`
 3. Unauthenticated users trying to access protected routes are redirected to sign-in
 
 ---
@@ -234,7 +234,7 @@ Uses **expo-router** with file-based routing and route groups:
 
 ### User Types
 - `buyer` - Can only buy food
-- `seller` - Can sell food (has seller dashboard)
+- `seller` - Can sell food (has seller panel)
 - `both` - Can do both (switches between modes)
 
 ### AuthService Features

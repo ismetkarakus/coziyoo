@@ -13,11 +13,11 @@ export const OrderConfirmation: React.FC = () => {
   const { t } = useTranslation();
 
   const handleBackToHome = () => {
-    router.replace('/(tabs)');
+    router.replace('/(buyer)');
   };
 
   const handleViewOrders = () => {
-    router.push('/(tabs)/notifications');
+    router.push('/(buyer)/notifications');
   };
 
   return (

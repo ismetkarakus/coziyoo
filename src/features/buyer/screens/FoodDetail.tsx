@@ -339,11 +339,11 @@ export const FoodDetail: React.FC = () => {
     try {
       // Always go to home - safer since FoodDetail is now in main stack
       console.log('Going to home page...');
-      router.push('/(tabs)');
+      router.push('/(buyer)');
     } catch (error) {
       console.error('Navigation error:', error);
       // Fallback to home
-      router.replace('/(tabs)');
+      router.replace('/(buyer)');
     }
   };
 
@@ -687,7 +687,7 @@ export const FoodDetail: React.FC = () => {
             setPaymentRequest(null);
             
             // Navigate to orders or home
-            router.push('/(tabs)/orders');
+            router.push('/(buyer)/orders');
           }
         }
       ]
@@ -819,11 +819,11 @@ export const FoodDetail: React.FC = () => {
                           console.log('Cook filter saved to AsyncStorage');
                           
                           // Navigate directly to home with filter
-                          router.push('/(tabs)');
+                          router.push('/(buyer)');
                         } catch (error) {
                           console.error('Error setting cook filter:', error);
                           // Fallback to home
-                          router.push('/(tabs)');
+                          router.push('/(buyer)');
                         }
                       }}
                     >

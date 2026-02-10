@@ -55,7 +55,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         userData.userType === 'both' ||
         (userData as any).sellerEnabled === true;
       console.log('✅ User logged in, redirecting by role', { isSeller });
-      router.replace(isSeller ? '/(seller)/dashboard' : '/(tabs)');
+      router.replace(isSeller ? '/(seller)/seller-panel' : '/(buyer)');
       return;
     }
 

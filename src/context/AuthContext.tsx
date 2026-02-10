@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUserData(result.userData);
       if (result.userData) {
         const isSeller = result.userData.userType === 'seller' || result.userData.userType === 'both';
-        safeReplace(isSeller ? '/(seller)/dashboard' : '/(tabs)');
+        safeReplace(isSeller ? '/(seller)/seller-panel' : '/(buyer)');
       }
     } catch (error) {
       const mockSession = await authService.signInWithMockCredentials(email, password);
@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUserData(mockSession.userData);
         if (mockSession.userData) {
           const isSeller = mockSession.userData.userType === 'seller' || mockSession.userData.userType === 'both';
-          safeReplace(isSeller ? '/(seller)/dashboard' : '/(tabs)');
+          safeReplace(isSeller ? '/(seller)/seller-panel' : '/(buyer)');
         }
         return;
       }

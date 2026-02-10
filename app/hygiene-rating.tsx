@@ -252,7 +252,7 @@ export default function HygieneRating() {
       <TopBar
         title={copy.title}
         leftComponent={
-          <TouchableOpacity onPress={() => router.push('/(seller)/dashboard')} style={styles.sellerButton}>
+          <TouchableOpacity onPress={() => router.push('/(seller)/seller-panel')} style={styles.sellerButton}>
             <Text variant="body" color="text" style={styles.sellerText}>
               {copy.sellerLabel} <Text style={styles.sellerIcon}>●</Text>
             </Text>

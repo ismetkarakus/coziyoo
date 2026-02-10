@@ -103,7 +103,7 @@ export const Profile: React.FC = () => {
         router.push('/favorites');
         break;
       case 'messages':
-        router.push('/(tabs)/chat-list');
+        router.push('/(buyer)/chat-list');
         break;
       case 'notifications':
         router.push('/notification-settings');
@@ -271,65 +271,6 @@ export const Profile: React.FC = () => {
           </Text>
           <Card variant="default" padding="md" style={styles.sectionCard}>
             <LanguageSwitcher />
-          </Card>
-        </View>
-
-        {/* Theme */}
-        <View style={styles.section}>
-          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {t('profileScreen.sections.theme')}
-          </Text>
-          <Card variant="default" padding="md" style={styles.sectionCard}>
-            <View style={styles.themeToggleRow}>
-              <TouchableOpacity
-                onPress={() => setPreference('light')}
-                style={[
-                  styles.themeToggleButton,
-                  { borderColor: colors.border },
-                  preference === 'light' && { borderColor: colors.primary, backgroundColor: colors.surface },
-                ]}
-                activeOpacity={0.7}
-              >
-                <View style={styles.themeToggleContent}>
-                  <WebSafeIcon name="light-mode" size={16} color={colors.text} />
-                  <Text variant="body" weight="semibold">
-                    {t('profileScreen.theme.light')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setPreference('dark')}
-                style={[
-                  styles.themeToggleButton,
-                  { borderColor: colors.border },
-                  preference === 'dark' && { borderColor: colors.primary, backgroundColor: colors.surface },
-                ]}
-                activeOpacity={0.7}
-              >
-                <View style={styles.themeToggleContent}>
-                  <WebSafeIcon name="dark-mode" size={16} color={colors.text} />
-                  <Text variant="body" weight="semibold">
-                    {t('profileScreen.theme.dark')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setPreference('system')}
-                style={[
-                  styles.themeToggleButton,
-                  { borderColor: colors.border },
-                  preference === 'system' && { borderColor: colors.primary, backgroundColor: colors.surface },
-                ]}
-                activeOpacity={0.7}
-              >
-                <View style={styles.themeToggleContent}>
-                  <WebSafeIcon name="settings" size={16} color={colors.text} />
-                  <Text variant="body" weight="semibold">
-                    {t('profileScreen.theme.system')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
           </Card>
         </View>
 

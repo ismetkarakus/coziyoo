@@ -416,10 +416,10 @@ export default function FoodDetailSimple() {
               onPress={async () => {
                 try {
                   await AsyncStorage.setItem('cookFilter', cookName);
-                  router.push('/(tabs)');
+                  router.push('/(buyer)');
                 } catch (error) {
                   console.error('Error setting cook filter:', error);
-                  router.push('/(tabs)');
+                  router.push('/(buyer)');
                 }
               }}
             >

@@ -107,7 +107,7 @@ export const CheckoutScreen: React.FC = () => {
         [
           {
             text: t('checkoutScreen.alerts.goToOrders'),
-            onPress: () => router.replace('/(tabs)/orders'),
+            onPress: () => router.replace('/(buyer)/orders'),
           },
         ]
       );
@@ -145,7 +145,7 @@ export const CheckoutScreen: React.FC = () => {
           </Text>
           <Button
             title={t('checkoutScreen.continueShopping')}
-            onPress={() => router.replace('/(tabs)/')}
+            onPress={() => router.replace('/(buyer)/')}
             style={styles.continueButton}
           />
         </View>

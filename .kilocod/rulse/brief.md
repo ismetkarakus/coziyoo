@@ -22,7 +22,7 @@
 ## Project Structure
 - `app/`: Expo Router screens (file-based routing)
   - `(auth)/`: Auth route group
-  - `(tabs)/`: Buyer tab navigation
+  - `(buyer)/`: Buyer tab navigation
   - `(seller)/`: Seller route group
 - `src/`: Source code
   - `components/`: UI and layout components
@@ -35,5 +35,5 @@
 - **TypeScript**: Strict mode, interfaces over types, explicit return types.
 - **Naming**: PascalCase for components, camelCase for files/utilities.
 - **Imports**: React/Expo -> Libraries -> Absolute (@/*) -> Relative.
-- **Routing**: Use route groups for auth, buyer (tabs), and seller.
+- **Routing**: Use route groups for auth, buyer (buyer), and seller.
 - **i18n**: Support TR and UK locales via `CountryContext` and `useTranslation`.

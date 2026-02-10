@@ -3,14 +3,12 @@ import { useEffect } from 'react';
 
 export default function SellerScreen() {
   useEffect(() => {
-    // Redirect to seller dashboard
-    router.replace('/(seller)/dashboard');
+    // Redirect to sellers panel
+    router.replace('/(seller)/seller-panel');
   }, []);
 
   return null; // This component just redirects
 }
-
-
 
 
 

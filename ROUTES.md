@@ -11,7 +11,7 @@ The app uses expo-router with route groups for clean organization:
 
 ### Route Groups
 
-#### 1. Buyer Tabs - `app/(tabs)/`
+#### 1. Buyer Tabs - `app/(buyer)/`
 Bottom tab navigation for buyers:
 - **Home** (`index.tsx`) - Main landing page
 - **Explore** (`explore.tsx`) - Product discovery
@@ -27,7 +27,7 @@ Authentication flow:
 
 #### 3. Seller Tabs - `app/(seller)/`
 Bottom tab navigation for sellers:
-- **Dashboard** (`dashboard.tsx`) - Seller overview
+- **Seller Panel** (`seller-panel.tsx`) - Seller overview
 - **Products** (`products.tsx`) - Product management
 - **Orders** (`orders.tsx`) - Order management
 - **Analytics** (`analytics.tsx`) - Sales analytics
@@ -65,7 +65,7 @@ The route structure supports easy addition of:
 ```
 app/
 ├── _layout.tsx          # Root layout
-├── (tabs)/              # Buyer navigation
+├── (buyer)/              # Buyer navigation
 │   ├── _layout.tsx      # Tab layout
 │   ├── index.tsx        # Home
 │   ├── explore.tsx      # Explore
@@ -79,7 +79,7 @@ app/
 │   └── forgot-password.tsx # Password reset
 ├── (seller)/            # Seller navigation
 │   ├── _layout.tsx      # Seller tabs
-│   ├── dashboard.tsx    # Dashboard
+│   ├── seller-panel.tsx    # Seller Panel
 │   ├── products.tsx     # Products
 │   ├── orders.tsx       # Orders
 │   ├── analytics.tsx    # Analytics
@@ -87,8 +87,6 @@ app/
 ├── modal.tsx            # Modal screen
 └── +not-found.tsx       # 404 screen
 ```
-
-
 
 
 

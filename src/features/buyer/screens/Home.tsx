@@ -810,7 +810,7 @@ export const Home: React.FC = () => {
   const topBarOpacity = Math.max(0.3, Math.min(1, 1 - scrollY / 100));
 
   const handleProfilePress = () => {
-    router.push('/(tabs)/buyer-profile');
+    router.push('/(buyer)/buyer-profile');
   };
 
 
@@ -1038,7 +1038,7 @@ export const Home: React.FC = () => {
                 setCookFilter('');
                 // Clear URL params
                 // @ts-ignore
-                router.replace('/(tabs)');
+                router.replace('/(buyer)');
               }}
               style={[styles.cookFilterCloseButton, { backgroundColor: colors.primary }]}
             >

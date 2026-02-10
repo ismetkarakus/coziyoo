@@ -12,12 +12,14 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import sellerMock from '../../../mock/seller.json';
 import { useCountry } from '../../../context/CountryContext';
+import { useAuth } from '../../../context/AuthContext';
 
 export const SellerProfile: React.FC = () => {
   const { section } = useLocalSearchParams<{ section?: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
+  const { signOut } = useAuth();
   const { currentCountry } = useCountry();
   const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
   const complianceCopy = currentCountry.code === 'TR' ? localizedMock.panel.compliance.tr : localizedMock.panel.compliance.uk;
@@ -196,6 +198,36 @@ export const SellerProfile: React.FC = () => {
         [{ text: t('sellerProfileScreen.alerts.ok') }]
       );
     }
+  };
+
+  const handleSignOut = () => {
+    const runSignOut = async () => {
+      try {
+        await signOut();
+        router.replace('/(auth)/sign-in');
+      } catch (error) {
+        console.error('Sign out error:', error);
+        Alert.alert(t('sellerPanel.alerts.signOutTitle'), t('sellerPanel.alerts.signOutError'));
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      runSignOut();
+      return;
+    }
+
+    Alert.alert(
+      t('sellerPanel.alerts.signOutTitle'),
+      t('sellerPanel.alerts.signOutMessage'),
+      [
+        { text: t('sellerPanel.alerts.ok'), style: 'cancel' },
+        {
+          text: t('sellerPanel.alerts.ok'),
+          style: 'destructive',
+          onPress: runSignOut,
+        },
+      ]
+    );
   };
 
   const handleCancelSection = () => {
@@ -1085,6 +1117,16 @@ export const SellerProfile: React.FC = () => {
           )}
         </Card>
 
+        <TouchableOpacity
+          onPress={handleSignOut}
+          style={[styles.signOutButton, { backgroundColor: colors.error }]}
+          activeOpacity={0.7}
+        >
+          <Text variant="body" weight="semibold" style={{ color: 'white' }}>
+            {t('sellerPanel.signOutButton')}
+          </Text>
+        </TouchableOpacity>
+
         <View style={styles.bottomSpace} />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -1101,6 +1143,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: Spacing.xl,
     flexGrow: 1,
+  },
+  signOutButton: {
+    marginTop: Spacing.md,
+    marginHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   backButton: {
     padding: Spacing.xs,

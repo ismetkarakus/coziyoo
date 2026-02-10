@@ -4,7 +4,7 @@ export default function SellerLayout() {
   return (
     <Stack>
       <Stack.Screen 
-        name="dashboard" 
+        name="seller-panel" 
         options={{ 
           headerShown: false,
         }} 

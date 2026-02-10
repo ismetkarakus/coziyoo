@@ -39,7 +39,7 @@ export const CountrySelection: React.FC = () => {
     await AsyncStorage.setItem('onboardingCompleted', 'true');
     
     // Ana sayfaya yönlendir
-    router.replace('/(tabs)');
+    router.replace('/(buyer)');
   };
 
   const handleAutoDetect = async () => {
@@ -69,7 +69,7 @@ export const CountrySelection: React.FC = () => {
     
     await setCountry(defaultCountry);
     await AsyncStorage.setItem('onboardingCompleted', 'true');
-    router.replace('/(tabs)');
+    router.replace('/(buyer)');
   };
 
   return (

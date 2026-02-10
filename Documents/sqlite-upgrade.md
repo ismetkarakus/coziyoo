@@ -199,7 +199,7 @@ Check your terminal logs (where Expo is running). You should see:
 - `Database initialized successfully`
 
 ### 3. Debugging queries
-If you want to see exactly what is in the database, you can add this snippet to any screen (e.g., `app/(tabs)/index.tsx`):
+If you want to see exactly what is in the database, you can add this snippet to any screen (e.g., `app/(buyer)/index.tsx`):
 ```typescript
 import { getDB } from '../src/api/utils/db';
 

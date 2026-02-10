@@ -89,7 +89,7 @@ function RootLayoutNav() {
                 <WalletProvider>
                   <CartProvider>
               <Stack screenOptions={{ gestureEnabled: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false, gestureEnabled: false }} />
+          <Stack.Screen name="(buyer)" options={{ headerShown: false, gestureEnabled: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(seller)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />

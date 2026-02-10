@@ -69,7 +69,7 @@ export const Cart: React.FC = () => {
   const total = subtotal + deliveryFee;
 
   const handleCheckout = () => {
-    router.push('/(tabs)/payment');
+    router.push('/(buyer)/payment');
   };
 
   if (cartItems.length === 0) {
@@ -85,7 +85,7 @@ export const Cart: React.FC = () => {
           </Text>
           <Button 
             variant="primary" 
-            onPress={() => router.push('/(tabs)')}
+            onPress={() => router.push('/(buyer)')}
             style={styles.browseButton}
           >
             {t('cartScreen.browse')}

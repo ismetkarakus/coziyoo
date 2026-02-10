@@ -77,7 +77,7 @@ export const Orders: React.FC = () => {
 
   const handleTrackOrder = (order: any) => {
     router.push({
-      pathname: '/(tabs)/order-tracking',
+      pathname: '/(buyer)/order-tracking',
       params: {
         orderNumber: order.orderNumber,
         cookName: order.cookName,
@@ -89,7 +89,7 @@ export const Orders: React.FC = () => {
     // For now, navigate to tracking page with order details
     // Later can be a separate order details page
     router.push({
-      pathname: '/(tabs)/order-tracking',
+      pathname: '/(buyer)/order-tracking',
       params: {
         orderNumber: order.orderNumber,
         cookName: order.cookName,
@@ -191,7 +191,7 @@ export const Orders: React.FC = () => {
           </Text>
           <Button 
             variant="primary" 
-            onPress={() => router.push('/(tabs)')}
+            onPress={() => router.push('/(buyer)')}
             style={styles.browseButton}
           >
             {t('ordersScreen.browse')}

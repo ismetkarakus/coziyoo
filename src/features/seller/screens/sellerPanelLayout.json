@@ -367,25 +367,6 @@
             }
           ]
         },
-        {
-          "type": "View",
-          "style": "signOutContainer",
-          "children": [
-            {
-              "type": "TouchableOpacity",
-              "style": ["signOutButton", { "$": "signOutButtonBackgroundStyle" }],
-              "props": { "onPress": { "$": "handlers.signOut" }, "activeOpacity": 0.8 },
-              "children": [
-                {
-                  "type": "Text",
-                  "style": "signOutButtonText",
-                  "props": { "variant": "body", "weight": "semibold" },
-                  "text": { "$": "panel.signOutButton" }
-                }
-              ]
-            }
-          ]
-        },
         { "type": "View", "style": "bottomSpace" }
       ]
     }

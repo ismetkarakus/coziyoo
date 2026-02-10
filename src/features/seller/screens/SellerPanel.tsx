@@ -102,7 +102,7 @@ export const SellerPanel: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed - navigating to home'); // Debug log
-    router.push('/(tabs)'); // Navigate to home/main screen
+    router.push('/(buyer)'); // Navigate to home/main screen
   };
 
   const handleSignOut = () => {

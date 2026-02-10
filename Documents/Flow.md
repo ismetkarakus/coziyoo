@@ -31,7 +31,7 @@ Coziyoo is an Expo + React Native app using expo-router for navigation and Fireb
 
 ## 5) Navigation & Routing
 - Routing uses expo-router with route groups:
-  - Buyer tabs: `app/(tabs)/` (home, explore, cart, notifications, profile, etc.)
+  - Buyer tabs: `app/(buyer)/` (home, explore, cart, notifications, profile, etc.)
   - Seller tabs: `app/(seller)/` (dashboard, orders, products, analytics, etc.)
   - Auth flow: `app/(auth)/` (sign-in, sign-up, forgot-password)
   - Standalone screens: `app/food-detail.tsx`, `app/checkout.tsx`, `app/order-history.tsx`, etc.
@@ -105,7 +105,7 @@ Cache troubleshooting:
 - See `CLEAR_CACHE.md` for Expo cache reset and test scenarios.
 
 ## 11) Key Files for Development
-- Routing: `app/_layout.tsx`, `app/(tabs)/_layout.tsx`, `app/(seller)/_layout.tsx`
+- Routing: `app/_layout.tsx`, `app/(buyer)/_layout.tsx`, `app/(seller)/_layout.tsx`
 - Auth: `src/context/AuthContext.tsx`, `src/components/auth/AuthGuard.tsx`, `src/services/authService.ts`
 - Data: `src/services/foodService.ts`, `src/services/chatService.ts`, `src/services/reviewService.ts`
 - UI kit: `src/components/ui/*`

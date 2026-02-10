@@ -280,7 +280,7 @@ export default function AdminPanel() {
       <TopBar
         title="🛠️ Admin Panel"
         leftComponent={
-          <TouchableOpacity onPress={() => router.push('/(seller)/dashboard')} style={styles.sellerButton}>
+          <TouchableOpacity onPress={() => router.push('/(seller)/seller-panel')} style={styles.sellerButton}>
             <Text variant="body" color="text" style={styles.sellerText}>
               Seller <Text style={styles.sellerIcon}>●</Text>
             </Text>

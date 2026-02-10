@@ -22,7 +22,7 @@ export const SellerMessages: React.FC = () => {
 
   const handleChatPress = (chatId: string, orderId: string, foodName: string, status: SellerChatStatus) => {
     const statusLabel = t(`sellerMessagesScreen.status.${status}`);
-    router.push(`/(tabs)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(statusLabel)}`);
+    router.push(`/(buyer)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(statusLabel)}`);
   };
 
   const getStatusColor = (status: SellerChatStatus) => {

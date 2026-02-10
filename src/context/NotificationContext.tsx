@@ -75,8 +75,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         // Navigate to chat
         router.push(`/chat?id=${data.chatId}`);
       } else if (data?.type === 'low_stock') {
-        // Navigate to seller dashboard
-        router.push('/(seller)/dashboard');
+        // Navigate to sellers panel
+        router.push('/(seller)/seller-panel');
       }
     });
 

@@ -116,7 +116,7 @@ export interface PaginatedResponse<T = any> {
 
 // Navigation types
 export type RootStackParamList = {
-  '(tabs)': undefined;
+  '(buyer)': undefined;
   '(auth)': undefined;
   '(seller)': undefined;
   modal: undefined;
@@ -139,14 +139,12 @@ export type AuthStackParamList = {
 };
 
 export type SellerStackParamList = {
-  dashboard: undefined;
+  'seller-panel': undefined;
   products: undefined;
   orders: undefined;
   analytics: undefined;
   'seller-profile': undefined;
 };
-
-
 
 
 

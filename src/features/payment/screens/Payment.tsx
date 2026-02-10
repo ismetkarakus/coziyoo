@@ -89,7 +89,7 @@ export const Payment: React.FC = () => {
                     text: t('paymentScreen.alerts.ok'),
                     onPress: () => {
                       clearCart();
-                      router.push('/(tabs)/orders');
+                      router.push('/(buyer)/orders');
                     },
                   },
                 ]

@@ -39,12 +39,20 @@ export default function TabLayout() {
   const buttonBg = colors.primary;
   const buttonText = colors.card;
 
+  const handleCenterPress = () => {
+    if (isSeller) {
+      router.push('/(seller)/seller-panel' as any);
+      return;
+    }
+    router.push('/(buyer)' as any);
+  };
+
   const handleProfilePress = () => {
     if (isSeller) {
       router.push('/(seller)/seller-profile' as any);
       return;
     }
-    router.push('/(tabs)/buyer-profile' as any);
+    router.push('/(buyer)/buyer-profile' as any);
   };
 
   const renderCompactTabButton = (props: any, onPressOverride?: () => void) => {
@@ -184,7 +192,7 @@ export default function TabLayout() {
             return (
               <View style={[style, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
                 <TouchableOpacity
-                  onPress={handleProfilePress}
+                  onPress={handleCenterPress}
                   onLongPress={onLongPress}
                   accessibilityRole="button"
                   accessibilityLabel={accessibilityLabel || t('tabs.profileShortcut')}

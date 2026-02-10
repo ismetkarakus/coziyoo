@@ -16,7 +16,7 @@
 │              ┌─────────────────────┼─────────────────────┐                              │
 │              ▼                     ▼                     ▼                              │
 │      ┌──────────────┐    ┌──────────────┐    ┌──────────────────┐                      │
-│      │   (auth)     │    │   (tabs)     │    │    (seller)      │                      │
+│      │   (auth)     │    │   (buyer)     │    │    (seller)      │                      │
 │      │ Auth Stack   │    │ Buyer Tabs   │    │  Seller Stack    │                      │
 │      └──────────────┘    └──────────────┘    └──────────────────┘                      │
 │                                                                                         │
@@ -79,11 +79,11 @@
 
 ---
 
-## 🛒 Buyer Tab Group (app/(tabs)/)
+## 🛒 Buyer Tab Group (app/(buyer)/)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                           (tabs) - Buyer Bottom Tab Nav                              │
+│                           (buyer) - Buyer Bottom Tab Nav                              │
 │                           TabLayout (Tabs Navigator)                                 │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                     │
@@ -141,7 +141,7 @@
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                     │
 │                              ┌─────────────┐                                        │
-│                              │  dashboard  │ ◀── Entry Point (Seller Home)         │
+│                              │ seller-panel │ ◀── Entry Point (Seller Home)         │
 │                              │   (main)    │                                        │
 │                              └──────┬──────┘                                        │
 │                                     │                                               │
@@ -175,7 +175,7 @@
 **Screens & Source Mapping:**
 | Route File | Screen Component | Purpose |
 |------------|------------------|---------|
-| `dashboard.tsx` | `SellerPanel.tsx` | Seller dashboard home |
+| `seller-panel.tsx` | `SellerPanel.tsx` | Seller panel home |
 | `products.tsx` | `ManageMeals.tsx` | Product management list |
 | `manage-meals.tsx` | `ManageMeals.tsx` | Alternative meal list |
 | `add-meal.tsx` | `AddMeal.tsx` | Create new meal listing |
@@ -439,7 +439,7 @@
 |----------|-------|-------|
 | **Auth Routes** | 7 | index, sign-in, sign-up, user-type-selection, buyer-register, seller-register, forgot-password |
 | **Buyer Tabs** | 13 | index, cart, messages, notifications, buyer-profile, explore, seller, orders, order-confirmation, order-tracking, chat-list, chat-detail, payment |
-| **Seller Routes** | 14 | dashboard, products, add-meal, edit-meal, meal-preview, orders, analytics, wallet, earnings, ratings, seller-profile, messages, delivery-settings, manage-meals |
+| **Seller Routes** | 14 | seller-panel, products, add-meal, edit-meal, meal-preview, orders, analytics, wallet, earnings, ratings, seller-profile, messages, delivery-settings, manage-meals |
 | **Standalone Screens** | 32 | food-detail, food-detail-order, checkout, wallet, personal-info, change-password, addresses, favorites, location-settings, notification-settings, help-center, contact, about, order-history, admin-panel, terms-and-conditions, council-registration, hygiene-rating, hygiene-certificate, allergen-declaration, insurance-details, is-yeri-sigortasi, gida-isletme-belgesi, vergi-levhasi, gida-guvenligi-egitimi, kvkk-uyumluluk, country-selection, chat, chat-list, seller-public-profile, buyer-wallet, +not-found |
 | **System** | 2 | modal, +html |
 | **TOTAL PAGES** | **68** | |
