@@ -9,7 +9,6 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from "react-native";
-import Toast from "react-native-toast-message";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -60,7 +59,11 @@ type FoodCardProps = {
   availableDates?: string;
   currentStock?: number;
   dailyStock?: number;
-  onAddToCart?: (id: string, quantity: number, deliveryOption?: DeliveryMode) => void;
+  onAddToCart?: (
+    id: string,
+    quantity: number,
+    deliveryOption?: DeliveryMode
+  ) => void | boolean | Promise<void | boolean>;
   maxDeliveryDistance?: number;
   country?: string;
   category?: string;
@@ -255,14 +258,6 @@ export function FoodCard({
 
   const handleAddToCart = () => {
     onAddToCart?.(id, 1, deliveryMode);
-    Toast.show({
-      type: "success",
-      text1: t("foodCard.alerts.addToCartTitle"),
-      text2: t("foodCard.alerts.addToCartMessage", { count: 1, name }),
-      position: "bottom",
-      bottomOffset: 90,
-      visibilityTime: 2000,
-    });
   };
 
   return (

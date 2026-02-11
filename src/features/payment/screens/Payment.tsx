@@ -11,13 +11,23 @@ import { useCart } from '../../../context/CartContext';
 
 type PaymentMethod = 'card' | 'apple_pay' | 'google_pay';
 
+interface SavedCard {
+  id: string;
+  type: 'visa' | 'mastercard';
+  lastFour: string;
+  expiryMonth: string;
+  expiryYear: string;
+  holderName: string;
+  isDefault: boolean;
+}
+
 export const Payment: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('card');
-  const savedCards = [
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([
     {
       id: '1',
       type: 'visa',
@@ -36,7 +46,7 @@ export const Payment: React.FC = () => {
       holderName: t('paymentScreen.mockCardHolder'),
       isDefault: false,
     },
-  ];
+  ]);
   const defaultCardId = savedCards.find(card => card.isDefault)?.id || savedCards[0]?.id;
   const [selectedCard, setSelectedCard] = useState(defaultCardId);
 
@@ -101,6 +111,29 @@ export const Payment: React.FC = () => {
     );
   };
 
+  const handleAddCard = () => {
+    const randomLastFour = `${Math.floor(1000 + Math.random() * 9000)}`;
+    const newCard: SavedCard = {
+      id: `${Date.now()}`,
+      type: Math.random() > 0.5 ? 'visa' : 'mastercard',
+      lastFour: randomLastFour,
+      expiryMonth: '12',
+      expiryYear: '29',
+      holderName: t('paymentScreen.mockCardHolder'),
+      isDefault: false,
+    };
+
+    setSavedCards((prevCards) => [...prevCards, newCard]);
+    setSelectedCard(newCard.id);
+
+    Alert.alert(
+      currentLanguage === 'tr' ? 'Kart Eklendi' : 'Card Added',
+      currentLanguage === 'tr'
+        ? `Yeni kartiniz eklendi (**** ${randomLastFour}).`
+        : `Your new card was added (**** ${randomLastFour}).`
+    );
+  };
+
   const renderPaymentMethod = (method: PaymentMethod, title: string, icon: string, available: boolean = true) => (
     <TouchableOpacity
       key={method}
@@ -134,7 +167,7 @@ export const Payment: React.FC = () => {
     </TouchableOpacity>
   );
 
-  const renderSavedCard = (card: any) => (
+  const renderSavedCard = (card: SavedCard) => (
     <TouchableOpacity
       key={card.id}
       onPress={() => setSelectedCard(card.id)}
@@ -185,8 +218,8 @@ export const Payment: React.FC = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
         title={t('paymentScreen.title')} 
-        leftIcon="arrow-back"
-        onLeftPress={() => router.back()}
+        showBack
+        onBack={() => router.replace('/(buyer)/buyer-profile')}
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -238,7 +271,7 @@ export const Payment: React.FC = () => {
               {savedCards.map(renderSavedCard)}
             </View>
             
-            <TouchableOpacity style={styles.addCardButton}>
+            <TouchableOpacity style={styles.addCardButton} onPress={handleAddCard} activeOpacity={0.75}>
               <MaterialIcons name="add" size={16} color={colors.primary} />
               <Text variant="body" color="primary" style={{ marginLeft: Spacing.sm }}>
                 {t('paymentScreen.addCard')}
@@ -285,7 +318,7 @@ export const Payment: React.FC = () => {
         <Button
           variant="outline"
           fullWidth
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(buyer)/buyer-profile')}
           style={styles.cancelButton}
         >
           {t('paymentScreen.cancel')}

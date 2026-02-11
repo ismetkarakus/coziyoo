@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput, Alert, Modal } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -381,6 +382,7 @@ export const Home: React.FC = () => {
       if (newStock <= 2) {
         sendLowStockNotification(food.name, newStock);
       }
+      return true;
     } catch (error) {
       console.error('Error updating stock:', error);
       // Revert local stock change on error
@@ -389,6 +391,7 @@ export const Home: React.FC = () => {
         [payload.originalId]: payload.currentStock
       }));
       Alert.alert(t('homeScreen.alerts.stockUpdateErrorTitle'), t('homeScreen.alerts.stockUpdateErrorMessage'));
+      return false;
     }
   };
 
@@ -455,10 +458,10 @@ export const Home: React.FC = () => {
               firebaseFood,
             });
             setAllergenModalVisible(true);
-            return;
+            return false;
           }
 
-          await finalizeAddToCart({
+          const added = await finalizeAddToCart({
             food,
             quantity,
             deliveryOption: finalDeliveryOption,
@@ -470,6 +473,17 @@ export const Home: React.FC = () => {
             newStock,
             firebaseFood,
           });
+          if (added) {
+            Toast.show({
+              type: 'success',
+              text1: t('foodCard.alerts.addToCartTitle'),
+              text2: t('foodCard.alerts.addToCartMessage', { count: quantity, name: food.name }),
+              position: 'bottom',
+              bottomOffset: 90,
+              visibilityTime: 1800,
+            });
+          }
+          return added;
         } catch (error) {
           console.error('Error updating stock:', error);
           // Revert local stock change on error
@@ -478,11 +492,14 @@ export const Home: React.FC = () => {
             [originalId]: currentStock
           }));
           Alert.alert(t('homeScreen.alerts.stockUpdateErrorTitle'), t('homeScreen.alerts.stockUpdateErrorMessage'));
+          return false;
         }
       } else {
         Alert.alert(t('homeScreen.alerts.stockInsufficientTitle'), t('homeScreen.alerts.stockInsufficientMessage', { count: currentStock }));
+        return false;
       }
     }
+    return false;
   };
 
   const handleFoodPress = (food: any) => {
@@ -892,7 +909,17 @@ export const Home: React.FC = () => {
                   setAllergenModalMatches([]);
                   setAllergenConfirmChecked(false);
                   if (next) {
-                    await finalizeAddToCart(next);
+                    const added = await finalizeAddToCart(next);
+                    if (added) {
+                      Toast.show({
+                        type: 'success',
+                        text1: t('foodCard.alerts.addToCartTitle'),
+                        text2: t('foodCard.alerts.addToCartMessage', { count: next.quantity, name: next.food.name }),
+                        position: 'bottom',
+                        bottomOffset: 90,
+                        visibilityTime: 1800,
+                      });
+                    }
                   }
                 }}
                 activeOpacity={allergenConfirmChecked ? 0.8 : 1}

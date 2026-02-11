@@ -1,31 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Platform } from 'react-native';
-import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Text, Card, LanguageSwitcher } from '../../../components/ui';
+import { router } from 'expo-router';
+
 import { TopBar } from '../../../components/layout';
+import { Text } from '../../../components/ui';
+import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
+import { useAuth } from '../../../context/AuthContext';
+import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
-import { useTranslation } from '../../../hooks/useTranslation';
-import { useAuth } from '../../../context/AuthContext';
-import { useThemePreference } from '../../../context/ThemeContext';
-import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
 
-const getProfileSections = (t: (key: string) => string) => ([
-  {
-    id: 'support',
-    title: t('profileScreen.items.contact'),
-    items: [
-      { id: 'contact', title: t('profileScreen.items.contact'), icon: '📞' },
-    ],
-  },
-]);
+interface QuickActionItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+}
+
+interface RowItem {
+  id: string;
+  title: string;
+  icon: string;
+  value?: string;
+}
 
 const getDefaultUserData = (language: 'tr' | 'en') => ({
-  name: language === 'en' ? 'Ahmet Yilmaz' : 'Ahmet Yılmaz',
+  name: language === 'en' ? 'Ahmet Yilmaz' : 'Ahmet Yilmaz',
   email: 'ahmet@example.com',
-  location: language === 'en' ? 'Kadikoy, Istanbul' : 'Kadıköy, İstanbul',
-  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+  location: language === 'en' ? 'Kadikoy, Istanbul' : 'Kadikoy, Istanbul',
+  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=180&h=180&fit=crop&crop=face',
 });
 
 export const Profile: React.FC = () => {
@@ -33,51 +37,32 @@ export const Profile: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const { signOut } = useAuth();
-  const { preference, setPreference } = useThemePreference();
+
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
-  const [forceUpdate, setForceUpdate] = useState(0);
-  const profileSections = getProfileSections(t);
   const defaultUserData = getDefaultUserData(currentLanguage);
 
-  // Load profile data on component mount
   useEffect(() => {
-    loadProfileData();
-  }, []);
+    const loadProfileData = async () => {
+      try {
+        const savedProfile = await AsyncStorage.getItem('buyerProfile');
+        if (savedProfile) {
+          const profileData = JSON.parse(savedProfile);
+          setAvatarUri(profileData.avatarUri || null);
+          return;
+        }
 
-  const loadProfileData = async () => {
-    try {
-      // Önce buyerProfile'dan yükle
-      const savedProfile = await AsyncStorage.getItem('buyerProfile');
-      if (savedProfile) {
-        const profileData = JSON.parse(savedProfile);
-        setAvatarUri(profileData.avatarUri || null);
-      } else {
-        // Eğer buyerProfile yoksa personalInfo'dan yükle
         const personalInfo = await AsyncStorage.getItem('personalInfo');
         if (personalInfo) {
           const personalData = JSON.parse(personalInfo);
           setAvatarUri(personalData.avatar || null);
         }
+      } catch (error) {
+        console.error('Error loading buyer profile data:', error);
       }
-    } catch (error) {
-      console.error('Error loading buyer profile data:', error);
-    }
-  };
+    };
 
-  const saveProfileData = async () => {
-    try {
-      const profileData = {
-        avatarUri,
-        updatedAt: new Date().toISOString(),
-      };
-      await AsyncStorage.setItem('buyerProfile', JSON.stringify(profileData));
-      console.log('Buyer profile data saved successfully');
-    } catch (error) {
-      console.error('Error saving buyer profile data:', error);
-      throw error;
-    }
-  };
-
+    loadProfileData();
+  }, []);
 
   const handleItemPress = (itemId: string) => {
     switch (itemId) {
@@ -94,9 +79,10 @@ export const Profile: React.FC = () => {
         router.push('/location-settings');
         break;
       case 'wallet':
-        router.push('/buyer-wallet');
+        router.push('/(buyer)/payment');
         break;
       case 'order-history':
+      case 'orders':
         router.push('/order-history');
         break;
       case 'favorites':
@@ -105,17 +91,23 @@ export const Profile: React.FC = () => {
       case 'messages':
         router.push('/(buyer)/chat-list');
         break;
-      case 'notifications':
-        router.push('/notification-settings');
+      case 'support':
+      case 'contact':
+        router.push('/contact');
         break;
       case 'help':
         router.push('/help-center');
         break;
-      case 'contact':
-        router.push('/contact');
+      case 'notifications':
+        router.push('/notification-settings');
         break;
-      case 'about':
-        router.push('/about');
+      case 'language':
+        Alert.alert(
+          currentLanguage === 'tr' ? 'Dil ayari' : 'Language setting',
+          currentLanguage === 'tr'
+            ? 'Dil degistirme icin ana ekrandaki dil seciciyi kullanabilirsiniz.'
+            : 'Use the language switcher from the main flow to change language.'
+        );
         break;
       default:
         Alert.alert(
@@ -158,138 +150,244 @@ export const Profile: React.FC = () => {
     );
   };
 
+  const quickActions: QuickActionItem[] = useMemo(
+    () => [
+      {
+        id: 'orders',
+        title: currentLanguage === 'tr' ? 'Siparislerim' : 'My Orders',
+        subtitle:
+          currentLanguage === 'tr' ? 'Son siparislerini goruntule' : 'View your latest orders',
+        icon: 'event-available',
+      },
+      {
+        id: 'addresses',
+        title: t('profileScreen.items.addresses'),
+        subtitle:
+          currentLanguage === 'tr'
+            ? 'Ev, is ve konum ayarlari'
+            : 'Home, work and location settings',
+        icon: 'location-on',
+      },
+      {
+        id: 'wallet',
+        title: currentLanguage === 'tr' ? 'Kartlarim' : 'My Cards',
+        subtitle: currentLanguage === 'tr' ? 'Kart ekle ve yonet' : 'Add and manage cards',
+        icon: 'credit-card',
+      },
+      {
+        id: 'help',
+        title: currentLanguage === 'tr' ? 'Destek' : 'Support',
+        subtitle: currentLanguage === 'tr' ? 'Yardim merkezi' : 'Help center',
+        icon: 'phone',
+      },
+    ],
+    [currentLanguage, t]
+  );
+
+  const accountRows: RowItem[] = useMemo(
+    () => [
+      {
+        id: 'change-password',
+        title: t('profileScreen.items.changePassword'),
+        icon: 'lock',
+      },
+      {
+        id: 'language',
+        title: currentLanguage === 'tr' ? 'Dil' : 'Language',
+        icon: 'translate',
+        value: currentLanguage === 'tr' ? 'Turkce' : 'English',
+      },
+    ],
+    [currentLanguage, t]
+  );
+
+  const shoppingRows: RowItem[] = useMemo(
+    () => [
+      {
+        id: 'favorites',
+        title: t('profileScreen.items.favorites'),
+        icon: 'heart',
+      },
+      {
+        id: 'messages',
+        title: t('profileScreen.items.messages'),
+        icon: 'chat',
+        value: currentLanguage === 'tr' ? '3 yeni' : '3 new',
+      },
+    ],
+    [currentLanguage, t]
+  );
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopBar
-        title={t('profileScreen.title')}
-        titleStyle={{ fontSize: 24, color: colors.primary }}
-      />
-      
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* User Info */}
-        <Card variant="default" padding="md" style={styles.userCard}>
-          <View style={styles.userInfo}>
-            <View style={styles.avatarContainer}>
-              <Image 
-                key={`${avatarUri || 'default'}-${forceUpdate}`}
-                source={avatarUri ? { uri: avatarUri } : { uri: defaultUserData.avatar }}
-                style={styles.avatarImage}
-                defaultSource={{ uri: 'https://via.placeholder.com/150x150/7FAF9A/FFFFFF?text=A' }}
-                onLoad={() => console.log('Buyer avatar loaded:', avatarUri)}
-                onError={(error) => console.log('Buyer avatar error:', error)}
-              />
-            </View>
-            <View style={styles.userDetails}>
-              <Text variant="subheading" weight="semibold">
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+      <TopBar title={t('profileScreen.title')} titleStyle={{ fontSize: 28, color: colors.text }} />
+
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <View style={styles.profileRow}>
+            <Image
+              source={avatarUri ? { uri: avatarUri } : { uri: defaultUserData.avatar }}
+              style={[styles.avatarImage, { borderColor: colors.primary }]}
+            />
+
+            <View style={styles.profileInfo}>
+              <Text variant="subheading" weight="bold" style={styles.profileName}>
                 {defaultUserData.name}
               </Text>
-              <Text variant="body" color="textSecondary">
-                {defaultUserData.email}
-              </Text>
-              <Text variant="caption" color="textSecondary">
+              <Text variant="body" color="textSecondary" style={styles.profileSubtext}>
                 {defaultUserData.location}
               </Text>
+              <View style={styles.locationRow}>
+                <WebSafeIcon name="location-on" size={17} color={colors.textSecondary} />
+                <Text variant="caption" color="textSecondary">
+                  {defaultUserData.location}
+                </Text>
+              </View>
             </View>
+
+            <TouchableOpacity
+              style={[styles.editButton, { backgroundColor: colors.surface }]}
+              onPress={() => handleItemPress('personal-info')}
+              activeOpacity={0.75}
+            >
+              <Text variant="body" weight="semibold" color="textSecondary">
+                {currentLanguage === 'tr' ? 'Duzenle' : 'Edit'}
+              </Text>
+              <WebSafeIcon name="edit" size={18} color={colors.textSecondary} style={styles.editIcon} />
+            </TouchableOpacity>
           </View>
-        </Card>
 
-        {/* Quick Actions under profile */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.quickActionItem}
-            onPress={() => handleItemPress('personal-info')}
-            activeOpacity={0.7}
-          >
-            <Text variant="body" weight="semibold" style={styles.quickActionText}>
-              👤 {t('profileScreen.items.personalInfo')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionItem}
-            onPress={() => handleItemPress('change-password')}
-            activeOpacity={0.7}
-          >
-            <Text variant="body" weight="semibold" style={styles.quickActionText}>
-              🔒 {t('profileScreen.items.changePassword')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionItem}
-            onPress={() => handleItemPress('order-history')}
-            activeOpacity={0.7}
-          >
-            <Text variant="body" weight="semibold" style={styles.quickActionText}>
-              📋 {t('profileScreen.items.orderHistory')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionItem}
-            onPress={() => handleItemPress('favorites')}
-            activeOpacity={0.7}
-          >
-            <Text variant="body" weight="semibold" style={styles.quickActionText}>
-              ❤️ {t('profileScreen.items.favorites')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionItem}
-            onPress={() => handleItemPress('location-settings')}
-            activeOpacity={0.7}
-          >
-            <Text variant="body" weight="semibold" style={styles.quickActionText}>
-              🗺️ {t('profileScreen.items.locationSettings')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionItem}
-            onPress={() => handleItemPress('addresses')}
-            activeOpacity={0.7}
-          >
-            <Text variant="body" weight="semibold" style={styles.quickActionText}>
-              📍 {t('profileScreen.items.addresses')}
-            </Text>
-          </TouchableOpacity>
+          <View style={[styles.quickGrid, { borderTopColor: colors.border }]}>
+            {quickActions.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.quickCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                activeOpacity={0.75}
+                onPress={() => handleItemPress(item.id)}
+              >
+                <View style={styles.quickTitleRow}>
+                  <WebSafeIcon name={item.icon} size={20} color={colors.primary} />
+                  <Text variant="body" weight="semibold" style={styles.quickTitle}>
+                    {item.title}
+                  </Text>
+                </View>
+                <Text variant="caption" color="textSecondary">
+                  {item.subtitle}
+                </Text>
+                <WebSafeIcon
+                  name="chevron-right"
+                  size={18}
+                  color={colors.textSecondary}
+                  style={styles.quickArrow}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
-        {/* Contact Card (Language button style) */}
-        <Card variant="default" padding="md" style={styles.sectionCard}>
-          <TouchableOpacity
-            onPress={() => handleItemPress('contact')}
-            style={[styles.contactButton, { borderColor: colors.border }]}
-            activeOpacity={0.7}
-          >
-            <Text variant="body" weight="semibold">
-              {t('profileScreen.items.contact')}
-            </Text>
-          </TouchableOpacity>
-        </Card>
-
-        {/* Language */}
-        <View style={styles.section}>
-          <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-            {t('profileScreen.sections.language')}
-          </Text>
-          <Card variant="default" padding="md" style={styles.sectionCard}>
-            <LanguageSwitcher />
-          </Card>
+        <SectionTitle label={currentLanguage === 'tr' ? 'Hesap' : 'Account'} color={colors.text} />
+        <View style={[styles.groupCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {accountRows.map((item, index) => (
+            <SectionRow
+              key={item.id}
+              item={item}
+              isLast={index === accountRows.length - 1}
+              colors={colors}
+              onPress={handleItemPress}
+            />
+          ))}
         </View>
 
-        {/* Sign Out */}
+        <SectionTitle label={currentLanguage === 'tr' ? 'Alisveris' : 'Shopping'} color={colors.text} />
+        <View style={styles.dualGrid}>
+          {shoppingRows.map((item) => (
+            <SquareActionCard key={item.id} item={item} colors={colors} onPress={handleItemPress} />
+          ))}
+        </View>
+
         <TouchableOpacity
+          style={[styles.signOutButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          activeOpacity={0.75}
           onPress={handleSignOut}
-          style={[styles.signOutButton, { backgroundColor: colors.error }]}
-          activeOpacity={0.7}
         >
-          <Text variant="body" weight="semibold" style={{ color: 'white' }}>
+          <WebSafeIcon name="logout" size={21} color={colors.text} />
+          <Text variant="body" weight="bold" style={styles.signOutLabel}>
             {t('profileScreen.alerts.signOutConfirm')}
           </Text>
         </TouchableOpacity>
-
-        <View style={styles.bottomSpace} />
       </ScrollView>
     </View>
   );
 };
+
+const SectionTitle: React.FC<{ label: string; color: string }> = ({ label, color }) => (
+  <Text variant="subheading" weight="bold" style={{ color, marginBottom: Spacing.sm }}>
+    {label}
+  </Text>
+);
+
+const SectionRow: React.FC<{
+  item: RowItem;
+  isLast: boolean;
+  colors: typeof Colors.light;
+  onPress: (id: string) => void;
+}> = ({ item, isLast, colors, onPress }) => (
+  <TouchableOpacity
+    style={[styles.rowItem, !isLast && { borderBottomColor: colors.border, borderBottomWidth: 1 }]}
+    activeOpacity={0.75}
+    onPress={() => onPress(item.id)}
+  >
+    <View style={styles.rowLeft}>
+      <WebSafeIcon name={item.icon} size={20} color={colors.primary} />
+      <Text variant="body" weight="semibold" style={styles.rowTitle}>
+        {item.title}
+      </Text>
+    </View>
+
+    <View style={styles.rowRight}>
+      {item.value ? (
+        <Text variant="body" color="textSecondary" style={styles.rowValue}>
+          {item.value}
+        </Text>
+      ) : null}
+      <WebSafeIcon name="chevron-right" size={20} color={colors.textSecondary} />
+    </View>
+  </TouchableOpacity>
+);
+
+const SquareActionCard: React.FC<{
+  item: RowItem;
+  colors: typeof Colors.light;
+  onPress: (id: string) => void;
+}> = ({ item, colors, onPress }) => (
+  <TouchableOpacity
+    style={[styles.squareCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+    activeOpacity={0.75}
+    onPress={() => onPress(item.id)}
+  >
+    <View style={styles.squareLeft}>
+      <WebSafeIcon name={item.icon} size={20} color={colors.primary} />
+      <Text variant="body" weight="semibold" style={styles.squareTitle} numberOfLines={1}>
+        {item.title}
+      </Text>
+    </View>
+
+    <View style={styles.squareRight}>
+      {item.value ? (
+        <View style={[styles.badge, { backgroundColor: colors.primary }]}> 
+          <Text variant="caption" weight="semibold" style={styles.badgeText}>
+            {item.value}
+          </Text>
+        </View>
+      ) : null}
+      <WebSafeIcon name="chevron-right" size={18} color={colors.textSecondary} />
+    </View>
+  </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -298,113 +396,163 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  userCard: {
-    margin: Spacing.md,
-    marginBottom: Spacing.lg,
+  contentContainer: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.md,
   },
-  userInfo: {
+  profileCard: {
+    borderRadius: 22,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  avatarContainer: {
-    width: 70, // Slightly larger for better visibility
-    height: 70,
-    borderRadius: 35,
-    marginRight: Spacing.md,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: Colors.light.primary, // Sage green border
+    padding: Spacing.md,
+    gap: Spacing.md,
   },
   avatarImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 35,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 4,
   },
-  userDetails: {
+  profileInfo: {
     flex: 1,
   },
-  quickActions: {
+  profileName: {
+    marginBottom: 2,
+  },
+  profileSubtext: {
+    marginBottom: 4,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+  },
+  editIcon: {
+    marginLeft: 4,
+  },
+  quickGrid: {
+    borderTopWidth: 1,
+    borderTopColor: '#E7E3DD',
+    padding: Spacing.md,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
-    marginHorizontal: Spacing.md,
-    marginBottom: Spacing.lg,
+    justifyContent: 'space-between',
+    rowGap: Spacing.sm,
   },
-  quickActionItem: {
-    flexBasis: '48%',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    borderRadius: 12,
-    backgroundColor: Colors.light.primary,
-    borderWidth: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickActionText: {
-    color: 'white',
-  },
-  section: {
-    marginBottom: Spacing.lg,
-  },
-  sectionTitle: {
-    marginHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  sectionCard: {
-    marginHorizontal: Spacing.md,
-  },
-  themeToggleRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  themeToggleButton: {
-    flex: 1,
+  quickCard: {
+    width: '48.4%',
+    borderRadius: 16,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    position: 'relative',
   },
-  themeToggleContent: {
+  quickTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    marginBottom: 4,
+    gap: 6,
   },
-  contactButton: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuItem: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
-  menuItemBorder: {
-    borderBottomWidth: 1,
-  },
-  menuItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuIcon: {
-    fontSize: 20,
-    marginRight: Spacing.md,
-    width: 24,
-  },
-  menuTitle: {
+  quickTitle: {
     flex: 1,
+  },
+  quickArrow: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+  },
+  groupCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  rowItem: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  rowTitle: {
+    marginLeft: 10,
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rowValue: {
+    maxWidth: 130,
+  },
+  dualGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: Spacing.sm,
+  },
+  squareCard: {
+    width: '48.4%',
+    minHeight: 72,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  squareLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+  },
+  squareTitle: {
+    marginLeft: 8,
+    flexShrink: 1,
+  },
+  squareRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  badge: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
   },
   signOutButton: {
-    marginHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    borderRadius: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    minHeight: 56,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
   },
-  bottomSpace: {
-    height: Spacing.xl,
+  signOutLabel: {
+    marginLeft: 8,
   },
 });

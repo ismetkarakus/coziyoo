@@ -137,6 +137,22 @@ export const Addresses: React.FC = () => {
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Card style={styles.locationSettingsCard}>
+          <TouchableOpacity
+            style={styles.locationSettingsRow}
+            activeOpacity={0.75}
+            onPress={() => router.push('/location-settings')}
+          >
+            <View style={styles.locationSettingsLeft}>
+              <WebSafeIcon name="map" size={20} color={colors.primary} />
+              <Text variant="body" weight="semibold" style={styles.locationSettingsTitle}>
+                {t('profileScreen.items.locationSettings')}
+              </Text>
+            </View>
+            <WebSafeIcon name="chevron-right" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </Card>
+
         {addresses.map((address) => (
           <Card key={address.id} style={styles.addressCard}>
             <View style={styles.addressHeader}>
@@ -252,6 +268,24 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     padding: Spacing.md,
   },
+  locationSettingsCard: {
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  locationSettingsRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  locationSettingsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationSettingsTitle: {
+    marginLeft: Spacing.sm,
+  },
   addressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -318,5 +352,4 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
 });
-
 

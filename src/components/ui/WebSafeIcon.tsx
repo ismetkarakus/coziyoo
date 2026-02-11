@@ -45,6 +45,7 @@ const webIconMap: { [key: string]: string } = {
   
   // Location & Time
   'location-on': '📍',
+  'map': '🗺️',
   'schedule': '🕐',
   'calendar-today': '📅',
   'event-available': '📅',
@@ -64,6 +65,11 @@ const webIconMap: { [key: string]: string } = {
   
   // Settings
   'settings': '⚙️',
+  'lock': '🔒',
+  'translate': '🌐',
+  'chat': '💬',
+  'assignment': '📋',
+  'logout': '↪',
   
   // Other commonly used
   'info': 'ℹ️',

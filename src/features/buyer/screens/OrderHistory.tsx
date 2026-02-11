@@ -142,7 +142,7 @@ export const OrderHistory: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
-        title={t('orderHistoryScreen.title')}
+        title={currentLanguage === 'tr' ? 'Siparislerim' : 'My Orders'}
         leftComponent={
           <TouchableOpacity 
             onPress={handleBackPress}

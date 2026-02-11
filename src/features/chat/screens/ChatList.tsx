@@ -203,7 +203,7 @@ export const ChatList: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed from ChatList');
-    router.back();
+    router.replace('/(buyer)/buyer-profile');
   };
 
   const getStatusColor = (status: string) => {
@@ -416,7 +416,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-
 
 
 

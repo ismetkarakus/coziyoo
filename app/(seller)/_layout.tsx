@@ -26,6 +26,7 @@ export default function SellerLayout() {
         name="orders" 
         options={{ 
           headerShown: false,
+          animation: 'slide_from_right',
         }} 
       />
       <Stack.Screen 
@@ -62,6 +63,7 @@ export default function SellerLayout() {
         name="messages" 
         options={{ 
           headerShown: false,
+          animation: 'slide_from_right',
         }} 
       />
       <Stack.Screen 
@@ -80,12 +82,14 @@ export default function SellerLayout() {
         name="wallet" 
         options={{ 
           headerShown: false,
+          animation: 'slide_from_right',
         }} 
       />
       <Stack.Screen 
         name="ratings" 
         options={{ 
           headerShown: false,
+          animation: 'slide_from_right',
         }} 
       />
     </Stack>

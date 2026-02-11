@@ -199,7 +199,7 @@ export default function TabLayout() {
                   accessibilityState={accessibilityState}
                   testID={testID}
                   activeOpacity={0.8}
-                  style={{ alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
+                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
                 >
                   <View
                     style={{
@@ -216,7 +216,6 @@ export default function TabLayout() {
                       shadowOpacity: 0.12,
                       shadowRadius: 6,
                       elevation: 6,
-                      transform: [{ translateY: -18 }],
                       zIndex: 10,
                     }}
                   >
