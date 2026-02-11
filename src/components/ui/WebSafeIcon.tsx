@@ -97,6 +97,18 @@ export const WebSafeIcon: React.FC<WebSafeIconProps> = ({
   color = '#000000',
   style 
 }) => {
+  const isNavigationArrow =
+    name === 'arrow-back' ||
+    name === 'arrow-forward' ||
+    name === 'chevron-left' ||
+    name === 'chevron-right';
+
+  // Use Material icons for navigation arrows on all platforms
+  // to avoid thin unicode arrows on web.
+  if (isNavigationArrow) {
+    return <MaterialIcons name={name as any} size={Math.max(size + 6, 26)} color={color} style={style} />;
+  }
+
   if (Platform.OS === 'web') {
     const emoji = webIconMap[name] || webIconMap['default'];
     return (
@@ -105,6 +117,7 @@ export const WebSafeIcon: React.FC<WebSafeIconProps> = ({
         color: color === 'white' ? '#FFFFFF' : color,
         lineHeight: size,
         textAlign: 'center',
+        fontWeight: '700',
         ...style 
       }}>
         {emoji}

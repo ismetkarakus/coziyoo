@@ -65,7 +65,7 @@ export const SellerPanel: React.FC = () => {
     const filled = index < Math.floor(ratingValue);
     return {
       id: index,
-      name: filled ? 'star' : 'star-o',
+      name: filled ? 'star' : 'star-outline',
       color: filled ? colors.warning : colors.border,
     };
   });
@@ -210,7 +210,7 @@ export const SellerPanel: React.FC = () => {
     heroGradientColors: colorScheme === 'dark'
       ? ['#3F4A3E', colors.surface]
       : ['#DDE6DD', colors.surface],
-    defaultAvatarSource: { uri: 'https://via.placeholder.com/60x60/7FAF9A/FFFFFF?text=S' },
+    defaultAvatarSource: { uri: 'https://placehold.co/60x60/7FAF9A/FFFFFF?text=S' },
     menuCardStyle,
     menuCardIconStyle,
     menuCardTitleStyle,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingBottom: Spacing.sm,
   },
   statsContainer: {
@@ -280,14 +280,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingTop: 0,
     paddingBottom: Spacing.md,
-    marginTop: Spacing.sm,
+    marginTop: 0,
   },
   heroHeader: {
     position: 'relative',
     borderRadius: 20,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   heroRow: {
     flexDirection: 'row',
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     gap: 6,
-    marginTop: Spacing.md,
+    marginTop: 0,
   },
   statCard: {
     flex: 1,

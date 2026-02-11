@@ -1,7 +1,7 @@
 {
   "items": [
     { "id": "all", "tr": "Tümü", "en": "All", "icon": "✨" },
-    { "id": "main", "tr": "Ana Yemek", "en": "Main Dish", "icon": "🍽️" },
+    { "id": "main", "tr": "Ana Yemek", "en": "Main Dish", "icon": "🍱" },
     { "id": "soup", "tr": "Çorba", "en": "Soup", "icon": "🍲" },
     { "id": "appetizer", "tr": "Meze", "en": "Appetizer", "icon": "🥗" },
     { "id": "salad", "tr": "Salata", "en": "Salad", "icon": "🥗" },

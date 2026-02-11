@@ -30,9 +30,9 @@ export const HeaderBackButton: React.FC<HeaderBackButtonProps> = ({
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
       <MaterialIcons 
-        name="chevron-left" 
-        size={18} 
-        color={colors.primary} 
+        name="arrow-back" 
+        size={24} 
+        color={colors.text} 
       />
     </TouchableOpacity>
   );

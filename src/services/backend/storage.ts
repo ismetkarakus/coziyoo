@@ -35,7 +35,7 @@ export const uploadBytesResumable = (ref: any, blob: any) => {
 export const getDownloadURL = async (ref: any) => {
   console.log(`[MockStorage] Get download URL for ${ref.path}`);
   // Return a placeholder image
-  return `https://via.placeholder.com/300?text=${encodeURIComponent(ref.path)}`;
+  return `https://placehold.co/300x300?text=${encodeURIComponent(ref.path)}`;
 };
 
 export const deleteObject = async (ref: any) => {

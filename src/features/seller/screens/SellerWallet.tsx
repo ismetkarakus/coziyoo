@@ -157,7 +157,7 @@ export const SellerWallet: React.FC = () => {
         title={t('sellerWalletScreen.title')}
         leftComponent={(
           <TouchableOpacity onPress={() => router.back()} style={styles.iconButton} activeOpacity={0.7}>
-            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         )}
       />

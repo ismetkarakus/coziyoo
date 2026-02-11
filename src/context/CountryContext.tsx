@@ -9,7 +9,7 @@ interface CountryContextType {
   countryCode: string;
   setCountry: (countryCode: string) => void;
   detectCountry: () => Promise<void>;
-  formatCurrency: (amount: number) => string;
+  formatCurrency: (amount: number | string | null | undefined) => string;
   formatDate: (date: Date) => string;
   isBusinessComplianceRequired: boolean;
 }
@@ -159,8 +159,15 @@ export const CountryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await autoDetectCountryAndLanguage();
   };
 
-  const formatCurrency = (amount: number): string => {
-    const formatted = amount.toFixed(2);
+  const formatCurrency = (amount: number | string | null | undefined): string => {
+    const parsedAmount =
+      typeof amount === 'number'
+        ? amount
+        : typeof amount === 'string'
+          ? Number(amount)
+          : NaN;
+    const safeAmount = Number.isFinite(parsedAmount) ? parsedAmount : 0;
+    const formatted = safeAmount.toFixed(2);
     return `${currentCountry.currencySymbol}${formatted}`;
   };
 

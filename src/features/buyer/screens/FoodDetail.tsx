@@ -705,7 +705,7 @@ export const FoodDetail: React.FC = () => {
               style={styles.backButton}
               activeOpacity={0.7}
             >
-              <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
+              <WebSafeIcon name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           }
         />
@@ -728,7 +728,7 @@ export const FoodDetail: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
       />
@@ -802,7 +802,7 @@ export const FoodDetail: React.FC = () => {
                 <Image 
                   source={{ uri: food.cookAvatar }}
                   style={styles.cookAvatar}
-                  defaultSource={{ uri: 'https://via.placeholder.com/50x50/7FAF9A/FFFFFF?text=C' }}
+                  defaultSource={{ uri: 'https://placehold.co/50x50/7FAF9A/FFFFFF?text=C' }}
                 />
                 <View style={styles.cookDetails}>
                   <View style={styles.cookNameRow}>
@@ -1140,7 +1140,7 @@ export const FoodDetail: React.FC = () => {
                       setSelectedTime(timeString);
                     }}
                   >
-                    <MaterialIcons name="chevron-left" size={12} color="white" />
+                    <MaterialIcons name="arrow-back" size={12} color="white" />
                   </TouchableOpacity>
                   
                   <View style={styles.minuteValue}>

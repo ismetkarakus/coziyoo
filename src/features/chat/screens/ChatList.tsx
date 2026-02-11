@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -8,6 +8,7 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import { useAuth } from '../../../context/AuthContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { getSyncedOrderStatuses, SyncedOrderStatusKey } from '../../../utils/orderStatusSync';
 
 const getMockChats = (language: 'tr' | 'en') => {
   if (language === 'tr') {
@@ -165,6 +166,7 @@ export const ChatList: React.FC = () => {
   const { userData } = useAuth();
   const { t, currentLanguage } = useTranslation();
   const { buyerChats, sellerChats } = getMockChats(currentLanguage);
+  const [chats, setChats] = useState<any[]>([]);
 
   // Determine which chats to show based on user type
   const getChats = () => {
@@ -195,10 +197,58 @@ export const ChatList: React.FC = () => {
     }
   };
 
-  const chats = getChats();
+  const getLocalizedStatus = useCallback((statusKey: SyncedOrderStatusKey): string => {
+    switch (statusKey) {
+      case 'preparing':
+        return t('chatListScreen.statuses.preparing');
+      case 'ready':
+        return t('chatListScreen.statuses.ready');
+      case 'onTheWay':
+        return t('chatListScreen.statuses.onTheWay');
+      case 'delivered':
+        return t('chatListScreen.statuses.delivered');
+      default:
+        return t('chatListScreen.statuses.preparing');
+    }
+  }, [t]);
 
-  const handleChatPress = (chatId: string, orderId: string, foodName: string, orderStatus: string) => {
-    router.push(`/(buyer)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(orderStatus)}`);
+  const refreshChats = useCallback(async () => {
+    const baseChats = getChats();
+    try {
+      const syncedStatuses = await getSyncedOrderStatuses();
+      const nextChats = baseChats.map((chat) => {
+        const synced = syncedStatuses[chat.orderId];
+        if (!synced) return chat;
+        return {
+          ...chat,
+          orderStatus: getLocalizedStatus(synced.statusKey),
+        };
+      });
+      setChats(nextChats);
+    } catch (error) {
+      console.error('Failed to load synced chat statuses:', error);
+      setChats(baseChats);
+    }
+  }, [buyerChats, sellerChats, userData?.userType, t, getLocalizedStatus]);
+
+  React.useEffect(() => {
+    refreshChats();
+  }, [refreshChats, currentLanguage]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshChats();
+    }, [refreshChats])
+  );
+
+  const handleChatPress = (
+    chatId: string,
+    orderId: string,
+    foodName: string,
+    orderStatus: string,
+    chatType: 'buyer' | 'seller'
+  ) => {
+    router.push(`/(buyer)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(orderStatus)}&type=${chatType}`);
   };
 
   const handleBackPress = () => {
@@ -243,7 +293,7 @@ export const ChatList: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
       />
@@ -263,7 +313,15 @@ export const ChatList: React.FC = () => {
             {chats.map((chat) => (
               <TouchableOpacity
                 key={chat.id}
-                onPress={() => handleChatPress(chat.id, chat.orderId, chat.foodName, chat.orderStatus)}
+                onPress={() =>
+                  handleChatPress(
+                    chat.id,
+                    chat.orderId,
+                    chat.foodName,
+                    chat.orderStatus,
+                    chat.userType as 'buyer' | 'seller'
+                  )
+                }
                 activeOpacity={0.7}
               >
                 <Card variant="default" padding="md" style={styles.chatCard}>
@@ -416,6 +474,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-
-
 

@@ -1,14 +1,27 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Text, Input, Button } from '../../../components/ui';
+import { Text } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useAuth } from '../../../context/AuthContext';
+import { getSyncedOrderStatus, setSyncedOrderStatus, SyncedOrderStatusKey } from '../../../utils/orderStatusSync';
 
-const getMockMessages = (language: 'tr' | 'en') => {
+type ChatRole = 'buyer' | 'seller';
+type ChatMessageType = 'system' | ChatRole;
+type StatusKey = 'preparing' | 'ready' | 'onTheWay' | 'delivered';
+
+interface MockMessage {
+  id: string;
+  type: ChatMessageType;
+  content: string;
+  timestamp: string;
+}
+
+const getMockMessages = (language: 'tr' | 'en'): MockMessage[] => {
   if (language === 'tr') {
     return [
       {
@@ -78,32 +91,118 @@ const getMockMessages = (language: 'tr' | 'en') => {
   ];
 };
 
-const getQuickReplies = (language: 'tr' | 'en') => (
-  language === 'tr'
-    ? ['Ne zaman hazır olur?', 'Yoldayım', 'Geldim', 'Teşekkür ederim']
-    : ['When will it be ready?', 'On my way', 'I arrived', 'Thank you']
-);
+const getQuickReplies = (language: 'tr' | 'en', role: ChatRole): string[] => {
+  if (language === 'tr') {
+    return role === 'seller'
+      ? ['Siparişinizi onayladım.', 'Şu an hazırlanıyor.', 'Tahmini 15 dakika içinde hazır.', 'Siparişiniz hazır, teslim alabilirsiniz.', 'Teslim edildi.']
+      : ['Ne zaman hazır olur?', 'Tahmini kaç dakika kaldı?', 'Adresi tekrar paylaşır mısınız?', 'Yoldayım, birazdan oradayım.', 'Kapıya geldim.'];
+  }
+
+  return role === 'seller'
+    ? ['Order is approved.', 'Preparing now.', 'Estimated 15 minutes.', 'Your order is ready for pickup.', 'Delivered.']
+    : ['When will it be ready?', 'How many minutes left?', 'Can you share the address again?', 'I am on my way.', 'I arrived at the door.'];
+};
+
+const getStatusOptions = (language: 'tr' | 'en'): Array<{ key: StatusKey; label: string }> => {
+  if (language === 'tr') {
+    return [
+      { key: 'preparing', label: 'Hazırlanıyor' },
+      { key: 'ready', label: 'Hazır' },
+      { key: 'onTheWay', label: 'Yolda' },
+      { key: 'delivered', label: 'Teslim Edildi' },
+    ];
+  }
+
+  return [
+    { key: 'preparing', label: 'Preparing' },
+    { key: 'ready', label: 'Ready' },
+    { key: 'onTheWay', label: 'On The Way' },
+    { key: 'delivered', label: 'Delivered' },
+  ];
+};
+
+const getSystemStatusMessage = (language: 'tr' | 'en', status: StatusKey): string => {
+  if (language === 'tr') {
+    switch (status) {
+      case 'preparing':
+        return 'Siparişiniz hazırlanmaya başlandı.';
+      case 'ready':
+        return 'Siparişiniz hazır.';
+      case 'onTheWay':
+        return 'Siparişiniz yola çıktı.';
+      case 'delivered':
+        return 'Siparişiniz teslim edildi.';
+      default:
+        return 'Sipariş durumu güncellendi.';
+    }
+  }
+
+  switch (status) {
+    case 'preparing':
+      return 'Your order is now being prepared.';
+    case 'ready':
+      return 'Your order is ready.';
+    case 'onTheWay':
+      return 'Your order is on the way.';
+    case 'delivered':
+      return 'Your order has been delivered.';
+    default:
+      return 'Order status updated.';
+  }
+};
+
+const getStatusLabelByKey = (language: 'tr' | 'en', statusKey: StatusKey): string => {
+  const options = getStatusOptions(language);
+  const match = options.find((item) => item.key === statusKey);
+  return match?.label ?? options[0].label;
+};
 
 export const ChatDetail: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
+  const { userData } = useAuth();
   const params = useLocalSearchParams();
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(getMockMessages(currentLanguage));
-  const quickReplies = getQuickReplies(currentLanguage);
+  const rawRoleParam = params.type;
+  const roleParam = Array.isArray(rawRoleParam) ? rawRoleParam[0] : rawRoleParam;
+  const roleFromUser: ChatRole = userData?.userType === 'seller' ? 'seller' : 'buyer';
+  const role: ChatRole = roleParam === 'seller' || roleFromUser === 'seller' ? 'seller' : 'buyer';
+  const [messages, setMessages] = useState<MockMessage[]>(getMockMessages(currentLanguage));
+  const [currentStatus, setCurrentStatus] = useState((params.orderStatus as string) || '');
+  const quickReplies = getQuickReplies(currentLanguage, role);
+  const statusOptions = getStatusOptions(currentLanguage);
 
   const foodName = params.foodName as string;
-  const orderStatus = params.orderStatus as string;
+  const orderStatus = currentStatus;
+  const orderId = (Array.isArray(params.orderId) ? params.orderId[0] : params.orderId) ?? '';
 
   React.useEffect(() => {
     setMessages(getMockMessages(currentLanguage));
   }, [currentLanguage]);
 
+  React.useEffect(() => {
+    setCurrentStatus((params.orderStatus as string) || '');
+  }, [params.orderStatus]);
+
+  React.useEffect(() => {
+    const loadSyncedStatus = async () => {
+      if (!orderId) return;
+      try {
+        const synced = await getSyncedOrderStatus(orderId);
+        if (!synced) return;
+        setCurrentStatus(getStatusLabelByKey(currentLanguage, synced.statusKey));
+      } catch (error) {
+        console.error('Failed to load synced chat status:', error);
+      }
+    };
+
+    loadSyncedStatus();
+  }, [currentLanguage, orderId]);
+
   const sendMessage = (content: string) => {
-    const newMessage = {
+    const newMessage: MockMessage = {
       id: Date.now().toString(),
-      type: 'buyer' as const,
+      type: role,
       content,
       timestamp: new Date().toLocaleTimeString(currentLanguage === 'en' ? 'en-GB' : 'tr-TR', { 
         hour: '2-digit', 
@@ -111,17 +210,33 @@ export const ChatDetail: React.FC = () => {
       }),
     };
     setMessages(prev => [...prev, newMessage]);
-    setMessage('');
-  };
-
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      sendMessage(message.trim());
-    }
   };
 
   const handleQuickReply = (reply: string) => {
     sendMessage(reply);
+  };
+
+  const handleStatusUpdate = async (status: StatusKey, statusLabel: string) => {
+    setCurrentStatus(statusLabel);
+
+    if (orderId) {
+      try {
+        await setSyncedOrderStatus(orderId, status as SyncedOrderStatusKey);
+      } catch (error) {
+        console.error('Failed to persist chat status update:', error);
+      }
+    }
+
+    const systemMessage: MockMessage = {
+      id: `status-${Date.now()}`,
+      type: 'system',
+      content: getSystemStatusMessage(currentLanguage, status),
+      timestamp: new Date().toLocaleTimeString(currentLanguage === 'en' ? 'en-GB' : 'tr-TR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
+    setMessages(prev => [...prev, systemMessage]);
   };
 
   const handleBackPress = () => {
@@ -146,7 +261,7 @@ export const ChatDetail: React.FC = () => {
     }
   };
 
-  const renderMessage = (msg: typeof MOCK_MESSAGES[0]) => {
+  const renderMessage = (msg: MockMessage) => {
     if (msg.type === 'system') {
       return (
         <View key={msg.id} style={styles.systemMessageContainer}>
@@ -208,19 +323,49 @@ export const ChatDetail: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
-        rightComponent={
-          orderStatus ? (
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(orderStatus) }]}>
-              <Text variant="caption" style={{ color: 'white' }}>
-                {orderStatus}
-              </Text>
-            </View>
-          ) : null
-        }
       />
+      {orderStatus ? (
+        <View style={[styles.orderStatusRow, { backgroundColor: colors.background }]}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(orderStatus) }]}>
+            <Text variant="caption" style={styles.statusBadgeText} numberOfLines={1}>
+              {orderStatus}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+      {role === 'seller' ? (
+        <View style={[styles.statusActionsContainer, { backgroundColor: colors.background }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.statusActionsContent}
+          >
+            {statusOptions.map((statusOption) => {
+              const isActive = orderStatus === statusOption.label;
+              return (
+                <TouchableOpacity
+                  key={statusOption.key}
+                  onPress={() => handleStatusUpdate(statusOption.key, statusOption.label)}
+                  style={[
+                    styles.statusActionButton,
+                    {
+                      backgroundColor: isActive ? colors.success : colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text variant="caption" style={{ color: isActive ? 'white' : colors.text }}>
+                    {statusOption.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
       
       <ScrollView 
         style={styles.messagesContainer} 
@@ -232,6 +377,11 @@ export const ChatDetail: React.FC = () => {
 
       {/* Quick Replies */}
       <View style={[styles.quickRepliesContainer, { backgroundColor: colors.background }]}>
+        <Text variant="caption" color="textSecondary" style={styles.quickRepliesTitle}>
+          {role === 'seller'
+            ? (currentLanguage === 'tr' ? 'Satıcı sabit mesajları' : 'Seller quick messages')
+            : (currentLanguage === 'tr' ? 'Alıcı sabit mesajları' : 'Buyer quick messages')}
+        </Text>
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -251,33 +401,10 @@ export const ChatDetail: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* Message Input */}
-      <View style={[styles.inputContainer, { backgroundColor: colors.background }]}>
-        <View style={styles.inputRow}>
-          <View style={styles.inputWrapper}>
-            <Input
-              value={message}
-              onChangeText={setMessage}
-              placeholder={t('chatDetailScreen.placeholder')}
-              style={styles.messageInput}
-              containerStyle={styles.inputContainerStyle}
-              multiline
-              maxLength={500}
-            />
-          </View>
-          <TouchableOpacity
-            onPress={handleSendMessage}
-            style={[styles.sendButton, { backgroundColor: message.trim() ? colors.primary : colors.border }]}
-            disabled={!message.trim()}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons 
-              name="send" 
-              size={16} 
-              color={message.trim() ? 'white' : colors.textSecondary} 
-            />
-          </TouchableOpacity>
-        </View>
+      <View style={[styles.fixedInfoContainer, { backgroundColor: colors.background }]}>
+        <Text variant="caption" color="textSecondary" center>
+          {currentLanguage === 'tr' ? 'Sabit mesajlardan birini seçerek gönderin.' : 'Send one of the predefined messages.'}
+        </Text>
       </View>
     </View>
   );
@@ -295,6 +422,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: 12,
+    maxWidth: '60%',
+  },
+  statusBadgeText: {
+    color: 'white',
+  },
+  orderStatusRow: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    alignItems: 'flex-end',
+  },
+  statusActionsContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.sm,
+  },
+  statusActionsContent: {
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.sm,
+  },
+  statusActionButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: commonStyles.borderRadius.full,
+    borderWidth: 1,
   },
   messagesContainer: {
     flex: 1,
@@ -340,6 +492,10 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E5E5',
     paddingVertical: Spacing.sm,
   },
+  quickRepliesTitle: {
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
   quickRepliesContent: {
     paddingHorizontal: Spacing.md,
     gap: Spacing.sm,
@@ -349,45 +505,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: commonStyles.borderRadius.full,
   },
-  inputContainer: {
+  fixedInfoContainer: {
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
     padding: Spacing.md,
-    paddingBottom: Spacing.lg,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.sm,
-  },
-  inputWrapper: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 20,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    minHeight: 40,
-    maxHeight: 100,
-  },
-  messageInput: {
-    minHeight: 24,
-    maxHeight: 80,
-    paddingVertical: 0,
-    fontSize: 16,
-  },
-  inputContainerStyle: {
-    marginBottom: 0,
-    backgroundColor: 'transparent',
-  },
-  sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 2,
   },
 });
-
-
-

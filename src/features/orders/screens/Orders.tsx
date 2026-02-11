@@ -1,18 +1,20 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useCountry } from '../../../context/CountryContext';
+import { getSyncedOrderStatuses } from '../../../utils/orderStatusSync';
 
 const getMockOrders = (language: 'tr' | 'en') => {
   if (language === 'tr') {
     return [
       {
         id: '1',
+        orderId: 'ORD-001',
         orderNumber: '#ORD-2024-001',
         date: '4 Ocak 2024',
         status: 'preparing',
@@ -26,6 +28,7 @@ const getMockOrders = (language: 'tr' | 'en') => {
       },
       {
         id: '2',
+        orderId: 'ORD-002',
         orderNumber: '#ORD-2024-002',
         date: '3 Ocak 2024',
         status: 'completed',
@@ -42,6 +45,7 @@ const getMockOrders = (language: 'tr' | 'en') => {
   return [
     {
       id: '1',
+      orderId: 'ORD-001',
       orderNumber: '#ORD-2024-001',
       date: '4 Jan 2024',
       status: 'preparing',
@@ -55,6 +59,7 @@ const getMockOrders = (language: 'tr' | 'en') => {
     },
     {
       id: '2',
+      orderId: 'ORD-002',
       orderNumber: '#ORD-2024-002',
       date: '3 Jan 2024',
       status: 'completed',
@@ -73,12 +78,61 @@ export const Orders: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
-  const mockOrders = getMockOrders(currentLanguage);
+  const [orders, setOrders] = useState<any[]>([]);
+
+  const refreshOrders = useCallback(async () => {
+    const baseOrders = getMockOrders(currentLanguage);
+    try {
+      const syncedStatuses = await getSyncedOrderStatuses();
+      const nextOrders = baseOrders.map((order) => {
+        const synced = syncedStatuses[order.orderId];
+        if (!synced) return order;
+
+        let mappedStatus = order.status;
+        let estimatedTime = order.estimatedTime;
+
+        if (synced.statusKey === 'preparing') {
+          mappedStatus = 'preparing';
+          estimatedTime = currentLanguage === 'tr' ? 'Hazırlanıyor' : 'Preparing';
+        } else if (synced.statusKey === 'ready') {
+          mappedStatus = 'ready';
+          estimatedTime = currentLanguage === 'tr' ? 'Hazır' : 'Ready';
+        } else if (synced.statusKey === 'onTheWay') {
+          mappedStatus = 'ready';
+          estimatedTime = currentLanguage === 'tr' ? 'Yolda' : 'On the way';
+        } else if (synced.statusKey === 'delivered') {
+          mappedStatus = 'completed';
+          estimatedTime = currentLanguage === 'tr' ? 'Teslim edildi' : 'Delivered';
+        }
+
+        return {
+          ...order,
+          status: mappedStatus,
+          estimatedTime,
+        };
+      });
+      setOrders(nextOrders);
+    } catch (error) {
+      console.error('Failed to load synced order statuses:', error);
+      setOrders(baseOrders);
+    }
+  }, [currentLanguage]);
+
+  React.useEffect(() => {
+    refreshOrders();
+  }, [refreshOrders]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshOrders();
+    }, [refreshOrders])
+  );
 
   const handleTrackOrder = (order: any) => {
     router.push({
       pathname: '/(buyer)/order-tracking',
       params: {
+        orderId: order.orderId,
         orderNumber: order.orderNumber,
         cookName: order.cookName,
       },
@@ -91,6 +145,7 @@ export const Orders: React.FC = () => {
     router.push({
       pathname: '/(buyer)/order-tracking',
       params: {
+        orderId: order.orderId,
         orderNumber: order.orderNumber,
         cookName: order.cookName,
         showDetails: 'true',
@@ -178,7 +233,7 @@ export const Orders: React.FC = () => {
     </Card>
   );
 
-  if (mockOrders.length === 0) {
+  if (orders.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <TopBar title={t('ordersScreen.title')} />
@@ -207,7 +262,7 @@ export const Orders: React.FC = () => {
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.ordersContainer}>
-          {mockOrders.map(renderOrder)}
+          {orders.map(renderOrder)}
         </View>
       </ScrollView>
     </View>

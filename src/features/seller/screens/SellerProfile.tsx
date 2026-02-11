@@ -432,7 +432,7 @@ export const SellerProfile: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={null}
@@ -452,7 +452,7 @@ export const SellerProfile: React.FC = () => {
                 key={`${avatarUri || 'default'}-${forceUpdate}`} // Force re-render when avatar changes
                 source={avatarUri ? { uri: avatarUri } : { uri: sellerData.avatar }}
                 style={styles.avatar}
-                defaultSource={{ uri: 'https://via.placeholder.com/100x100/7FAF9A/FFFFFF?text=S' }}
+                defaultSource={{ uri: 'https://placehold.co/100x100/7FAF9A/FFFFFF?text=S' }}
                 onLoad={() => console.log('Avatar loaded:', avatarUri)}
                 onError={(error) => console.log('Avatar error:', error)}
               />

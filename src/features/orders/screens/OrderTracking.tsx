@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Card, Text, Button } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { getSyncedOrderStatus, SyncedOrderStatusKey } from '../../../utils/orderStatusSync';
 
 export const OrderTracking: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
   const params = useLocalSearchParams();
-  const [estimatedTime, setEstimatedTime] = useState(t('orderTrackingScreen.estimatedDefault'));
+  const [statusKey, setStatusKey] = useState<SyncedOrderStatusKey>('preparing');
 
   const orderNumberParam = Array.isArray(params.orderNumber)
     ? params.orderNumber[0]
@@ -21,8 +22,25 @@ export const OrderTracking: React.FC = () => {
   const cookNameParam = Array.isArray(params.cookName)
     ? params.cookName[0]
     : params.cookName;
+  const orderIdParam = Array.isArray(params.orderId)
+    ? params.orderId[0]
+    : params.orderId;
 
-  // Mock tracking data
+  const getEstimatedFromStatus = (key: SyncedOrderStatusKey) => {
+    if (key === 'preparing') {
+      return t('orderTrackingScreen.estimatedDefault');
+    }
+    if (key === 'ready') {
+      return t('chatListScreen.statuses.ready');
+    }
+    if (key === 'onTheWay') {
+      return t('chatListScreen.statuses.onTheWay');
+    }
+    return t('chatListScreen.statuses.delivered');
+  };
+
+  const estimatedTime = getEstimatedFromStatus(statusKey);
+
   const trackingSteps = [
     {
       id: 1,
@@ -30,31 +48,31 @@ export const OrderTracking: React.FC = () => {
       description: t('orderTrackingScreen.steps.received.desc'),
       time: t('orderTrackingScreen.steps.received.time'),
       completed: true,
-      active: false,
+      active: statusKey === 'preparing',
     },
     {
       id: 2,
       title: t('orderTrackingScreen.steps.preparing.title'),
       description: t('orderTrackingScreen.steps.preparing.desc'),
       time: t('orderTrackingScreen.steps.preparing.time'),
-      completed: true,
-      active: true,
+      completed: statusKey !== 'preparing',
+      active: statusKey === 'preparing',
     },
     {
       id: 3,
       title: t('orderTrackingScreen.steps.ready.title'),
       description: t('orderTrackingScreen.steps.ready.desc'),
       time: t('orderTrackingScreen.steps.ready.time'),
-      completed: false,
-      active: false,
+      completed: statusKey === 'onTheWay' || statusKey === 'delivered',
+      active: statusKey === 'ready',
     },
     {
       id: 4,
       title: t('orderTrackingScreen.steps.delivered.title'),
       description: t('orderTrackingScreen.steps.delivered.desc'),
       time: t('orderTrackingScreen.steps.delivered.time'),
-      completed: false,
-      active: false,
+      completed: statusKey === 'delivered',
+      active: statusKey === 'onTheWay',
     },
   ];
 
@@ -70,15 +88,27 @@ export const OrderTracking: React.FC = () => {
     deliveryType: 'pickup',
   };
 
-  useEffect(() => {
-    // Simulate real-time updates
-    const interval = setInterval(() => {
-      const minutes = Math.max(0, parseInt(estimatedTime) - 1);
-      setEstimatedTime(t('orderTrackingScreen.estimatedMinutes', { minutes }));
-    }, 60000); // Update every minute
+  const loadStatus = React.useCallback(async () => {
+    if (!orderIdParam) return;
+    try {
+      const synced = await getSyncedOrderStatus(orderIdParam);
+      if (synced?.statusKey) {
+        setStatusKey(synced.statusKey);
+      }
+    } catch (error) {
+      console.error('Failed to load tracked order status:', error);
+    }
+  }, [orderIdParam]);
 
-    return () => clearInterval(interval);
-  }, [estimatedTime]);
+  useEffect(() => {
+    loadStatus();
+  }, [loadStatus]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadStatus();
+    }, [loadStatus])
+  );
 
   const getStepIcon = (step: any) => {
     if (step.completed) {
@@ -141,7 +171,7 @@ export const OrderTracking: React.FC = () => {
         title={t('orderTrackingScreen.title')} 
         leftComponent={
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
       />

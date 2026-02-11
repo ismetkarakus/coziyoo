@@ -15,3 +15,4 @@ kalan urun sayisi 0 sa mantik kurgula
 ana menudeki mesajlarimi degistirip siparislerim yapiyoruz acilan sayfada su anki adi musteri mesajlari olan sayfayi kullanacagiz
 her bir siparis tiklandiginda bu siparisle ilgili mesajlara gider
 siparisle ilgili bildirinm geldiginde tiklanildiginda o siparisle ilgili mesaj sayfasi acilicak
+[ ] alici ve satici mesazlasma sayfasindan neden tabottombar ve ana yemek sayfasindan bobottombar daki mesaj ikonu ne ise yariyor bunu bildirim olarakmi kullanacagiz

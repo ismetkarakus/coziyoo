@@ -124,7 +124,7 @@ export const Addresses: React.FC = () => {
         title={t('addressesScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
-            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={

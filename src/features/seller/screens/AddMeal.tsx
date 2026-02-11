@@ -257,10 +257,13 @@ export const AddMeal: React.FC = () => {
           t('addMealScreen.date.unknown'),
         startDate: formData.startDate,
         endDate: formData.endDate,
+        price: parseFloat(formData.price) || 0,
+        dailyStock: parseInt(formData.dailyStock) || 0,
         // Diğer eksik alanlar
         currentStock: parseInt(formData.dailyStock) || 0,
         hasPickup: deliveryOptions.pickup,
         hasDelivery: deliveryOptions.delivery,
+        isActive: true,
       };
 
       const existingMeals = await AsyncStorage.getItem('publishedMeals');
@@ -695,10 +698,13 @@ export const AddMeal: React.FC = () => {
           t('addMealScreen.date.unknown'),
         startDate: formData.startDate,
         endDate: formData.endDate,
+        price: parseFloat(formData.price) || 0,
+        dailyStock: parseInt(formData.dailyStock) || 0,
         // Diğer eksik alanlar
         currentStock: parseInt(formData.dailyStock) || 0,
         hasPickup: deliveryOptions.pickup,
         hasDelivery: deliveryOptions.delivery,
+        isActive: true,
       };
 
       const existingMeals = await AsyncStorage.getItem('publishedMeals');
@@ -768,7 +774,7 @@ export const AddMeal: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
       />

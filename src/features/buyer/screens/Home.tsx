@@ -23,6 +23,7 @@ import { mockUserService } from '../../../services/mockUserService';
 import { MockFood } from '../../../mock/data';
 import sellerMock from '../../../mock/seller.json';
 import categoriesData from '../../../mock/categories.json';
+import { getLatestSyncedOrderStatus } from '../../../utils/orderStatusSync';
 
 const getCategoriesForLanguage = (language: 'tr' | 'en') => {
   const items = categoriesData.items ?? [];
@@ -127,6 +128,18 @@ const localizeMockFoods = (foods: MockFood[], language: 'tr' | 'en') => {
   }));
 };
 
+const getVisiblePublishedMeals = (meals: any[]) =>
+  meals
+    .map((meal) => ({
+      ...meal,
+      currentStock: Number(meal?.currentStock ?? 0),
+      dailyStock: Number(meal?.dailyStock ?? 0),
+    }))
+    .filter((meal) => meal?.isActive !== false && meal.currentStock > 0);
+
+const getFoodIdentity = (food: any) =>
+  `${String(food?.name ?? '').toLowerCase()}__${String(food?.cookName ?? food?.sellerName ?? '').toLowerCase()}`;
+
 export const Home: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -173,6 +186,35 @@ export const Home: React.FC = () => {
 
     loadSellerNickname();
   }, [currentLanguage, localizedSeller.profile.nickname]);
+
+  const loadLatestOrderStatus = React.useCallback(async () => {
+    try {
+      const latest = await getLatestSyncedOrderStatus();
+      if (!latest) {
+        setLatestOrderStatus(null);
+        return;
+      }
+
+      setLatestOrderStatus({
+        orderId: latest.orderId,
+        statusLabel: getChatStatusLabel(latest.statusKey),
+      });
+    } catch (error) {
+      console.error('Error loading latest synced order status:', error);
+      setLatestOrderStatus(null);
+    }
+  }, [currentLanguage]);
+
+  useEffect(() => {
+    loadLatestOrderStatus();
+  }, [loadLatestOrderStatus]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadLatestOrderStatus();
+    }, [loadLatestOrderStatus])
+  );
+
   const [foodStocks, setFoodStocks] = useState<{[key: string]: number}>({});
   const [scrollY, setScrollY] = useState(0);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
@@ -191,6 +233,7 @@ export const Home: React.FC = () => {
   const [allergenModalVisible, setAllergenModalVisible] = useState(false);
   const [allergenModalMatches, setAllergenModalMatches] = useState<string[]>([]);
   const [allergenConfirmChecked, setAllergenConfirmChecked] = useState(false);
+  const [latestOrderStatus, setLatestOrderStatus] = useState<{ orderId: string; statusLabel: string } | null>(null);
   const [pendingAdd, setPendingAdd] = useState<{
     food: any;
     quantity: number;
@@ -211,6 +254,21 @@ export const Home: React.FC = () => {
     t('homeScreen.nearbyAlt3'),
   ];
   const turkishKeywords = currentLanguage === 'tr' ? ['türk', 'türkiye'] : ['turkish', 'turkey'];
+
+  const getChatStatusLabel = (statusKey: string) => {
+    switch (statusKey) {
+      case 'preparing':
+        return t('chatListScreen.statuses.preparing');
+      case 'ready':
+        return t('chatListScreen.statuses.ready');
+      case 'onTheWay':
+        return t('chatListScreen.statuses.onTheWay');
+      case 'delivered':
+        return t('chatListScreen.statuses.delivered');
+      default:
+        return t('chatListScreen.statuses.preparing');
+    }
+  };
 
 
   const loadMockFoods = async () => {
@@ -257,7 +315,17 @@ export const Home: React.FC = () => {
         const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
         if (publishedMealsJson) {
           const meals = JSON.parse(publishedMealsJson);
-          setPublishedMeals(meals);
+          const visibleMeals = getVisiblePublishedMeals(meals);
+          setPublishedMeals(visibleMeals);
+          setFoodStocks((prev) => {
+            const next = { ...prev };
+            visibleMeals.forEach((meal) => {
+              if (meal?.id) {
+                next[String(meal.id)] = Number(meal.currentStock ?? 0);
+              }
+            });
+            return next;
+          });
         } else {
           setPublishedMeals([]);
         }
@@ -277,7 +345,17 @@ export const Home: React.FC = () => {
           const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
           if (publishedMealsJson) {
             const meals = JSON.parse(publishedMealsJson);
-            setPublishedMeals(meals);
+            const visibleMeals = getVisiblePublishedMeals(meals);
+            setPublishedMeals(visibleMeals);
+            setFoodStocks((prev) => {
+              const next = { ...prev };
+              visibleMeals.forEach((meal) => {
+                if (meal?.id) {
+                  next[String(meal.id)] = Number(meal.currentStock ?? 0);
+                }
+              });
+              return next;
+            });
           } else {
             setPublishedMeals([]);
           }
@@ -419,7 +497,7 @@ export const Home: React.FC = () => {
             (await mockUserService.getUserByEmail(userData?.email || user?.email));
           const userAllergies = (userRecord?.allergicTo || []).map(item => item.toLowerCase());
           const foodAllergens = (food.allergens || []).map((item: string) => item.toLowerCase());
-          const matches = foodAllergens.filter(allergen => userAllergies.includes(allergen));
+          const matches = foodAllergens.filter((allergen: string) => userAllergies.includes(allergen));
 
           // Determine available options
           const availableOptions: ('pickup' | 'delivery')[] = Array.isArray((food as any).availableDeliveryOptions)
@@ -504,8 +582,16 @@ export const Home: React.FC = () => {
 
   const handleFoodPress = (food: any) => {
     const foodImageUrl = food.imageUrl || '';
-    const route = `/food-detail-order?id=${food.id}&name=${encodeURIComponent(food.name)}&cookName=${encodeURIComponent(food.cookName || '')}&imageUrl=${encodeURIComponent(foodImageUrl)}&price=${encodeURIComponent(String(food.price))}`;
-    router.push(route);
+    router.push({
+      pathname: '/food-detail-order',
+      params: {
+        id: String(food.id),
+        name: String(food.name),
+        cookName: String(food.cookName || ''),
+        imageUrl: String(foodImageUrl),
+        price: String(food.price),
+      },
+    } as any);
   };
 
   const handleCategoryPress = (category: string) => {
@@ -571,9 +657,13 @@ export const Home: React.FC = () => {
   // Generate local suggestions from current food data
   const getLocalSuggestions = (query: string) => {
     const searchTerm = query.toLowerCase().trim();
+    const publishedFoodKeys = new Set(publishedMeals.map(getFoodIdentity));
+    const mockFoodsWithoutPublishedDuplicates = mockFoods.filter(
+      (food) => !publishedFoodKeys.has(getFoodIdentity(food))
+    );
     const allFoods = [
       ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
-      ...mockFoods.map(food => ({ ...food, id: `mock_${food.id}` })),
+      ...mockFoodsWithoutPublishedDuplicates.map(food => ({ ...food, id: `mock_${food.id}` })),
       ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
     ];
     const suggestions: string[] = [];
@@ -755,10 +845,15 @@ export const Home: React.FC = () => {
       return searchResults;
     }
 
+    const publishedFoodKeys = new Set(publishedMeals.map(getFoodIdentity));
+    const mockFoodsWithoutPublishedDuplicates = mockFoods.filter(
+      (food) => !publishedFoodKeys.has(getFoodIdentity(food))
+    );
+
     // Otherwise use local filtering - unique ID'ler için prefix ekle
     let foods = [
       ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
-      ...mockFoods.map(food => ({ ...food, id: `mock_${food.id}` })),
+      ...mockFoodsWithoutPublishedDuplicates.map(food => ({ ...food, id: `mock_${food.id}` })),
       ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
     ];
     
@@ -940,12 +1035,17 @@ export const Home: React.FC = () => {
         </View>
       </Modal>
 
-      {/* TopBar */}
-      <View style={[styles.topBar, {
-        backgroundColor: colors.primary,
-        opacity: topBarOpacity,
-      }]}>
-        {/* Center Logo */}
+      {/* Hero Header */}
+      <View
+        style={[
+          styles.topBar,
+          {
+            backgroundColor: '#AAB3AA',
+            opacity: topBarOpacity,
+            paddingTop: insets.top + 5,
+          },
+        ]}
+      >
         <View style={styles.logoContainer}>
           <View style={styles.titleRow}>
             <Text variant="heading" weight="bold" style={styles.topBarTitle}>
@@ -955,12 +1055,12 @@ export const Home: React.FC = () => {
               {currentCountry.code === 'TR' ? '🇹🇷' : '🇬🇧'}
             </Text>
           </View>
-          <Text variant="caption" style={styles.logoSlogan}>
-            {t('homeScreen.slogan')}
-          </Text>
+          <View style={styles.heroTag}>
+            <Text variant="body" style={styles.heroTagText}>
+              {currentLanguage === 'tr' ? 'Ev yemeği · Yakınında' : 'Home food · Nearby'}
+            </Text>
+          </View>
         </View>
-        
-        {/* Right Icons removed */}
       </View>
       
       {/* Search - Outside ScrollView to avoid VirtualizedList warning */}
@@ -981,7 +1081,7 @@ export const Home: React.FC = () => {
           
           <TouchableOpacity 
             style={[styles.nearbyButton, { 
-              backgroundColor: locationLoading ? colors.textSecondary : colors.primary,
+              backgroundColor: '#FFFFFF',
               opacity: locationLoading ? 0.7 : 1
             }]}
             onPress={async () => {
@@ -990,9 +1090,13 @@ export const Home: React.FC = () => {
               const userCoords = await getUserLocation();
               if (userCoords) {
                 setSearchQuery(t('homeScreen.nearbyQuery'));
+                const publishedFoodKeys = new Set(publishedMeals.map(getFoodIdentity));
+                const mockFoodsWithoutPublishedDuplicates = mockFoods.filter(
+                  (food) => !publishedFoodKeys.has(getFoodIdentity(food))
+                );
                 const allFoods = [
                   ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
-                  ...mockFoods.map(food => ({ ...food, id: `mock_${food.id}` })),
+                  ...mockFoodsWithoutPublishedDuplicates.map(food => ({ ...food, id: `mock_${food.id}` })),
                   ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` }))
                 ];
                 const sortedFoods = sortFoodsByRealDistance(allFoods, userCoords);
@@ -1002,9 +1106,7 @@ export const Home: React.FC = () => {
             }}
             disabled={locationLoading}
           >
-            <Text variant="caption" weight="medium" style={{ color: 'white', fontSize: 11 }}>
-              {locationLoading ? t('locationLoading') : t('nearMe')}
-            </Text>
+            <MaterialIcons name="location-on" size={22} color="#D12B2B" />
           </TouchableOpacity>
         </View>
       </View>
@@ -1024,9 +1126,9 @@ export const Home: React.FC = () => {
                 styles.categoryButton,
                 {
                   backgroundColor: selectedCategory === category 
-                    ? colors.primary 
-                    : 'transparent',
-                  borderColor: selectedCategory === category ? colors.primary : 'transparent',
+                    ? '#8FA08E'
+                    : '#FFFFFF',
+                  borderColor: selectedCategory === category ? '#8FA08E' : '#E7E8EA',
                 },
               ]}
             >
@@ -1036,8 +1138,8 @@ export const Home: React.FC = () => {
                 style={{
                   color: selectedCategory === category 
                     ? 'white' 
-                    : colors.textSecondary,
-                  fontSize: 15, // Slightly increased from default
+                    : '#5B5E63',
+                  fontSize: 15,
                 }}
               >
                 {category}
@@ -1046,6 +1148,28 @@ export const Home: React.FC = () => {
           ))}
         </ScrollView>
       </View>
+
+      {latestOrderStatus ? (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.latestOrderBanner, { borderColor: colors.primary, backgroundColor: colors.surface }]}
+          onPress={() =>
+            router.push({
+              pathname: '/(buyer)/order-tracking',
+              params: {
+                orderId: latestOrderStatus.orderId,
+              },
+            })
+          }
+        >
+          <Text variant="caption" color="textSecondary">
+            {currentLanguage === 'tr' ? 'Son Sipariş Durumu' : 'Latest Order Status'}
+          </Text>
+          <Text variant="body" weight="semibold" style={{ color: colors.primary }}>
+            #{latestOrderStatus.orderId} • {latestOrderStatus.statusLabel}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
       
       <ScrollView 
         style={styles.content} 
@@ -1135,23 +1259,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
-    paddingTop: 50, // Safe area padding
-    paddingBottom: Spacing.xs, // Reduced to xs to push icons to very bottom
-    paddingHorizontal: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center', // Changed from flex-end to center
-    justifyContent: 'space-between',
-    minHeight: 100, // Added minimum height for more space
-    position: 'relative',
-  },
-  logoContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 50, // Match paddingTop of topBar
-    bottom: 0,
+    paddingBottom: 6,
+    paddingHorizontal: Spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 124,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginTop: -12,
   },
   titleRow: {
     flexDirection: 'row',
@@ -1159,110 +1278,70 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   countryFlag: {
-    fontSize: 16,
+    fontSize: 18,
   },
-  logoSlogan: {
-    fontSize: 12.5, // Increased from 11 to 12.5
-    color: 'rgba(255, 255, 255, 0.85)',
-    textAlign: 'center',
-    marginTop: 2, // Small positive margin to keep Coziyoo position unchanged
-    letterSpacing: 0.8,
-    fontStyle: 'italic',
-    fontWeight: '500', // Increased from 'normal' to '500' (medium)
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+  heroTag: {
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+  },
+  heroTagText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+    textShadowColor: 'rgba(0,0,0,0.35)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    textShadowRadius: 2,
   },
   topBarTitle: {
-    fontSize: 24, // Original size
+    fontSize: 38,
     color: 'white',
-    letterSpacing: 1, // Original spacing
+    letterSpacing: 0.4,
     textAlign: 'center',
-    fontWeight: 'bold', // Original weight
-    textShadowColor: 'rgba(0, 0, 0, 0.2)', // Original shadow
+    fontWeight: '800',
+    textShadowColor: 'rgba(0,0,0,0.2)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1, // Original radius
-  },
-  leftIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 0, // No margin - stick to very bottom
-  },
-  rightIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: 0, // No margin - stick to very bottom
-  },
-  cartButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    // @ts-ignore
-    backgroundColor: Colors.light.error,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  cartBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  rightIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    textShadowRadius: 2,
   },
   content: {
     flex: 1,
     paddingTop: 0, // Remove top padding since categories are now fixed
   },
   searchContainer: {
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 4,
-    paddingBottom: 2, // Reduced bottom padding to get closer to categories
+    marginTop: -4,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 4,
+    paddingBottom: 2,
+    backgroundColor: '#F5F5F5',
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs, // Reduced from sm to xs
+    gap: Spacing.xs,
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E7E8EA',
   },
   searchBarContainer: {
-    flex: 1, // Takes remaining space, making SearchBar narrower
+    flex: 1,
   },
   nearbyButton: {
-    paddingHorizontal: Spacing.xs, // Reduced padding
-    paddingVertical: 6, // Reduced from 8 to 6
-    borderRadius: 16, // Slightly smaller radius
-    minWidth: 60, // Reduced from 70
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
-    elevation: 3,
+    elevation: 1,
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -1324,32 +1403,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   categoriesContainer: {
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 0,
-    paddingTop: 0,
-    // @ts-ignore
-    backgroundColor: Colors.light.background,
-    borderBottomWidth: 1,
-    // @ts-ignore
-    borderBottomColor: Colors.light.border,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    minHeight: 0,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: 0,
+    backgroundColor: '#F5F5F5',
   },
   categoriesScroll: {
     flexGrow: 0,
   },
+  latestOrderBanner: {
+    marginHorizontal: Spacing.md,
+    marginTop: 2,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+  },
   categoryButton: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
     marginRight: Spacing.xs,
     minWidth: 60,
     alignItems: 'center',
-    borderWidth: Platform.OS === 'web' ? 1 : 0.5,
+    borderWidth: 1,
+    borderColor: '#E7E8EA',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
   foodListContainer: {
     paddingHorizontal: 0, // Remove side padding for full-width cards

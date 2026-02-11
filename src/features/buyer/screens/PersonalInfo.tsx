@@ -180,7 +180,7 @@ export const PersonalInfo: React.FC = () => {
         title={t('personalInfoScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
-            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={
@@ -211,7 +211,7 @@ export const PersonalInfo: React.FC = () => {
                   <Image 
                     source={{ uri: formData.avatar }}
                     style={styles.avatarImage}
-                    defaultSource={{ uri: 'https://via.placeholder.com/100x100/7FAF9A/FFFFFF?text=A' }}
+                    defaultSource={{ uri: 'https://placehold.co/100x100/7FAF9A/FFFFFF?text=A' }}
                   />
                 ) : (
                   <WebSafeIcon name="person" size={40} color={colors.textSecondary} />

@@ -50,7 +50,7 @@ export const ChangePassword: React.FC = () => {
         title={t('changePasswordScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
-            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
       />

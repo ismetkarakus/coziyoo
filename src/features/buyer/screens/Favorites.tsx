@@ -108,7 +108,7 @@ export const Favorites: React.FC = () => {
         title={t('favoritesScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
-            <WebSafeIcon name="arrow-back" size={20} color={colors.text} />
+            <WebSafeIcon name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
       />

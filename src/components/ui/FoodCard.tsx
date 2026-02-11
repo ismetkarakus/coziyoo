@@ -233,6 +233,7 @@ export function FoodCard({
 
   const totalStock = dailyStock ?? currentStock ?? 0;
   const remainingStock = currentStock ?? 0;
+  const safeRating = Number.isFinite(rating) ? rating : 0;
   const qtyText = t("foodCard.remainingOnly", {
     remaining: Math.max(remainingStock, 0),
   });
@@ -323,7 +324,7 @@ export function FoodCard({
         </Pressable>
         <View style={styles.footerRating}>
           <Stars value={rating} />
-          <Text style={styles.footerRatingText}>{rating.toFixed(1)}</Text>
+          <Text style={styles.footerRatingText}>{safeRating.toFixed(1)}</Text>
         </View>
       </View>
     </View>

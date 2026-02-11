@@ -151,7 +151,7 @@ export const SellerRatings: React.FC = () => {
         title={t('sellerRatingsScreen.title')}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
-            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
       />

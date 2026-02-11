@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { getSyncedOrderStatuses } from '../../../utils/orderStatusSync';
 
 type SellerChatStatus = 'preparing' | 'ready' | 'onWay' | 'delivered';
 
@@ -14,6 +15,7 @@ export const SellerMessages: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
+  const [chats, setChats] = React.useState<any[]>([]);
 
   const handleBackPress = () => {
     console.log('Back button pressed from SellerMessages');
@@ -22,7 +24,7 @@ export const SellerMessages: React.FC = () => {
 
   const handleChatPress = (chatId: string, orderId: string, foodName: string, status: SellerChatStatus) => {
     const statusLabel = t(`sellerMessagesScreen.status.${status}`);
-    router.push(`/(buyer)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(statusLabel)}`);
+    router.push(`/(buyer)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(statusLabel)}&type=seller`);
   };
 
   const getStatusColor = (status: SellerChatStatus) => {
@@ -73,6 +75,44 @@ export const SellerMessages: React.FC = () => {
     },
   ];
 
+  const refreshChats = React.useCallback(async () => {
+    try {
+      const syncedStatuses = await getSyncedOrderStatuses();
+      const nextChats = mockChats.map((chat) => {
+        const synced = syncedStatuses[chat.orderId];
+        if (!synced) return chat;
+
+        const mappedStatus: SellerChatStatus =
+          synced.statusKey === 'preparing'
+            ? 'preparing'
+            : synced.statusKey === 'ready'
+              ? 'ready'
+              : synced.statusKey === 'onTheWay'
+                ? 'onWay'
+                : 'delivered';
+
+        return {
+          ...chat,
+          orderStatus: mappedStatus,
+        };
+      });
+      setChats(nextChats);
+    } catch (error) {
+      console.error('Failed to load synced seller chat statuses:', error);
+      setChats(mockChats);
+    }
+  }, [t]);
+
+  React.useEffect(() => {
+    refreshChats();
+  }, [refreshChats]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshChats();
+    }, [refreshChats])
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar 
@@ -83,13 +123,13 @@ export const SellerMessages: React.FC = () => {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {mockChats.length === 0 ? (
+        {chats.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text variant="heading" center>
               {t('sellerMessagesScreen.emptyTitle')}
@@ -100,7 +140,7 @@ export const SellerMessages: React.FC = () => {
           </View>
         ) : (
           <View style={styles.chatsContainer}>
-            {mockChats.map((chat) => (
+            {chats.map((chat) => (
               <TouchableOpacity
                 key={chat.id}
                 onPress={() => handleChatPress(chat.id, chat.orderId, chat.foodName, chat.orderStatus)}
@@ -224,8 +264,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
-
 
 
 

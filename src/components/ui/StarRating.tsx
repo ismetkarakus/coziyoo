@@ -79,7 +79,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
           </View>
         ) : (
           <MaterialIcons
-            name={isFilled ? "star" : "star-o"}
+            name={isFilled ? "star" : "star-outline"}
             size={starSize}
             color={isFilled ? starColor : emptyStarColor}
           />
