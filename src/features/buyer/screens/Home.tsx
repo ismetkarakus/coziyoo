@@ -1170,6 +1170,21 @@ export const Home: React.FC = () => {
           </Text>
         </TouchableOpacity>
       ) : null}
+
+      {__DEV__ ? (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.previewBanner, { borderColor: colors.primary, backgroundColor: '#FFFFFF' }]}
+          onPress={() => router.push('/(buyer)/home-preview' as any)}
+        >
+          <Text variant="caption" color="textSecondary">
+            UI Önizleme
+          </Text>
+          <Text variant="body" weight="semibold" style={{ color: colors.primary }}>
+            Referans Ana Sayfa Tasarımını Aç
+          </Text>
+        </TouchableOpacity>
+      ) : null}
       
       <ScrollView 
         style={styles.content} 
@@ -1411,6 +1426,15 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   latestOrderBanner: {
+    marginHorizontal: Spacing.md,
+    marginTop: 2,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+  },
+  previewBanner: {
     marginHorizontal: Spacing.md,
     marginTop: 2,
     marginBottom: 2,
