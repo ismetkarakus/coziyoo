@@ -60,6 +60,9 @@ export const HomePreview: React.FC = () => {
             <MaterialIcons name="search" size={20} color="#7A7A7A" />
             <Text style={styles.searchText}>Bugün ne yemek istersin?</Text>
           </View>
+          <TouchableOpacity style={styles.filterButton} activeOpacity={0.85}>
+            <MaterialIcons name="filter-list" size={18} color="#7A7A7A" />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.pinButton}>
             <MaterialIcons name="location-on" size={18} color="#D22D2D" />
           </TouchableOpacity>
@@ -149,7 +152,7 @@ export const HomePreview: React.FC = () => {
                   </View>
                   <View style={styles.deliveryItem}>
                     <Text style={styles.deliveryEmoji}>🚚</Text>
-                    <Text style={styles.deliveryLabel}>Teslim</Text>
+                    <Text style={styles.deliveryLabel}>Getir</Text>
                   </View>
                 </View>
                 <View style={styles.cookRating}>
@@ -231,6 +234,14 @@ const styles = StyleSheet.create({
     color: '#7A7A7A',
     fontSize: 15,
   },
+  filterButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F7F8F9',
+  },
   pinButton: {
     width: 28,
     height: 28,
@@ -276,20 +287,20 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    paddingTop: 4,
-    paddingHorizontal: 12,
-    paddingBottom: 6,
+    paddingTop: 6,
+    paddingHorizontal: 14,
+    paddingBottom: 8,
     borderWidth: 1,
     borderColor: '#E8E8E8',
   },
   cardContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   cardImage: {
-    width: 108,
-    height: 90,
+    width: 114,
+    height: 96,
     borderRadius: 6,
   },
   imageWrap: {
@@ -312,14 +323,14 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   imageColumn: {
-    width: 108,
+    width: 114,
     alignItems: 'center',
     alignSelf: 'flex-start',
     marginLeft: -2,
   },
   cardBody: {
     flex: 1,
-    minHeight: 86,
+    minHeight: 94,
     justifyContent: 'space-between',
   },
   cardBodyTop: {
@@ -350,10 +361,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardTitle: {
-    fontSize: 14.5,
+    fontSize: 15.5,
     fontWeight: '800',
     color: '#4B5563',
-    lineHeight: 17,
+    lineHeight: 18,
     flexShrink: 1,
   },
   titleRowInline: {
@@ -362,7 +373,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   stockInline: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: '#6B7280',
   },
@@ -374,32 +385,32 @@ const styles = StyleSheet.create({
   priceText: {
     color: '#2E7D32',
     fontWeight: '800',
-    fontSize: 13,
+    fontSize: 14,
   },
   metaTitle: {
     color: '#5E6672',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    lineHeight: 18,
+    lineHeight: 19,
     letterSpacing: 0.2,
   },
   metaDate: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     color: '#7A8089',
   },
   metaDescription: {
     color: '#6B7280',
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '500',
-    lineHeight: 17,
+    lineHeight: 18,
     marginTop: 1,
   },
   metaIngredients: {
     color: '#5E6672',
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '500',
-    lineHeight: 16,
+    lineHeight: 17,
     marginTop: 4,
   },
   ingredientsLabel: {
@@ -422,13 +433,13 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   deliveryLabel: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
     color: '#6B7280',
   },
   cook: {
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#4B5563',
     flexShrink: 1,
@@ -463,7 +474,7 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   cookRatingText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: '#374151',
   },

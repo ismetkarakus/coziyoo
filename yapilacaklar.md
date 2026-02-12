@@ -16,3 +16,5 @@ ana menudeki mesajlarimi degistirip siparislerim yapiyoruz acilan sayfada su ank
 her bir siparis tiklandiginda bu siparisle ilgili mesajlara gider
 siparisle ilgili bildirinm geldiginde tiklanildiginda o siparisle ilgili mesaj sayfasi acilicak
 [ ] alici ve satici mesazlasma sayfasindan neden tabottombar ve ana yemek sayfasindan bobottombar daki mesaj ikonu ne ise yariyor bunu bildirim olarakmi kullanacagiz
+
+[ ] yemek kartlarina aciklama ve baharat yazildiginda kartin bozulmaamsi icin kart siniri fakat icerikler bolumunde daha uzun yaza bilsin
