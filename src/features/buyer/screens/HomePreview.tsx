@@ -47,9 +47,7 @@ export const HomePreview: React.FC = () => {
     <View style={[styles.container, { backgroundColor: '#F3F1EF' }]}>
       <View style={styles.hero}>
         <View style={styles.heroTopRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.8}>
-            <MaterialIcons name="arrow-back" size={24} color="#1F2937" />
-          </TouchableOpacity>
+          <View style={styles.backButton} />
           <View style={styles.heroCenter}>
             <Text style={styles.logo}>Coziyoo</Text>
             <Text style={styles.slogan}>Ev Yemeği · Yakınında</Text>
@@ -90,74 +88,82 @@ export const HomePreview: React.FC = () => {
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
         {DEMO_ITEMS.map((item) => (
           <View key={item.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() =>
-                    setExpandedFoodId((prev) => (prev === item.id ? null : item.id))
-                  }
-                  style={styles.titlePress}
-                >
-                  <View style={styles.titleRowInline}>
-                    <Text style={styles.cardTitle}>{item.title}</Text>
-                    <Text style={styles.stockInline}>8/Ps</Text>
-                  </View>
+            <View style={styles.cardHeader}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setExpandedFoodId((prev) => (prev === item.id ? null : item.id))}
+                style={styles.headerLeft}
+              >
+                <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
+                  {item.title}
+                </Text>
+                <Text style={styles.stockInline}>8/Ps</Text>
+              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <TouchableOpacity style={styles.favButton} activeOpacity={0.8}>
+                  <MaterialIcons name="favorite-border" size={18} color="#9CA3AF" />
                 </TouchableOpacity>
-                <View style={styles.headerActions}>
-                  <TouchableOpacity style={styles.favButton} activeOpacity={0.8}>
-                    <MaterialIcons name="favorite-border" size={17} color="#6B7280" />
-                </TouchableOpacity>
-                <View style={styles.priceBadge}>
-                  <Text style={styles.priceText}>{item.price}</Text>
-                </View>
+                <Text style={styles.priceText}>{item.price}</Text>
               </View>
             </View>
 
             <View style={styles.cardContentRow}>
               <View style={styles.imageColumn}>
-                <Image source={{ uri: item.img }} style={styles.cardImage} />
-                <View style={styles.sellerRow}>
-                  <TouchableOpacity
-                    style={styles.cookLink}
-                    activeOpacity={0.8}
-                    onPress={() =>
-                      router.push(`/seller-public-profile?cookName=${encodeURIComponent(item.cook)}` as any)
-                    }
-                  >
-                    <Text style={styles.cook}>{item.cook}</Text>
-                    <MaterialIcons name="chevron-right" size={14} color="#4B5563" />
+                <View style={styles.imageWrap}>
+                  <Image source={{ uri: item.img }} style={styles.cardImage} />
+                  <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => {}}>
+                    <MaterialIcons name="add" size={22} color="#16A34A" />
                   </TouchableOpacity>
                 </View>
               </View>
 
               <View style={styles.cardBody}>
-                <Text style={styles.meta}>Mutfak · Türk mutfağı</Text>
-                <Text style={styles.metaDescription}>{item.description}</Text>
-                <Text style={styles.metaIngredients}>
-                  <Text style={styles.ingredientsLabel}>Malzemeler: </Text>
-                  {item.ingredients}
-                </Text>
-                <View style={styles.deliveryInline}>
-                  <Text style={styles.deliveryEmoji}>🚚</Text>
-                  <Text style={styles.deliveryEmoji}>🚶</Text>
+                <View style={styles.cardBodyTop}>
+                  <Text style={styles.metaTitle}>
+                    Türk mutfağı · <Text style={styles.metaDate}>20 Ocak</Text>
+                  </Text>
+                  <Text style={styles.metaDescription}>{item.description}</Text>
+                  <Text style={styles.metaIngredients}>
+                    <Text style={styles.ingredientsLabel}>Malzemeler: </Text>
+                    {item.ingredients}
+                  </Text>
                 </View>
-                {expandedFoodId === item.id ? (
-                  <Text style={styles.meta}>Son Tarih: 20 Ocak</Text>
-                ) : null}
-                <View style={styles.cardBottomRight}>
-                  <View style={styles.cookRating}>
-                    <View style={styles.cookStars}>
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <MaterialIcons
-                          key={`${item.id}-star-${index}`}
-                          name={index < Math.round(item.rating) ? 'star' : 'star-border'}
-                          size={11}
-                          color="#F59E0B"
-                        />
-                      ))}
-                    </View>
-                    <Text style={styles.cookRatingText}>{item.rating.toFixed(1)}</Text>
+              </View>
+            </View>
+            <View style={styles.cardFooterRow}>
+              <TouchableOpacity
+                style={styles.cookLink}
+                activeOpacity={0.8}
+                onPress={() =>
+                  router.push(`/seller-public-profile?cookName=${encodeURIComponent(item.cook)}` as any)
+                }
+              >
+                <Text style={styles.cook}>{item.cook}</Text>
+                <MaterialIcons name="arrow-forward" size={14} color="#6B7280" />
+              </TouchableOpacity>
+              <View style={styles.footerRight}>
+                <View style={styles.deliveryInline}>
+                  <View style={styles.deliveryItem}>
+                    <Text style={styles.deliveryEmoji}>🚶</Text>
+                    <Text style={styles.deliveryLabel}>Al</Text>
                   </View>
+                  <View style={styles.deliveryItem}>
+                    <Text style={styles.deliveryEmoji}>🚚</Text>
+                    <Text style={styles.deliveryLabel}>Teslim</Text>
+                  </View>
+                </View>
+                <View style={styles.cookRating}>
+                  <View style={styles.cookStars}>
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <MaterialIcons
+                        key={`${item.id}-star-${index}`}
+                        name={index < Math.round(item.rating) ? 'star' : 'star-border'}
+                        size={11}
+                        color="#F59E0B"
+                      />
+                    ))}
+                  </View>
+                  <Text style={styles.cookRatingText}>{item.rating.toFixed(1)}</Text>
                 </View>
               </View>
             </View>
@@ -212,14 +218,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E4E7',
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 2,
     gap: Spacing.xs,
   },
   searchInputWrap: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   searchText: {
     color: '#7A7A7A',
@@ -264,71 +270,99 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 6,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    gap: 3,
   },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    paddingTop: 2,
-    paddingHorizontal: 10,
-    paddingBottom: 8,
+    paddingTop: 4,
+    paddingHorizontal: 12,
+    paddingBottom: 6,
     borderWidth: 1,
     borderColor: '#E8E8E8',
   },
   cardContentRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 6,
+    alignItems: 'center',
+    gap: 10,
   },
   cardImage: {
-    width: 122,
-    height: 106,
-    borderRadius: 12,
+    width: 108,
+    height: 90,
+    borderRadius: 6,
+  },
+  imageWrap: {
+    position: 'relative',
+  },
+  addButton: {
+    position: 'absolute',
+    right: -8,
+    bottom: -6,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
   },
   imageColumn: {
-    width: 122,
+    width: 108,
     alignItems: 'center',
     alignSelf: 'flex-start',
     marginLeft: -2,
   },
   cardBody: {
     flex: 1,
+    minHeight: 86,
+    justifyContent: 'space-between',
+  },
+  cardBodyTop: {
+    flexShrink: 1,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 0,
+    marginBottom: 2,
   },
-  headerActions: {
+  headerLeft: {
+    flexShrink: 1,
+    paddingVertical: 2,
+    marginRight: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  favButton: {
-    padding: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#1F2937',
-    lineHeight: 18,
-  },
-  titlePress: {
-    flexShrink: 1,
-    paddingVertical: 1,
-    marginRight: 8,
-  },
-  titleRowInline: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
+  favButton: {
+    padding: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    fontSize: 14.5,
+    fontWeight: '800',
+    color: '#4B5563',
+    lineHeight: 17,
+    flexShrink: 1,
+  },
+  titleRowInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   stockInline: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: '#6B7280',
   },
@@ -338,70 +372,84 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   priceText: {
-    color: '#305846',
-    fontWeight: '700',
-    fontSize: 12,
+    color: '#2E7D32',
+    fontWeight: '800',
+    fontSize: 13,
   },
-  meta: {
+  metaTitle: {
     color: '#5E6672',
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 18,
+    letterSpacing: 0.2,
+  },
+  metaDate: {
+    fontSize: 11,
     fontWeight: '600',
-    lineHeight: 19,
-    letterSpacing: 0.05,
-    marginTop: 1,
+    color: '#7A8089',
   },
   metaDescription: {
     color: '#6B7280',
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '500',
     lineHeight: 17,
     marginTop: 1,
   },
   metaIngredients: {
-    color: '#6B7280',
+    color: '#5E6672',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 16,
-    marginTop: 1,
+    marginTop: 4,
   },
   ingredientsLabel: {
-    color: '#4B5563',
+    color: '#5E6672',
     fontWeight: '700',
   },
   deliveryInline: {
-    marginTop: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     justifyContent: 'flex-start',
   },
+  deliveryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
   deliveryEmoji: {
-    fontSize: 16,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 16,
+  },
+  deliveryLabel: {
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#6B7280',
   },
   cook: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '700',
-    color: '#374151',
+    color: '#4B5563',
     flexShrink: 1,
   },
   cookLink: {
-    marginLeft: 6,
+    marginLeft: 2,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
     flexShrink: 1,
   },
-  sellerRow: {
-    marginTop: 2,
-    width: '100%',
+  cardFooterRow: {
+    marginTop: 4,
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  cardBottomRight: {
-    marginTop: 2,
-    alignItems: 'flex-end',
+  footerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   cookRating: {
     flexDirection: 'row',
