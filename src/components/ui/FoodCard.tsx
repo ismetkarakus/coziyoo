@@ -77,6 +77,7 @@ type FoodCardProps = {
   ingredients?: string[];
   favoriteCount?: number;
   style?: ViewStyle;
+  isTitleClickable?: boolean;
 };
 
 function Stars({ value }: { value: number }) {
@@ -185,6 +186,7 @@ export function FoodCard({
   showAvailableDates = false,
   favoriteCount = 0,
   style,
+  isTitleClickable = true,
 }: FoodCardProps) {
   const { t, currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
@@ -285,6 +287,16 @@ export function FoodCard({
     onAddToCart?.(id, 1, deliveryMode);
   };
 
+  const handleCookPress = () => {
+    router.push({
+      pathname: "/(buyer)",
+      params: {
+        filterByCook: cookName,
+        showCookFilter: "true",
+      },
+    } as any);
+  };
+
   const handleToggleFavorite = async () => {
     try {
       const result = await toggleFavorite({
@@ -308,11 +320,19 @@ export function FoodCard({
       {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Pressable onPress={handleView} style={styles.titlePressable}>
-            <Text style={styles.title} numberOfLines={2}>
-              {name}
-            </Text>
-          </Pressable>
+          {isTitleClickable ? (
+            <Pressable onPress={handleView} style={styles.titlePressable}>
+              <Text style={styles.title} numberOfLines={2}>
+                {name}
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={styles.titlePressable}>
+              <Text style={styles.title} numberOfLines={2}>
+                {name}
+              </Text>
+            </View>
+          )}
           <Pressable style={styles.heartInlineBtn} onPress={handleToggleFavorite}>
             <MaterialIcons
               name={isFavorite ? "favorite" : "favorite-border"}
@@ -360,11 +380,7 @@ export function FoodCard({
       </View>
 
       <View style={styles.footerMeta}>
-        <Pressable
-          onPress={() =>
-            router.push(`/seller-public-profile?cookName=${encodeURIComponent(cookName)}`)
-          }
-        >
+        <Pressable onPress={handleCookPress}>
           <Text style={styles.seller} numberOfLines={1}>
             {(displayCookName || cookName)} →
           </Text>

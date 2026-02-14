@@ -96,14 +96,15 @@ export default function FoodDetailSimple() {
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 18 && Math.abs(gestureState.dy) < 20,
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dx) > 40 &&
-          Math.abs(gestureState.dy) < 25 &&
-          Math.abs(gestureState.vx) > 0.2,
+          Math.abs(gestureState.dx) > 22 && Math.abs(gestureState.dy) < 22,
+        onPanResponderTerminationRequest: () => false,
         onPanResponderRelease: (_, gestureState) => {
           const isHorizontalSwipe =
-            Math.abs(gestureState.dx) > 90 &&
-            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+            Math.abs(gestureState.dx) > 70 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.25;
 
           if (isHorizontalSwipe) {
             router.replace('/(buyer)');
@@ -271,10 +272,7 @@ export default function FoodDetailSimple() {
   };
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
-      {...swipeToHomeResponder.panHandlers}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Modal
         visible={allergenModalVisible}
         transparent
@@ -451,168 +449,170 @@ export default function FoodDetailSimple() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.titleRowOutside}>
-          <Text variant="heading" weight="semibold" style={styles.foodNameOutside} numberOfLines={2}>
-            {foodName}
-          </Text>
-          <Text variant="heading" weight="semibold" color="primary" style={styles.priceTextOutside}>
-            {formatCurrency(basePrice)}
-          </Text>
-        </View>
+        <View style={styles.swipeExitZone} {...swipeToHomeResponder.panHandlers}>
+          <View style={styles.titleRowOutside}>
+            <Text variant="heading" weight="semibold" style={styles.foodNameOutside} numberOfLines={2}>
+              {foodName}
+            </Text>
+            <Text variant="heading" weight="semibold" color="primary" style={styles.priceTextOutside}>
+              {formatCurrency(basePrice)}
+            </Text>
+          </View>
 
-        <View style={[styles.cardsRow, showSideBySideCards ? styles.cardsRowSide : styles.cardsRowStack]}>
-          <Card variant="default" padding="md" style={styles.cookInfoCard}>
-          <View style={styles.cookInfo}>
-            <View style={styles.cookProfile}>
-              {sellerAvatar && !sellerAvatarError ? (
-                <Image
-                  source={{ uri: sellerAvatar }}
-                  style={styles.cookAvatar}
-                  onError={() => setSellerAvatarError(true)}
-                />
-              ) : (
-                <View style={styles.cookAvatarFallback}>
-                  <Text variant="body" weight="bold" style={styles.cookAvatarFallbackText}>
-                    {cookName?.trim()?.charAt(0) || 'C'}
-                  </Text>
-                </View>
-              )}
-                <View style={styles.cookDetails}>
-                <View style={styles.cookNameRow}>
-                  <Text variant="body" color="textSecondary" style={styles.cookName} numberOfLines={1}>
-                    {cookName}
-                  </Text>
-                </View>
-                <View style={styles.rating}>
-                  <StarRating rating={foodMeta.rating} size="small" showNumber />
-                  <Text variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
-                    {t('foodDetailScreen.reviewCount', { count: foodMeta.reviewCount })}
-                  </Text>
+          <View style={[styles.cardsRow, showSideBySideCards ? styles.cardsRowSide : styles.cardsRowStack]}>
+            <Card variant="default" padding="md" style={styles.cookInfoCard}>
+            <View style={styles.cookInfo}>
+              <View style={styles.cookProfile}>
+                {sellerAvatar && !sellerAvatarError ? (
+                  <Image
+                    source={{ uri: sellerAvatar }}
+                    style={styles.cookAvatar}
+                    onError={() => setSellerAvatarError(true)}
+                  />
+                ) : (
+                  <View style={styles.cookAvatarFallback}>
+                    <Text variant="body" weight="bold" style={styles.cookAvatarFallbackText}>
+                      {cookName?.trim()?.charAt(0) || 'C'}
+                    </Text>
+                  </View>
+                )}
+                  <View style={styles.cookDetails}>
+                  <View style={styles.cookNameRow}>
+                    <Text variant="body" color="textSecondary" style={styles.cookName} numberOfLines={1}>
+                      {cookName}
+                    </Text>
+                  </View>
+                  <View style={styles.rating}>
+                    <StarRating rating={foodMeta.rating} size="small" showNumber />
+                    <Text variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
+                      {t('foodDetailScreen.reviewCount', { count: foodMeta.reviewCount })}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
 
-          <View style={styles.cookDescriptionRow}>
-            <Text variant="caption" color="textSecondary" style={styles.cookDescriptionText}>
-              {foodMeta.cookDescription}
-            </Text>
-          </View>
-          </Card>
-
-          <Card variant="default" padding="md" style={styles.metaInfoCard}>
-            <View style={styles.deliveryDetailsSection}>
-              <Text variant="body" weight="medium" style={styles.deliveryDetailText}>
-                {deliveryTimeLabel}: {foodMeta.prepTime}
-              </Text>
-              <Text variant="body" weight="medium" style={styles.deliveryDetailText}>
-                {t('foodDetailScreen.distance')}: {foodMeta.distance}
+            <View style={styles.cookDescriptionRow}>
+              <Text variant="caption" color="textSecondary" style={styles.cookDescriptionText}>
+                {foodMeta.cookDescription}
               </Text>
             </View>
+            </Card>
 
-            <View style={styles.deliveryTypeRow}>
-              <Text variant="body" weight="medium" color="primary" style={styles.deliveryTypeText}>
-                {deliveryTypeDescription}
-              </Text>
-            </View>
-
-            <View style={styles.availabilitySection}>
-              <View style={styles.availabilityItem}>
-                <Text variant="body" weight="medium" color="primary" style={styles.leftAlignedText}>
-                  {t('foodDetailSimpleScreen.endDateLabel')}: {endDate}
+            <Card variant="default" padding="md" style={styles.metaInfoCard}>
+              <View style={styles.deliveryDetailsSection}>
+                <Text variant="body" weight="medium" style={styles.deliveryDetailText}>
+                  {deliveryTimeLabel}: {foodMeta.prepTime}
+                </Text>
+                <Text variant="body" weight="medium" style={styles.deliveryDetailText}>
+                  {t('foodDetailScreen.distance')}: {foodMeta.distance}
                 </Text>
               </View>
-              <View style={styles.availabilityItem}>
-                <Text
-                  variant="body"
-                  weight="medium"
-                  color={foodMeta.currentStock > 0 ? 'primary' : 'error'}
-                  style={styles.leftAlignedText}
-                >
-                  {t('foodDetailSimpleScreen.remainingLabel')}: {foodMeta.currentStock} {t('foodDetailSimpleScreen.remainingValue')}
+
+              <View style={styles.deliveryTypeRow}>
+                <Text variant="body" weight="medium" color="primary" style={styles.deliveryTypeText}>
+                  {deliveryTypeDescription}
                 </Text>
               </View>
-            </View>
-          </Card>
-        </View>
 
-        <View style={[styles.infoContainer, { backgroundColor: colors.surface }]}>
-          {/* İçindekiler */}
-          <View style={styles.ingredientsSection}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              {t('foodDetailSimpleScreen.ingredientsTitle')}
-            </Text>
-            <Text variant="body" style={styles.ingredientsText}>
-              {ingredients && ingredients.length > 0
-                ? ingredients.join(', ')
-                : t('foodDetailSimpleScreen.ingredients')}
-            </Text>
+              <View style={styles.availabilitySection}>
+                <View style={styles.availabilityItem}>
+                  <Text variant="body" weight="medium" color="primary" style={styles.leftAlignedText}>
+                    {t('foodDetailSimpleScreen.endDateLabel')}: {endDate}
+                  </Text>
+                </View>
+                <View style={styles.availabilityItem}>
+                  <Text
+                    variant="body"
+                    weight="medium"
+                    color={foodMeta.currentStock > 0 ? 'primary' : 'error'}
+                    style={styles.leftAlignedText}
+                  >
+                    {t('foodDetailSimpleScreen.remainingLabel')}: {foodMeta.currentStock} {t('foodDetailSimpleScreen.remainingValue')}
+                  </Text>
+                </View>
+              </View>
+            </Card>
           </View>
 
-          <View style={styles.allergensSection}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              {t('foodDetailSimpleScreen.allergensTitle')}
-            </Text>
-            {allergens && allergens.length > 0 ? (
-              <View style={styles.allergenPillsContainer}>
-                {allergens.map((allergen, index) => {
-                  const isMatched = userAllergies.includes(allergen.toLowerCase());
+          <View style={[styles.infoContainer, { backgroundColor: colors.surface }]}>
+            {/* İçindekiler */}
+            <View style={styles.ingredientsSection}>
+              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+                {t('foodDetailSimpleScreen.ingredientsTitle')}
+              </Text>
+              <Text variant="body" style={styles.ingredientsText}>
+                {ingredients && ingredients.length > 0
+                  ? ingredients.join(', ')
+                  : t('foodDetailSimpleScreen.ingredients')}
+              </Text>
+            </View>
 
-                  return (
-                    <View
-                      key={`${allergen}-${index}`}
-                      style={[
-                        styles.allergenPill,
-                        isMatched && styles.allergenPillDanger,
-                      ]}
-                    >
-                      <Text
-                        variant="caption"
-                        weight="medium"
+            <View style={styles.allergensSection}>
+              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+                {t('foodDetailSimpleScreen.allergensTitle')}
+              </Text>
+              {allergens && allergens.length > 0 ? (
+                <View style={styles.allergenPillsContainer}>
+                  {allergens.map((allergen, index) => {
+                    const isMatched = userAllergies.includes(allergen.toLowerCase());
+
+                    return (
+                      <View
+                        key={`${allergen}-${index}`}
                         style={[
-                          styles.allergenPillText,
-                          isMatched && styles.allergenPillTextDanger,
+                          styles.allergenPill,
+                          isMatched && styles.allergenPillDanger,
                         ]}
                       >
-                        {allergen}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            ) : (
-              <Text variant="body" style={styles.ingredientsText}>
-                {t('foodDetailSimpleScreen.allergensEmpty')}
+                        <Text
+                          variant="caption"
+                          weight="medium"
+                          style={[
+                            styles.allergenPillText,
+                            isMatched && styles.allergenPillTextDanger,
+                          ]}
+                        >
+                          {allergen}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <Text variant="body" style={styles.ingredientsText}>
+                  {t('foodDetailSimpleScreen.allergensEmpty')}
+                </Text>
+              )}
+            </View>
+
+            {/* Tarif */}
+            <View style={styles.aboutSection}>
+              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+                {t('foodDetailSimpleScreen.recipeTitle')}
               </Text>
-            )}
-          </View>
-
-          {/* Tarif */}
-          <View style={styles.aboutSection}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              {t('foodDetailSimpleScreen.recipeTitle')}
-            </Text>
-            <Text variant="body" style={styles.description}>
-              {t('foodDetailSimpleScreen.recipe', { food: foodName })}
-            </Text>
-          </View>
-
-          {/* Reviews Section */}
-          <View style={styles.reviewsSection}>
-            <Text variant="subheading" weight="semibold" style={styles.reviewsTitle}>
-              {t('foodDetailSimpleScreen.reviewsTitle')}
-            </Text>
-            <View style={styles.reviewItem}>
-              <Text variant="body" weight="medium">{t('foodDetailSimpleScreen.review1Name')}</Text>
-              <Text variant="caption" color="textSecondary">
-                {t('foodDetailSimpleScreen.review1Text')}
+              <Text variant="body" style={styles.description}>
+                {t('foodDetailSimpleScreen.recipe', { food: foodName })}
               </Text>
             </View>
-            <View style={styles.reviewItem}>
-              <Text variant="body" weight="medium">{t('foodDetailSimpleScreen.review2Name')}</Text>
-              <Text variant="caption" color="textSecondary">
-                {t('foodDetailSimpleScreen.review2Text')}
+
+            {/* Reviews Section */}
+            <View style={styles.reviewsSection}>
+              <Text variant="subheading" weight="semibold" style={styles.reviewsTitle}>
+                {t('foodDetailSimpleScreen.reviewsTitle')}
               </Text>
+              <View style={styles.reviewItem}>
+                <Text variant="body" weight="medium">{t('foodDetailSimpleScreen.review1Name')}</Text>
+                <Text variant="caption" color="textSecondary">
+                  {t('foodDetailSimpleScreen.review1Text')}
+                </Text>
+              </View>
+              <View style={styles.reviewItem}>
+                <Text variant="body" weight="medium">{t('foodDetailSimpleScreen.review2Name')}</Text>
+                <Text variant="caption" color="textSecondary">
+                  {t('foodDetailSimpleScreen.review2Text')}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -675,6 +675,9 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingBottom: 96,
+  },
+  swipeExitZone: {
+    flex: 1,
   },
   header: {
     borderBottomWidth: 1,

@@ -271,18 +271,14 @@ export const HomePreview: React.FC = () => {
         {filteredItems.map((item) => (
           <View key={item.id} style={styles.card}>
             <View style={styles.cardHeader}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => openFoodDetail(item)}
-                style={styles.headerLeft}
-              >
+              <View style={styles.headerLeft}>
                 <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
                   {item.title}
                 </Text>
                 <Text style={styles.stockInline}>
                   {item.currentStock}/{item.dailyStock} {currentLanguage === 'en' ? 'pcs' : 'adet'}
                 </Text>
-              </TouchableOpacity>
+              </View>
               <View style={styles.headerActions}>
                 <TouchableOpacity style={styles.favButton} activeOpacity={0.8} onPress={() => void handleFavoritePress(item)}>
                   <MaterialIcons

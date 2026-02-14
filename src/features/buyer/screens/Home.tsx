@@ -1230,6 +1230,7 @@ export const Home: React.FC = () => {
                 key={food.id}
                 {...food}
                 displayCookName={getDisplayCookName(food.cookName)}
+                isTitleClickable={false}
                 currentStock={foodStocks[food.id.replace(/^(firebase_|mock_|published_)/, '')] ?? food.currentStock}
                 onAddToCart={handleAddToCart}
                 maxDeliveryDistance={food.maxDeliveryDistance}

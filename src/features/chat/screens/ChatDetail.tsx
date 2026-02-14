@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, PanResponder } from 'react-native';
 import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { Text } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -177,6 +177,26 @@ export const ChatDetail: React.FC = () => {
   const orderStatus = currentStatus;
   const orderId = (Array.isArray(params.orderId) ? params.orderId[0] : params.orderId) ?? '';
   const returnToParam = Array.isArray(params.returnTo) ? params.returnTo[0] : params.returnTo;
+  const swipeToSellerProfileResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 40 &&
+          Math.abs(gestureState.dy) < 25 &&
+          Math.abs(gestureState.vx) > 0.2,
+        onPanResponderRelease: (_, gestureState) => {
+          const isHorizontalSwipe =
+            Math.abs(gestureState.dx) > 90 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+
+          if (isHorizontalSwipe) {
+            router.replace('/(seller)/seller-panel');
+          }
+        },
+      }),
+    []
+  );
 
   React.useEffect(() => {
     setMessages(getMockMessages(currentLanguage));
@@ -324,7 +344,10 @@ export const ChatDetail: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      {...swipeToSellerProfileResponder.panHandlers}
+    >
       <TopBar 
         title={foodName || t('chatDetailScreen.titleFallback')}
         leftComponent={
