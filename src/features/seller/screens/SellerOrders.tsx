@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, PanResponder } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, PanResponder, Animated, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Button, Card } from '../../../components/ui';
@@ -53,24 +53,52 @@ export const SellerOrders: React.FC = () => {
   const [orders, setOrders] = useState(() => getMockOrders(t));
   const [realOrders, setRealOrders] = useState<any[]>([]);
   const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
+  const { width } = useWindowDimensions();
+  const swipeTranslateX = React.useRef(new Animated.Value(0)).current;
   const swipeToPanelResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 12 &&
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2,
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dx) > 40 &&
-          Math.abs(gestureState.dy) < 25 &&
-          Math.abs(gestureState.vx) > 0.2,
+          Math.abs(gestureState.dx) > 18 &&
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2,
+        onPanResponderMove: (_, gestureState) => {
+          swipeTranslateX.setValue(gestureState.dx);
+        },
         onPanResponderRelease: (_, gestureState) => {
-          const isHorizontalSwipe =
-            Math.abs(gestureState.dx) > 90 &&
-            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
-          if (isHorizontalSwipe) {
-            router.replace('/(seller)/seller-panel');
+          const shouldClose =
+            Math.abs(gestureState.dx) > 85 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+          if (shouldClose) {
+            const targetX = gestureState.dx >= 0 ? width : -width;
+            Animated.timing(swipeTranslateX, {
+              toValue: targetX,
+              duration: 170,
+              useNativeDriver: true,
+            }).start(() => {
+              swipeTranslateX.setValue(0);
+              router.replace('/(seller)/seller-panel');
+            });
+            return;
           }
+          Animated.spring(swipeTranslateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 6,
+          }).start();
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(swipeTranslateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 6,
+          }).start();
         },
       }),
-    []
+    [swipeTranslateX, width]
   );
 
   // Load orders from AsyncStorage when screen comes into focus
@@ -209,8 +237,12 @@ export const SellerOrders: React.FC = () => {
   );
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
+    <Animated.View
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, transform: [{ translateX: swipeTranslateX }] },
+      ]}
+      // Dragging the page reveals the underlying screen for a native-like transition feel.
       {...swipeToPanelResponder.panHandlers}
     >
       <TopBar 
@@ -351,7 +383,7 @@ export const SellerOrders: React.FC = () => {
           </View>
         )}
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 };
 

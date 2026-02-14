@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, PanResponder } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, ReviewCard, RatingStats, Card } from '../../../components/ui';
@@ -141,34 +141,12 @@ export const SellerRatings: React.FC = () => {
   const { t, currentLanguage } = useTranslation();
   const localizedSeller = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
   const sellerName = localizedSeller.profile.nickname?.trim() || localizedSeller.profile.name;
-  const swipeToPanelResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => false,
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dx) > 40 &&
-          Math.abs(gestureState.dy) < 25 &&
-          Math.abs(gestureState.vx) > 0.2,
-        onPanResponderRelease: (_, gestureState) => {
-          const isHorizontalSwipe =
-            Math.abs(gestureState.dx) > 90 &&
-            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
-          if (isHorizontalSwipe) {
-            router.replace('/(seller)/seller-panel');
-          }
-        },
-      }),
-    []
-  );
 
   const reviews = useMemo(() => getMockSellerReviews(currentLanguage, sellerName), [currentLanguage, sellerName]);
   const stats = useMemo(() => buildStats(reviews), [reviews]);
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
-      {...swipeToPanelResponder.panHandlers}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar
         title={t('sellerRatingsScreen.title')}
         leftComponent={

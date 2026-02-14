@@ -91,7 +91,11 @@ export const Profile: React.FC = () => {
         router.push('/favorites');
         break;
       case 'messages':
-        router.push('/(buyer)/chat-list');
+        if (userData?.userType === 'seller' || userData?.userType === 'both' || (userData as any)?.sellerEnabled === true) {
+          router.push('/(seller)/messages');
+        } else {
+          router.push('/(buyer)/chat-list');
+        }
         break;
       case 'support':
       case 'contact':

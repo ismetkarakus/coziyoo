@@ -23,11 +23,11 @@ export const SellerMessages: React.FC = () => {
         onMoveShouldSetPanResponder: (_, gestureState) =>
           Math.abs(gestureState.dx) > 40 &&
           Math.abs(gestureState.dy) < 25 &&
-          Math.abs(gestureState.vx) > 0.2,
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2,
         onPanResponderRelease: (_, gestureState) => {
           const isHorizontalSwipe =
             Math.abs(gestureState.dx) > 90 &&
-            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
           if (isHorizontalSwipe) {
             router.replace('/(seller)/seller-panel');
           }
@@ -288,7 +288,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
-
-
 

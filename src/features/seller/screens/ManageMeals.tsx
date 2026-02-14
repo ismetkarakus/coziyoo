@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, PanResponder } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -41,6 +41,32 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
   const [sellerProfile, setSellerProfile] = useState<any>(null);
   const [stockDrafts, setStockDrafts] = useState<Record<string, number>>({});
+  const tabSwipeResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 14 &&
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 22 &&
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2,
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderRelease: (_, gestureState) => {
+          if (Math.abs(gestureState.dx) < 70) return;
+
+          if (gestureState.dx > 0 && activeTab !== 'expired') {
+            setActiveTab('expired');
+            return;
+          }
+
+          if (gestureState.dx < 0 && activeTab !== 'active') {
+            setActiveTab('active');
+          }
+        },
+      }),
+    [activeTab]
+  );
 
   // Load meals and profile when screen comes into focus
   useFocusEffect(
@@ -470,7 +496,10 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      {...tabSwipeResponder.panHandlers}
+    >
       {!embedded && (
         <TopBar 
           title={t('manageMealsScreen.title')} 

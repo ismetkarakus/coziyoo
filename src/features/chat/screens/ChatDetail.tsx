@@ -191,11 +191,15 @@ export const ChatDetail: React.FC = () => {
             Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
 
           if (isHorizontalSwipe) {
-            router.replace('/(seller)/seller-panel');
+            if (navigation.canGoBack()) {
+              router.back();
+              return;
+            }
+            router.replace((role === 'seller' ? '/(seller)/messages' : '/(buyer)/messages') as any);
           }
         },
       }),
-    []
+    [navigation, role]
   );
 
   React.useEffect(() => {
