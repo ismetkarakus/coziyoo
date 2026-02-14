@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useCountry } from "../../context/CountryContext";
 import { AllergenId } from "../../constants/allergens";
+import { getFavoriteMeta, toggleFavorite } from "../../services/favoriteService";
 
 type DeliveryMode = "pickup" | "delivery";
 
@@ -74,6 +75,7 @@ type FoodCardProps = {
   isGridMode?: boolean;
   showAvailableDates?: boolean;
   ingredients?: string[];
+  favoriteCount?: number;
   style?: ViewStyle;
 };
 
@@ -181,6 +183,7 @@ export function FoodCard({
   isPreview = false,
   availableDeliveryOptions,
   showAvailableDates = false,
+  favoriteCount = 0,
   style,
 }: FoodCardProps) {
   const { t, currentLanguage } = useTranslation();
@@ -214,6 +217,27 @@ export function FoodCard({
     : "delivery";
 
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>(initialMode);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteTotal, setFavoriteTotal] = useState<number>(Math.max(0, Number(favoriteCount)));
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadFavoriteState = async () => {
+      try {
+        const meta = await getFavoriteMeta();
+        if (!isMounted) return;
+        setIsFavorite(meta.favoriteIds.has(String(id)));
+        setFavoriteTotal(Number(meta.favoriteCounts[String(id)] ?? favoriteCount ?? 0));
+      } catch (error) {
+        console.error("Error loading food card favorite state:", error);
+      }
+    };
+
+    loadFavoriteState();
+    return () => {
+      isMounted = false;
+    };
+  }, [id, favoriteCount]);
 
   const formatAvailableDates = (value?: string) => {
     if (!value) return t("foodCard.unknownDate");
@@ -261,6 +285,24 @@ export function FoodCard({
     onAddToCart?.(id, 1, deliveryMode);
   };
 
+  const handleToggleFavorite = async () => {
+    try {
+      const result = await toggleFavorite({
+        id: String(id),
+        name,
+        cookName,
+        price,
+        rating,
+        imageUrl: resolvedImage,
+        category: category || (currentLanguage === "en" ? "Main Dish" : "Ana Yemek"),
+      });
+      setIsFavorite(result.isFavorite);
+      setFavoriteTotal(result.favoriteCount);
+    } catch (error) {
+      console.error("Error toggling food card favorite:", error);
+    }
+  };
+
   return (
     <View style={[styles.card, style]}>
       {/* HEADER */}
@@ -271,8 +313,13 @@ export function FoodCard({
               {name}
             </Text>
           </Pressable>
-          <Pressable style={styles.heartInlineBtn}>
-            <MaterialIcons name="favorite-border" size={20} color={COLORS.textMuted} />
+          <Pressable style={styles.heartInlineBtn} onPress={handleToggleFavorite}>
+            <MaterialIcons
+              name={isFavorite ? "favorite" : "favorite-border"}
+              size={20}
+              color={isFavorite ? COLORS.danger : COLORS.textMuted}
+            />
+            {favoriteTotal > 0 ? <Text style={styles.heartInlineCount}>{favoriteTotal}</Text> : null}
           </Pressable>
           <View style={styles.priceChipInline}>
             <Text style={styles.priceText}>{priceText}</Text>
@@ -477,14 +524,21 @@ const styles = StyleSheet.create({
 
 
   heartInlineBtn: {
-    width: 32,
-    height: 32,
+    minHeight: 32,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FFFFFF",
+    paddingHorizontal: 4,
+    flexDirection: "row",
+    gap: 3,
+  },
+  heartInlineCount: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: COLORS.textMuted,
   },
 
   footerMeta: {

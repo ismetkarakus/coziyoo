@@ -12,6 +12,7 @@ import { MockFood } from '@/src/mock/data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useCountry } from '@/src/context/CountryContext';
+import { getFavoriteMeta, toggleFavorite } from '@/src/services/favoriteService';
 
 const getAllFoodsForSeller = (cookName: string) => {
   return (foodsMock as MockFood[]).filter(food => food.cookName === cookName);
@@ -26,6 +27,8 @@ export default function SellerProfileScreen() {
   const [overrideNickname, setOverrideNickname] = useState<string>('');
   const [overrideName, setOverrideName] = useState<string>('');
   const [overrideAvatar, setOverrideAvatar] = useState<string>('');
+  const [favoriteCounts, setFavoriteCounts] = useState<Record<string, number>>({});
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   
   const cookName = params.cookName as string;
   const localizedProfile = (sellerMock as any)[currentLanguage]?.profile || (sellerMock as any).tr?.profile;
@@ -67,6 +70,20 @@ export default function SellerProfileScreen() {
 
     loadSellerProfileNickname();
   }, [cookName, isCurrentSeller]);
+
+  useEffect(() => {
+    const loadFavoriteState = async () => {
+      try {
+        const meta = await getFavoriteMeta();
+        setFavoriteCounts(meta.favoriteCounts);
+        setFavoriteIds(meta.favoriteIds);
+      } catch (error) {
+        console.error('Error loading seller profile favorites:', error);
+      }
+    };
+
+    loadFavoriteState();
+  }, []);
   
   // Group foods by category
   const foodsByCategory = sellerFoods.reduce((acc, food) => {
@@ -81,6 +98,25 @@ export default function SellerProfileScreen() {
     router.push(
       `/food-detail-order?id=${encodeURIComponent(String(food.id ?? ''))}&name=${encodeURIComponent(food.name)}&cookName=${encodeURIComponent(food.cookName)}&imageUrl=${encodeURIComponent(food.imageUrl || '')}&price=${Number(food.price || 0)}` as any
     );
+  };
+
+  const handleFavoritePress = async (food: MockFood) => {
+    try {
+      const result = await toggleFavorite({
+        id: String(food.id),
+        name: food.name,
+        cookName: food.cookName,
+        price: Number(food.price || 0),
+        rating: Number(food.rating || 0),
+        imageUrl:
+          food.imageUrl || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop',
+        category: food.category || (currentLanguage === 'en' ? 'Main Dish' : 'Ana Yemek'),
+      });
+      setFavoriteCounts(result.meta.favoriteCounts);
+      setFavoriteIds(result.meta.favoriteIds);
+    } catch (error) {
+      console.error('Error toggling seller profile favorite:', error);
+    }
   };
 
   if (!sellerData) {
@@ -187,8 +223,21 @@ export default function SellerProfileScreen() {
                       </View>
                     </TouchableOpacity>
                     <View style={styles.headerActions}>
-                      <TouchableOpacity style={styles.favButton} activeOpacity={0.8}>
-                        <MaterialIcons name="favorite-border" size={18} color="#9CA3AF" />
+                      <TouchableOpacity
+                        style={styles.favButton}
+                        activeOpacity={0.8}
+                        onPress={() => void handleFavoritePress(food)}
+                      >
+                        <MaterialIcons
+                          name={favoriteIds.has(String(food.id)) ? 'favorite' : 'favorite-border'}
+                          size={18}
+                          color={favoriteIds.has(String(food.id)) ? '#E53935' : '#9CA3AF'}
+                        />
+                        {(favoriteCounts[String(food.id)] ?? Number(food.favoriteCount ?? 0)) > 0 ? (
+                          <Text style={styles.favoriteCount}>
+                            {favoriteCounts[String(food.id)] ?? Number(food.favoriteCount ?? 0)}
+                          </Text>
+                        ) : null}
                       </TouchableOpacity>
                       <Text style={styles.priceText}>{formatCurrency(Number(food.price || 0))}</Text>
                     </View>
@@ -361,12 +410,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   favButton: {
-    width: 30,
-    height: 30,
+    minHeight: 30,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
+    flexDirection: 'row',
+    gap: 2,
+    paddingHorizontal: 3,
+  },
+  favoriteCount: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6B7280',
   },
   priceText: {
     fontSize: 18,

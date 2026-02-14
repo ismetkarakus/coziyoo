@@ -28,6 +28,7 @@ export interface MockFood {
   category: string;
   rating: number;
   reviewCount?: number;
+  favoriteCount?: number;
   cardSummary?: string;
   description?: string;
   recipe?: string;

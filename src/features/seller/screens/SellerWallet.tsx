@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform, PanResponder } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import { Text, Card, Button } from '../../../components/ui';
@@ -18,6 +18,25 @@ export const SellerWallet: React.FC = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const swipeToPanelResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 40 &&
+          Math.abs(gestureState.dy) < 25 &&
+          Math.abs(gestureState.vx) > 0.2,
+        onPanResponderRelease: (_, gestureState) => {
+          const isHorizontalSwipe =
+            Math.abs(gestureState.dx) > 90 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+          if (isHorizontalSwipe) {
+            router.replace('/(seller)/seller-panel');
+          }
+        },
+      }),
+    []
+  );
 
   const bankDetails = {
     bankName: 'Garanti BBVA',
@@ -152,7 +171,10 @@ export const SellerWallet: React.FC = () => {
       ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      {...swipeToPanelResponder.panHandlers}
+    >
       <TopBar
         title={t('sellerWalletScreen.title')}
         leftComponent={(

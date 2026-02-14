@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, PanResponder } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Button, Card } from '../../../components/ui';
@@ -53,6 +53,25 @@ export const SellerOrders: React.FC = () => {
   const [orders, setOrders] = useState(() => getMockOrders(t));
   const [realOrders, setRealOrders] = useState<any[]>([]);
   const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
+  const swipeToPanelResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 40 &&
+          Math.abs(gestureState.dy) < 25 &&
+          Math.abs(gestureState.vx) > 0.2,
+        onPanResponderRelease: (_, gestureState) => {
+          const isHorizontalSwipe =
+            Math.abs(gestureState.dx) > 90 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+          if (isHorizontalSwipe) {
+            router.replace('/(seller)/seller-panel');
+          }
+        },
+      }),
+    []
+  );
 
   // Load orders from AsyncStorage when screen comes into focus
   useFocusEffect(
@@ -190,7 +209,10 @@ export const SellerOrders: React.FC = () => {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      {...swipeToPanelResponder.panHandlers}
+    >
       <TopBar 
         title={t('sellerOrdersScreen.title')}
         leftComponent={

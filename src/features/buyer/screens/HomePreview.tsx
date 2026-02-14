@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '../../../components/ui';
@@ -8,6 +8,10 @@ import foods from '../../../mock/foods.json';
 import { MockFood } from '../../../mock/data';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useCountry } from '../../../context/CountryContext';
+import { useCart } from '../../../context/CartContext';
+import { useAuth } from '../../../context/AuthContext';
+import { mockUserService } from '../../../services/mockUserService';
+import { getFavoriteMeta, toggleFavorite } from '../../../services/favoriteService';
 
 const PREVIEW_COLORS = {
   primary: '#8FA08E',
@@ -24,7 +28,11 @@ const PREVIEW_COLORS = {
 export const HomePreview: React.FC = () => {
   const { currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
+  const { addToCart } = useCart();
+  const { user, userData } = useAuth();
   const [selectedCategoryId, setSelectedCategoryId] = useState<'all' | 'main' | 'soup' | 'meze' | 'dessert'>('all');
+  const [favoriteCounts, setFavoriteCounts] = useState<Record<string, number>>({});
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const categories = useMemo(
     () =>
       currentLanguage === 'en'
@@ -96,9 +104,19 @@ export const HomePreview: React.FC = () => {
         dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 0,
         hasPickup: food.hasPickup !== false,
         hasDelivery: food.hasDelivery !== false,
+        deliveryFee: typeof food.deliveryFee === 'number' ? food.deliveryFee : 0,
+        availableOptions:
+          Array.isArray(food.availableDeliveryOptions) && food.availableDeliveryOptions.length > 0
+            ? food.availableDeliveryOptions
+            : [
+                ...(food.hasPickup !== false ? (['pickup'] as const) : []),
+                ...(food.hasDelivery ? (['delivery'] as const) : []),
+              ],
+        allergens: food.allergens || [],
         img:
           food.imageUrl ||
           `https://placehold.co/320x320/E8E6E1/4B5563?text=${encodeURIComponent(food.name || (currentLanguage === 'en' ? `Meal ${index + 1}` : `Yemek ${index + 1}`))}`,
+        initialFavoriteCount: Number(food.favoriteCount ?? 0),
       })),
     [currentLanguage, formatCurrency]
   );
@@ -112,6 +130,86 @@ export const HomePreview: React.FC = () => {
     router.push(
       `/food-detail-order?id=${encodeURIComponent(item.id)}&name=${encodeURIComponent(item.title)}&cookName=${encodeURIComponent(item.cook)}&imageUrl=${encodeURIComponent(item.img)}&price=${item.numericPrice}` as any
     );
+  };
+
+  React.useEffect(() => {
+    const loadFavoriteState = async () => {
+      try {
+        const meta = await getFavoriteMeta();
+        setFavoriteIds(meta.favoriteIds);
+        setFavoriteCounts(meta.favoriteCounts);
+      } catch (error) {
+        console.error('Error loading favorites state:', error);
+      }
+    };
+    loadFavoriteState();
+  }, []);
+
+  const handleFavoritePress = async (item: (typeof homeItems)[number]): Promise<void> => {
+    try {
+      const result = await toggleFavorite({
+        id: String(item.id),
+        name: item.title,
+        cookName: item.cook,
+        price: item.numericPrice,
+        rating: item.rating,
+        imageUrl: item.img,
+        category: item.category,
+      });
+
+      setFavoriteIds(result.meta.favoriteIds);
+      setFavoriteCounts(result.meta.favoriteCounts);
+    } catch (error) {
+      console.error('Error saving favorite:', error);
+    }
+  };
+
+  const addItemToCart = (item: (typeof homeItems)[number]): void => {
+    addToCart(
+      {
+        id: String(item.id),
+        name: item.title,
+        cookName: item.cook,
+        price: item.numericPrice,
+        imageUrl: item.img,
+        currentStock: item.currentStock,
+        dailyStock: item.dailyStock,
+        availableOptions: item.availableOptions as ('pickup' | 'delivery')[],
+        deliveryOption: item.availableOptions.length === 1 ? item.availableOptions[0] : undefined,
+        deliveryFee: item.deliveryFee,
+        allergens: item.allergens,
+      },
+      1
+    );
+  };
+
+  const handleAddToCart = async (item: (typeof homeItems)[number]): Promise<void> => {
+    const userRecord =
+      (await mockUserService.getUserByUid(user?.uid || userData?.uid)) ||
+      (await mockUserService.getUserByEmail(userData?.email || user?.email));
+    const userAllergies = (userRecord?.allergicTo || []).map((allergen: string) => allergen.toLowerCase());
+    const matches = (item.allergens || []).filter((allergen) =>
+      userAllergies.includes(allergen.toLowerCase())
+    );
+
+    if (matches.length > 0) {
+      Alert.alert(
+        currentLanguage === 'en' ? 'Allergen Warning' : 'Allerjen Uyarısı',
+        currentLanguage === 'en'
+          ? `This product contains: ${matches.join(', ')}. Do you want to continue?`
+          : `Bu üründe şu allerjenler var: ${matches.join(', ')}. Devam etmek istiyor musunuz?`,
+        [
+          { text: currentLanguage === 'en' ? 'Cancel' : 'Vazgeç', style: 'cancel' },
+          {
+            text: currentLanguage === 'en' ? 'Continue' : 'Devam et',
+            onPress: () => addItemToCart(item),
+          },
+        ]
+      );
+      return;
+    }
+
+    addItemToCart(item);
   };
 
   return (
@@ -186,8 +284,15 @@ export const HomePreview: React.FC = () => {
                 </Text>
               </TouchableOpacity>
               <View style={styles.headerActions}>
-                <TouchableOpacity style={styles.favButton} activeOpacity={0.8}>
-                  <MaterialIcons name="favorite-border" size={18} color="#9CA3AF" />
+                <TouchableOpacity style={styles.favButton} activeOpacity={0.8} onPress={() => void handleFavoritePress(item)}>
+                  <MaterialIcons
+                    name={favoriteIds.has(String(item.id)) ? 'favorite' : 'favorite-border'}
+                    size={18}
+                    color={favoriteIds.has(String(item.id)) ? '#E53935' : '#9CA3AF'}
+                  />
+                  {(favoriteCounts[String(item.id)] ?? item.initialFavoriteCount) > 0 ? (
+                    <Text style={styles.favoriteCount}>{favoriteCounts[String(item.id)] ?? item.initialFavoriteCount}</Text>
+                  ) : null}
                 </TouchableOpacity>
                 <Text style={styles.priceText}>{item.price}</Text>
               </View>
@@ -199,7 +304,7 @@ export const HomePreview: React.FC = () => {
                   <TouchableOpacity activeOpacity={0.85} onPress={() => openFoodDetail(item)}>
                     <Image source={{ uri: item.img }} style={styles.cardImage} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => {}}>
+                  <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => void handleAddToCart(item)}>
                     <MaterialIcons name="add" size={24} color={PREVIEW_COLORS.accent} />
                   </TouchableOpacity>
                 </View>
@@ -444,6 +549,13 @@ const styles = StyleSheet.create({
     padding: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 2,
+  },
+  favoriteCount: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '700',
   },
   cardTitle: {
     fontSize: 15.5,

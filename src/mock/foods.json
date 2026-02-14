@@ -50,7 +50,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 18
   },
   {
     "id": "2",
@@ -99,7 +100,8 @@
     "sellerId": "seller_mehmet_usta",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 11
   },
   {
     "id": "4",
@@ -150,7 +152,8 @@
     "sellerId": "seller_ali_usta",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 27
   },
   {
     "id": "5",
@@ -196,7 +199,8 @@
     "sellerId": "seller_zeynep_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 8
   },
   {
     "id": "6",
@@ -243,7 +247,8 @@
     "sellerId": "seller_fatma_teyze",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 14
   },
   {
     "id": "8",
@@ -293,7 +298,8 @@
     "sellerId": "seller_hasan_usta",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 6
   },
   {
     "id": "9",
@@ -340,7 +346,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 22
   },
   {
     "id": "11",
@@ -385,7 +392,8 @@
     "sellerId": "seller_zehra_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 9
   },
   {
     "id": "12",
@@ -430,7 +438,8 @@
     "sellerId": "seller_gul_teyze",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 13
   },
   {
     "id": "13",
@@ -476,7 +485,8 @@
     "sellerId": "seller_elif_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 5
   },
   {
     "id": "3",
@@ -524,7 +534,8 @@
     "sellerId": "seller_fatma_teyze",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 16
   },
   {
     "id": "14",
@@ -572,7 +583,8 @@
     "sellerId": "seller_elif_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 7
   },
   {
     "id": "15",
@@ -617,7 +629,8 @@
     "sellerId": "seller_hasan_usta",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 20
   },
   {
     "id": "17",
@@ -664,7 +677,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 10
   },
   {
     "id": "18",
@@ -710,7 +724,8 @@
     "sellerId": "seller_zehra_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 4
   },
   {
     "id": "19",
@@ -754,7 +769,8 @@
     "sellerId": "seller_fatma_teyze",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 12
   },
   {
     "id": "20",
@@ -802,7 +818,8 @@
     "sellerId": "seller_gul_teyze",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 15
   },
   {
     "id": "21",
@@ -847,7 +864,8 @@
     "sellerId": "seller_mehmet_usta",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 3
   },
   {
     "id": "22",
@@ -888,7 +906,8 @@
     "sellerId": "seller_elif_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 19
   },
   {
     "id": "23",
@@ -934,7 +953,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 2
   },
   {
     "id": "26",
@@ -983,7 +1003,8 @@
     "sellerId": "seller_zehra_han_m",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 18
   },
   {
     "id": "27",
@@ -1032,7 +1053,8 @@
     "sellerId": "seller_fatma_teyze",
     "isActive": true,
     "createdAt": "2026-01-01T09:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 11
   },
   {
     "id": "28",
@@ -1078,7 +1100,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 27
   },
   {
     "id": "29",
@@ -1124,7 +1147,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 8
   },
   {
     "id": "30",
@@ -1168,7 +1192,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 14
   },
   {
     "id": "31",
@@ -1214,7 +1239,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 6
   },
   {
     "id": "32",
@@ -1261,7 +1287,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 22
   },
   {
     "id": "33",
@@ -1308,7 +1335,8 @@
     "sellerId": "seller_ayse_han_m",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 9
   },
   {
     "id": "34",
@@ -1354,7 +1382,8 @@
     "sellerId": "seller_mehmet_usta",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 13
   },
   {
     "id": "35",
@@ -1400,7 +1429,8 @@
     "sellerId": "seller_ali_usta",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 5
   },
   {
     "id": "36",
@@ -1446,7 +1476,8 @@
     "sellerId": "seller_zehra_han_m",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 16
   },
   {
     "id": "37",
@@ -1494,6 +1525,7 @@
     "sellerId": "seller_gul_teyze",
     "isActive": true,
     "createdAt": "2026-02-14T12:00:00.000Z",
-    "updatedAt": "2026-02-14T12:00:00.000Z"
+    "updatedAt": "2026-02-14T12:00:00.000Z",
+    "favoriteCount": 7
   }
 ]

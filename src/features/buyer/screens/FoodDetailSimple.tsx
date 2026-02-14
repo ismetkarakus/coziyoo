@@ -13,6 +13,7 @@ import { useCart } from '../../../context/CartContext';
 import { mockFoodService } from '../../../services/mockFoodService';
 import { mockUserService } from '../../../services/mockUserService';
 import { useAuth } from '../../../context/AuthContext';
+import { getFavoriteMeta, toggleFavorite } from '../../../services/favoriteService';
 
 export default function FoodDetailSimple() {
   const params = useLocalSearchParams();
@@ -89,6 +90,8 @@ export default function FoodDetailSimple() {
     'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face'
   );
   const [sellerAvatarError, setSellerAvatarError] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState(0);
   const swipeToHomeResponder = useMemo(
     () =>
       PanResponder.create({
@@ -161,6 +164,22 @@ export default function FoodDetailSimple() {
   }, [foodId]);
 
   useEffect(() => {
+    const loadFavoriteState = async () => {
+      try {
+        const resolvedId = resolveFoodId(foodId);
+        if (!resolvedId) return;
+        const meta = await getFavoriteMeta();
+        setIsFavorite(meta.favoriteIds.has(String(resolvedId)));
+        setFavoriteCount(Number(meta.favoriteCounts[String(resolvedId)] ?? 0));
+      } catch (error) {
+        console.error('Error loading detail favorite state:', error);
+      }
+    };
+
+    loadFavoriteState();
+  }, [foodId]);
+
+  useEffect(() => {
     const loadUserAllergies = async () => {
       const userRecord =
         (await mockUserService.getUserByUid(user?.uid || userData?.uid)) ||
@@ -228,6 +247,27 @@ export default function FoodDetailSimple() {
       return;
     }
     performAddToCart(food);
+  };
+
+  const handleFavoritePress = async () => {
+    try {
+      const resolvedId = resolveFoodId(foodId);
+      if (!resolvedId) return;
+
+      const result = await toggleFavorite({
+        id: String(resolvedId),
+        name: foodName,
+        cookName,
+        price: basePrice,
+        rating: foodMeta.rating,
+        imageUrl: foodImageUrl,
+        category: (params.category as string) || (currentLanguage === 'en' ? 'Main Dish' : 'Ana Yemek'),
+      });
+      setIsFavorite(result.isFavorite);
+      setFavoriteCount(result.favoriteCount);
+    } catch (error) {
+      console.error('Error toggling detail favorite:', error);
+    }
   };
 
   return (
@@ -399,12 +439,15 @@ export default function FoodDetailSimple() {
 
           <TouchableOpacity
             style={styles.imageFavorite}
-            onPress={() => {
-              alert(t('foodDetailSimpleScreen.addFavoriteToast'));
-            }}
+            onPress={() => void handleFavoritePress()}
             activeOpacity={0.8}
           >
-            <MaterialIcons name="favorite-border" size={20} color={colors.text} />
+            <MaterialIcons
+              name={isFavorite ? 'favorite' : 'favorite-border'}
+              size={20}
+              color={isFavorite ? '#E53935' : colors.text}
+            />
+            {favoriteCount > 0 ? <Text style={styles.imageFavoriteCount}>{favoriteCount}</Text> : null}
           </TouchableOpacity>
         </View>
 
@@ -694,17 +737,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    width: 32,
-    height: 32,
+    minHeight: 32,
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 2,
+    paddingHorizontal: 6,
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
+  },
+  imageFavoriteCount: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6B7280',
   },
   imageCounterText: {
     color: '#FFFFFF',

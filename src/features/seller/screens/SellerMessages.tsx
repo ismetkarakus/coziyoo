@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, PanResponder } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -16,6 +16,25 @@ export const SellerMessages: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
   const [chats, setChats] = React.useState<any[]>([]);
+  const swipeToPanelResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 40 &&
+          Math.abs(gestureState.dy) < 25 &&
+          Math.abs(gestureState.vx) > 0.2,
+        onPanResponderRelease: (_, gestureState) => {
+          const isHorizontalSwipe =
+            Math.abs(gestureState.dx) > 90 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+          if (isHorizontalSwipe) {
+            router.replace('/(seller)/seller-panel');
+          }
+        },
+      }),
+    []
+  );
 
   const handleBackPress = () => {
     console.log('Back button pressed from SellerMessages');
@@ -116,7 +135,10 @@ export const SellerMessages: React.FC = () => {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      {...swipeToPanelResponder.panHandlers}
+    >
       <TopBar 
         title={t('sellerMessagesScreen.title')}
         leftComponent={
@@ -266,7 +288,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
 
 
 
