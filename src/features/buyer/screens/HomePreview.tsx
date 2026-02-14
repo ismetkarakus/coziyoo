@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Text } from '../../../components/ui';
+import * as Location from 'expo-location';
+import { FilterModal, Text } from '../../../components/ui';
 import { Spacing } from '../../../theme';
 import foods from '../../../mock/foods.json';
 import { MockFood } from '../../../mock/data';
@@ -12,6 +13,7 @@ import { useCart } from '../../../context/CartContext';
 import { useAuth } from '../../../context/AuthContext';
 import { mockUserService } from '../../../services/mockUserService';
 import { getFavoriteMeta, toggleFavorite } from '../../../services/favoriteService';
+import { SearchFilters } from '../../../services/searchService';
 
 const PREVIEW_COLORS = {
   primary: '#8FA08E',
@@ -30,43 +32,14 @@ export const HomePreview: React.FC = () => {
   const { formatCurrency } = useCountry();
   const { addToCart } = useCart();
   const { user, userData } = useAuth();
-  const [selectedCategoryId, setSelectedCategoryId] = useState<'all' | 'main' | 'soup' | 'meze' | 'dessert'>('all');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const [showNearbyOnly, setShowNearbyOnly] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [favoriteCounts, setFavoriteCounts] = useState<Record<string, number>>({});
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
-  const categories = useMemo(
-    () =>
-      currentLanguage === 'en'
-        ? [
-            { id: 'all' as const, label: 'All' },
-            { id: 'main' as const, label: 'Main Course' },
-            { id: 'soup' as const, label: 'Soup' },
-            { id: 'meze' as const, label: 'Meze' },
-            { id: 'dessert' as const, label: 'Dessert' },
-          ]
-        : [
-            { id: 'all' as const, label: 'Tümü' },
-            { id: 'main' as const, label: 'Ana Yemek' },
-            { id: 'soup' as const, label: 'Çorba' },
-            { id: 'meze' as const, label: 'Meze' },
-            { id: 'dessert' as const, label: 'Tatlı' },
-          ],
-    [currentLanguage]
-  );
-
-  const getCategoryId = (rawCategory: string): 'main' | 'soup' | 'meze' | 'dessert' => {
-    if (rawCategory === 'Çorba' || rawCategory === 'Soup') return 'soup';
-    if (rawCategory === 'Meze') return 'meze';
-    if (
-      rawCategory === 'Tatlı' ||
-      rawCategory === 'Dessert' ||
-      rawCategory === 'Tatlı/Kek' ||
-      rawCategory === 'Dessert/Cake'
-    ) {
-      return 'dessert';
-    }
-    return 'main';
-  };
-
   const localizeCategory = (category: string): string => {
     if (currentLanguage === 'tr') return category;
 
@@ -99,7 +72,7 @@ export const HomePreview: React.FC = () => {
             ? 'Homemade, fresh, and carefully prepared.'
             : 'Ev yapımı, taze ve özenli hazırlanır.'),
         category: localizeCategory(food.category || (currentLanguage === 'en' ? 'Main Course' : 'Ana Yemek')),
-        categoryId: getCategoryId(food.category || 'Ana Yemek'),
+        preparationTime: typeof food.preparationTime === 'number' ? food.preparationTime : 30,
         currentStock: typeof food.currentStock === 'number' ? food.currentStock : 0,
         dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 0,
         hasPickup: food.hasPickup !== false,
@@ -121,10 +94,146 @@ export const HomePreview: React.FC = () => {
     [currentLanguage, formatCurrency]
   );
 
+  const categories = useMemo(
+    () => {
+      const uniqueCategories = Array.from(
+        new Set(homeItems.map((item) => item.category).filter(Boolean))
+      );
+      return [
+        { id: 'all', label: currentLanguage === 'en' ? 'All' : 'Tümü' },
+        ...uniqueCategories.map((category) => ({ id: category, label: category })),
+      ];
+    },
+    [homeItems, currentLanguage]
+  );
+
+  const getNumericDistance = (distanceValue?: string): number => {
+    const numericDistance = Number(String(distanceValue || '').replace(',', '.').replace(/[^\d.]/g, ''));
+    return Number.isFinite(numericDistance) ? numericDistance : Number.POSITIVE_INFINITY;
+  };
+
   const filteredItems = useMemo(() => {
-    if (selectedCategoryId === 'all') return homeItems;
-    return homeItems.filter((item) => item.categoryId === selectedCategoryId);
-  }, [homeItems, selectedCategoryId]);
+    let result =
+      selectedCategoryId === 'all'
+        ? homeItems
+        : homeItems.filter((item) => item.category === selectedCategoryId);
+
+    if (searchFilters.category) {
+      const isAllCategory = searchFilters.category === 'All' || searchFilters.category === 'Tümü';
+      if (!isAllCategory) {
+        result = result.filter((item) => item.category === searchFilters.category);
+      }
+    }
+
+    if (searchFilters.priceRange) {
+      result = result.filter(
+        (item) =>
+          item.numericPrice >= (searchFilters.priceRange?.min ?? 0) &&
+          item.numericPrice <= (searchFilters.priceRange?.max ?? Number.POSITIVE_INFINITY)
+      );
+    }
+
+    if (searchFilters.rating) {
+      result = result.filter((item) => item.rating >= (searchFilters.rating || 0));
+    }
+
+    if (searchFilters.deliveryOptions?.length) {
+      result = result.filter((item) =>
+        searchFilters.deliveryOptions?.some((option) => item.availableOptions.includes(option))
+      );
+    }
+
+    if (searchFilters.preparationTime?.max) {
+      result = result.filter((item) => item.preparationTime <= (searchFilters.preparationTime?.max || 0));
+    }
+
+    if (searchFilters.maxDistance) {
+      result = result.filter((item) => getNumericDistance(item.distance) <= (searchFilters.maxDistance || 0));
+    }
+
+    if (showNearbyOnly && userLocation) {
+      result = result.filter((item) => getNumericDistance(item.distance) <= 3);
+    }
+
+    if (searchFilters.sortBy) {
+      const sorted = [...result];
+      switch (searchFilters.sortBy) {
+        case 'price_asc':
+          result = sorted.sort((a, b) => a.numericPrice - b.numericPrice);
+          break;
+        case 'price_desc':
+          result = sorted.sort((a, b) => b.numericPrice - a.numericPrice);
+          break;
+        case 'rating_desc':
+          result = sorted.sort((a, b) => b.rating - a.rating);
+          break;
+        case 'popularity':
+          result = sorted.sort(
+            (a, b) => (favoriteCounts[String(b.id)] ?? b.initialFavoriteCount) - (favoriteCounts[String(a.id)] ?? a.initialFavoriteCount)
+          );
+          break;
+        default:
+          break;
+      }
+    }
+
+    return result;
+  }, [homeItems, selectedCategoryId, showNearbyOnly, userLocation, searchFilters, favoriteCounts]);
+
+  const handleNearbyPress = async (): Promise<void> => {
+    if (showNearbyOnly) {
+      setShowNearbyOnly(false);
+      return;
+    }
+
+    try {
+      setLocationLoading(true);
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          currentLanguage === 'en' ? 'Location Permission' : 'Konum İzni',
+          currentLanguage === 'en'
+            ? 'Location permission is required to use nearby filter.'
+            : 'Yakınımdaki filtresi için konum izni gereklidir.'
+        );
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+      setShowNearbyOnly(true);
+    } catch (error) {
+      console.error('Error getting location in HomePreview:', error);
+      Alert.alert(
+        currentLanguage === 'en' ? 'Location Error' : 'Konum Hatası',
+        currentLanguage === 'en'
+          ? 'Could not fetch your location right now.'
+          : 'Konumunuz şu an alınamadı.'
+      );
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const handleFilterPress = (): void => {
+    setShowFilterModal(true);
+  };
+
+  const handleApplyFilters = (filters: SearchFilters): void => {
+    setSearchFilters(filters);
+    if (!filters.category || filters.category === 'All' || filters.category === 'Tümü') {
+      setSelectedCategoryId('all');
+      return;
+    }
+    setSelectedCategoryId(filters.category);
+  };
 
   const openFoodDetail = (item: (typeof homeItems)[number]): void => {
     router.push(
@@ -233,10 +342,19 @@ export const HomePreview: React.FC = () => {
               {currentLanguage === 'en' ? 'What would you like to eat today?' : 'Bugün ne yemek istersin?'}
             </Text>
           </View>
-          <TouchableOpacity style={styles.filterButton} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.filterButton} activeOpacity={0.85} onPress={handleFilterPress}>
             <MaterialIcons name="filter-list" size={18} color="#7A7A7A" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.pinButton}>
+          <TouchableOpacity
+            style={[
+              styles.pinButton,
+              showNearbyOnly ? styles.pinButtonActive : null,
+              locationLoading ? styles.pinButtonDisabled : null,
+            ]}
+            onPress={() => void handleNearbyPress()}
+            activeOpacity={0.85}
+            disabled={locationLoading}
+          >
             <MaterialIcons name="location-on" size={18} color="#D22D2D" />
           </TouchableOpacity>
         </View>
@@ -361,6 +479,13 @@ export const HomePreview: React.FC = () => {
           </View>
         ))}
       </ScrollView>
+
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleApplyFilters}
+        initialFilters={searchFilters}
+      />
     </View>
   );
 };
@@ -438,6 +563,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F7F8F9',
+  },
+  pinButtonActive: {
+    backgroundColor: '#FEE2E2',
+  },
+  pinButtonDisabled: {
+    opacity: 0.6,
   },
   categoriesWrap: {
     paddingHorizontal: Spacing.md,
