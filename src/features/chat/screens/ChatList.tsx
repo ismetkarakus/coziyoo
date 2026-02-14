@@ -10,7 +10,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { getSyncedOrderStatuses, SyncedOrderStatusKey } from '../../../utils/orderStatusSync';
 
-const getMockChats = (language: 'tr' | 'en') => {
+export const getMockChats = (language: 'tr' | 'en') => {
   if (language === 'tr') {
     return {
       buyerChats: [
@@ -474,4 +474,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-

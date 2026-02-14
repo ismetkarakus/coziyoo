@@ -11,6 +11,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { getMockChats } from '../../chat/screens/ChatList';
 
 interface QuickActionItem {
   id: string;
@@ -38,7 +39,7 @@ export const Profile: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const { setLanguage } = useLanguage();
-  const { signOut } = useAuth();
+  const { signOut, userData } = useAuth();
 
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const defaultUserData = getDefaultUserData(currentLanguage);
@@ -91,7 +92,7 @@ export const Profile: React.FC = () => {
         router.push('/favorites');
         break;
       case 'messages':
-        if (userData?.userType === 'seller' || userData?.userType === 'both' || (userData as any)?.sellerEnabled === true) {
+        if (userData?.userType === 'seller') {
           router.push('/(seller)/messages');
         } else {
           router.push('/(buyer)/chat-list');
@@ -224,6 +225,12 @@ export const Profile: React.FC = () => {
     [currentLanguage, t]
   );
 
+  const unreadMessageCount = useMemo(() => {
+    const { buyerChats, sellerChats } = getMockChats(currentLanguage);
+    const chatsToUse = userData?.userType === 'seller' ? sellerChats : buyerChats;
+    return chatsToUse.reduce((total, chat) => total + Number(chat.unreadCount || 0), 0);
+  }, [currentLanguage, userData?.userType]);
+
   const shoppingRows: RowItem[] = useMemo(
     () => [
       {
@@ -235,10 +242,15 @@ export const Profile: React.FC = () => {
         id: 'messages',
         title: t('profileScreen.items.messages'),
         icon: 'chat',
-        value: currentLanguage === 'tr' ? '3 yeni' : '3 new',
+        value:
+          unreadMessageCount > 0
+            ? currentLanguage === 'tr'
+              ? `${unreadMessageCount} yeni`
+              : `${unreadMessageCount} new`
+            : undefined,
       },
     ],
-    [currentLanguage, t]
+    [currentLanguage, t, unreadMessageCount]
   );
 
   return (

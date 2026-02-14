@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, PanResponder } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -36,37 +36,20 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [expiredMeals, setExpiredMeals] = useState<Meal[]>([]);
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
   const [sellerProfile, setSellerProfile] = useState<any>(null);
   const [stockDrafts, setStockDrafts] = useState<Record<string, number>>({});
-  const tabSwipeResponder = React.useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => false,
-        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-          Math.abs(gestureState.dx) > 14 &&
-          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2,
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dx) > 22 &&
-          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2,
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderRelease: (_, gestureState) => {
-          if (Math.abs(gestureState.dx) < 70) return;
+  const pagerRef = React.useRef<ScrollView | null>(null);
 
-          if (gestureState.dx > 0 && activeTab !== 'expired') {
-            setActiveTab('expired');
-            return;
-          }
-
-          if (gestureState.dx < 0 && activeTab !== 'active') {
-            setActiveTab('active');
-          }
-        },
-      }),
-    [activeTab]
-  );
+  useEffect(() => {
+    pagerRef.current?.scrollTo({
+      x: activeTab === 'active' ? 0 : width,
+      animated: true,
+    });
+  }, [activeTab, width]);
 
   // Load meals and profile when screen comes into focus
   useFocusEffect(
@@ -496,10 +479,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   );
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
-      {...tabSwipeResponder.panHandlers}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {!embedded && (
         <TopBar 
           title={t('manageMealsScreen.title')} 
@@ -578,38 +558,58 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
         />
       )}
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {activeTab === 'active' ? (
-          meals.length > 0 ? (
-            meals.map(meal => renderMealCard(meal))
-          ) : (
-            <View style={styles.emptyState}>
-              <MaterialIcons name="restaurant" size={48} color={colors.textSecondary} />
-              <Text variant="subheading" weight="semibold" color="textSecondary" style={styles.emptyTitle}>
-                {t('manageMealsScreen.emptyActiveTitle')}
-              </Text>
-              <Text variant="body" color="textSecondary" style={styles.emptyDescription}>
-                {t('manageMealsScreen.emptyActiveDesc')}
-              </Text>
-            </View>
-          )
-        ) : (
-          expiredMeals.length > 0 ? (
-            expiredMeals.map(meal => renderMealCard(meal, true))
-          ) : (
-            <View style={styles.emptyState}>
-              <MaterialIcons name="schedule" size={48} color={colors.textSecondary} />
-              <Text variant="subheading" weight="semibold" color="textSecondary" style={styles.emptyTitle}>
-                {t('manageMealsScreen.emptyExpiredTitle')}
-              </Text>
-              <Text variant="body" color="textSecondary" style={styles.emptyDescription}>
-                {t('manageMealsScreen.emptyExpiredDesc')}
-              </Text>
-            </View>
-          )
-        )}
-        
-        <View style={styles.bottomSpace} />
+      <ScrollView
+        ref={pagerRef}
+        horizontal
+        pagingEnabled
+        nestedScrollEnabled
+        directionalLockEnabled
+        bounces={false}
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={(event) => {
+          const x = event.nativeEvent.contentOffset.x;
+          setActiveTab(x >= width / 2 ? 'expired' : 'active');
+        }}
+      >
+        <View style={{ width }}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {meals.length > 0 ? (
+              meals.map(meal => renderMealCard(meal))
+            ) : (
+              <View style={styles.emptyState}>
+                <MaterialIcons name="restaurant" size={48} color={colors.textSecondary} />
+                <Text variant="subheading" weight="semibold" color="textSecondary" style={styles.emptyTitle}>
+                  {t('manageMealsScreen.emptyActiveTitle')}
+                </Text>
+                <Text variant="body" color="textSecondary" style={styles.emptyDescription}>
+                  {t('manageMealsScreen.emptyActiveDesc')}
+                </Text>
+              </View>
+            )}
+            <View style={styles.bottomSpace} />
+          </ScrollView>
+        </View>
+
+        <View style={{ width }}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {expiredMeals.length > 0 ? (
+              expiredMeals.map(meal => renderMealCard(meal, true))
+            ) : (
+              <View style={styles.emptyState}>
+                <MaterialIcons name="schedule" size={48} color={colors.textSecondary} />
+                <Text variant="subheading" weight="semibold" color="textSecondary" style={styles.emptyTitle}>
+                  {t('manageMealsScreen.emptyExpiredTitle')}
+                </Text>
+                <Text variant="body" color="textSecondary" style={styles.emptyDescription}>
+                  {t('manageMealsScreen.emptyExpiredDesc')}
+                </Text>
+              </View>
+            )}
+            <View style={styles.bottomSpace} />
+          </ScrollView>
+        </View>
       </ScrollView>
     </View>
   );

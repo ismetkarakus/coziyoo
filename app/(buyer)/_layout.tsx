@@ -32,10 +32,8 @@ export default function TabLayout() {
   const { getTotalItems } = useCart();
   const cartItemCount = getTotalItems();
   const { userData } = useAuth();
-  const isSeller =
-    userData?.userType === 'seller' ||
-    userData?.userType === 'both' ||
-    (userData as any)?.sellerEnabled === true;
+  // Giris tipi buyer ise buyer akisi, seller ise seller akisi.
+  const isSeller = userData?.userType === 'seller';
   const buttonBg = colors.primary;
   const buttonText = colors.card;
 

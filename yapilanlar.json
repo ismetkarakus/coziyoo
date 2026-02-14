@@ -1,0 +1,42 @@
+{
+  "updatedAt": "2026-02-14",
+  "project": "coziyoo",
+  "changes": [
+    {
+      "id": "foodcard-title-click",
+      "area": "buyer-home",
+      "status": "done",
+      "summary": "Ana yemek kartında yemek adı tıklaması kapatıldı, aşçı adı tıklaması aktif bırakıldı."
+    },
+    {
+      "id": "cook-filter-navigation",
+      "area": "buyer-home",
+      "status": "done",
+      "summary": "Aşçı adına tıklanınca o aşçının yemeklerini filtreleyen akış yeniden aktifleştirildi."
+    },
+    {
+      "id": "profile-userdata-fix",
+      "area": "buyer-profile",
+      "status": "done",
+      "summary": "Profile ekranında userData ReferenceError hatası düzeltildi."
+    },
+    {
+      "id": "messages-role-routing",
+      "area": "buyer-tabs",
+      "status": "done",
+      "summary": "Mesajlar ve profil yönlendirmeleri giriş yapılan kullanıcı tipine göre (buyer/seller) çalışacak şekilde düzenlendi."
+    },
+    {
+      "id": "messages-source-sync",
+      "area": "buyer-messages-profile",
+      "status": "done",
+      "summary": "Buyer mesaj tabı ile profildeki mesaj sayısı aynı mock chat kaynağına bağlandı; sabit 3 mesaj kaldırıldı."
+    },
+    {
+      "id": "seller-manage-meals-swipe",
+      "area": "seller-panel",
+      "status": "done",
+      "summary": "Aktif/Pasif yemek geçişi PanResponder yerine yatay paging yapısına çevrilerek daha stabil hale getirildi."
+    }
+  ]
+}

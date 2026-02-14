@@ -1,22 +1,18 @@
-import { ChatList } from '@/src/features/buyer/screens';
+import { ChatList } from '@/src/features/chat/screens';
 import { SellerMessages } from '@/src/features/seller/screens';
 import { useAuth } from '@/src/context/AuthContext';
 
 export default function MessagesTab() {
   const { userData } = useAuth();
-  const isSeller =
-    userData?.userType === 'seller' ||
-    userData?.userType === 'both' ||
-    (userData as any)?.sellerEnabled === true;
+  // Buyer tabinda "both" kullanici da alici mesajlarini gormeli.
+  const isSellerOnly = userData?.userType === 'seller';
 
-  if (isSeller) {
+  if (isSellerOnly) {
     return <SellerMessages />;
   }
 
   return <ChatList />;
 }
-
-
 
 
 
