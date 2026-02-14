@@ -335,16 +335,7 @@ export const FoodDetail: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed from FoodDetail');
-    
-    try {
-      // Always go to home - safer since FoodDetail is now in main stack
-      console.log('Going to home page...');
-      router.push('/(buyer)');
-    } catch (error) {
-      console.error('Navigation error:', error);
-      // Fallback to home
-      router.replace('/(buyer)');
-    }
+    router.back();
   };
 
   const handleMessageSeller = async () => {
@@ -811,20 +802,10 @@ export const FoodDetail: React.FC = () => {
                     </Text>
                     <TouchableOpacity
                       style={styles.inlineViewAllButton}
-                      onPress={async () => {
-                        console.log('Filtering by cook:', food.cookName);
-                        try {
-                          // Store filter in AsyncStorage
-                          await AsyncStorage.setItem('cookFilter', food.cookName);
-                          console.log('Cook filter saved to AsyncStorage');
-                          
-                          // Navigate directly to home with filter
-                          router.push('/(buyer)');
-                        } catch (error) {
-                          console.error('Error setting cook filter:', error);
-                          // Fallback to home
-                          router.push('/(buyer)');
-                        }
+                      onPress={() => {
+                        router.push(
+                          `/seller-public-profile?cookName=${encodeURIComponent(food.cookName)}`
+                        );
                       }}
                     >
                       <Text variant="body" style={{ color: colors.primary }}>

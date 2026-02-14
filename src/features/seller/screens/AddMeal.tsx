@@ -17,6 +17,8 @@ import { foodService } from '../../../services/foodService';
 import { storageService } from '../../../services/storageService';
 import categoriesData from '../../../mock/categories.json';
 
+const CARD_SUMMARY_MAX_LENGTH = 80;
+
 export const AddMeal: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -58,6 +60,7 @@ export const AddMeal: React.FC = () => {
 
   const [formData, setFormData] = useState({
     name: '',
+    cardSummary: '',
     description: '',
     recipe: '',
     price: '',
@@ -97,6 +100,15 @@ export const AddMeal: React.FC = () => {
     }));
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
+    if (field === 'cardSummary' && value.length > CARD_SUMMARY_MAX_LENGTH) {
+      Alert.alert(
+        t('addMealScreen.alerts.characterLimitTitle'),
+        t('addMealScreen.alerts.cardSummaryLimitMessage'),
+        [{ text: t('addMealScreen.alerts.ok') }]
+      );
+      return;
+    }
+
     // Açıklama alanı için karakter limiti kontrolü
     if (field === 'description' && value.length > 500) {
       Alert.alert(
@@ -134,6 +146,7 @@ export const AddMeal: React.FC = () => {
       setEditingCreatedAt(parsed.createdAt ?? null);
       setFormData({
         name: parsed.name ?? '',
+        cardSummary: parsed.cardSummary ?? '',
         description: parsed.description ?? '',
         recipe: parsed.recipe ?? '',
         price: parsed.price != null ? String(parsed.price) : '',
@@ -290,6 +303,7 @@ export const AddMeal: React.FC = () => {
               // Form'u temizle
               setFormData({
                 name: '',
+                cardSummary: '',
                 description: '',
                 recipe: '',
                 price: '',
@@ -600,6 +614,7 @@ export const AddMeal: React.FC = () => {
       price: formData.price,
       category: formData.category,
       country: formData.country,
+      cardSummary: formData.cardSummary,
       description: formData.description,
       recipe: formData.recipe,
       dailyStock: formData.dailyStock,
@@ -731,6 +746,7 @@ export const AddMeal: React.FC = () => {
               // Form'u temizle
               setFormData({
                 name: '',
+                cardSummary: '',
                 description: '',
                 recipe: '',
                 price: '',
@@ -890,6 +906,16 @@ export const AddMeal: React.FC = () => {
               placeholder={t('addMealScreen.placeholders.name')}
               required
             />
+
+            <View style={styles.descriptionContainer}>
+              <FormField
+                label={t('addMealScreen.fields.cardSummary')}
+                value={formData.cardSummary}
+                onChangeText={handleInputChange('cardSummary')}
+                placeholder={t('addMealScreen.placeholders.cardSummary')}
+                maxLength={CARD_SUMMARY_MAX_LENGTH}
+              />
+            </View>
 
             <View style={styles.descriptionContainer}>
               <FormField

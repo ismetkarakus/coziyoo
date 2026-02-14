@@ -20,6 +20,7 @@ interface FormFieldProps {
   multiline?: boolean;
   numberOfLines?: number;
   textAlignVertical?: 'auto' | 'top' | 'bottom' | 'center';
+  maxLength?: number;
   style?: any;
   onContentSizeChange?: (event: any) => void;
 }
@@ -44,4 +45,3 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
 });
-

@@ -3,6 +3,7 @@ import { apiClient } from '../api/apiClient';
 export interface Food {
   id?: string;
   name: string;
+  cardSummary?: string;
   description: string;
   price: number;
   cookName: string;

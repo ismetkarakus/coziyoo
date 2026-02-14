@@ -94,7 +94,7 @@ function RootLayoutNav() {
           <Stack.Screen name="(seller)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
           <Stack.Screen name="food-detail" options={{ headerShown: false, presentation: 'card' }} />
-          <Stack.Screen name="food-detail-order" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="food-detail-order" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="personal-info" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="change-password" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="addresses" options={{ headerShown: false, presentation: 'card' }} />

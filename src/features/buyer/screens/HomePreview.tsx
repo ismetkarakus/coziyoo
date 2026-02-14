@@ -5,6 +5,18 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '../../../components/ui';
 import { Spacing } from '../../../theme';
 
+const PREVIEW_COLORS = {
+  primary: '#8FA08E',
+  primaryDark: '#305846',
+  accent: '#5F7F5E',
+  primarySoft: '#DCE5DC',
+  background: '#F3F1EF',
+  surface: '#FFFFFF',
+  border: '#E5E7EB',
+  text: '#4B5563',
+  textMuted: '#6B7280',
+} as const;
+
 const DEMO_CATEGORIES = ['Tümü', 'Ana Yemek', 'Çorba', 'Meze', 'Tatlı'];
 
 const DEMO_ITEMS = [
@@ -14,8 +26,7 @@ const DEMO_ITEMS = [
     price: '₺35.00',
     cook: 'Ayşe Hanım',
     rating: 4.8,
-    description: 'İnce hamur, bol yoğurt ve tereyağlı sos.',
-    ingredients: 'Un, kıyma, yoğurt, sarımsak, tereyağı',
+    description: 'El açması mantı, ev tadında unutulmaz lezzet.',
     img: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=320&h=320&fit=crop',
   },
   {
@@ -24,8 +35,7 @@ const DEMO_ITEMS = [
     price: '₺28.00',
     cook: 'Mehmet Usta',
     rating: 4.7,
-    description: 'Fırında pişmiş patlıcan, kıymalı iç harç.',
-    ingredients: 'Patlıcan, kıyma, soğan, domates, biber',
+    description: 'Anne usulü karnıyarık, sıcak ve doyurucu bir klasik.',
     img: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=320&fit=crop',
   },
   {
@@ -34,8 +44,7 @@ const DEMO_ITEMS = [
     price: '₺22.00',
     cook: 'Fatma Teyze',
     rating: 4.9,
-    description: 'Günlük taze pişen, limonla servis edilir.',
-    ingredients: 'Kırmızı mercimek, soğan, havuç, baharat',
+    description: 'Günlük taze mercimek çorbası, şifa dolu sıcak başlangıç.',
     img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=320&fit=crop',
   },
 ];
@@ -44,7 +53,7 @@ export const HomePreview: React.FC = () => {
   const [expandedFoodId, setExpandedFoodId] = useState<string | null>(null);
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F3F1EF' }]}>
+    <View style={styles.container}>
       <View style={styles.hero}>
         <View style={styles.heroTopRow}>
           <View style={styles.backButton} />
@@ -115,21 +124,29 @@ export const HomePreview: React.FC = () => {
                 <View style={styles.imageWrap}>
                   <Image source={{ uri: item.img }} style={styles.cardImage} />
                   <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => {}}>
-                    <MaterialIcons name="add" size={22} color="#16A34A" />
+                    <MaterialIcons name="add" size={24} color={PREVIEW_COLORS.accent} />
                   </TouchableOpacity>
                 </View>
               </View>
 
               <View style={styles.cardBody}>
                 <View style={styles.cardBodyTop}>
-                  <Text style={styles.metaTitle}>
-                    Türk mutfağı · <Text style={styles.metaDate}>20 Ocak</Text>
+                  <Text style={styles.metaTitle}>Türk mutfağı</Text>
+                  <Text style={styles.metaDescription} numberOfLines={3} ellipsizeMode="tail">
+                    {item.description}
                   </Text>
-                  <Text style={styles.metaDescription}>{item.description}</Text>
-                  <Text style={styles.metaIngredients}>
-                    <Text style={styles.ingredientsLabel}>Malzemeler: </Text>
-                    {item.ingredients}
-                  </Text>
+                </View>
+                <View style={styles.metaDeliveryRow}>
+                  <View style={styles.deliveryInline}>
+                    <View style={styles.deliveryItem}>
+                      <Text style={styles.deliveryEmoji}>🚶</Text>
+                      <Text style={styles.deliveryLabel}>Al</Text>
+                    </View>
+                    <View style={styles.deliveryItem}>
+                      <Text style={styles.deliveryEmoji}>🚚</Text>
+                      <Text style={styles.deliveryLabel}>Getir</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
@@ -145,16 +162,6 @@ export const HomePreview: React.FC = () => {
                 <MaterialIcons name="arrow-forward" size={14} color="#6B7280" />
               </TouchableOpacity>
               <View style={styles.footerRight}>
-                <View style={styles.deliveryInline}>
-                  <View style={styles.deliveryItem}>
-                    <Text style={styles.deliveryEmoji}>🚶</Text>
-                    <Text style={styles.deliveryLabel}>Al</Text>
-                  </View>
-                  <View style={styles.deliveryItem}>
-                    <Text style={styles.deliveryEmoji}>🚚</Text>
-                    <Text style={styles.deliveryLabel}>Getir</Text>
-                  </View>
-                </View>
                 <View style={styles.cookRating}>
                   <View style={styles.cookStars}>
                     {Array.from({ length: 5 }).map((_, index) => (
@@ -180,9 +187,10 @@ export const HomePreview: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: PREVIEW_COLORS.background,
   },
   hero: {
-    backgroundColor: '#D6DDD5',
+    backgroundColor: PREVIEW_COLORS.primarySoft,
     paddingTop: 48,
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
@@ -205,21 +213,21 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 34,
     fontWeight: '800',
-    color: '#305846',
+    color: PREVIEW_COLORS.primaryDark,
   },
   slogan: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#687067',
+    color: PREVIEW_COLORS.accent,
     marginTop: 2,
   },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PREVIEW_COLORS.surface,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#E2E4E7',
+    borderColor: PREVIEW_COLORS.border,
     paddingHorizontal: 12,
     paddingVertical: 2,
     gap: Spacing.xs,
@@ -259,14 +267,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PREVIEW_COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: PREVIEW_COLORS.border,
     marginRight: Spacing.xs,
   },
   categoryChipActive: {
-    backgroundColor: '#8DA08D',
-    borderColor: '#8DA08D',
+    backgroundColor: PREVIEW_COLORS.primary,
+    borderColor: PREVIEW_COLORS.primary,
   },
   categoryText: {
     color: '#667085',
@@ -285,13 +293,13 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PREVIEW_COLORS.surface,
     borderRadius: 18,
     paddingTop: 6,
     paddingHorizontal: 14,
     paddingBottom: 8,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: PREVIEW_COLORS.border,
   },
   cardContentRow: {
     flexDirection: 'row',
@@ -309,13 +317,13 @@ const styles = StyleSheet.create({
   addButton: {
     position: 'absolute',
     right: -8,
-    bottom: -6,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    bottom: -2,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PREVIEW_COLORS.surface,
     shadowColor: '#000',
     shadowOpacity: 0.18,
     shadowRadius: 6,
@@ -330,7 +338,7 @@ const styles = StyleSheet.create({
   },
   cardBody: {
     flex: 1,
-    minHeight: 94,
+    minHeight: 96,
     justifyContent: 'space-between',
   },
   cardBodyTop: {
@@ -363,7 +371,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15.5,
     fontWeight: '800',
-    color: '#4B5563',
+    color: PREVIEW_COLORS.text,
     lineHeight: 18,
     flexShrink: 1,
   },
@@ -375,7 +383,7 @@ const styles = StyleSheet.create({
   stockInline: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
+    color: PREVIEW_COLORS.textMuted,
   },
   priceBadge: {
     backgroundColor: 'transparent',
@@ -383,39 +391,27 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   priceText: {
-    color: '#2E7D32',
+    color: PREVIEW_COLORS.accent,
     fontWeight: '800',
     fontSize: 14,
   },
   metaTitle: {
-    color: '#5E6672',
+    color: PREVIEW_COLORS.textMuted,
     fontSize: 13,
     fontWeight: '700',
     lineHeight: 19,
     letterSpacing: 0.2,
   },
-  metaDate: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#7A8089',
-  },
   metaDescription: {
-    color: '#6B7280',
+    color: PREVIEW_COLORS.textMuted,
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
     marginTop: 1,
   },
-  metaIngredients: {
-    color: '#5E6672',
-    fontSize: 12.5,
-    fontWeight: '500',
-    lineHeight: 17,
+  metaDeliveryRow: {
     marginTop: 4,
-  },
-  ingredientsLabel: {
-    color: '#5E6672',
-    fontWeight: '700',
+    alignItems: 'flex-start',
   },
   deliveryInline: {
     flexDirection: 'row',
@@ -436,12 +432,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#6B7280',
+    color: PREVIEW_COLORS.textMuted,
   },
   cook: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#4B5563',
+    color: PREVIEW_COLORS.text,
     flexShrink: 1,
   },
   cookLink: {

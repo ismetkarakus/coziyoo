@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { Text } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing, commonStyles } from '../../../theme';
@@ -163,6 +163,7 @@ export const ChatDetail: React.FC = () => {
   const { t, currentLanguage } = useTranslation();
   const { userData } = useAuth();
   const params = useLocalSearchParams();
+  const navigation = useNavigation();
   const rawRoleParam = params.type;
   const roleParam = Array.isArray(rawRoleParam) ? rawRoleParam[0] : rawRoleParam;
   const roleFromUser: ChatRole = userData?.userType === 'seller' ? 'seller' : 'buyer';
@@ -175,6 +176,7 @@ export const ChatDetail: React.FC = () => {
   const foodName = params.foodName as string;
   const orderStatus = currentStatus;
   const orderId = (Array.isArray(params.orderId) ? params.orderId[0] : params.orderId) ?? '';
+  const returnToParam = Array.isArray(params.returnTo) ? params.returnTo[0] : params.returnTo;
 
   React.useEffect(() => {
     setMessages(getMockMessages(currentLanguage));
@@ -241,7 +243,15 @@ export const ChatDetail: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed from ChatDetail');
-    router.back();
+    if (navigation.canGoBack()) {
+      router.back();
+      return;
+    }
+    if (typeof returnToParam === 'string' && returnToParam.length > 0) {
+      router.replace(returnToParam as any);
+      return;
+    }
+    router.replace((role === 'seller' ? '/(seller)/messages' : '/(buyer)/messages') as any);
   };
 
   const getStatusColor = (status: string) => {

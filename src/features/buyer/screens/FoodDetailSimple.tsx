@@ -413,14 +413,10 @@ export default function FoodDetailSimple() {
           <View style={styles.viewAllRow}>
             <TouchableOpacity
               style={styles.viewAllLink}
-              onPress={async () => {
-                try {
-                  await AsyncStorage.setItem('cookFilter', cookName);
-                  router.push('/(buyer)');
-                } catch (error) {
-                  console.error('Error setting cook filter:', error);
-                  router.push('/(buyer)');
-                }
+              onPress={() => {
+                router.push(
+                  `/seller-public-profile?cookName=${encodeURIComponent(cookName)}`
+                );
               }}
             >
               <Text variant="body" style={{ color: colors.primary }}>

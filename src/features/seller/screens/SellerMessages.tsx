@@ -19,12 +19,14 @@ export const SellerMessages: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed from SellerMessages');
-    router.back();
+    router.replace('/(seller)/seller-panel');
   };
 
   const handleChatPress = (chatId: string, orderId: string, foodName: string, status: SellerChatStatus) => {
     const statusLabel = t(`sellerMessagesScreen.status.${status}`);
-    router.push(`/(buyer)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(statusLabel)}&type=seller`);
+    router.push(
+      `/(seller)/chat-detail?chatId=${chatId}&orderId=${orderId}&foodName=${encodeURIComponent(foodName)}&orderStatus=${encodeURIComponent(statusLabel)}&type=seller`
+    );
   };
 
   const getStatusColor = (status: SellerChatStatus) => {
@@ -264,8 +266,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
-
 
 
 

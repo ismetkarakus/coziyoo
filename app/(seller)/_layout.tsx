@@ -66,6 +66,13 @@ export default function SellerLayout() {
           animation: 'slide_from_right',
         }} 
       />
+      <Stack.Screen
+        name="chat-detail"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
       <Stack.Screen 
         name="delivery-settings" 
         options={{ 
