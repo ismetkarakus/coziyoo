@@ -310,12 +310,6 @@ export default function TabLayout() {
           href: null, // Hide from tab bar
         }}
       />
-      <Tabs.Screen
-        name="home-preview"
-        options={{
-          href: null, // Hidden preview route
-        }}
-      />
     </Tabs>
   );
 }

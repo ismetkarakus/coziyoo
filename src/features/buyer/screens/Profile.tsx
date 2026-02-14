@@ -7,6 +7,7 @@ import { TopBar } from '../../../components/layout';
 import { Text } from '../../../components/ui';
 import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../context/LanguageContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -36,6 +37,7 @@ export const Profile: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
+  const { setLanguage } = useLanguage();
   const { signOut } = useAuth();
 
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -103,10 +105,28 @@ export const Profile: React.FC = () => {
         break;
       case 'language':
         Alert.alert(
-          currentLanguage === 'tr' ? 'Dil ayari' : 'Language setting',
+          currentLanguage === 'tr' ? 'Dil secin' : 'Choose language',
           currentLanguage === 'tr'
-            ? 'Dil degistirme icin ana ekrandaki dil seciciyi kullanabilirsiniz.'
-            : 'Use the language switcher from the main flow to change language.'
+            ? 'Uygulama dilini buradan degistirebilirsiniz.'
+            : 'You can change the app language here.',
+          [
+            {
+              text: currentLanguage === 'tr' ? 'Turkce' : 'Turkish',
+              onPress: () => {
+                void setLanguage('tr');
+              },
+            },
+            {
+              text: 'English',
+              onPress: () => {
+                void setLanguage('en');
+              },
+            },
+            {
+              text: currentLanguage === 'tr' ? 'Iptal' : 'Cancel',
+              style: 'cancel',
+            },
+          ]
         );
         break;
       default:
@@ -121,7 +141,6 @@ export const Profile: React.FC = () => {
     const runSignOut = async () => {
       try {
         await signOut();
-        router.replace('/(auth)/sign-in');
       } catch (error) {
         console.error('Sign out error:', error);
         Alert.alert(

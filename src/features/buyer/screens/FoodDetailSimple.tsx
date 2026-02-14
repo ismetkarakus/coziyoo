@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, useWindowDimensions, Modal } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity, useWindowDimensions, Modal, PanResponder } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +18,7 @@ export default function FoodDetailSimple() {
   const params = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
   const { addToCart } = useCart();
   const { user, userData } = useAuth();
@@ -61,6 +61,7 @@ export default function FoodDetailSimple() {
   const totalPrice = formatCurrency(basePrice * quantity);
   const [ingredients, setIngredients] = useState<string[] | null>(null);
   const [allergens, setAllergens] = useState<string[] | null>(null);
+  const [userAllergies, setUserAllergies] = useState<string[]>([]);
   const [allergenModalVisible, setAllergenModalVisible] = useState(false);
   const [allergenModalMatches, setAllergenModalMatches] = useState<string[]>([]);
   const [allergenConfirmChecked, setAllergenConfirmChecked] = useState(false);
@@ -70,6 +71,7 @@ export default function FoodDetailSimple() {
     reviewCount: 24,
     distance: '1.2 km',
     prepTime: '30 dk',
+    cookDescription: 'Ev yapımı yemeklerde özenli ve hijyenik hazırlık sunar.',
     availableDates: '15-20 Ocak',
     currentStock: 8,
     dailyStock: 10,
@@ -78,10 +80,35 @@ export default function FoodDetailSimple() {
   const endDate = foodMeta.availableDates.includes('-')
     ? foodMeta.availableDates.split('-').pop()?.trim() || foodMeta.availableDates
     : foodMeta.availableDates;
+  const deliveryTimeLabel = currentLanguage === 'en' ? 'Delivery Time' : 'Teslimat Süresi';
+  const deliveryTypeDescription =
+    foodMeta.deliveryType === 'delivery'
+      ? (currentLanguage === 'en' ? 'This product is delivered' : 'Bu urun teslim edilir')
+      : (currentLanguage === 'en' ? 'This product must be picked up' : 'Bu urunu gelip almaniz gerekir');
   const [sellerAvatar, setSellerAvatar] = useState(
     'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face'
   );
   const [sellerAvatarError, setSellerAvatarError] = useState(false);
+  const swipeToHomeResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 40 &&
+          Math.abs(gestureState.dy) < 25 &&
+          Math.abs(gestureState.vx) > 0.2,
+        onPanResponderRelease: (_, gestureState) => {
+          const isHorizontalSwipe =
+            Math.abs(gestureState.dx) > 90 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+
+          if (isHorizontalSwipe) {
+            router.replace('/(buyer)');
+          }
+        },
+      }),
+    []
+  );
 
   useEffect(() => {
     const loadSellerProfile = async () => {
@@ -121,6 +148,7 @@ export default function FoodDetailSimple() {
           reviewCount: typeof food.reviewCount === 'number' ? food.reviewCount : 24,
           distance: food.distance || '1.2 km',
           prepTime: food.prepTime || '30 dk',
+          cookDescription: food.cookDescription || 'Ev yapımı yemeklerde özenli ve hijyenik hazırlık sunar.',
           availableDates: food.availableDates || '15-20 Ocak',
           currentStock: typeof food.currentStock === 'number' ? food.currentStock : 8,
           dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 10,
@@ -131,6 +159,18 @@ export default function FoodDetailSimple() {
 
     loadDetails();
   }, [foodId]);
+
+  useEffect(() => {
+    const loadUserAllergies = async () => {
+      const userRecord =
+        (await mockUserService.getUserByUid(user?.uid || userData?.uid)) ||
+        (await mockUserService.getUserByEmail(userData?.email || user?.email));
+      const allergies = Array.isArray(userRecord?.allergicTo) ? userRecord.allergicTo : [];
+      setUserAllergies(allergies.map((item: string) => item.toLowerCase()));
+    };
+
+    loadUserAllergies();
+  }, [user?.uid, user?.email, userData?.uid, userData?.email]);
 
   const performAddToCart = (food: any) => {
     const availableOptions =
@@ -191,7 +231,10 @@ export default function FoodDetailSimple() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      {...swipeToHomeResponder.panHandlers}
+    >
       <Modal
         visible={allergenModalVisible}
         transparent
@@ -396,9 +439,6 @@ export default function FoodDetailSimple() {
                   <Text variant="body" color="textSecondary" style={styles.cookName} numberOfLines={1}>
                     {cookName}
                   </Text>
-                  <Text variant="caption" color="textSecondary" style={styles.cookDistance}>
-                    {foodMeta.distance}
-                  </Text>
                 </View>
                 <View style={styles.rating}>
                   <StarRating rating={foodMeta.rating} size="small" showNumber />
@@ -410,48 +450,43 @@ export default function FoodDetailSimple() {
             </View>
           </View>
 
-          <View style={styles.viewAllRow}>
-            <TouchableOpacity
-              style={styles.viewAllLink}
-              onPress={() => {
-                router.push(
-                  `/seller-public-profile?cookName=${encodeURIComponent(cookName)}`
-                );
-              }}
-            >
-              <Text variant="body" style={{ color: colors.primary }}>
-                {t('foodDetailScreen.viewAllCook')}
-              </Text>
-            </TouchableOpacity>
+          <View style={styles.cookDescriptionRow}>
+            <Text variant="caption" color="textSecondary" style={styles.cookDescriptionText}>
+              {foodMeta.cookDescription}
+            </Text>
           </View>
           </Card>
 
           <Card variant="default" padding="md" style={styles.metaInfoCard}>
-            <View style={styles.metaInfo}>
-              <View style={styles.metaItem}>
-                <Text variant="caption" color="textSecondary">{t('foodDetailScreen.prep')}</Text>
-                <Text variant="body" weight="medium">{foodMeta.prepTime}</Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Text variant="body" weight="medium" color="primary">
-                  {foodMeta.deliveryType === 'delivery' ? t('foodDetailScreen.delivery') : t('foodDetailScreen.pickup')}
-                </Text>
-              </View>
+            <View style={styles.deliveryDetailsSection}>
+              <Text variant="body" weight="medium" style={styles.deliveryDetailText}>
+                {deliveryTimeLabel}: {foodMeta.prepTime}
+              </Text>
+              <Text variant="body" weight="medium" style={styles.deliveryDetailText}>
+                {t('foodDetailScreen.distance')}: {foodMeta.distance}
+              </Text>
+            </View>
+
+            <View style={styles.deliveryTypeRow}>
+              <Text variant="body" weight="medium" color="primary" style={styles.deliveryTypeText}>
+                {deliveryTypeDescription}
+              </Text>
             </View>
 
             <View style={styles.availabilitySection}>
               <View style={styles.availabilityItem}>
-                <Text variant="caption" color="textSecondary">{t('foodDetailSimpleScreen.endDateLabel')}</Text>
-                <Text variant="body" weight="medium" color="primary">📅 {endDate}</Text>
+                <Text variant="body" weight="medium" color="primary" style={styles.leftAlignedText}>
+                  {t('foodDetailSimpleScreen.endDateLabel')}: {endDate}
+                </Text>
               </View>
               <View style={styles.availabilityItem}>
-                <Text variant="caption" color="textSecondary">{t('foodDetailSimpleScreen.remainingLabel')}</Text>
                 <Text
                   variant="body"
                   weight="medium"
                   color={foodMeta.currentStock > 0 ? 'primary' : 'error'}
+                  style={styles.leftAlignedText}
                 >
-                  {foodMeta.currentStock} {t('foodDetailSimpleScreen.remainingValue')}
+                  {t('foodDetailSimpleScreen.remainingLabel')}: {foodMeta.currentStock} {t('foodDetailSimpleScreen.remainingValue')}
                 </Text>
               </View>
             </View>
@@ -475,11 +510,38 @@ export default function FoodDetailSimple() {
             <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
               {t('foodDetailSimpleScreen.allergensTitle')}
             </Text>
-            <Text variant="body" style={styles.ingredientsText}>
-              {allergens && allergens.length > 0
-                ? allergens.join(', ')
-                : t('foodDetailSimpleScreen.allergensEmpty')}
-            </Text>
+            {allergens && allergens.length > 0 ? (
+              <View style={styles.allergenPillsContainer}>
+                {allergens.map((allergen, index) => {
+                  const isMatched = userAllergies.includes(allergen.toLowerCase());
+
+                  return (
+                    <View
+                      key={`${allergen}-${index}`}
+                      style={[
+                        styles.allergenPill,
+                        isMatched && styles.allergenPillDanger,
+                      ]}
+                    >
+                      <Text
+                        variant="caption"
+                        weight="medium"
+                        style={[
+                          styles.allergenPillText,
+                          isMatched && styles.allergenPillTextDanger,
+                        ]}
+                      >
+                        {allergen}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text variant="body" style={styles.ingredientsText}>
+                {t('foodDetailSimpleScreen.allergensEmpty')}
+              </Text>
+            )}
           </View>
 
           {/* Tarif */}
@@ -743,33 +805,41 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     marginRight: Spacing.sm,
   },
-  cookDistance: {
-    color: '#8E8E93',
-  },
   rating: {
     marginTop: Spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  viewAllRow: {
+  cookDescriptionRow: {
+    marginTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    paddingTop: Spacing.sm,
+  },
+  cookDescriptionText: {
+    lineHeight: 18,
+  },
+  deliveryTypeRow: {
     alignItems: 'center',
-    marginTop: Spacing.xs,
+    marginBottom: Spacing.md,
   },
-  viewAllLink: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#8B9D8A',
-    backgroundColor: '#F5F4F0',
+  deliveryTypeText: {
+    textAlign: 'center',
   },
-  metaInfo: {
+  deliveryDetailsSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: Spacing.md,
   },
-  metaItem: {
-    alignItems: 'center',
+  deliveryDetailText: {
+    flex: 1,
+  },
+  availabilityItem: {
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  leftAlignedText: {
+    textAlign: 'left',
   },
   availabilitySection: {
     flexDirection: 'row',
@@ -779,9 +849,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-  availabilityItem: {
+  metaItem: {
     alignItems: 'center',
-    flex: 1,
   },
   description: {
     marginBottom: Spacing.lg,
@@ -809,6 +878,30 @@ const styles = StyleSheet.create({
   },
   allergensSection: {
     marginBottom: Spacing.lg,
+  },
+  allergenPillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    marginTop: Spacing.sm,
+  },
+  allergenPill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#D0D5DD',
+    backgroundColor: '#F2F4F7',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+  },
+  allergenPillDanger: {
+    borderColor: '#FECACA',
+    backgroundColor: '#FEE2E2',
+  },
+  allergenPillText: {
+    color: '#344054',
+  },
+  allergenPillTextDanger: {
+    color: '#B42318',
   },
   modalBackdrop: {
     flex: 1,

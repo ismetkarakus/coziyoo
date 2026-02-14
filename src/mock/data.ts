@@ -21,16 +21,28 @@ export interface MockFood {
   name: string;
   price: number;
   cookName: string;
+  sellerName?: string;
+  sellerId?: string;
+  cookDescription?: string;
   cookId?: string;
   category: string;
   rating: number;
   reviewCount?: number;
+  cardSummary?: string;
   description?: string;
+  recipe?: string;
+  country?: string;
   imageUrl?: string;
+  images?: string[];
   ingredients?: string[];
+  deliveryOptions?: {
+    pickup: boolean;
+    delivery: boolean;
+  };
   preparationTime?: number;
   servingSize?: number;
   isAvailable?: boolean;
+  isActive?: boolean;
   distance?: string;
   hasPickup?: boolean;
   hasDelivery?: boolean;
@@ -42,8 +54,10 @@ export interface MockFood {
   allergens?: string[];
   hygieneRating?: string;
   deliveryFee?: number;
-  createdAt: string;
-  updatedAt: string;
+  startDate?: string;
+  endDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface MockOrder {

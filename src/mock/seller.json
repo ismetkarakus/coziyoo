@@ -236,7 +236,7 @@
     },
     "sellers": [
       {
-        "name": "Ayse Hanim",
+        "name": "Ayşe Hanım",
         "nickname": "Chef Ayse",
         "avatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
         "rating": 4.7,
@@ -284,7 +284,7 @@
         "distance": "2.8 km"
       },
       {
-        "name": "Zeynep Hanim",
+        "name": "Zeynep Hanım",
         "nickname": "Chef Zeynep",
         "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
         "rating": 4.9,
@@ -308,7 +308,7 @@
         "distance": "2.2 km"
       },
       {
-        "name": "Zehra Hanim",
+        "name": "Zehra Hanım",
         "nickname": "Chef Zehra",
         "avatar": "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face",
         "rating": 4.7,
@@ -320,7 +320,7 @@
         "distance": "4.2 km"
       },
       {
-        "name": "Gul Teyze",
+        "name": "Gül Teyze",
         "nickname": "Chef Gul",
         "avatar": "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=150&h=150&fit=crop&crop=face",
         "rating": 4.6,
@@ -332,7 +332,7 @@
         "distance": "5.1 km"
       },
       {
-        "name": "Elif Hanim",
+        "name": "Elif Hanım",
         "nickname": "Chef Elif",
         "avatar": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face",
         "rating": 4.8,

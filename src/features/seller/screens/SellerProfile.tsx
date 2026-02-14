@@ -204,7 +204,6 @@ export const SellerProfile: React.FC = () => {
     const runSignOut = async () => {
       try {
         await signOut();
-        router.replace('/(auth)/sign-in');
       } catch (error) {
         console.error('Sign out error:', error);
         Alert.alert(t('sellerPanel.alerts.signOutTitle'), t('sellerPanel.alerts.signOutError'));

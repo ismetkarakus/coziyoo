@@ -16,6 +16,16 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const rootNavigationState = useRootNavigationState();
   const group = segments[0];
   const { t } = useTranslation();
+  const publicAuthRoutes = new Set([
+    '(auth)',
+    'sign-in',
+    'buyer-register',
+    'seller-register',
+    'user-type-selection',
+    'forgot-password',
+    'welcome',
+  ]);
+  const inAuthGroup = publicAuthRoutes.has(String(segments[0] ?? ''));
   
   // ✅ Çok akıllı bekleme - cache varsa hiç bekleme
   const shouldWait = loading && !userData;
@@ -25,7 +35,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       user: user ? `${user.email} (${user.uid})` : 'null',
       loading,
       segments,
-      inAuthGroup: segments[0] === '(auth)',
+      inAuthGroup,
       currentPath: segments.join('/')
     });
 
@@ -33,8 +43,6 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       console.log('⏳ Auth still loading, waiting...');
       return; // Auth durumu henüz yükleniyor
     }
-
-    const inAuthGroup = segments[0] === '(auth)';
 
     // ZORLA REDIRECT - Kullanıcı yoksa auth'a git
     if (!user && !inAuthGroup) {
@@ -78,8 +86,6 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   }
 
   // GÜÇLÜ KONTROL: Kullanıcı yoksa erişimi engelle
-  const inAuthGroup = segments[0] === '(auth)';
-  
   if (!user && !inAuthGroup) {
     console.log('🚫 BLOCKING ACCESS - no user and not in auth');
     return (

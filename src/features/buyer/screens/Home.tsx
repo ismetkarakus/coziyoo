@@ -1175,13 +1175,13 @@ export const Home: React.FC = () => {
         <TouchableOpacity
           activeOpacity={0.85}
           style={[styles.previewBanner, { borderColor: colors.primary, backgroundColor: '#FFFFFF' }]}
-          onPress={() => router.push('/(buyer)/home-preview' as any)}
+          onPress={() => router.push('/(buyer)' as any)}
         >
           <Text variant="caption" color="textSecondary">
-            UI Önizleme
+            Home
           </Text>
           <Text variant="body" weight="semibold" style={{ color: colors.primary }}>
-            Referans Ana Sayfa Tasarımını Aç
+            Ana Sayfa
           </Text>
         </TouchableOpacity>
       ) : null}

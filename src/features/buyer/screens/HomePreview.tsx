@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text } from '../../../components/ui';
 import { Spacing } from '../../../theme';
+import foods from '../../../mock/foods.json';
+import { MockFood } from '../../../mock/data';
+import { useTranslation } from '../../../hooks/useTranslation';
+import { useCountry } from '../../../context/CountryContext';
 
 const PREVIEW_COLORS = {
   primary: '#8FA08E',
@@ -17,40 +21,98 @@ const PREVIEW_COLORS = {
   textMuted: '#6B7280',
 } as const;
 
-const DEMO_CATEGORIES = ['Tümü', 'Ana Yemek', 'Çorba', 'Meze', 'Tatlı'];
-
-const DEMO_ITEMS = [
-  {
-    id: 'demo-1',
-    title: 'Ev Yapımı Mantı',
-    price: '₺35.00',
-    cook: 'Ayşe Hanım',
-    rating: 4.8,
-    description: 'El açması mantı, ev tadında unutulmaz lezzet.',
-    img: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=320&h=320&fit=crop',
-  },
-  {
-    id: 'demo-2',
-    title: 'Karnıyarık',
-    price: '₺28.00',
-    cook: 'Mehmet Usta',
-    rating: 4.7,
-    description: 'Anne usulü karnıyarık, sıcak ve doyurucu bir klasik.',
-    img: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=320&h=320&fit=crop',
-  },
-  {
-    id: 'demo-3',
-    title: 'Mercimek Çorbası',
-    price: '₺22.00',
-    cook: 'Fatma Teyze',
-    rating: 4.9,
-    description: 'Günlük taze mercimek çorbası, şifa dolu sıcak başlangıç.',
-    img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=320&h=320&fit=crop',
-  },
-];
-
 export const HomePreview: React.FC = () => {
-  const [expandedFoodId, setExpandedFoodId] = useState<string | null>(null);
+  const { currentLanguage } = useTranslation();
+  const { formatCurrency } = useCountry();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<'all' | 'main' | 'soup' | 'meze' | 'dessert'>('all');
+  const categories = useMemo(
+    () =>
+      currentLanguage === 'en'
+        ? [
+            { id: 'all' as const, label: 'All' },
+            { id: 'main' as const, label: 'Main Course' },
+            { id: 'soup' as const, label: 'Soup' },
+            { id: 'meze' as const, label: 'Meze' },
+            { id: 'dessert' as const, label: 'Dessert' },
+          ]
+        : [
+            { id: 'all' as const, label: 'Tümü' },
+            { id: 'main' as const, label: 'Ana Yemek' },
+            { id: 'soup' as const, label: 'Çorba' },
+            { id: 'meze' as const, label: 'Meze' },
+            { id: 'dessert' as const, label: 'Tatlı' },
+          ],
+    [currentLanguage]
+  );
+
+  const getCategoryId = (rawCategory: string): 'main' | 'soup' | 'meze' | 'dessert' => {
+    if (rawCategory === 'Çorba' || rawCategory === 'Soup') return 'soup';
+    if (rawCategory === 'Meze') return 'meze';
+    if (
+      rawCategory === 'Tatlı' ||
+      rawCategory === 'Dessert' ||
+      rawCategory === 'Tatlı/Kek' ||
+      rawCategory === 'Dessert/Cake'
+    ) {
+      return 'dessert';
+    }
+    return 'main';
+  };
+
+  const localizeCategory = (category: string): string => {
+    if (currentLanguage === 'tr') return category;
+
+    const map: Record<string, string> = {
+      'Ana Yemek': 'Main Course',
+      'Çorba': 'Soup',
+      'Meze': 'Meze',
+      'Tatlı': 'Dessert',
+      'Tatlı/Kek': 'Dessert/Cake',
+      'Vejetaryen': 'Vegetarian',
+      'Kahvaltı': 'Breakfast',
+      'İçecek': 'Drink',
+    };
+    return map[category] || category;
+  };
+
+  const homeItems = useMemo(
+    () =>
+      (foods as MockFood[]).map((food, index) => ({
+        id: food.id,
+        title: food.name,
+        price: formatCurrency(Number(food.price || 0)),
+        numericPrice: Number(food.price || 0),
+        cook: food.cookName,
+        rating: Number(food.rating || 0),
+        description:
+          food.description ||
+          food.cookDescription ||
+          (currentLanguage === 'en'
+            ? 'Homemade, fresh, and carefully prepared.'
+            : 'Ev yapımı, taze ve özenli hazırlanır.'),
+        category: localizeCategory(food.category || (currentLanguage === 'en' ? 'Main Course' : 'Ana Yemek')),
+        categoryId: getCategoryId(food.category || 'Ana Yemek'),
+        currentStock: typeof food.currentStock === 'number' ? food.currentStock : 0,
+        dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 0,
+        hasPickup: food.hasPickup !== false,
+        hasDelivery: food.hasDelivery !== false,
+        img:
+          food.imageUrl ||
+          `https://placehold.co/320x320/E8E6E1/4B5563?text=${encodeURIComponent(food.name || (currentLanguage === 'en' ? `Meal ${index + 1}` : `Yemek ${index + 1}`))}`,
+      })),
+    [currentLanguage, formatCurrency]
+  );
+
+  const filteredItems = useMemo(() => {
+    if (selectedCategoryId === 'all') return homeItems;
+    return homeItems.filter((item) => item.categoryId === selectedCategoryId);
+  }, [homeItems, selectedCategoryId]);
+
+  const openFoodDetail = (item: (typeof homeItems)[number]): void => {
+    router.push(
+      `/food-detail-order?id=${encodeURIComponent(item.id)}&name=${encodeURIComponent(item.title)}&cookName=${encodeURIComponent(item.cook)}&imageUrl=${encodeURIComponent(item.img)}&price=${item.numericPrice}` as any
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -59,7 +121,9 @@ export const HomePreview: React.FC = () => {
           <View style={styles.backButton} />
           <View style={styles.heroCenter}>
             <Text style={styles.logo}>Coziyoo</Text>
-            <Text style={styles.slogan}>Ev Yemeği · Yakınında</Text>
+            <Text style={styles.slogan}>
+              {currentLanguage === 'en' ? 'Home Food · Nearby' : 'Ev Yemeği · Yakınında'}
+            </Text>
           </View>
           <View style={styles.backButton} />
         </View>
@@ -67,7 +131,9 @@ export const HomePreview: React.FC = () => {
         <View style={styles.searchWrap}>
           <View style={styles.searchInputWrap}>
             <MaterialIcons name="search" size={20} color="#7A7A7A" />
-            <Text style={styles.searchText}>Bugün ne yemek istersin?</Text>
+            <Text style={styles.searchText}>
+              {currentLanguage === 'en' ? 'What would you like to eat today?' : 'Bugün ne yemek istersin?'}
+            </Text>
           </View>
           <TouchableOpacity style={styles.filterButton} activeOpacity={0.85}>
             <MaterialIcons name="filter-list" size={18} color="#7A7A7A" />
@@ -80,17 +146,23 @@ export const HomePreview: React.FC = () => {
 
       <View style={styles.categoriesWrap}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {DEMO_CATEGORIES.map((category, index) => (
+          {categories.map((category) => (
             <TouchableOpacity
-              key={category}
+              key={category.id}
               style={[
                 styles.categoryChip,
-                index === 1 ? styles.categoryChipActive : null,
+                selectedCategoryId === category.id ? styles.categoryChipActive : null,
               ]}
               activeOpacity={0.8}
+              onPress={() => setSelectedCategoryId(category.id)}
             >
-              <Text style={[styles.categoryText, index === 1 ? styles.categoryTextActive : null]}>
-                {category}
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategoryId === category.id ? styles.categoryTextActive : null,
+                ]}
+              >
+                {category.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -98,18 +170,20 @@ export const HomePreview: React.FC = () => {
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {DEMO_ITEMS.map((item) => (
+        {filteredItems.map((item) => (
           <View key={item.id} style={styles.card}>
             <View style={styles.cardHeader}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => setExpandedFoodId((prev) => (prev === item.id ? null : item.id))}
+                onPress={() => openFoodDetail(item)}
                 style={styles.headerLeft}
               >
                 <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
                   {item.title}
                 </Text>
-                <Text style={styles.stockInline}>8/Ps</Text>
+                <Text style={styles.stockInline}>
+                  {item.currentStock}/{item.dailyStock} {currentLanguage === 'en' ? 'pcs' : 'adet'}
+                </Text>
               </TouchableOpacity>
               <View style={styles.headerActions}>
                 <TouchableOpacity style={styles.favButton} activeOpacity={0.8}>
@@ -122,7 +196,9 @@ export const HomePreview: React.FC = () => {
             <View style={styles.cardContentRow}>
               <View style={styles.imageColumn}>
                 <View style={styles.imageWrap}>
-                  <Image source={{ uri: item.img }} style={styles.cardImage} />
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => openFoodDetail(item)}>
+                    <Image source={{ uri: item.img }} style={styles.cardImage} />
+                  </TouchableOpacity>
                   <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => {}}>
                     <MaterialIcons name="add" size={24} color={PREVIEW_COLORS.accent} />
                   </TouchableOpacity>
@@ -131,21 +207,25 @@ export const HomePreview: React.FC = () => {
 
               <View style={styles.cardBody}>
                 <View style={styles.cardBodyTop}>
-                  <Text style={styles.metaTitle}>Türk mutfağı</Text>
+                  <Text style={styles.metaTitle}>{item.category}</Text>
                   <Text style={styles.metaDescription} numberOfLines={3} ellipsizeMode="tail">
                     {item.description}
                   </Text>
                 </View>
                 <View style={styles.metaDeliveryRow}>
                   <View style={styles.deliveryInline}>
-                    <View style={styles.deliveryItem}>
-                      <Text style={styles.deliveryEmoji}>🚶</Text>
-                      <Text style={styles.deliveryLabel}>Al</Text>
-                    </View>
-                    <View style={styles.deliveryItem}>
-                      <Text style={styles.deliveryEmoji}>🚚</Text>
-                      <Text style={styles.deliveryLabel}>Getir</Text>
-                    </View>
+                    {item.hasPickup ? (
+                      <View style={styles.deliveryItem}>
+                        <Text style={styles.deliveryEmoji}>🚶</Text>
+                        <Text style={styles.deliveryLabel}>{currentLanguage === 'en' ? 'Pickup' : 'Al'}</Text>
+                      </View>
+                    ) : null}
+                    {item.hasDelivery ? (
+                      <View style={styles.deliveryItem}>
+                        <Text style={styles.deliveryEmoji}>🚚</Text>
+                        <Text style={styles.deliveryLabel}>{currentLanguage === 'en' ? 'Delivery' : 'Getir'}</Text>
+                      </View>
+                    ) : null}
                   </View>
                 </View>
               </View>
@@ -317,18 +397,15 @@ const styles = StyleSheet.create({
   addButton: {
     position: 'absolute',
     right: -8,
-    bottom: -2,
+    bottom: -8,
     width: 34,
     height: 34,
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: PREVIEW_COLORS.surface,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: PREVIEW_COLORS.accent,
   },
   imageColumn: {
     width: 114,
@@ -439,6 +516,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: PREVIEW_COLORS.text,
     flexShrink: 1,
+    paddingTop: 6,
+    paddingBottom: 2,
   },
   cookLink: {
     marginLeft: 2,

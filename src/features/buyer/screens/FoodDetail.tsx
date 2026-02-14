@@ -203,6 +203,11 @@ export const FoodDetail: React.FC = () => {
   const [showAllergenModal, setShowAllergenModal] = useState(false);
   const screenWidth = Dimensions.get('window').width;
   const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
+  const deliveryTimeLabel = currentLanguage === 'en' ? 'Delivery Time' : 'Teslimat Süresi';
+  const deliveryTypeDescription =
+    deliveryType === 'pickup'
+      ? (currentLanguage === 'en' ? 'This product must be picked up' : 'Bu urunu gelip almaniz gerekir')
+      : (currentLanguage === 'en' ? 'This product is delivered' : 'Bu urun teslim edilir');
   const isSellerUser = userData?.userType === 'seller' || userData?.userType === 'both';
   const encodedMealData = params.mealData as string | undefined;
 
@@ -829,12 +834,12 @@ export const FoodDetail: React.FC = () => {
                 <Text variant="body" weight="medium">{food.distance}</Text>
               </View>
               <View style={styles.metaItem}>
-                <Text variant="caption" color="textSecondary">{t('foodDetailScreen.prep')}</Text>
+                <Text variant="caption" color="textSecondary">{deliveryTimeLabel}</Text>
                 <Text variant="body" weight="medium">{food.prepTime}</Text>
               </View>
               <View style={styles.metaItem}>
                 <Text variant="body" weight="medium" color="primary">
-                  {deliveryType === 'pickup' ? t('foodDetailScreen.pickup') : t('foodDetailScreen.delivery')}
+                  {deliveryTypeDescription}
                 </Text>
               </View>
             </View>

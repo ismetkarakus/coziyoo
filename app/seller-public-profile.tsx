@@ -1,97 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Text, FoodCard, Card, HeaderBackButton } from '@/src/components/ui';
+import { Text, Card, HeaderBackButton } from '@/src/components/ui';
 import { TopBar } from '@/src/components/layout';
 import { Colors, Spacing } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
-import { useCart } from '@/src/context/CartContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import sellerMock from '@/src/mock/seller.json';
+import foodsMock from '@/src/mock/foods.json';
+import { MockFood } from '@/src/mock/data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useCountry } from '@/src/context/CountryContext';
 
-// Import foods from Home.tsx (in real app, this would be from API)
 const getAllFoodsForSeller = (cookName: string) => {
-  // This would normally come from API, but for demo we'll use mock data
-  const MOCK_FOODS = [
-    // Ayşe Hanım's foods across categories
-    {
-      id: '1',
-      name: 'Ev Yapımı Mantı',
-      cookName: 'Ayşe Hanım',
-      rating: 4.8,
-      price: 35,
-      distance: '3 km',
-      category: 'Ana Yemek',
-      hasPickup: true,
-      hasDelivery: true,
-      availableDates: '15-20 Ocak',
-      currentStock: 8,
-      dailyStock: 10,
-      maxDeliveryDistance: 3,
-      availableDeliveryOptions: ['pickup', 'delivery'],
-    },
-    {
-      id: '9',
-      name: 'Menemen',
-      cookName: 'Ayşe Hanım',
-      rating: 4.6,
-      price: 22,
-      distance: '900 m',
-      category: 'Kahvaltı',
-      hasPickup: true,
-      hasDelivery: true,
-      availableDates: '17-24 Ocak',
-      currentStock: 7,
-      dailyStock: 10,
-      availableDeliveryOptions: ['pickup', 'delivery'],
-    },
-    {
-      id: '15',
-      name: 'Vejetaryen Köfte',
-      cookName: 'Ayşe Hanım',
-      rating: 4.6,
-      price: 24,
-      distance: '1.5 km',
-      category: 'Vejetaryen',
-      hasPickup: true,
-      hasDelivery: true,
-      availableDates: '17-24 Ocak',
-      currentStock: 8,
-      dailyStock: 10,
-      maxDeliveryDistance: 2,
-      availableDeliveryOptions: ['pickup', 'delivery'],
-    },
-    {
-      id: '21',
-      name: 'Ev Yapımı Sütlaç',
-      cookName: 'Ayşe Hanım',
-      rating: 4.9,
-      price: 16,
-      distance: '1.2 km',
-      category: 'Tatlı/Kek',
-      hasPickup: true,
-      hasDelivery: true,
-      availableDates: '18-25 Ocak',
-      currentStock: 12,
-      dailyStock: 15,
-      maxDeliveryDistance: 1.5,
-      availableDeliveryOptions: ['pickup', 'delivery'],
-    },
-    // Add more sellers' foods here...
-  ];
-
-  return MOCK_FOODS.filter(food => food.cookName === cookName);
+  return (foodsMock as MockFood[]).filter(food => food.cookName === cookName);
 };
 
 export default function SellerProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const params = useLocalSearchParams();
-  const { addToCart } = useCart();
-  const [foodStocks, setFoodStocks] = useState<{ [key: string]: number }>({});
   const { currentLanguage } = useTranslation();
+  const { formatCurrency } = useCountry();
   const [overrideNickname, setOverrideNickname] = useState<string>('');
   const [overrideName, setOverrideName] = useState<string>('');
   const [overrideAvatar, setOverrideAvatar] = useState<string>('');
@@ -146,60 +77,10 @@ export default function SellerProfileScreen() {
     return acc;
   }, {} as { [key: string]: any[] });
 
-  const handleAddToCart = (foodId: string, quantity: number, deliveryOption?: 'pickup' | 'delivery') => {
-    const food = sellerFoods.find(f => f.id === foodId);
-    if (food && quantity > 0) {
-      // Get current stock (from foodStocks state or original stock)
-      const currentStock = foodStocks[foodId] ?? food.currentStock ?? 0;
-      
-      if (currentStock >= quantity) {
-        // Update local stock state immediately for UI feedback
-        const newStock = currentStock - quantity;
-        setFoodStocks(prev => ({
-          ...prev,
-          [foodId]: newStock
-        }));
-        
-        // Determine available options
-        const availableOptions: ('pickup' | 'delivery')[] = Array.isArray((food as any).availableDeliveryOptions)
-          && (food as any).availableDeliveryOptions.length > 0
-            ? (food as any).availableDeliveryOptions
-            : [];
-        if (availableOptions.length === 0) {
-          if (food.hasPickup) availableOptions.push('pickup');
-          if (food.hasDelivery) availableOptions.push('delivery');
-        }
-        
-        // Set default delivery option if not provided
-        const finalDeliveryOption = deliveryOption || (availableOptions.length === 1 ? availableOptions[0] : undefined);
-        
-        const rawDeliveryFee = (food as any).deliveryFee;
-        const parsedDeliveryFee =
-          typeof rawDeliveryFee === 'number'
-            ? rawDeliveryFee
-            : typeof rawDeliveryFee === 'string'
-              ? parseFloat(rawDeliveryFee)
-              : 0;
-
-        addToCart({
-          id: food.id,
-          name: food.name,
-          price: food.price,
-          cookName: food.cookName,
-          imageUrl: '',
-          currentStock: newStock,
-          dailyStock: food.dailyStock,
-          deliveryOption: finalDeliveryOption,
-          availableOptions: availableOptions,
-          deliveryFee: food.hasDelivery ? (Number.isFinite(parsedDeliveryFee) ? parsedDeliveryFee : 0) : 0,
-          allergens: (food as any).allergens || [],
-        }, quantity);
-        
-        console.log(`Added ${quantity} of ${food.name} to cart from seller profile. Remaining stock: ${newStock}`);
-      } else {
-        console.log(`Not enough stock for ${food.name}. Available: ${currentStock}, Requested: ${quantity}`);
-      }
-    }
+  const openFoodDetail = (food: MockFood) => {
+    router.push(
+      `/food-detail-order?id=${encodeURIComponent(String(food.id ?? ''))}&name=${encodeURIComponent(food.name)}&cookName=${encodeURIComponent(food.cookName)}&imageUrl=${encodeURIComponent(food.imageUrl || '')}&price=${Number(food.price || 0)}` as any
+    );
   };
 
   if (!sellerData) {
@@ -288,16 +169,76 @@ export default function SellerProfileScreen() {
                 {category} ({foods.length})
               </Text>
               
-              {foods.map((food) => (
-                <FoodCard
-                  key={food.id}
-                  {...food}
-                  displayCookName={displayNickname || displayName}
-                  currentStock={foodStocks[food.id] ?? food.currentStock}
-                  onAddToCart={handleAddToCart}
-                  isPreview={false}
-                  showAvailableDates={true}
-                />
+              {foods.map((food: MockFood) => (
+                <View key={food.id} style={styles.foodCard}>
+                  <View style={styles.cardHeader}>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => openFoodDetail(food)}
+                      style={styles.headerLeft}
+                    >
+                      <View style={styles.titleRow}>
+                        <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
+                          {food.name}
+                        </Text>
+                        <Text style={styles.stockInline}>
+                          {food.currentStock ?? 0}/{food.dailyStock ?? 0} {currentLanguage === 'en' ? 'pcs' : 'adet'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    <View style={styles.headerActions}>
+                      <TouchableOpacity style={styles.favButton} activeOpacity={0.8}>
+                        <MaterialIcons name="favorite-border" size={18} color="#9CA3AF" />
+                      </TouchableOpacity>
+                      <Text style={styles.priceText}>{formatCurrency(Number(food.price || 0))}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.cardContentRow}>
+                    <View style={styles.imageColumn}>
+                      <View style={styles.imageWrap}>
+                        <TouchableOpacity activeOpacity={0.85} onPress={() => openFoodDetail(food)}>
+                          <Image
+                            source={{
+                              uri:
+                                food.imageUrl ||
+                                'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop',
+                            }}
+                            style={styles.cardImage}
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => openFoodDetail(food)}>
+                          <MaterialIcons name="add" size={24} color="#5F7F5E" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardBody}>
+                      <View style={styles.cardBodyTop}>
+                        <Text style={styles.metaTitle}>{food.category}</Text>
+                        <Text style={styles.metaDescription} numberOfLines={3} ellipsizeMode="tail">
+                          {food.description || food.cardSummary || ''}
+                        </Text>
+                      </View>
+                      <View style={styles.metaDeliveryRow}>
+                        <View style={styles.deliveryInline}>
+                          {food.hasPickup !== false ? (
+                            <View style={styles.deliveryItem}>
+                              <Text style={styles.deliveryEmoji}>🚶</Text>
+                              <Text style={styles.deliveryLabel}>{currentLanguage === 'en' ? 'Pickup' : 'Al'}</Text>
+                            </View>
+                          ) : null}
+                          {food.hasDelivery ? (
+                            <View style={styles.deliveryItem}>
+                              <Text style={styles.deliveryEmoji}>🚚</Text>
+                              <Text style={styles.deliveryLabel}>{currentLanguage === 'en' ? 'Delivery' : 'Getir'}</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
               ))}
             </View>
           ))}
@@ -375,5 +316,134 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     color: '#666',
     marginHorizontal: Spacing.md,
+  },
+  foodCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  headerLeft: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: Spacing.xs,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#374151',
+    flexShrink: 1,
+  },
+  stockInline: {
+    color: '#6B7280',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: Spacing.xs,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  favButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  priceText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#5F7F5E',
+  },
+  cardContentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  imageColumn: {
+    width: 90,
+  },
+  imageWrap: {
+    position: 'relative',
+  },
+  cardImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 18,
+    backgroundColor: '#E5E7EB',
+  },
+  addButton: {
+    position: 'absolute',
+    right: -8,
+    bottom: -8,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#5F7F5E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardBody: {
+    flex: 1,
+    marginLeft: Spacing.md,
+    justifyContent: 'space-between',
+  },
+  cardBodyTop: {
+    minHeight: 54,
+  },
+  metaTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  metaDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#6B7280',
+  },
+  metaDeliveryRow: {
+    marginTop: 10,
+  },
+  deliveryInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    justifyContent: 'flex-start',
+  },
+  deliveryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  deliveryEmoji: {
+    fontSize: 14,
+    lineHeight: 16,
+  },
+  deliveryLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#6B7280',
   },
 });
