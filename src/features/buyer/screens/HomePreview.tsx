@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { FilterModal, Text } from '../../../components/ui';
 import { Spacing } from '../../../theme';
@@ -45,6 +46,32 @@ export const HomePreview: React.FC = () => {
   const [allergenModalVisible, setAllergenModalVisible] = useState(false);
   const [allergenMatches, setAllergenMatches] = useState<string[]>([]);
   const [pendingAllergenItem, setPendingAllergenItem] = useState<any | null>(null);
+  const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
+
+  const loadPublishedMeals = React.useCallback(async () => {
+    try {
+      const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
+      if (!publishedMealsJson) {
+        setPublishedMeals([]);
+        return;
+      }
+
+      const parsedMeals = JSON.parse(publishedMealsJson);
+      setPublishedMeals(Array.isArray(parsedMeals) ? parsedMeals : []);
+    } catch (error) {
+      console.error('Error loading published meals in HomePreview:', error);
+      setPublishedMeals([]);
+    }
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadPublishedMeals();
+    }, [loadPublishedMeals])
+  );
+
+  const getFoodIdentity = (food: any) =>
+    `${String(food?.name ?? '').toLowerCase()}__${String(food?.cookName ?? '').toLowerCase()}`;
   const localizeCategory = (category: string): string => {
     if (currentLanguage === 'tr') return category;
 
@@ -102,9 +129,45 @@ export const HomePreview: React.FC = () => {
     return currentLanguage === 'en' ? 'Cuisine Not Specified' : 'Mutfak Belirtilmedi';
   };
 
+  const sourceFoods = useMemo(() => {
+    const normalizedPublishedMeals = publishedMeals
+      .map((meal) => ({
+        ...meal,
+        id: String(meal?.id ?? ''),
+        name: String(meal?.name ?? ''),
+        cookName: String(meal?.cookName ?? meal?.sellerName ?? 'Coziyoo'),
+        rating: Number(meal?.rating ?? 4.8),
+        price: Number(meal?.price ?? 0),
+        category: String(meal?.category ?? 'Ana Yemek'),
+        description: meal?.description,
+        imageUrl: meal?.imageUrl,
+        currentStock: Number(meal?.currentStock ?? 0),
+        dailyStock: Number(meal?.dailyStock ?? 0),
+        hasPickup: meal?.hasPickup !== false,
+        hasDelivery: meal?.hasDelivery !== false,
+        deliveryFee: typeof meal?.deliveryFee === 'number' ? meal.deliveryFee : 0,
+        availableDeliveryOptions:
+          Array.isArray(meal?.availableDeliveryOptions) && meal.availableDeliveryOptions.length > 0
+            ? meal.availableDeliveryOptions
+            : [
+                ...(meal?.hasPickup !== false ? (['pickup'] as const) : []),
+                ...(meal?.hasDelivery ? (['delivery'] as const) : []),
+              ],
+        allergens: Array.isArray(meal?.allergens) ? meal.allergens : [],
+      }));
+
+    const visiblePublishedMeals = normalizedPublishedMeals
+      .filter((meal) => meal.isActive !== false && meal.currentStock > 0);
+
+    const publishedIdentities = new Set(normalizedPublishedMeals.map(getFoodIdentity));
+    const fallbackFoods = (foods as MockFood[]).filter((food) => !publishedIdentities.has(getFoodIdentity(food)));
+
+    return [...visiblePublishedMeals, ...fallbackFoods];
+  }, [publishedMeals]);
+
   const homeItems = useMemo(
     () =>
-      (foods as MockFood[]).map((food, index) => ({
+      sourceFoods.map((food: any, index) => ({
         id: food.id,
         title: food.name,
         price: formatCurrency(Number(food.price || 0)),
@@ -141,7 +204,7 @@ export const HomePreview: React.FC = () => {
           `https://placehold.co/320x320/E8E6E1/4B5563?text=${encodeURIComponent(food.name || (currentLanguage === 'en' ? `Meal ${index + 1}` : `Yemek ${index + 1}`))}`,
         initialFavoriteCount: Number(food.favoriteCount ?? 0),
       })),
-    [currentLanguage, formatCurrency, getRemainingStock]
+    [currentLanguage, formatCurrency, getRemainingStock, sourceFoods]
   );
 
   const categories = useMemo(
@@ -404,6 +467,10 @@ export const HomePreview: React.FC = () => {
     closeAllergenModal();
   };
 
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
@@ -431,6 +498,15 @@ export const HomePreview: React.FC = () => {
               autoCorrect={false}
               autoCapitalize="none"
             />
+            {searchQuery.trim() ? (
+              <TouchableOpacity
+                onPress={handleClearSearch}
+                activeOpacity={0.75}
+                style={styles.searchClearButton}
+              >
+                <MaterialIcons name="close" size={18} color="#D22D2D" />
+              </TouchableOpacity>
+            ) : null}
           </View>
           <TouchableOpacity style={styles.filterButton} activeOpacity={0.85} onPress={handleFilterPress}>
             <MaterialIcons name="filter-list" size={18} color="#7A7A7A" />
@@ -684,6 +760,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  searchClearButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
   },
   searchInput: {
     color: '#7A7A7A',

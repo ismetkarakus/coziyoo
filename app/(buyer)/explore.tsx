@@ -4,6 +4,7 @@ import { Text, Input, FoodCard } from '@/src/components/ui';
 import { TopBar } from '@/src/components/layout';
 import { Colors, Spacing } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 // Mock data for categories
 const CATEGORIES = [
@@ -92,6 +93,16 @@ export default function ExploreScreen() {
             onChangeText={setSearchQuery}
             placeholder="Yemek ara..."
             leftIcon={<Text>🔍</Text>}
+            rightIcon={
+              searchQuery.trim() ? (
+                <TouchableOpacity
+                  onPress={() => setSearchQuery('')}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="close" size={18} color={colors.error} />
+                </TouchableOpacity>
+              ) : undefined
+            }
           />
         </View>
 

@@ -937,6 +937,16 @@ export const Home: React.FC = () => {
     performSearch(text, searchFilters);
   };
 
+  const handleClearSearch = () => {
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+    }
+    setSearchQuery('');
+    setSearchResults([]);
+    setSuggestions([]);
+    setIsSearching(false);
+  };
+
   const handleSuggestionPress = (suggestion: string) => {
     setSearchQuery(suggestion);
     performSearch(suggestion, searchFilters);
@@ -1122,6 +1132,7 @@ export const Home: React.FC = () => {
             <SearchBar
               value={searchQuery}
               onChangeText={handleSearchChange}
+              onClear={handleClearSearch}
               onSubmit={handleSearchSubmit}
               onFilterPress={handleFilterPress}
               placeholder={t('searchPlaceholder')}

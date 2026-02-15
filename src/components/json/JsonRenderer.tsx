@@ -150,7 +150,7 @@ const renderNode = (
       ? null 
       : finalChildren.length === 1 
         ? finalChildren[0] 
-        : <>{finalChildren}</>;
+        : finalChildren;
   }
 
   return (

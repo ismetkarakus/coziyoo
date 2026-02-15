@@ -38,8 +38,10 @@ export const SellerPanel: React.FC = () => {
     ...item,
     isManageMeals: item.id === 'manage-meals',
   }));
+  const showManageMeals = currentCountry.code === 'TR';
   const visibleMenuItems =
-    currentCountry.code === 'TR' ? menuItems.filter((item: any) => item.id !== 'manage-meals') : menuItems;
+    showManageMeals ? menuItems.filter((item: any) => item.id !== 'manage-meals') : menuItems;
+  const scrollStickyHeaderIndices = showManageMeals ? [0, 1] : [0];
   
   // Ülkeye göre menü öğeleri (JSON)
 
@@ -200,7 +202,8 @@ export const SellerPanel: React.FC = () => {
     manageMealsSummary: panel.manageMealsSummary,
     themeExpanded,
     visibleMenuItems,
-    showManageMeals: currentCountry.code === 'TR',
+    showManageMeals,
+    scrollStickyHeaderIndices,
     hasVisibleMenuItems: visibleMenuItems.length > 0,
     manageMealsTitle: t('manageMealsScreen.title'),
     rootBackgroundStyle: { backgroundColor: colors.background },

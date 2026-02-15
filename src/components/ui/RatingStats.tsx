@@ -1,20 +1,25 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from './Text';
 import { StarRating } from './StarRating';
 import { Colors, Spacing } from '../../theme';
 import { useColorScheme } from '../../../components/useColorScheme';
 import { ReviewStats } from '../../services/reviewService';
 import { useTranslation } from '../../hooks/useTranslation';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 interface RatingStatsProps {
   stats: ReviewStats;
   compact?: boolean;
+  onRatingPress?: (rating: number) => void;
+  selectedRating?: number | null;
 }
 
 export const RatingStats: React.FC<RatingStatsProps> = ({
   stats,
   compact = false,
+  onRatingPress,
+  selectedRating = null,
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -22,12 +27,44 @@ export const RatingStats: React.FC<RatingStatsProps> = ({
 
   const renderRatingBar = (rating: number, count: number) => {
     const percentage = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
-    
+    const isInteractive = typeof onRatingPress === 'function';
+    const isSelected = selectedRating === rating;
+
     return (
-      <View key={rating} style={styles.ratingBarContainer}>
-        <Text variant="caption" style={[styles.ratingLabel, { color: colors.textSecondary }]}>
-          {rating}
-        </Text>
+      <TouchableOpacity
+        key={rating}
+        style={[
+          styles.ratingBarContainer,
+          isInteractive ? styles.ratingBarTouchable : null,
+          isSelected
+            ? {
+                backgroundColor: colors.primary + '22',
+              }
+            : null,
+        ]}
+        activeOpacity={isInteractive ? 0.75 : 1}
+        onPress={isInteractive ? () => onRatingPress?.(rating) : undefined}
+        disabled={!isInteractive}
+      >
+        <View style={styles.ratingLabelWrap}>
+          {isInteractive && isSelected ? (
+            <MaterialIcons
+              name="touch-app"
+              size={12}
+              color={isSelected ? colors.primary : colors.textSecondary}
+            />
+          ) : <View style={styles.ratingIconSpacer} />}
+          <Text
+            variant="caption"
+            style={[
+              styles.ratingLabel,
+              { color: isSelected ? colors.primary : colors.textSecondary },
+              isSelected ? styles.selectedText : null,
+            ]}
+          >
+            {rating}
+          </Text>
+        </View>
         <StarRating rating={1} maxRating={1} size="small" />
         <View style={[styles.barBackground, { backgroundColor: colors.border }]}>
           <View 
@@ -40,10 +77,17 @@ export const RatingStats: React.FC<RatingStatsProps> = ({
             ]} 
           />
         </View>
-        <Text variant="caption" style={[styles.countLabel, { color: colors.textSecondary }]}>
+        <Text
+          variant="caption"
+          style={[
+            styles.countLabel,
+            { color: isSelected ? colors.primary : colors.textSecondary },
+            isSelected ? styles.selectedText : null,
+          ]}
+        >
           {count}
         </Text>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -124,9 +168,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
+  ratingBarTouchable: {
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+  },
+  selectedText: {
+    fontWeight: '600',
+  },
   ratingLabel: {
     width: 12,
     textAlign: 'center',
+  },
+  ratingLabelWrap: {
+    width: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  ratingIconSpacer: {
+    width: 12,
+    height: 12,
   },
   barBackground: {
     flex: 1,
@@ -143,11 +205,3 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 });
-
-
-
-
-
-
-
-

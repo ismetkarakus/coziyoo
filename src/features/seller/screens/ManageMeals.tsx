@@ -36,20 +36,22 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const [pagerWidth, setPagerWidth] = useState(width);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [expiredMeals, setExpiredMeals] = useState<Meal[]>([]);
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
   const [sellerProfile, setSellerProfile] = useState<any>(null);
   const [stockDrafts, setStockDrafts] = useState<Record<string, number>>({});
   const pagerRef = React.useRef<ScrollView | null>(null);
+  const embeddedListHeight = Math.max(320, Math.min(560, height * 0.62));
 
   useEffect(() => {
     pagerRef.current?.scrollTo({
-      x: activeTab === 'active' ? 0 : width,
+      x: activeTab === 'active' ? 0 : pagerWidth,
       animated: true,
     });
-  }, [activeTab, width]);
+  }, [activeTab, pagerWidth]);
 
   // Load meals and profile when screen comes into focus
   useFocusEffect(
@@ -549,15 +551,6 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
         </TouchableOpacity>
       </View>
 
-      {embedded && activeTab === 'expired' && (
-        <TouchableOpacity
-          onPress={() => setActiveTab('active')}
-          activeOpacity={1}
-          style={styles.collapseTapArea}
-          accessible={false}
-        />
-      )}
-      
       <ScrollView
         ref={pagerRef}
         horizontal
@@ -568,13 +561,29 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
         showsHorizontalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         scrollEventThrottle={16}
+        onLayout={(event) => {
+          const nextWidth = event.nativeEvent.layout.width;
+          if (nextWidth > 0 && Math.abs(nextWidth - pagerWidth) > 1) {
+            setPagerWidth(nextWidth);
+          }
+        }}
         onMomentumScrollEnd={(event) => {
           const x = event.nativeEvent.contentOffset.x;
-          setActiveTab(x >= width / 2 ? 'expired' : 'active');
+          setActiveTab(x >= pagerWidth / 2 ? 'expired' : 'active');
         }}
       >
-        <View style={{ width }}>
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={{ width: pagerWidth }}>
+          <ScrollView
+            style={[
+              styles.content,
+              embedded && styles.embeddedContent,
+              embedded && { height: embeddedListHeight },
+            ]}
+            contentContainerStyle={styles.listContentContainer}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            scrollEnabled
+          >
             {meals.length > 0 ? (
               meals.map(meal => renderMealCard(meal))
             ) : (
@@ -592,8 +601,18 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           </ScrollView>
         </View>
 
-        <View style={{ width }}>
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={{ width: pagerWidth }}>
+          <ScrollView
+            style={[
+              styles.content,
+              embedded && styles.embeddedContent,
+              embedded && { height: embeddedListHeight },
+            ]}
+            contentContainerStyle={styles.listContentContainer}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            scrollEnabled
+          >
             {expiredMeals.length > 0 ? (
               expiredMeals.map(meal => renderMealCard(meal, true))
             ) : (
@@ -642,12 +661,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 2,
   },
-  collapseTapArea: {
-    height: Spacing.sm,
-  },
   content: {
-    flex: 1,
     padding: Spacing.md,
+  },
+  listContentContainer: {
+    flexGrow: 1,
+  },
+  embeddedContent: {
+    paddingBottom: 0,
   },
   mealCard: {
     marginBottom: Spacing.md,

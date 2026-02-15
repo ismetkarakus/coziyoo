@@ -17,6 +17,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
+  onClear?: () => void;
   onSubmit?: (text: string) => void;
   onFilterPress?: () => void;
   placeholder?: string;
@@ -29,6 +30,7 @@ interface SearchBarProps {
 export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChangeText,
+  onClear,
   onSubmit,
   onFilterPress,
   placeholder,
@@ -101,7 +103,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   const handleClear = () => {
-    onChangeText('');
+    if (onClear) {
+      onClear();
+    } else {
+      onChangeText('');
+    }
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
@@ -127,9 +133,20 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           borderColor: isFocused ? colors.primary : colors.border,
         }
       ]}>
-        <TouchableOpacity onPress={handleSubmit} style={styles.searchIconButton} activeOpacity={0.7}>
-          <MaterialIcons name="search" size={16} color={colors.textSecondary} style={styles.searchIcon} />
-        </TouchableOpacity>
+        {value.length > 0 ? (
+          <TouchableOpacity
+            onPress={handleClear}
+            style={[styles.searchIconButton, styles.clearIconButton, { backgroundColor: colors.error + '18' }]}
+            activeOpacity={0.75}
+            accessibilityLabel="Clear search"
+          >
+            <MaterialIcons name="close" size={18} color={colors.error} style={styles.searchIcon} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={handleSubmit} style={styles.searchIconButton} activeOpacity={0.7}>
+            <MaterialIcons name="search" size={16} color={colors.textSecondary} style={styles.searchIcon} />
+          </TouchableOpacity>
+        )}
         
         <TextInput
           ref={inputRef}
@@ -145,12 +162,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           autoCorrect={false}
           autoCapitalize="none"
         />
-
-        {value.length > 0 && (
-          <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
-            <MaterialIcons name="cancel" size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
-        )}
 
         {showFilter && (
           <TouchableOpacity
@@ -222,14 +233,15 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
     padding: 2,
   },
+  clearIconButton: {
+    borderRadius: 10,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
   input: {
     flex: 1,
     fontSize: 16,
     paddingVertical: 0,
-  },
-  clearButton: {
-    padding: Spacing.xs,
-    marginLeft: Spacing.sm,
   },
   filterButton: {
     position: 'relative',
@@ -281,5 +293,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
-

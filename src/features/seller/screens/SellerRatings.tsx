@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -144,6 +144,27 @@ export const SellerRatings: React.FC = () => {
 
   const reviews = useMemo(() => getMockSellerReviews(currentLanguage, sellerName), [currentLanguage, sellerName]);
   const stats = useMemo(() => buildStats(reviews), [reviews]);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [isRatingGuideVisible, setIsRatingGuideVisible] = useState(false);
+  const [isRatingFilterEnabled, setIsRatingFilterEnabled] = useState(false);
+
+  const filteredReviews = useMemo(() => {
+    if (!selectedRating) return reviews;
+    return reviews.filter((review) => Math.round(review.rating) === selectedRating);
+  }, [reviews, selectedRating]);
+
+  const handleRatingPress = (rating: number) => {
+    if (!isRatingFilterEnabled) {
+      return;
+    }
+    setIsRatingGuideVisible(false);
+    setSelectedRating((prev) => (prev === rating ? null : rating));
+  };
+
+  const handleGuidePress = () => {
+    setIsRatingFilterEnabled(true);
+    setIsRatingGuideVisible(true);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -161,27 +182,53 @@ export const SellerRatings: React.FC = () => {
           <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
             {t('sellerRatingsScreen.summaryTitle', { name: sellerName })}
           </Text>
-          <RatingStats stats={stats} />
+          <RatingStats
+            stats={stats}
+            onRatingPress={isRatingFilterEnabled ? handleRatingPress : undefined}
+            selectedRating={selectedRating}
+          />
+          <View style={styles.guideInlineRow}>
+            <TouchableOpacity
+              onPress={handleGuidePress}
+              activeOpacity={0.8}
+              style={[styles.guideIconButton, { backgroundColor: colors.primary + '20' }]}
+            >
+              <MaterialIcons name="touch-app" size={18} color={colors.primary} />
+            </TouchableOpacity>
+            {isRatingGuideVisible ? (
+              <View style={[styles.guideBubble, { borderColor: colors.primary, backgroundColor: colors.primary + '14' }]}>
+                <Text variant="caption" style={{ color: colors.text }}>
+                  {t('sellerRatingsScreen.guideText')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
         </Card>
 
         <View style={styles.listHeader}>
           <Text variant="subheading" weight="semibold">
-            {t('sellerRatingsScreen.reviewsTitle')}
+            {selectedRating
+              ? `${selectedRating}★ ${t('sellerRatingsScreen.reviewsTitle')}`
+              : t('sellerRatingsScreen.reviewsTitle')}
           </Text>
           <Text variant="caption" color="textSecondary">
-            {t('sellerRatingsScreen.reviewsCount', { count: reviews.length })}
+            {t('sellerRatingsScreen.reviewsCount', { count: filteredReviews.length })}
           </Text>
         </View>
 
-        {reviews.length === 0 ? (
+        {filteredReviews.length === 0 ? (
           <View style={styles.emptyState}>
             <Text variant="body" color="textSecondary">
-              {t('sellerRatingsScreen.empty')}
+              {selectedRating
+                ? (currentLanguage === 'en'
+                  ? `No ${selectedRating}-star reviews yet.`
+                  : `Henüz ${selectedRating} yıldızlı yorum yok.`)
+                : t('sellerRatingsScreen.empty')}
             </Text>
           </View>
         ) : (
           <View style={styles.reviewsList}>
-            {reviews.map((review) => (
+            {filteredReviews.map((review) => (
               <ReviewCard key={review.id} review={review} showFoodName />
             ))}
           </View>
@@ -208,9 +255,34 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
+    position: 'relative',
+    overflow: 'visible',
+    paddingBottom: Spacing.xl,
   },
   sectionTitle: {
     marginBottom: Spacing.md,
+  },
+  guideInlineRow: {
+    position: 'absolute',
+    left: Spacing.md,
+    bottom: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  guideBubble: {
+    marginLeft: Spacing.xs,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    maxWidth: 260,
+  },
+  guideIconButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listHeader: {
     marginHorizontal: Spacing.md,

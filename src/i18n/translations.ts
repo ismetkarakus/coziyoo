@@ -1109,6 +1109,8 @@ export const translations = {
     sellerRatingsScreen: {
       title: 'Usta Yorumları',
       summaryTitle: '{{name}} için puan özeti',
+      guideText: 'Yıldız satırına dokunarak o puanı veren müşterileri listeleyebilirsin.',
+      tapHint: 'Filtrelemek için yıldız satırına dokunun.',
       reviewsTitle: 'Yorumlar',
       reviewsCount: '{{count}} yorum',
       empty: 'Henüz yorum yok.',
@@ -3282,6 +3284,8 @@ export const translations = {
     sellerRatingsScreen: {
       title: 'Chef Reviews',
       summaryTitle: 'Rating summary for {{name}}',
+      guideText: 'Tap a star row to list customers who gave that rating.',
+      tapHint: 'Tap a star row to filter reviews.',
       reviewsTitle: 'Reviews',
       reviewsCount: '{{count}} reviews',
       empty: 'No reviews yet.',

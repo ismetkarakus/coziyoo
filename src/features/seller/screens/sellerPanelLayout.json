@@ -13,7 +13,11 @@
       "style": "content",
       "props": {
         "showsVerticalScrollIndicator": false,
-        "contentContainerStyle": { "$": "styles.contentContainer" }
+        "bounces": false,
+        "alwaysBounceVertical": false,
+        "overScrollMode": "never",
+        "contentContainerStyle": { "$": "styles.contentContainer" },
+        "stickyHeaderIndices": { "$": "scrollStickyHeaderIndices" }
       },
       "children": [
         {
