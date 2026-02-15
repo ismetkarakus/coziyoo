@@ -31,7 +31,7 @@ const PREVIEW_COLORS = {
 export const HomePreview: React.FC = () => {
   const { currentLanguage, t } = useTranslation();
   const { formatCurrency } = useCountry();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { user, userData } = useAuth();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,6 +101,21 @@ export const HomePreview: React.FC = () => {
     return currentLanguage === 'en' ? 'Cuisine Not Specified' : 'Mutfak Belirtilmedi';
   };
 
+  const remainingStockByFoodId = useMemo(() => {
+    const inCartById = cartItems.reduce((acc, item) => {
+      acc[item.id] = (acc[item.id] ?? 0) + item.quantity;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return (foods as MockFood[]).reduce((acc, food) => {
+      const id = String(food.id);
+      const baseStock = typeof food.currentStock === 'number' ? food.currentStock : 0;
+      const inCartCount = inCartById[id] ?? 0;
+      acc[id] = Math.max(0, baseStock - inCartCount);
+      return acc;
+    }, {} as Record<string, number>);
+  }, [cartItems]);
+
   const homeItems = useMemo(
     () =>
       (foods as MockFood[]).map((food, index) => ({
@@ -119,7 +134,7 @@ export const HomePreview: React.FC = () => {
         category: localizeCategory(food.category || (currentLanguage === 'en' ? 'Main Course' : 'Ana Yemek')),
         cuisine: localizeCategory(getCuisineLabel(food)),
         preparationTime: typeof food.preparationTime === 'number' ? food.preparationTime : 30,
-        currentStock: typeof food.currentStock === 'number' ? food.currentStock : 0,
+        currentStock: remainingStockByFoodId[String(food.id)] ?? (typeof food.currentStock === 'number' ? food.currentStock : 0),
         dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 0,
         hasPickup: food.hasPickup !== false,
         hasDelivery: food.hasDelivery !== false,
@@ -137,7 +152,7 @@ export const HomePreview: React.FC = () => {
           `https://placehold.co/320x320/E8E6E1/4B5563?text=${encodeURIComponent(food.name || (currentLanguage === 'en' ? `Meal ${index + 1}` : `Yemek ${index + 1}`))}`,
         initialFavoriteCount: Number(food.favoriteCount ?? 0),
       })),
-    [currentLanguage, formatCurrency]
+    [currentLanguage, formatCurrency, remainingStockByFoodId]
   );
 
   const categories = useMemo(
@@ -331,14 +346,24 @@ export const HomePreview: React.FC = () => {
   };
 
   const addItemToCart = (item: (typeof homeItems)[number]): void => {
+    const itemId = String(item.id);
+    const liveStock = remainingStockByFoodId[itemId] ?? item.currentStock ?? 0;
+    if (liveStock <= 0) {
+      Alert.alert(
+        currentLanguage === 'en' ? 'Out of Stock' : 'Stok Tükendi',
+        currentLanguage === 'en' ? 'This meal is no longer available.' : 'Bu yemekten kalan stok bulunmuyor.'
+      );
+      return;
+    }
+
     const cartCount = addToCart(
       {
-        id: String(item.id),
+        id: itemId,
         name: item.title,
         cookName: item.cook,
         price: item.numericPrice,
         imageUrl: item.img,
-        currentStock: item.currentStock,
+        currentStock: liveStock,
         dailyStock: item.dailyStock,
         availableOptions: item.availableOptions as ('pickup' | 'delivery')[],
         deliveryOption: item.availableOptions.length === 1 ? item.availableOptions[0] : undefined,
@@ -466,12 +491,26 @@ export const HomePreview: React.FC = () => {
           <View key={item.id} style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={styles.headerLeft}>
-                <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
-                  {item.title}
-                </Text>
-                <Text style={styles.stockInline}>
-                  {item.currentStock}/{item.dailyStock} {currentLanguage === 'en' ? 'pcs' : 'adet'}
-                </Text>
+                <View style={styles.titleRowInline}>
+                  <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
+                    {item.title}
+                  </Text>
+                  <View
+                    style={[
+                      styles.stockInlineBadge,
+                      (item.currentStock ?? 0) <= 2 ? styles.stockInlineBadgeLow : null,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.stockInlineText,
+                        (item.currentStock ?? 0) <= 2 ? styles.stockInlineTextLow : null,
+                      ]}
+                    >
+                      {currentLanguage === 'en' ? `${item.currentStock ?? 0} left` : `${item.currentStock ?? 0} kaldı`}
+                    </Text>
+                  </View>
+                </View>
               </View>
               <View style={styles.headerActions}>
                 <TouchableOpacity style={styles.favButton} activeOpacity={0.8} onPress={() => void handleFavoritePress(item)}>
@@ -810,11 +849,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
   },
-  stockInline: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: PREVIEW_COLORS.textMuted,
+  stockInlineBadge: {
+    backgroundColor: '#E8F4EC',
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    marginLeft: 2,
+  },
+  stockInlineBadgeLow: {
+    backgroundColor: '#FEE4E2',
+  },
+  stockInlineText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#2F6B58',
+  },
+  stockInlineTextLow: {
+    color: '#B42318',
   },
   priceBadge: {
     backgroundColor: 'transparent',

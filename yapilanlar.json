@@ -55,6 +55,18 @@
       "area": "mock-data",
       "status": "done",
       "summary": "Mock yemek verisine farklı ülke mutfakları ve Türkiye şehir mutfakları için yeni JSON kayıtları eklendi."
+    },
+    {
+      "id": "seller-profile-icon-cleanup",
+      "area": "seller-public-profile",
+      "status": "done",
+      "summary": "Aşçı adına tıklanınca açılan profil kartında konum ve takvim ikonları kaldırıldı."
+    },
+    {
+      "id": "home-stock-cart-sync",
+      "area": "buyer-home-cart",
+      "status": "done",
+      "summary": "Ana sayfadaki kalan stok göstergesi sepetteki adetle senkron hale getirildi; sepete ekleme düşürür, sepetten çıkarma geri artırır."
     }
   ]
 }

@@ -165,10 +165,10 @@ export default function SellerProfileScreen() {
                 </Text>
               </View>
               <Text variant="caption" color="textSecondary">
-                📍 {sellerData.location} • {sellerData.distance}
+                {sellerData.location} • {sellerData.distance}
               </Text>
               <Text variant="caption" color="textSecondary">
-                📅 {sellerData.joinDate} tarihinden beri
+                {sellerData.joinDate} tarihinden beri
               </Text>
             </View>
           </View>
