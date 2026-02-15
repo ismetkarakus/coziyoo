@@ -22,7 +22,7 @@ export default function FoodDetailSimple() {
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
-  const { addToCart } = useCart();
+  const { addToCart, getRemainingStock } = useCart();
   const { user, userData } = useAuth();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -84,6 +84,7 @@ export default function FoodDetailSimple() {
     dailyStock: 10,
     deliveryType: 'pickup' as 'pickup' | 'delivery',
   });
+  const [baseStock, setBaseStock] = useState(8);
   const endDate = foodMeta.availableDates.includes('-')
     ? foodMeta.availableDates.split('-').pop()?.trim() || foodMeta.availableDates
     : foodMeta.availableDates;
@@ -143,6 +144,11 @@ export default function FoodDetailSimple() {
   };
 
   const resolveFoodId = (id?: string) => (id ? id.replace(/^(firebase_|mock_|published_)/, '') : undefined);
+  const resolvedStockId = resolveFoodId(foodId);
+  const remainingStock = useMemo(
+    () => (resolvedStockId ? getRemainingStock(String(resolvedStockId), baseStock) : baseStock),
+    [resolvedStockId, getRemainingStock, baseStock]
+  );
 
   useEffect(() => {
     const loadDetails = async () => {
@@ -153,6 +159,8 @@ export default function FoodDetailSimple() {
       setIngredients(food?.ingredients ?? null);
       setAllergens(food?.allergens ?? null);
       if (food) {
+        const loadedBaseStock = typeof food.currentStock === 'number' ? food.currentStock : 8;
+        setBaseStock(loadedBaseStock);
         setFoodMeta({
           rating: typeof food.rating === 'number' ? food.rating : 4.8,
           reviewCount: typeof food.reviewCount === 'number' ? food.reviewCount : 24,
@@ -160,7 +168,7 @@ export default function FoodDetailSimple() {
           prepTime: food.prepTime || '30 dk',
           cookDescription: food.cookDescription || 'Ev yapımı yemeklerde özenli ve hijyenik hazırlık sunar.',
           availableDates: food.availableDates || '15-20 Ocak',
-          currentStock: typeof food.currentStock === 'number' ? food.currentStock : 8,
+          currentStock: loadedBaseStock,
           dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 10,
           deliveryType: food.hasDelivery && !food.hasPickup ? 'delivery' : 'pickup',
         });
@@ -169,6 +177,16 @@ export default function FoodDetailSimple() {
 
     loadDetails();
   }, [foodId]);
+
+  useEffect(() => {
+    if (remainingStock <= 0) {
+      setQuantity(1);
+      return;
+    }
+    if (quantity > remainingStock) {
+      setQuantity(remainingStock);
+    }
+  }, [remainingStock, quantity]);
 
   useEffect(() => {
     const loadFavoriteState = async () => {
@@ -219,7 +237,7 @@ export default function FoodDetailSimple() {
         cookName: food.cookName,
         price: food.price,
         imageUrl: food.imageUrl,
-        currentStock: food.currentStock,
+        currentStock: remainingStock,
         dailyStock: food.dailyStock,
         deliveryOption,
         availableOptions,
@@ -244,6 +262,20 @@ export default function FoodDetailSimple() {
   const handleAddToCart = async () => {
     const resolvedId = resolveFoodId(foodId);
     if (!resolvedId) return;
+
+    if (remainingStock <= 0 || quantity > remainingStock) {
+      Toast.show({
+        type: 'error',
+        text1: currentLanguage === 'en' ? 'Out of Stock' : 'Stok Yetersiz',
+        text2:
+          currentLanguage === 'en'
+            ? `Only ${remainingStock} left for this meal.`
+            : `Bu yemek için kalan stok: ${remainingStock}.`,
+        position: 'bottom',
+        bottomOffset: 90,
+      });
+      return;
+    }
 
     const foods = await mockFoodService.getFoods(0);
     const food = foods.find(item => item.id === resolvedId);
@@ -549,10 +581,10 @@ export default function FoodDetailSimple() {
                   <Text
                     variant="body"
                     weight="medium"
-                    color={foodMeta.currentStock > 0 ? 'primary' : 'error'}
+                    color={remainingStock > 0 ? 'primary' : 'error'}
                     style={styles.leftAlignedText}
                   >
-                    {t('foodDetailSimpleScreen.remainingLabel')}: {foodMeta.currentStock} {t('foodDetailSimpleScreen.remainingValue')}
+                    {t('foodDetailSimpleScreen.remainingLabel')}: {remainingStock} {t('foodDetailSimpleScreen.remainingValue')}
                   </Text>
                 </View>
               </View>
@@ -667,7 +699,11 @@ export default function FoodDetailSimple() {
           </Text>
           <View style={styles.counterDivider} />
           <TouchableOpacity
-            onPress={() => setQuantity(quantity + 1)}
+            onPress={() => {
+              if (quantity < Math.max(remainingStock, 1)) {
+                setQuantity(quantity + 1);
+              }
+            }}
             style={styles.counterButton}
             accessibilityLabel="increase-quantity"
           >

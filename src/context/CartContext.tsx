@@ -22,6 +22,8 @@ interface CartContextType {
   updateDeliveryOption: (itemId: string, deliveryOption: 'pickup' | 'delivery') => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
+  getItemQuantity: (itemId: string) => number;
+  getRemainingStock: (itemId: string, baseStock: number) => number;
   getTotalItems: () => number;
   getTotalPrice: () => number;
 }
@@ -101,6 +103,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setCartItems([]);
   };
 
+  const getItemQuantity = (itemId: string): number => {
+    const item = cartItems.find((cartItem) => cartItem.id === itemId);
+    return item ? item.quantity : 0;
+  };
+
+  const getRemainingStock = (itemId: string, baseStock: number): number => {
+    return Math.max(0, baseStock - getItemQuantity(itemId));
+  };
+
   const getTotalItems = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
@@ -117,6 +128,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     updateDeliveryOption,
     removeFromCart,
     clearCart,
+    getItemQuantity,
+    getRemainingStock,
     getTotalItems,
     getTotalPrice,
   };

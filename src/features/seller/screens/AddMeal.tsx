@@ -19,6 +19,34 @@ import categoriesData from '../../../mock/categories.json';
 
 const CARD_SUMMARY_MAX_LENGTH = 80;
 
+const normalizeCuisineInput = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  const lowered = trimmed.toLocaleLowerCase('tr-TR');
+  if (
+    lowered === 'türkiye' ||
+    lowered === 'turkiye' ||
+    lowered === 'turkey' ||
+    lowered === 'turkish' ||
+    lowered === 'türk'
+  ) {
+    return 'Türk Mutfağı';
+  }
+
+  if (/(mutfağı)$/i.test(trimmed) || /(cuisine)$/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const normalizedWord = trimmed
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+  return `${normalizedWord} Mutfağı`;
+};
+
 export const AddMeal: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -206,7 +234,7 @@ export const AddMeal: React.FC = () => {
   };
 
   const handleCountrySelect = (country: string) => {
-    setFormData(prev => ({ ...prev, country }));
+    setFormData(prev => ({ ...prev, country: normalizeCuisineInput(country) }));
     setCountryModalVisible(false);
     setFilteredCountries([]);
   };
@@ -608,12 +636,14 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
+    const normalizedCuisine = normalizeCuisineInput(formData.country);
+
     // Navigate to preview screen with form data
     const previewData = {
       name: formData.name,
       price: formData.price,
       category: formData.category,
-      country: formData.country,
+      country: normalizedCuisine,
       cardSummary: formData.cardSummary,
       description: formData.description,
       recipe: formData.recipe,
@@ -677,6 +707,8 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
+    const normalizedCuisine = normalizeCuisineInput(formData.country);
+
     try {
       setUploading(true);
       setUploadProgress(0);
@@ -699,6 +731,7 @@ export const AddMeal: React.FC = () => {
       const mealData = {
         id: foodId,
         ...formData,
+        country: normalizedCuisine,
         recipe: formData.recipe,
         images: selectedImages,
         deliveryOptions,

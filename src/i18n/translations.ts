@@ -1362,7 +1362,7 @@ export const translations = {
         hint: 'Tek/Çoklu/Kamera',
       },
       fields: {
-        country: '🌍 Hangi Ülke Yemeği',
+        country: '🌍 Hangi Ülke/Şehir Mutfağı',
         category: 'Kategori',
         name: 'Yemek Adı',
         cardSummary: 'Kart Sloganı (Kısa)',
@@ -1389,7 +1389,7 @@ export const translations = {
         deliveryFeeHelper: 'Müşterilerden alacağınız teslimat ücreti',
       },
       placeholders: {
-        country: 'Örn: Türk, İtalyan, Çin...',
+        country: 'Örn: Türkiye, Hatay, Japonya, İtalya...',
         category: 'Kategori seçin',
         name: 'Örn: Ev Yapımı Mantı',
         cardSummary: 'Örn: Günlük taze, el yapımı; ilk lokmada farkı hissedeceksiniz.',
@@ -3535,7 +3535,7 @@ export const translations = {
         hint: 'Single/Multiple/Camera',
       },
       fields: {
-        country: '🌍 Cuisine Country',
+        country: '🌍 Country/City Cuisine',
         category: 'Category',
         name: 'Meal Name',
         cardSummary: 'Card Slogan (Short)',
@@ -3562,7 +3562,7 @@ export const translations = {
         deliveryFeeHelper: 'Delivery fee you will charge customers',
       },
       placeholders: {
-        country: 'e.g. Turkish, Italian, Chinese...',
+        country: 'e.g. Turkey, Hatay, Japan, Italy...',
         category: 'Select a category',
         name: 'e.g. Homemade Manti',
         cardSummary: 'e.g. Fresh daily, handmade; a flavor you will remember.',

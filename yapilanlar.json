@@ -67,6 +67,24 @@
       "area": "buyer-home-cart",
       "status": "done",
       "summary": "Ana sayfadaki kalan stok göstergesi sepetteki adetle senkron hale getirildi; sepete ekleme düşürür, sepetten çıkarma geri artırır."
+    },
+    {
+      "id": "global-plus-stock-link",
+      "area": "buyer-cart-linkage",
+      "status": "done",
+      "summary": "+ butonlu buyer ekranları CartContext stok helper'larına bağlandı; kalan stok tüm akışta sepete göre otomatik güncelleniyor."
+    },
+    {
+      "id": "addmeal-cuisine-normalization",
+      "area": "seller-add-meal",
+      "status": "done",
+      "summary": "Yemek ekle ekranında 'Hangi Ülke/Şehir Mutfağı' alanı eklendi; Türkiye/turkey/turkish gibi girişler otomatik 'Türk Mutfağı' olarak normalize edilip preview ve publish akışına kaydediliyor."
+    },
+    {
+      "id": "cuisine-label-consistency",
+      "area": "buyer-food-cards",
+      "status": "done",
+      "summary": "FoodCard ve HomePreview mutfak etiketleri ülke/şehir mutfak adlarıyla tutarlı gösterilecek şekilde normalize edildi."
     }
   ]
 }

@@ -198,6 +198,19 @@ export function FoodCard({
   const formatCuisine = (value: string) => {
     const normalized = value.trim();
     if (!normalized) return value;
+
+    const lowered = normalized.toLocaleLowerCase("tr-TR");
+    if (
+      lowered === "türkiye" ||
+      lowered === "turkiye" ||
+      lowered === "turkey" ||
+      lowered === "turkish" ||
+      lowered === "türk" ||
+      lowered === "türk mutfağı"
+    ) {
+      return currentLanguage === "en" ? "Turkish cuisine" : "Türk mutfağı";
+    }
+
     if (currentLanguage === "en") {
       return /cuisine$/i.test(normalized) ? normalized : `${normalized} cuisine`;
     }

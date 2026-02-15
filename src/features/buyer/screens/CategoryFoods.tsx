@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text, FoodCard, SearchBar } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -209,7 +209,7 @@ export const CategoryFoods: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
-  const { addToCart } = useCart();
+  const { addToCart, getRemainingStock } = useCart();
   const params = useLocalSearchParams();
   const categoryName = (params.category as string) || DEFAULT_CATEGORY_BY_LANG[currentLanguage];
   const [searchQuery, setSearchQuery] = useState('');
@@ -217,25 +217,48 @@ export const CategoryFoods: React.FC = () => {
   // Get foods for the selected category
   const categoryFoodsMap = getCategoryFoods(currentLanguage);
   const categoryFoods = categoryFoodsMap[categoryName] || [];
+  const categoryFoodsWithStock = useMemo(
+    () =>
+      categoryFoods.map((food) => {
+        const baseStock = typeof (food as any).currentStock === 'number' ? (food as any).currentStock : 10;
+        const remaining = getRemainingStock(String(food.id), baseStock);
+        return {
+          ...food,
+          currentStock: remaining,
+          dailyStock: typeof (food as any).dailyStock === 'number' ? (food as any).dailyStock : baseStock,
+        };
+      }),
+    [categoryFoods, getRemainingStock]
+  );
+
   const filteredFoods = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return categoryFoods;
+    if (!query) return categoryFoodsWithStock;
 
-    return categoryFoods.filter((food) =>
+    return categoryFoodsWithStock.filter((food) =>
       food.name.toLowerCase().includes(query) ||
       food.cookName.toLowerCase().includes(query) ||
       String(food.distance || '').toLowerCase().includes(query)
     );
-  }, [categoryFoods, searchQuery]);
+  }, [categoryFoodsWithStock, searchQuery]);
 
   const handleAddToCart = (
     foodId: string,
     quantity: number,
     deliveryOption?: 'pickup' | 'delivery'
   ) => {
-    const food = categoryFoods.find((item) => item.id === foodId);
+    const food = categoryFoodsWithStock.find((item) => item.id === foodId);
     if (!food || quantity <= 0) {
       return;
+    }
+
+    const liveStock = typeof (food as any).currentStock === 'number' ? (food as any).currentStock : 0;
+    if (liveStock < quantity) {
+      Alert.alert(
+        currentLanguage === 'en' ? 'Out of Stock' : 'Stok Tükendi',
+        currentLanguage === 'en' ? 'This meal has no remaining stock.' : 'Bu yemekte yeterli kalan stok yok.'
+      );
+      return false;
     }
 
     const availableOptions: ('pickup' | 'delivery')[] = [];
@@ -252,6 +275,8 @@ export const CategoryFoods: React.FC = () => {
         name: food.name,
         cookName: food.cookName,
         price: food.price,
+        currentStock: liveStock,
+        dailyStock: typeof (food as any).dailyStock === 'number' ? (food as any).dailyStock : liveStock,
         deliveryOption: finalDeliveryOption,
         availableOptions,
       },

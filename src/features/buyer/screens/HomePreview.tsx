@@ -31,7 +31,7 @@ const PREVIEW_COLORS = {
 export const HomePreview: React.FC = () => {
   const { currentLanguage, t } = useTranslation();
   const { formatCurrency } = useCountry();
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, getRemainingStock } = useCart();
   const { user, userData } = useAuth();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,25 +96,11 @@ export const HomePreview: React.FC = () => {
     if (text.includes('fransa') || text.includes('french') || text.includes('france')) return 'Fransız Mutfağı';
     if (text.includes('kore') || text.includes('korean') || text.includes('korea')) return 'Kore Mutfağı';
     if (text.includes('lübnan') || text.includes('lebanon') || text.includes('lebanese')) return 'Lübnan Mutfağı';
+    if (text.includes('türk') || text.includes('turkish')) return 'Türk Mutfağı';
     if (text.includes('türkiye') || text.includes('turkey')) return 'Türk Mutfağı';
 
     return currentLanguage === 'en' ? 'Cuisine Not Specified' : 'Mutfak Belirtilmedi';
   };
-
-  const remainingStockByFoodId = useMemo(() => {
-    const inCartById = cartItems.reduce((acc, item) => {
-      acc[item.id] = (acc[item.id] ?? 0) + item.quantity;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return (foods as MockFood[]).reduce((acc, food) => {
-      const id = String(food.id);
-      const baseStock = typeof food.currentStock === 'number' ? food.currentStock : 0;
-      const inCartCount = inCartById[id] ?? 0;
-      acc[id] = Math.max(0, baseStock - inCartCount);
-      return acc;
-    }, {} as Record<string, number>);
-  }, [cartItems]);
 
   const homeItems = useMemo(
     () =>
@@ -134,7 +120,10 @@ export const HomePreview: React.FC = () => {
         category: localizeCategory(food.category || (currentLanguage === 'en' ? 'Main Course' : 'Ana Yemek')),
         cuisine: localizeCategory(getCuisineLabel(food)),
         preparationTime: typeof food.preparationTime === 'number' ? food.preparationTime : 30,
-        currentStock: remainingStockByFoodId[String(food.id)] ?? (typeof food.currentStock === 'number' ? food.currentStock : 0),
+        currentStock: getRemainingStock(
+          String(food.id),
+          typeof food.currentStock === 'number' ? food.currentStock : 0
+        ),
         dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 0,
         hasPickup: food.hasPickup !== false,
         hasDelivery: food.hasDelivery !== false,
@@ -152,7 +141,7 @@ export const HomePreview: React.FC = () => {
           `https://placehold.co/320x320/E8E6E1/4B5563?text=${encodeURIComponent(food.name || (currentLanguage === 'en' ? `Meal ${index + 1}` : `Yemek ${index + 1}`))}`,
         initialFavoriteCount: Number(food.favoriteCount ?? 0),
       })),
-    [currentLanguage, formatCurrency, remainingStockByFoodId]
+    [currentLanguage, formatCurrency, getRemainingStock]
   );
 
   const categories = useMemo(
@@ -347,7 +336,7 @@ export const HomePreview: React.FC = () => {
 
   const addItemToCart = (item: (typeof homeItems)[number]): void => {
     const itemId = String(item.id);
-    const liveStock = remainingStockByFoodId[itemId] ?? item.currentStock ?? 0;
+    const liveStock = item.currentStock ?? 0;
     if (liveStock <= 0) {
       Alert.alert(
         currentLanguage === 'en' ? 'Out of Stock' : 'Stok Tükendi',
