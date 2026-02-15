@@ -84,6 +84,8 @@ export const SellerProfile: React.FC = () => {
   };
 
   const complianceComplete = isComplianceComplete();
+  const complianceItemCount = complianceCopy.items?.length || 0;
+  const complianceProgress = complianceComplete ? 100 : 65;
 
   // Kimlik ve banka bilgileri state'leri
   const [identityImages, setIdentityImages] = useState({
@@ -473,57 +475,97 @@ export const SellerProfile: React.FC = () => {
               onPress={() => setComplianceExpanded(!complianceExpanded)}
               activeOpacity={0.7}
             >
-              <Card variant="default" padding="md" style={styles.complianceCard}>
+              <Card
+                variant="default"
+                padding="md"
+                style={[styles.complianceCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
                 <View style={styles.complianceHeader}>
-                  <Text
-                    variant="subheading"
-                    weight="semibold"
-                    style={[styles.complianceTitle, { color: colors.text }]}
-                  >
-                    {complianceCopy.title}
+                  <View style={styles.complianceTitleGroup}>
+                    <View style={[styles.complianceIconWrap, { backgroundColor: colors.primary + '16' }]}>
+                      <MaterialIcons name="verified-user" size={18} color={colors.primary} />
+                    </View>
+                    <View style={styles.complianceTitleTextWrap}>
+                      <Text
+                        variant="subheading"
+                        weight="semibold"
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                        style={[styles.complianceTitle, { color: colors.text }]}
+                      >
+                        {complianceCopy.title}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.complianceMetaRow}>
+                  <Text variant="caption" style={{ color: colors.textSecondary }}>
+                    {complianceItemCount} {complianceCopy.requirementsLabel}
                   </Text>
-                  <View style={styles.complianceHeaderRight}>
+                  <View style={styles.complianceMetaRight}>
                     <Text
                       variant="caption"
                       style={[
                         styles.statusBadge,
                         {
-                          backgroundColor: complianceComplete ? '#28A745' : '#17A2B8',
-                          color: 'white',
+                          backgroundColor: complianceComplete ? '#EAF7EF' : '#EAF2FF',
+                          color: complianceComplete ? '#1E7E34' : '#1D4ED8',
                         },
                       ]}
                     >
                       {complianceComplete ? complianceCopy.statusComplete : complianceCopy.statusOptional}
                     </Text>
-                    <Text variant="body" style={[styles.expandIcon, { color: colors.textSecondary }]}>
-                      {complianceExpanded ? '▼' : '▶'}
-                    </Text>
+                    <MaterialIcons
+                      name={complianceExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+                      size={22}
+                      color={colors.textSecondary}
+                    />
                   </View>
+                </View>
+                <View style={[styles.complianceProgressTrack, { backgroundColor: colors.border }]}>
+                  <View
+                    style={[
+                      styles.complianceProgressFill,
+                      { width: `${complianceProgress}%`, backgroundColor: complianceComplete ? '#28A745' : '#3B82F6' },
+                    ]}
+                  />
                 </View>
               </Card>
             </TouchableOpacity>
 
             {complianceExpanded && (
-              <Card variant="default" padding="sm" style={[styles.complianceCard, styles.complianceExpandedCard]}>
+              <Card
+                variant="default"
+                padding="sm"
+                style={[styles.complianceCard, styles.complianceExpandedCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
                 <View style={styles.complianceItems}>
                   {complianceCopy.items.map((item: any) => (
                     <TouchableOpacity
                       key={item.id}
-                      style={[styles.complianceItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+                      style={[styles.complianceItem, { backgroundColor: colors.background, borderColor: colors.border }]}
                       onPress={() => router.push(item.route)}
                       activeOpacity={0.7}
                     >
-                      <View style={styles.complianceItemContent}>
-                        <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
-                          {item.title}
-                        </Text>
+                      <View style={styles.complianceItemRow}>
+                        <MaterialIcons
+                          name={complianceComplete ? 'check-circle' : 'radio-button-unchecked'}
+                          size={18}
+                          color={complianceComplete ? '#22C55E' : colors.textSecondary}
+                        />
+                        <View style={styles.complianceItemContent}>
+                          <Text variant="body" style={[styles.complianceLabel, { color: colors.text }]}>
+                            {item.title}
+                          </Text>
+                          <Text variant="caption" style={{ color: colors.textSecondary }}>
+                            {item.sub}
+                          </Text>
+                        </View>
                         <Text variant="caption" color="primary" style={styles.editLink}>
                           {complianceCopy.edit}
                         </Text>
+                        <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
                       </View>
-                      <Text variant="caption" color="textSecondary">
-                        {item.sub}
-                      </Text>
                     </TouchableOpacity>
                   ))}
 
@@ -1228,72 +1270,101 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   complianceCard: {
-    borderWidth: 2,
-    borderColor: '#28A745',
-    backgroundColor: 'rgba(40, 167, 69, 0.05)',
+    borderWidth: 1,
+    borderRadius: 14,
   },
   complianceExpandedCard: {
-    marginTop: 2,
-    borderTopWidth: 0,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
+    marginTop: 8,
   },
   complianceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
+    alignItems: 'flex-start',
+    marginBottom: Spacing.xs,
+    gap: Spacing.sm,
   },
-  complianceHeaderRight: {
+  complianceTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
+    flex: 1,
   },
-  expandIcon: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  complianceIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  complianceTitleTextWrap: {
+    flex: 1,
+  },
+  complianceMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  complianceMetaRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginRight: Spacing.xs,
   },
   complianceTitle: {
     flex: 1,
+    fontSize: 15,
+    lineHeight: 19,
   },
   statusBadge: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
-    borderRadius: 12,
-    fontSize: 10,
-    fontWeight: 'bold',
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  complianceProgressTrack: {
+    height: 6,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  complianceProgressFill: {
+    height: '100%',
+    borderRadius: 999,
   },
   complianceItems: {
     gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   complianceItem: {
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.sm,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
   },
-  complianceItemContent: {
+  complianceItemRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 2,
+    gap: Spacing.xs,
+  },
+  complianceItemContent: {
+    flex: 1,
+    marginLeft: 2,
   },
   editLink: {
     fontSize: 12,
-    textDecorationLine: 'underline',
+    fontWeight: '600',
   },
   complianceLabel: {
-    marginBottom: 2,
+    marginBottom: 3,
   },
   complianceButton: {
-    padding: Spacing.sm,
-    backgroundColor: 'rgba(127, 175, 154, 0.1)',
-    borderRadius: 8,
+    paddingVertical: Spacing.sm,
+    borderRadius: 10,
     alignItems: 'center',
   },
   complianceButtonText: {
-    fontWeight: '500',
+    fontWeight: '600',
   },
   formContainer: {
     gap: Spacing.md,

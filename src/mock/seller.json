@@ -173,6 +173,7 @@
       "compliance": {
         "tr": {
           "title": "🇹🇷 Türkiye Gıda İşletmesi Uygunluğu",
+          "requirementsLabel": "gereksinim",
           "statusComplete": "✅ TAMAMLANDI",
           "statusOptional": "ℹ️ OPSİYONEL",
           "edit": "Düzenle",
@@ -187,6 +188,7 @@
         },
         "uk": {
           "title": "🇬🇧 UK Food Business Compliance",
+          "requirementsLabel": "requirements",
           "statusComplete": "✅ COMPLETE",
           "statusOptional": "⚠️ REQUIRED",
           "edit": "Edit",
@@ -394,6 +396,7 @@
       "compliance": {
         "tr": {
           "title": "🇹🇷 Turkey Food Business Compliance",
+          "requirementsLabel": "requirements",
           "statusComplete": "✅ COMPLETE",
           "statusOptional": "ℹ️ OPTIONAL",
           "edit": "Edit",
@@ -408,6 +411,7 @@
         },
         "uk": {
           "title": "🇬🇧 UK Food Business Compliance",
+          "requirementsLabel": "requirements",
           "statusComplete": "✅ COMPLETE",
           "statusOptional": "⚠️ REQUIRED",
           "edit": "Edit",
