@@ -48,6 +48,8 @@ export const SellerMessages: React.FC = () => {
     );
   };
 
+  const isChatClosed = (status: SellerChatStatus): boolean => status === 'delivered';
+
   const getStatusColor = (status: SellerChatStatus) => {
     switch (status) {
       case 'preparing':
@@ -167,8 +169,9 @@ export const SellerMessages: React.FC = () => {
             {chats.map((chat) => (
               <TouchableOpacity
                 key={chat.id}
+                disabled={isChatClosed(chat.orderStatus)}
                 onPress={() => handleChatPress(chat.id, chat.orderId, chat.foodName, chat.orderStatus)}
-                activeOpacity={0.7}
+                activeOpacity={isChatClosed(chat.orderStatus) ? 1 : 0.7}
               >
                 <Card variant="default" padding="md" style={styles.chatCard}>
                   <View style={styles.chatContent}>
@@ -288,4 +291,3 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-

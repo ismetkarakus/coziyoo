@@ -217,6 +217,8 @@ export const FoodDetail: React.FC = () => {
   const cookName = params.cookName as string;
   const foodImageUrl = params.imageUrl as string;
   const paramDeliveryType = params.deliveryType as string || 'Pickup';
+  const sourceParam = params.source as string | undefined;
+  const isReadOnlyReviews = sourceParam === 'favorites';
   console.log('FoodDetail params:', { foodId, foodName, cookName, foodImageUrl, paramDeliveryType, allParams: params });
   const defaultCookName = currentLanguage === 'en' ? 'Ayse Hanim' : 'Ayşe Hanım';
   const defaultFoodName = currentLanguage === 'en' ? 'Homemade Manti' : 'Ev Yapımı Mantı';
@@ -344,25 +346,35 @@ export const FoodDetail: React.FC = () => {
   };
 
   const handleMessageSeller = async () => {
-    if (!user || !firebaseFood) {
+    if (!user) {
       Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.loginToMessage'));
       return;
     }
 
     try {
+      const resolvedSellerId =
+        firebaseFood?.cookId ||
+        `mock_seller_${encodeURIComponent((cookName || defaultCookName).toString())}`;
+      const resolvedSellerName =
+        firebaseFood?.cookName ||
+        cookName ||
+        defaultCookName;
+      const resolvedFoodId = firebaseFood?.id || foodId || food.id;
+      const resolvedFoodName = firebaseFood?.name || food.name;
+
       // Create or get existing chat
       const chatId = await chatService.getOrCreateChat(
         user.uid,
         user.displayName || user.email || t('foodDetailScreen.defaults.buyerName'),
-        firebaseFood.cookId,
-        firebaseFood.cookName,
+        resolvedSellerId,
+        resolvedSellerName,
         undefined, // no specific order
-        firebaseFood.id,
-        firebaseFood.name
+        resolvedFoodId,
+        resolvedFoodName
       );
 
       // Navigate to chat
-      router.push(`/chat?id=${chatId}&name=${encodeURIComponent(firebaseFood.cookName)}&type=buyer`);
+      router.push(`/chat?id=${chatId}&name=${encodeURIComponent(resolvedSellerName)}&type=buyer`);
     } catch (error) {
       console.error('Error creating chat:', error);
       Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.chatFailed'));
@@ -596,6 +608,16 @@ export const FoodDetail: React.FC = () => {
 
   // Review handlers
   const handleSubmitReview = async (rating: number, comment: string, images: string[]) => {
+    if (isReadOnlyReviews) {
+      Alert.alert(
+        t('foodDetailScreen.alerts.errorTitle'),
+        currentLanguage === 'tr'
+          ? 'Yorum sadece Siparislerim bolumunden yapilabilir.'
+          : 'Reviews can only be submitted from My Orders.'
+      );
+      return;
+    }
+
     if (!user || !food.id) {
       Alert.alert(t('foodDetailScreen.alerts.errorTitle'), t('foodDetailScreen.alerts.loginToReview'));
       return;
@@ -888,7 +910,7 @@ export const FoodDetail: React.FC = () => {
               <Text variant="subheading" weight="medium" style={styles.reviewsTitle}>
                 {t('foodDetailScreen.reviewsTitle')}
               </Text>
-              {user && !hasUserReviewed && (
+              {user && !hasUserReviewed && !isReadOnlyReviews && (
                 <TouchableOpacity
                   onPress={() => setShowReviewModal(true)}
                   style={[styles.addReviewButton, { backgroundColor: colors.primary }]}
@@ -912,8 +934,8 @@ export const FoodDetail: React.FC = () => {
                   <ReviewCard
                     key={review.id}
                     review={review}
-                    onHelpfulPress={() => handleReviewHelpful(review.id!)}
-                    onReportPress={() => handleReviewReport(review.id!)}
+                    onHelpfulPress={isReadOnlyReviews ? undefined : () => handleReviewHelpful(review.id!)}
+                    onReportPress={isReadOnlyReviews ? undefined : () => handleReviewReport(review.id!)}
                     compact
                   />
                 ))
@@ -922,7 +944,7 @@ export const FoodDetail: React.FC = () => {
                   <Text variant="body" color="textSecondary" style={{ textAlign: 'center' }}>
                     {t('foodDetailScreen.noReviews')}
                   </Text>
-                  {user && (
+                  {user && !isReadOnlyReviews && (
                     <TouchableOpacity
                       onPress={() => setShowReviewModal(true)}
                       style={[styles.firstReviewButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
@@ -1251,7 +1273,7 @@ export const FoodDetail: React.FC = () => {
 
       {/* Review Modal */}
       <ReviewModal
-        visible={showReviewModal}
+        visible={!isReadOnlyReviews && showReviewModal}
         onClose={() => setShowReviewModal(false)}
         onSubmit={handleSubmitReview}
         foodName={food.name}

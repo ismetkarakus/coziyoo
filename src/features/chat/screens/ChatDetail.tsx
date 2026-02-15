@@ -177,6 +177,18 @@ export const ChatDetail: React.FC = () => {
   const orderStatus = currentStatus;
   const orderId = (Array.isArray(params.orderId) ? params.orderId[0] : params.orderId) ?? '';
   const returnToParam = Array.isArray(params.returnTo) ? params.returnTo[0] : params.returnTo;
+  const isChatClosed = React.useMemo(() => {
+    const normalized = String(orderStatus || '').trim().toLocaleLowerCase();
+    const closedStatuses = [
+      t('chatListScreen.statuses.delivered'),
+      t('orderHistoryScreen.statuses.confirmed'),
+      t('orderHistoryScreen.statuses.rejected'),
+      'delivered',
+      'confirmed',
+      'rejected',
+    ].map((item) => item.trim().toLocaleLowerCase());
+    return closedStatuses.includes(normalized);
+  }, [orderStatus, t]);
   const swipeToSellerProfileResponder = React.useMemo(
     () =>
       PanResponder.create({
@@ -191,6 +203,10 @@ export const ChatDetail: React.FC = () => {
             Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
 
           if (isHorizontalSwipe) {
+            if (typeof returnToParam === 'string' && returnToParam.length > 0) {
+              router.replace(returnToParam as any);
+              return;
+            }
             if (navigation.canGoBack()) {
               router.back();
               return;
@@ -199,7 +215,7 @@ export const ChatDetail: React.FC = () => {
           }
         },
       }),
-    [navigation, role]
+    [navigation, role, returnToParam]
   );
 
   React.useEffect(() => {
@@ -239,10 +255,12 @@ export const ChatDetail: React.FC = () => {
   };
 
   const handleQuickReply = (reply: string) => {
+    if (isChatClosed) return;
     sendMessage(reply);
   };
 
   const handleStatusUpdate = async (status: StatusKey, statusLabel: string) => {
+    if (isChatClosed) return;
     setCurrentStatus(statusLabel);
 
     if (orderId) {
@@ -267,12 +285,12 @@ export const ChatDetail: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed from ChatDetail');
-    if (navigation.canGoBack()) {
-      router.back();
-      return;
-    }
     if (typeof returnToParam === 'string' && returnToParam.length > 0) {
       router.replace(returnToParam as any);
+      return;
+    }
+    if (navigation.canGoBack()) {
+      router.back();
       return;
     }
     router.replace((role === 'seller' ? '/(seller)/messages' : '/(buyer)/messages') as any);
@@ -373,7 +391,7 @@ export const ChatDetail: React.FC = () => {
           </View>
         </View>
       ) : null}
-      {role === 'seller' ? (
+      {role === 'seller' && !isChatClosed ? (
         <View style={[styles.statusActionsContainer, { backgroundColor: colors.background }]}>
           <ScrollView
             horizontal
@@ -427,8 +445,15 @@ export const ChatDetail: React.FC = () => {
           {quickReplies.map((reply, index) => (
             <TouchableOpacity
               key={index}
+              disabled={isChatClosed}
               onPress={() => handleQuickReply(reply)}
-              style={[styles.quickReplyButton, { backgroundColor: colors.surface }]}
+              style={[
+                styles.quickReplyButton,
+                {
+                  backgroundColor: colors.surface,
+                  opacity: isChatClosed ? 0.45 : 1,
+                },
+              ]}
             >
               <Text variant="caption" color="primary">
                 {reply}
@@ -440,7 +465,13 @@ export const ChatDetail: React.FC = () => {
 
       <View style={[styles.fixedInfoContainer, { backgroundColor: colors.background }]}>
         <Text variant="caption" color="textSecondary" center>
-          {currentLanguage === 'tr' ? 'Sabit mesajlardan birini seçerek gönderin.' : 'Send one of the predefined messages.'}
+          {isChatClosed
+            ? (currentLanguage === 'tr'
+              ? 'Sipariş tamamlandı, mesajlaşma kapatıldı.'
+              : 'Order is completed, messaging is disabled.')
+            : (currentLanguage === 'tr'
+              ? 'Sabit mesajlardan birini seçerek gönderin.'
+              : 'Send one of the predefined messages.')}
         </Text>
       </View>
     </View>

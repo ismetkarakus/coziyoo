@@ -256,6 +256,15 @@ export const ChatList: React.FC = () => {
     router.replace('/(buyer)/buyer-profile');
   };
 
+  const isChatClosed = (status: string): boolean => {
+    const normalized = status.trim().toLocaleLowerCase();
+    const closedStatuses = [
+      t('chatListScreen.statuses.delivered'),
+      'delivered',
+    ].map((item) => item.trim().toLocaleLowerCase());
+    return closedStatuses.includes(normalized);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case t('chatListScreen.statuses.preparing'):
@@ -313,6 +322,7 @@ export const ChatList: React.FC = () => {
             {chats.map((chat) => (
               <TouchableOpacity
                 key={chat.id}
+                disabled={isChatClosed(chat.orderStatus)}
                 onPress={() =>
                   handleChatPress(
                     chat.id,
@@ -322,7 +332,7 @@ export const ChatList: React.FC = () => {
                     chat.userType as 'buyer' | 'seller'
                   )
                 }
-                activeOpacity={0.7}
+                activeOpacity={isChatClosed(chat.orderStatus) ? 1 : 0.7}
               >
                 <Card variant="default" padding="md" style={styles.chatCard}>
                   <View style={styles.chatContent}>

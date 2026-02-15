@@ -60,8 +60,8 @@ class ChatService {
           timestamp: new Date().toISOString(), isRead: false, orderData
       };
       const response = await apiClient.post(`/chats/${chatId}/messages`, messageData);
-      if (response.status !== 201) throw new Error(response.error || 'Mesaj gönderilemedi');
-      return id;
+      if (response.status !== 201 && response.status !== 200) throw new Error(response.error || 'Mesaj gönderilemedi');
+      return response.data?.id || id;
     } catch (error) {
       console.error('Mesaj gönderme hatası:', error);
       throw new Error('Mesaj gönderilemedi');

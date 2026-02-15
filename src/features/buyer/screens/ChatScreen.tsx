@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, FlatList, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ChatBubble, ChatInput } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -17,6 +18,7 @@ export const ChatScreen: React.FC = () => {
   const { sendMessageNotification } = useNotifications();
   const { t } = useTranslation();
   const params = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   
   const chatId = params.id as string;
   const otherUserName = params.name as string;
@@ -84,6 +86,12 @@ export const ChatScreen: React.FC = () => {
         message,
         chatId
       );
+
+      // Mock/local API realtime publish etmedigi icin gonderimden sonra listeyi yenile.
+      await loadMessages();
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 80);
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -155,8 +163,8 @@ export const ChatScreen: React.FC = () => {
   return (
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 56 : 0}
     >
       <TopBar 
         title={otherUserName || t('chatScreen.titleFallback')}
@@ -171,15 +179,19 @@ export const ChatScreen: React.FC = () => {
         ListEmptyComponent={!loading ? renderEmptyState : null}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={messages.length === 0 ? styles.emptyListContainer : styles.messagesList}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
       />
-      
-      <ChatInput
-        onSend={handleSendMessage}
-        disabled={sending}
-        placeholder={t('chatScreen.placeholder', { name: otherUserName })}
-      />
+
+      <View style={[styles.inputWrap, { paddingBottom: 0 }]}>
+        <ChatInput
+          onSend={handleSendMessage}
+          disabled={sending}
+          placeholder={t('chatScreen.placeholder', { name: otherUserName })}
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -204,10 +216,10 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     marginBottom: 2,
   },
+  inputWrap: {
+    backgroundColor: 'transparent',
+  },
 });
-
-
-
 
 
 

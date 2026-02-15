@@ -98,7 +98,7 @@ export const Favorites: React.FC = () => {
   };
 
   const navigateToFood = (item: FavoriteItem) => {
-    const route = `/food-detail?id=${item.id}&name=${encodeURIComponent(item.name)}&cookName=${encodeURIComponent(item.cookName)}&imageUrl=${encodeURIComponent(item.imageUrl)}&deliveryType=Pickup`;
+    const route = `/food-detail?id=${item.id}&name=${encodeURIComponent(item.name)}&cookName=${encodeURIComponent(item.cookName)}&imageUrl=${encodeURIComponent(item.imageUrl)}&deliveryType=Pickup&source=favorites`;
     router.push(route);
   };
 

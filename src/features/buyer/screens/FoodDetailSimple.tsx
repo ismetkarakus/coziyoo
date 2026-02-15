@@ -145,34 +145,57 @@ export default function FoodDetailSimple() {
 
   const resolveFoodId = (id?: string) => (id ? id.replace(/^(firebase_|mock_|published_)/, '') : undefined);
   const resolvedStockId = resolveFoodId(foodId);
+  const stockKey = useMemo(() => {
+    if (foodId) return String(foodId);
+    if (resolvedStockId) return String(resolvedStockId);
+    return '';
+  }, [foodId, resolvedStockId]);
   const remainingStock = useMemo(
-    () => (resolvedStockId ? getRemainingStock(String(resolvedStockId), baseStock) : baseStock),
-    [resolvedStockId, getRemainingStock, baseStock]
+    () => (stockKey ? getRemainingStock(stockKey, baseStock) : baseStock),
+    [stockKey, getRemainingStock, baseStock]
   );
 
   useEffect(() => {
     const loadDetails = async () => {
       const resolvedId = resolveFoodId(foodId);
-      if (!resolvedId) return;
-      const foods = await mockFoodService.getFoods(0);
-      const food = foods.find(item => item.id === resolvedId);
+      if (!resolvedId && !foodId) return;
+
+      let food: any | undefined;
+
+      try {
+        const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
+        if (publishedMealsJson) {
+          const publishedMeals = JSON.parse(publishedMealsJson);
+          if (Array.isArray(publishedMeals)) {
+            food = publishedMeals.find((item: any) => String(item?.id) === String(foodId));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading published meals in FoodDetailSimple:', error);
+      }
+
+      if (!food && resolvedId) {
+        const foods = await mockFoodService.getFoods(0);
+        food = foods.find(item => item.id === resolvedId);
+      }
+
       setIngredients(food?.ingredients ?? null);
       setAllergens(food?.allergens ?? null);
-      if (food) {
-        const loadedBaseStock = typeof food.currentStock === 'number' ? food.currentStock : 8;
-        setBaseStock(loadedBaseStock);
-        setFoodMeta({
-          rating: typeof food.rating === 'number' ? food.rating : 4.8,
-          reviewCount: typeof food.reviewCount === 'number' ? food.reviewCount : 24,
-          distance: food.distance || '1.2 km',
-          prepTime: food.prepTime || '30 dk',
-          cookDescription: food.cookDescription || 'Ev yapımı yemeklerde özenli ve hijyenik hazırlık sunar.',
-          availableDates: food.availableDates || '15-20 Ocak',
-          currentStock: loadedBaseStock,
-          dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 10,
-          deliveryType: food.hasDelivery && !food.hasPickup ? 'delivery' : 'pickup',
-        });
-      }
+      if (!food) return;
+
+      const loadedBaseStock = typeof food.currentStock === 'number' ? food.currentStock : 8;
+      setBaseStock(loadedBaseStock);
+      setFoodMeta({
+        rating: typeof food.rating === 'number' ? food.rating : 4.8,
+        reviewCount: typeof food.reviewCount === 'number' ? food.reviewCount : 24,
+        distance: food.distance || '1.2 km',
+        prepTime: food.prepTime || '30 dk',
+        cookDescription: food.cookDescription || 'Ev yapımı yemeklerde özenli ve hijyenik hazırlık sunar.',
+        availableDates: food.availableDates || '15-20 Ocak',
+        currentStock: loadedBaseStock,
+        dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 10,
+        deliveryType: food.hasDelivery && !food.hasPickup ? 'delivery' : 'pickup',
+      });
     };
 
     loadDetails();
@@ -230,9 +253,10 @@ export default function FoodDetailSimple() {
     const deliveryFee =
       food.hasDelivery && typeof food.deliveryFee === 'number' ? food.deliveryFee : 0;
 
+    const cartItemId = stockKey || String(food.id);
     const cartCount = addToCart(
       {
-        id: food.id,
+        id: cartItemId,
         name: food.name,
         cookName: food.cookName,
         price: food.price,
@@ -261,7 +285,7 @@ export default function FoodDetailSimple() {
 
   const handleAddToCart = async () => {
     const resolvedId = resolveFoodId(foodId);
-    if (!resolvedId) return;
+    if (!resolvedId && !foodId) return;
 
     if (remainingStock <= 0 || quantity > remainingStock) {
       Toast.show({
@@ -277,8 +301,24 @@ export default function FoodDetailSimple() {
       return;
     }
 
-    const foods = await mockFoodService.getFoods(0);
-    const food = foods.find(item => item.id === resolvedId);
+    let food: any | undefined;
+    try {
+      const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
+      if (publishedMealsJson) {
+        const publishedMeals = JSON.parse(publishedMealsJson);
+        if (Array.isArray(publishedMeals)) {
+          food = publishedMeals.find((item: any) => String(item?.id) === String(foodId));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading published meals for addToCart:', error);
+    }
+
+    if (!food && resolvedId) {
+      const foods = await mockFoodService.getFoods(0);
+      food = foods.find(item => item.id === resolvedId);
+    }
+
     if (!food) return;
 
     const userRecord =
@@ -286,7 +326,11 @@ export default function FoodDetailSimple() {
       (await mockUserService.getUserByEmail(userData?.email || user?.email));
     const userAllergies = (userRecord?.allergicTo || []).map(item => item.toLowerCase());
     const foodAllergens = (food.allergens || []).map((item: string) => item.toLowerCase());
-    const matches = foodAllergens.filter(allergen => userAllergies.includes(allergen));
+    const matches = userAllergies.length > 0
+      ? (food.allergens || []).filter((item: string) => userAllergies.includes(item.toLowerCase()))
+      : foodAllergens.length > 0
+        ? [...(food.allergens || [])]
+        : [];
     if (matches.length > 0) {
       setAllergenModalMatches(matches);
       setAllergenConfirmChecked(false);
@@ -610,30 +654,20 @@ export default function FoodDetailSimple() {
               </Text>
               {allergens && allergens.length > 0 ? (
                 <View style={styles.allergenPillsContainer}>
-                  {allergens.map((allergen, index) => {
-                    const isMatched = userAllergies.includes(allergen.toLowerCase());
-
-                    return (
-                      <View
-                        key={`${allergen}-${index}`}
-                        style={[
-                          styles.allergenPill,
-                          isMatched && styles.allergenPillDanger,
-                        ]}
+                  {allergens.map((allergen, index) => (
+                    <View
+                      key={`${allergen}-${index}`}
+                      style={[styles.allergenPill, styles.allergenPillDanger]}
+                    >
+                      <Text
+                        variant="caption"
+                        weight="medium"
+                        style={[styles.allergenPillText, styles.allergenPillTextDanger]}
                       >
-                        <Text
-                          variant="caption"
-                          weight="medium"
-                          style={[
-                            styles.allergenPillText,
-                            isMatched && styles.allergenPillTextDanger,
-                          ]}
-                        >
-                          {allergen}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                        {allergen}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
               ) : (
                 <Text variant="body" style={styles.ingredientsText}>

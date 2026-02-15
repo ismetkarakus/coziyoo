@@ -440,9 +440,14 @@ export const HomePreview: React.FC = () => {
       (await mockUserService.getUserByUid(user?.uid || userData?.uid)) ||
       (await mockUserService.getUserByEmail(userData?.email || user?.email));
     const userAllergies = (userRecord?.allergicTo || []).map((allergen: string) => allergen.toLowerCase());
-    const matches = (item.allergens || []).filter((allergen) =>
-      userAllergies.includes(allergen.toLowerCase())
-    );
+    const foodAllergens = (item.allergens || []).map((allergen) => allergen.toLowerCase());
+    const matches = userAllergies.length > 0
+      ? (item.allergens || []).filter((allergen) =>
+          userAllergies.includes(allergen.toLowerCase())
+        )
+      : foodAllergens.length > 0
+        ? [...(item.allergens || [])]
+        : [];
 
     if (matches.length > 0) {
       setPendingAllergenItem(item);

@@ -19,7 +19,8 @@
     "dailyStock": 10,
     "maxDeliveryDistance": 3,
     "allergens": [
-      "Süt"
+      "Süt",
+      "Buğday (Gluten)"
     ],
     "hygieneRating": "5",
     "deliveryFee": 5,
@@ -80,7 +81,9 @@
       "Biber",
       "Baharat"
     ],
-    "allergens": [],
+    "allergens": [
+      "Yumurta"
+    ],
     "imageUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop",
     "cardSummary": "Karnıyarık - Mehmet Usta tarafindan gunluk taze malzemelerle hazirlanir.",
     "description": "Karnıyarık, Mehmet Usta mutfaginda ev usulu tekniklerle hazirlanan ozel bir lezzettir. Siparis uzerine taze pisirilir ve hijyen kosullarina uygun sekilde paketlenir.",
@@ -179,7 +182,9 @@
       "Baharat",
       "Limon"
     ],
-    "allergens": [],
+    "allergens": [
+      "Kereviz"
+    ],
     "imageUrl": "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop",
     "cardSummary": "Mercimek Çorbası - Zeynep Hanım tarafindan gunluk taze malzemelerle hazirlanir.",
     "description": "Mercimek Çorbası, Zeynep Hanım mutfaginda ev usulu tekniklerle hazirlanan ozel bir lezzettir. Siparis uzerine taze pisirilir ve hijyen kosullarina uygun sekilde paketlenir.",
