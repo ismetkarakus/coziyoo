@@ -218,7 +218,7 @@ export const FoodDetail: React.FC = () => {
   const foodImageUrl = params.imageUrl as string;
   const paramDeliveryType = params.deliveryType as string || 'Pickup';
   const sourceParam = params.source as string | undefined;
-  const isReadOnlyReviews = sourceParam === 'favorites';
+  const isReadOnlyReviews = sourceParam === 'favorites' || sourceParam === 'bulk-demo';
   console.log('FoodDetail params:', { foodId, foodName, cookName, foodImageUrl, paramDeliveryType, allParams: params });
   const defaultCookName = currentLanguage === 'en' ? 'Ayse Hanim' : 'Ayşe Hanım';
   const defaultFoodName = currentLanguage === 'en' ? 'Homemade Manti' : 'Ev Yapımı Mantı';

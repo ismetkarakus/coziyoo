@@ -365,6 +365,34 @@ export const HomePreview: React.FC = () => {
     );
   };
 
+  const openBulkDemo = (item: (typeof homeItems)[number]): void => {
+    const cookMeals = homeItems.filter((meal) => meal.cook === item.cook);
+    const orderedMeals = [
+      item,
+      ...cookMeals.filter((meal) => String(meal.id) !== String(item.id)),
+    ];
+
+    router.push({
+      pathname: '/bulk-food-detail',
+      params: {
+        id: String(item.id),
+        name: item.title,
+        cookName: item.cook,
+        imageUrl: item.img,
+        price: String(item.numericPrice),
+        source: 'bulk-demo',
+        meals: JSON.stringify(
+          orderedMeals.map((meal) => ({
+            id: String(meal.id),
+            title: meal.title,
+            imageUrl: meal.img,
+            price: Number(meal.numericPrice || 0),
+          }))
+        ),
+      },
+    } as any);
+  };
+
   React.useEffect(() => {
     const loadFavoriteState = async () => {
       try {
@@ -631,6 +659,12 @@ export const HomePreview: React.FC = () => {
                       </View>
                     ) : null}
                   </View>
+                  <TouchableOpacity style={styles.bulkDemoButton} activeOpacity={0.85} onPress={() => openBulkDemo(item)}>
+                    <MaterialIcons name="groups" size={12} color={PREVIEW_COLORS.accent} />
+                    <Text style={styles.bulkDemoButtonText}>
+                      {currentLanguage === 'en' ? 'Bulk Demo' : 'Toplu Demo'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -973,7 +1007,9 @@ const styles = StyleSheet.create({
   },
   metaDeliveryRow: {
     marginTop: 4,
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   deliveryInline: {
     flexDirection: 'row',
@@ -1019,8 +1055,23 @@ const styles = StyleSheet.create({
   },
   footerRight: {
     flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 1,
+  },
+  bulkDemoButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 4,
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+  bulkDemoButtonText: {
+    color: PREVIEW_COLORS.accent,
+    fontSize: 11,
+    fontWeight: '700',
   },
   cookRating: {
     flexDirection: 'row',
