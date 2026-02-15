@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Text, FoodCard } from '../../../components/ui';
+import { Text, FoodCard, SearchBar } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useCart } from '../../../context/CartContext';
 
 const CATEGORY_FOODS_TR = {
   'Ana Yemek': [
@@ -208,20 +209,61 @@ export const CategoryFoods: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
+  const { addToCart } = useCart();
   const params = useLocalSearchParams();
   const categoryName = (params.category as string) || DEFAULT_CATEGORY_BY_LANG[currentLanguage];
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleAddToCart = (foodId: string, quantity: number) => {
-    console.log(`Added ${quantity} of food ${foodId} to cart`);
+  // Get foods for the selected category
+  const categoryFoodsMap = getCategoryFoods(currentLanguage);
+  const categoryFoods = categoryFoodsMap[categoryName] || [];
+  const filteredFoods = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return categoryFoods;
+
+    return categoryFoods.filter((food) =>
+      food.name.toLowerCase().includes(query) ||
+      food.cookName.toLowerCase().includes(query) ||
+      String(food.distance || '').toLowerCase().includes(query)
+    );
+  }, [categoryFoods, searchQuery]);
+
+  const handleAddToCart = (
+    foodId: string,
+    quantity: number,
+    deliveryOption?: 'pickup' | 'delivery'
+  ) => {
+    const food = categoryFoods.find((item) => item.id === foodId);
+    if (!food || quantity <= 0) {
+      return;
+    }
+
+    const availableOptions: ('pickup' | 'delivery')[] = [];
+    if (food.hasPickup) availableOptions.push('pickup');
+    if (food.hasDelivery) availableOptions.push('delivery');
+
+    const finalDeliveryOption =
+      deliveryOption ||
+      (availableOptions.includes('pickup') ? 'pickup' : availableOptions[0]);
+
+    const cartCount = addToCart(
+      {
+        id: food.id,
+        name: food.name,
+        cookName: food.cookName,
+        price: food.price,
+        deliveryOption: finalDeliveryOption,
+        availableOptions,
+      },
+      quantity
+    );
+
+    return cartCount;
   };
 
   const handleBackPress = () => {
     router.back();
   };
-
-  // Get foods for the selected category
-  const categoryFoodsMap = getCategoryFoods(currentLanguage);
-  const categoryFoods = categoryFoodsMap[categoryName] || [];
 
   const renderBackButton = () => (
     <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
@@ -241,15 +283,24 @@ export const CategoryFoods: React.FC = () => {
           <Text variant="heading" weight="semibold" style={styles.categoryTitle}>
             {categoryName} {t('categoryFoodsScreen.titleSuffix')}
           </Text>
+          <View style={styles.searchWrap}>
+            <SearchBar
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmit={setSearchQuery}
+              placeholder={t('searchPlaceholder')}
+              showFilter={false}
+            />
+          </View>
           <Text variant="body" color="textSecondary" style={styles.foodCount}>
-            {t('categoryFoodsScreen.count', { count: categoryFoods.length })}
+            {t('categoryFoodsScreen.count', { count: filteredFoods.length })}
           </Text>
         </View>
 
         {/* Food List */}
         <View style={styles.foodListContainer}>
-          {categoryFoods.length > 0 ? (
-            categoryFoods.map((food) => (
+          {filteredFoods.length > 0 ? (
+            filteredFoods.map((food) => (
               <FoodCard
                 key={food.id}
                 {...food}
@@ -279,6 +330,9 @@ const styles = StyleSheet.create({
   headerContainer: {
     padding: Spacing.md,
     paddingBottom: Spacing.sm,
+  },
+  searchWrap: {
+    marginBottom: Spacing.sm,
   },
   categoryTitle: {
     marginBottom: Spacing.xs,

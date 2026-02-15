@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, PanResponder, Animated, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, PanResponder, Animated, useWindowDimensions, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Button, Card } from '../../../components/ui';
@@ -100,11 +100,16 @@ export const SellerOrders: React.FC = () => {
       }),
     [swipeTranslateX, width]
   );
+  const isWeb = Platform.OS === 'web';
+  const panHandlers = isWeb ? {} : swipeToPanelResponder.panHandlers;
 
   // Load orders from AsyncStorage when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       loadOrders();
+      if (isWeb && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }
     }, [])
   );
 
@@ -206,7 +211,7 @@ export const SellerOrders: React.FC = () => {
 
   const handleBackPress = () => {
     console.log('Back button pressed from SellerOrders');
-    router.back();
+    router.replace('/(seller)/seller-panel');
   };
 
   const getStatusText = (status: string) => {
@@ -240,10 +245,13 @@ export const SellerOrders: React.FC = () => {
     <Animated.View
       style={[
         styles.container,
-        { backgroundColor: colors.background, transform: [{ translateX: swipeTranslateX }] },
+        {
+          backgroundColor: colors.background,
+          transform: [{ translateX: isWeb ? 0 : swipeTranslateX }],
+        },
       ]}
       // Dragging the page reveals the underlying screen for a native-like transition feel.
-      {...swipeToPanelResponder.panHandlers}
+      {...panHandlers}
     >
       <TopBar 
         title={t('sellerOrdersScreen.title')}

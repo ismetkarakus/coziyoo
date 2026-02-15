@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-14",
+  "updatedAt": "2026-02-15",
   "project": "coziyoo",
   "changes": [
     {
@@ -37,6 +37,24 @@
       "area": "seller-panel",
       "status": "done",
       "summary": "Aktif/Pasif yemek geçişi PanResponder yerine yatay paging yapısına çevrilerek daha stabil hale getirildi."
+    },
+    {
+      "id": "home-search-input-fix",
+      "area": "buyer-home",
+      "status": "done",
+      "summary": "Ana sayfa arama alanı static metin yerine gerçek input olarak çalışacak şekilde düzeltildi."
+    },
+    {
+      "id": "home-card-cuisine-label",
+      "area": "buyer-home",
+      "status": "done",
+      "summary": "Yemek kartında kategori yerine mutfak bilgisi gösterimi geri eklendi ve aramaya mutfak alanı dahil edildi."
+    },
+    {
+      "id": "mock-foods-global-cuisines",
+      "area": "mock-data",
+      "status": "done",
+      "summary": "Mock yemek verisine farklı ülke mutfakları ve Türkiye şehir mutfakları için yeni JSON kayıtları eklendi."
     }
   ]
 }

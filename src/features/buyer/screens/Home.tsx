@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, KeyboardAvoidingView, Platform, TextInput, Alert, Modal } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Toast from 'react-native-toast-message';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -209,6 +208,14 @@ export const Home: React.FC = () => {
     loadLatestOrderStatus();
   }, [loadLatestOrderStatus]);
 
+  useEffect(() => {
+    return () => {
+      if (searchDebounceTimerRef.current) {
+        clearTimeout(searchDebounceTimerRef.current);
+      }
+    };
+  }, []);
+
   useFocusEffect(
     React.useCallback(() => {
       loadLatestOrderStatus();
@@ -226,6 +233,7 @@ export const Home: React.FC = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const searchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const { addToCart } = useCart();
@@ -254,6 +262,11 @@ export const Home: React.FC = () => {
     t('homeScreen.nearbyAlt3'),
   ];
   const turkishKeywords = currentLanguage === 'tr' ? ['türk', 'türkiye'] : ['turkish', 'turkey'];
+  const highlightedAllergenText = allergenModalMatches.join(', ');
+  const warningMessageText = t('allergenWarning.warningMessage', { allergen: highlightedAllergenText });
+  const warningMessageParts = highlightedAllergenText
+    ? warningMessageText.split(highlightedAllergenText)
+    : [warningMessageText];
 
   const getChatStatusLabel = (statusKey: string) => {
     switch (statusKey) {
@@ -414,7 +427,7 @@ export const Home: React.FC = () => {
     currentStock: number;
     newStock: number;
     firebaseFood: Food | undefined;
-  }) => {
+  }): Promise<number | false> => {
     try {
       const {
         food,
@@ -440,7 +453,7 @@ export const Home: React.FC = () => {
         await foodService.updateFoodStock(foodId, newStock, sendLowStockNotification);
       }
 
-      addToCart({
+      const cartCount = addToCart({
         id: food.id!,
         name: food.name,
         cookName: food.cookName,
@@ -460,7 +473,7 @@ export const Home: React.FC = () => {
       if (newStock <= 2) {
         sendLowStockNotification(food.name, newStock);
       }
-      return true;
+      return cartCount;
     } catch (error) {
       console.error('Error updating stock:', error);
       // Revert local stock change on error
@@ -551,16 +564,6 @@ export const Home: React.FC = () => {
             newStock,
             firebaseFood,
           });
-          if (added) {
-            Toast.show({
-              type: 'success',
-              text1: t('foodCard.alerts.addToCartTitle'),
-              text2: t('foodCard.alerts.addToCartMessage', { count: quantity, name: food.name }),
-              position: 'bottom',
-              bottomOffset: 90,
-              visibilityTime: 1800,
-            });
-          }
           return added;
         } catch (error) {
           console.error('Error updating stock:', error);
@@ -619,7 +622,43 @@ export const Home: React.FC = () => {
       };
 
       const result = await searchService.searchFoods(searchParams);
-      setSearchResults(result.foods);
+      if (result.foods.length > 0) {
+        setSearchResults(result.foods);
+        return;
+      }
+
+      // Fallback to local in-memory data when backend search is empty/unavailable.
+      const publishedFoodKeys = new Set(publishedMeals.map(getFoodIdentity));
+      const mockFoodsWithoutPublishedDuplicates = mockFoods.filter(
+        (food) => !publishedFoodKeys.has(getFoodIdentity(food))
+      );
+      const localFoods = [
+        ...firebaseFoods.map(food => ({ ...food, id: `firebase_${food.id}` })),
+        ...mockFoodsWithoutPublishedDuplicates.map(food => ({ ...food, id: `mock_${food.id}` })),
+        ...publishedMeals.map(food => ({ ...food, id: `published_${food.id}` })),
+      ];
+
+      let localResults = localFoods;
+      if (query.trim()) {
+        localResults = performLocalSearch(query, localResults);
+      }
+
+      if (searchParams.category && searchParams.category !== 'Tümü' && searchParams.category !== 'All') {
+        localResults = localResults.filter(food => food.category === searchParams.category);
+      }
+
+      if (searchParams.priceRange) {
+        localResults = localResults.filter(food =>
+          Number(food.price || 0) >= searchParams.priceRange!.min &&
+          Number(food.price || 0) <= searchParams.priceRange!.max
+        );
+      }
+
+      if (searchParams.rating && searchParams.rating > 0) {
+        localResults = localResults.filter(food => Number(food.rating || 0) >= searchParams.rating!);
+      }
+
+      setSearchResults(localResults as Food[]);
     } catch (error) {
       console.error('Search error:', error);
       Alert.alert(t('homeScreen.alerts.searchErrorTitle'), t('homeScreen.alerts.searchErrorMessage'));
@@ -879,6 +918,19 @@ export const Home: React.FC = () => {
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     getSuggestions(text);
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+    }
+
+    if (!text.trim() && Object.keys(searchFilters).length === 0) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    searchDebounceTimerRef.current = setTimeout(() => {
+      performSearch(text, searchFilters);
+    }, 250);
   };
 
   const handleSearchSubmit = (text: string) => {
@@ -951,8 +1003,17 @@ export const Home: React.FC = () => {
             </View>
             <View style={styles.modalWarningBox}>
               <Text variant="body" style={styles.modalText}>
-                {t('allergenWarning.warningMessage', { allergen: allergenModalMatches.join(', ') })}
+                {warningMessageParts[0]}
+                {highlightedAllergenText ? (
+                  <Text style={styles.modalAllergenText}>{highlightedAllergenText}</Text>
+                ) : null}
+                {warningMessageParts.slice(1).join(highlightedAllergenText)}
               </Text>
+              {highlightedAllergenText ? (
+                <Text variant="body" weight="bold" style={styles.modalAllergenTextStandalone}>
+                  {highlightedAllergenText}
+                </Text>
+              ) : null}
               <Text variant="body" weight="bold" style={styles.modalEmphasis}>
                 {t('allergenWarning.question')}
               </Text>
@@ -1005,16 +1066,7 @@ export const Home: React.FC = () => {
                   setAllergenConfirmChecked(false);
                   if (next) {
                     const added = await finalizeAddToCart(next);
-                    if (added) {
-                      Toast.show({
-                        type: 'success',
-                        text1: t('foodCard.alerts.addToCartTitle'),
-                        text2: t('foodCard.alerts.addToCartMessage', { count: next.quantity, name: next.food.name }),
-                        position: 'bottom',
-                        bottomOffset: 90,
-                        visibilityTime: 1800,
-                      });
-                    }
+                    if (!added) return;
                   }
                 }}
                 activeOpacity={allergenConfirmChecked ? 0.8 : 1}
@@ -1565,6 +1617,15 @@ const styles = StyleSheet.create({
   },
   modalChipText: {
     color: '#B42318',
+  },
+  modalAllergenText: {
+    color: '#B42318',
+    fontWeight: '700',
+  },
+  modalAllergenTextStandalone: {
+    color: '#B42318',
+    fontWeight: '700',
+    marginTop: Spacing.xs,
   },
   modalCheckboxRow: {
     flexDirection: 'row',

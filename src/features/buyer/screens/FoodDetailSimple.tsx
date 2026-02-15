@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Toast from 'react-native-toast-message';
 import { Text, Button, Card, StarRating } from '../../../components/ui';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
@@ -67,6 +68,11 @@ export default function FoodDetailSimple() {
   const [allergenModalMatches, setAllergenModalMatches] = useState<string[]>([]);
   const [allergenConfirmChecked, setAllergenConfirmChecked] = useState(false);
   const [pendingFood, setPendingFood] = useState<any | null>(null);
+  const highlightedAllergenText = allergenModalMatches.join(', ');
+  const warningMessageText = t('allergenWarning.warningMessage', { allergen: highlightedAllergenText });
+  const warningMessageParts = highlightedAllergenText
+    ? warningMessageText.split(highlightedAllergenText)
+    : [warningMessageText];
   const [foodMeta, setFoodMeta] = useState({
     rating: 4.8,
     reviewCount: 24,
@@ -206,7 +212,7 @@ export default function FoodDetailSimple() {
     const deliveryFee =
       food.hasDelivery && typeof food.deliveryFee === 'number' ? food.deliveryFee : 0;
 
-    addToCart(
+    const cartCount = addToCart(
       {
         id: food.id,
         name: food.name,
@@ -222,6 +228,15 @@ export default function FoodDetailSimple() {
       },
       quantity
     );
+
+    Toast.show({
+      type: 'success',
+      text1: t('foodCard.alerts.addToCartTitle'),
+      text2: t('foodCard.alerts.addToCartMessage', { count: cartCount, name: food.name }),
+      position: 'bottom',
+      bottomOffset: 90,
+      visibilityTime: 1800,
+    });
 
     router.back();
   };
@@ -291,8 +306,17 @@ export default function FoodDetailSimple() {
             </View>
             <View style={styles.modalWarningBox}>
               <Text variant="body" style={styles.modalText}>
-                {t('allergenWarning.warningMessage', { allergen: allergenModalMatches.join(', ') })}
+                {warningMessageParts[0]}
+                {highlightedAllergenText ? (
+                  <Text style={styles.modalAllergenText}>{highlightedAllergenText}</Text>
+                ) : null}
+                {warningMessageParts.slice(1).join(highlightedAllergenText)}
               </Text>
+              {highlightedAllergenText ? (
+                <Text variant="body" weight="bold" style={styles.modalAllergenTextStandalone}>
+                  {highlightedAllergenText}
+                </Text>
+              ) : null}
               <Text variant="body" weight="bold" style={styles.modalEmphasis}>
                 {t('allergenWarning.question')}
               </Text>
@@ -1028,6 +1052,15 @@ const styles = StyleSheet.create({
   },
   modalChipText: {
     color: '#B42318',
+  },
+  modalAllergenText: {
+    color: '#B42318',
+    fontWeight: '700',
+  },
+  modalAllergenTextStandalone: {
+    color: '#B42318',
+    fontWeight: '700',
+    marginTop: Spacing.xs,
   },
   modalCheckboxRow: {
     flexDirection: 'row',

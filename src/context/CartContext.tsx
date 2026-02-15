@@ -17,7 +17,7 @@ export interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>, quantity: number) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'>, quantity: number) => number;
   updateQuantity: (itemId: string, quantity: number) => void;
   updateDeliveryOption: (itemId: string, deliveryOption: 'pickup' | 'delivery') => void;
   removeFromCart: (itemId: string) => void;
@@ -43,18 +43,20 @@ interface CartProviderProps {
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>, quantity: number) => {
+  const addToCart = (item: Omit<CartItem, 'quantity'>, quantity: number): number => {
     const availableOptions = item.availableOptions && item.availableOptions.length > 0
       ? item.availableOptions
       : (['pickup', 'delivery'] as ('pickup' | 'delivery')[]);
     const fallbackDeliveryOption =
       item.deliveryOption ??
       (availableOptions.includes('pickup') ? 'pickup' : availableOptions[0]);
+    let updatedQuantity = quantity;
 
     setCartItems(prev => {
       const existingItem = prev.find(cartItem => cartItem.id === item.id);
       
       if (existingItem) {
+        updatedQuantity = existingItem.quantity + quantity;
         // Update existing item quantity
         return prev.map(cartItem =>
           cartItem.id === item.id
@@ -62,10 +64,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             : cartItem
         );
       } else {
+        updatedQuantity = quantity;
         // Add new item
         return [...prev, { ...item, deliveryOption: fallbackDeliveryOption, availableOptions, quantity }];
       }
     });
+
+    return updatedQuantity;
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {

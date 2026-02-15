@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import Toast from "react-native-toast-message";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useCountry } from "../../context/CountryContext";
 import { AllergenId } from "../../constants/allergens";
@@ -64,7 +65,7 @@ type FoodCardProps = {
     id: string,
     quantity: number,
     deliveryOption?: DeliveryMode
-  ) => void | boolean | Promise<void | boolean>;
+  ) => void | boolean | number | Promise<void | boolean | number>;
   maxDeliveryDistance?: number;
   country?: string;
   category?: string;
@@ -283,8 +284,28 @@ export function FoodCard({
     router.push(route);
   };
 
-  const handleAddToCart = () => {
-    onAddToCart?.(id, 1, deliveryMode);
+  const handleAddToCart = async () => {
+    if (!onAddToCart) return;
+
+    try {
+      const addResult = await onAddToCart(id, 1, deliveryMode);
+      if (addResult === false || isPreview) return;
+      const cartCount =
+        typeof addResult === "number" && Number.isFinite(addResult) && addResult > 0
+          ? addResult
+          : 1;
+
+      Toast.show({
+        type: "success",
+        text1: t("foodCard.alerts.addToCartTitle"),
+        text2: t("foodCard.alerts.addToCartMessage", { count: cartCount, name }),
+        position: "bottom",
+        bottomOffset: 90,
+        visibilityTime: 1800,
+      });
+    } catch (error) {
+      console.error("Error adding to cart from FoodCard:", error);
+    }
   };
 
   const handleCookPress = () => {

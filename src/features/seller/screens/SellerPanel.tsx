@@ -74,6 +74,9 @@ export const SellerPanel: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       loadProfileData();
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }
     }, [])
   );
 

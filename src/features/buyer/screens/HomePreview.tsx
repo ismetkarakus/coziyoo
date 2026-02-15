@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
+import Toast from 'react-native-toast-message';
 import { FilterModal, Text } from '../../../components/ui';
 import { Spacing } from '../../../theme';
 import foods from '../../../mock/foods.json';
@@ -28,11 +29,12 @@ const PREVIEW_COLORS = {
 } as const;
 
 export const HomePreview: React.FC = () => {
-  const { currentLanguage } = useTranslation();
+  const { currentLanguage, t } = useTranslation();
   const { formatCurrency } = useCountry();
   const { addToCart } = useCart();
   const { user, userData } = useAuth();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
@@ -40,6 +42,9 @@ export const HomePreview: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [favoriteCounts, setFavoriteCounts] = useState<Record<string, number>>({});
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [allergenModalVisible, setAllergenModalVisible] = useState(false);
+  const [allergenMatches, setAllergenMatches] = useState<string[]>([]);
+  const [pendingAllergenItem, setPendingAllergenItem] = useState<any | null>(null);
   const localizeCategory = (category: string): string => {
     if (currentLanguage === 'tr') return category;
 
@@ -52,8 +57,48 @@ export const HomePreview: React.FC = () => {
       'Vejetaryen': 'Vegetarian',
       'Kahvaltı': 'Breakfast',
       'İçecek': 'Drink',
+      'Türk Mutfağı': 'Turkish Cuisine',
+      'Çin Mutfağı': 'Chinese Cuisine',
+      'Japon Mutfağı': 'Japanese Cuisine',
+      'Meksika Mutfağı': 'Mexican Cuisine',
+      'İspanya Mutfağı': 'Spanish Cuisine',
+      'Hindistan Mutfağı': 'Indian Cuisine',
+      'Hatay Mutfağı': 'Hatay Cuisine',
+      'Trabzon Mutfağı': 'Trabzon Cuisine',
+      'Maraş Mutfağı': 'Kahramanmaras Cuisine',
+      'Hakkari Mutfağı': 'Hakkari Cuisine',
+      'Muş Mutfağı': 'Mus Cuisine',
+      'İtalyan Mutfağı': 'Italian Cuisine',
+      'Fransız Mutfağı': 'French Cuisine',
+      'Kore Mutfağı': 'Korean Cuisine',
+      'Lübnan Mutfağı': 'Lebanese Cuisine',
     };
     return map[category] || category;
+  };
+
+  const getCuisineLabel = (food: MockFood): string => {
+    const rawCategory = String(food.category || '').trim();
+    if (rawCategory.includes('Mutfağı')) return rawCategory;
+
+    const text = `${food.name || ''} ${food.cardSummary || ''} ${food.description || ''} ${food.country || ''}`.toLowerCase();
+
+    if (text.includes('hatay')) return 'Hatay Mutfağı';
+    if (text.includes('trabzon')) return 'Trabzon Mutfağı';
+    if (text.includes('maraş') || text.includes('maras') || text.includes('kahramanmaraş') || text.includes('kahramanmaras')) return 'Maraş Mutfağı';
+    if (text.includes('hakkari') || text.includes('hakari')) return 'Hakkari Mutfağı';
+    if (text.includes('muş') || text.includes('mus')) return 'Muş Mutfağı';
+    if (text.includes('çin') || text.includes('china')) return 'Çin Mutfağı';
+    if (text.includes('japon') || text.includes('japan')) return 'Japon Mutfağı';
+    if (text.includes('meksika') || text.includes('mexico')) return 'Meksika Mutfağı';
+    if (text.includes('ispanya') || text.includes('spain')) return 'İspanya Mutfağı';
+    if (text.includes('hindistan') || text.includes('india')) return 'Hindistan Mutfağı';
+    if (text.includes('italya') || text.includes('italian') || text.includes('italy')) return 'İtalyan Mutfağı';
+    if (text.includes('fransa') || text.includes('french') || text.includes('france')) return 'Fransız Mutfağı';
+    if (text.includes('kore') || text.includes('korean') || text.includes('korea')) return 'Kore Mutfağı';
+    if (text.includes('lübnan') || text.includes('lebanon') || text.includes('lebanese')) return 'Lübnan Mutfağı';
+    if (text.includes('türkiye') || text.includes('turkey')) return 'Türk Mutfağı';
+
+    return currentLanguage === 'en' ? 'Cuisine Not Specified' : 'Mutfak Belirtilmedi';
   };
 
   const homeItems = useMemo(
@@ -72,6 +117,7 @@ export const HomePreview: React.FC = () => {
             ? 'Homemade, fresh, and carefully prepared.'
             : 'Ev yapımı, taze ve özenli hazırlanır.'),
         category: localizeCategory(food.category || (currentLanguage === 'en' ? 'Main Course' : 'Ana Yemek')),
+        cuisine: localizeCategory(getCuisineLabel(food)),
         preparationTime: typeof food.preparationTime === 'number' ? food.preparationTime : 30,
         currentStock: typeof food.currentStock === 'number' ? food.currentStock : 0,
         dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 0,
@@ -117,6 +163,17 @@ export const HomePreview: React.FC = () => {
       selectedCategoryId === 'all'
         ? homeItems
         : homeItems.filter((item) => item.category === selectedCategoryId);
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (normalizedQuery) {
+      result = result.filter((item) =>
+        item.title.toLowerCase().includes(normalizedQuery) ||
+        item.cook.toLowerCase().includes(normalizedQuery) ||
+        item.description.toLowerCase().includes(normalizedQuery) ||
+        item.category.toLowerCase().includes(normalizedQuery) ||
+        item.cuisine.toLowerCase().includes(normalizedQuery)
+      );
+    }
 
     if (searchFilters.category) {
       const isAllCategory = searchFilters.category === 'All' || searchFilters.category === 'Tümü';
@@ -178,7 +235,7 @@ export const HomePreview: React.FC = () => {
     }
 
     return result;
-  }, [homeItems, selectedCategoryId, showNearbyOnly, userLocation, searchFilters, favoriteCounts]);
+  }, [homeItems, selectedCategoryId, showNearbyOnly, userLocation, searchFilters, favoriteCounts, searchQuery]);
 
   const handleNearbyPress = async (): Promise<void> => {
     if (showNearbyOnly) {
@@ -274,7 +331,7 @@ export const HomePreview: React.FC = () => {
   };
 
   const addItemToCart = (item: (typeof homeItems)[number]): void => {
-    addToCart(
+    const cartCount = addToCart(
       {
         id: String(item.id),
         name: item.title,
@@ -290,6 +347,15 @@ export const HomePreview: React.FC = () => {
       },
       1
     );
+
+    Toast.show({
+      type: 'success',
+      text1: t('foodCard.alerts.addToCartTitle'),
+      text2: t('foodCard.alerts.addToCartMessage', { count: cartCount, name: item.title }),
+      position: 'bottom',
+      bottomOffset: 90,
+      visibilityTime: 1800,
+    });
   };
 
   const handleAddToCart = async (item: (typeof homeItems)[number]): Promise<void> => {
@@ -302,23 +368,26 @@ export const HomePreview: React.FC = () => {
     );
 
     if (matches.length > 0) {
-      Alert.alert(
-        currentLanguage === 'en' ? 'Allergen Warning' : 'Allerjen Uyarısı',
-        currentLanguage === 'en'
-          ? `This product contains: ${matches.join(', ')}. Do you want to continue?`
-          : `Bu üründe şu allerjenler var: ${matches.join(', ')}. Devam etmek istiyor musunuz?`,
-        [
-          { text: currentLanguage === 'en' ? 'Cancel' : 'Vazgeç', style: 'cancel' },
-          {
-            text: currentLanguage === 'en' ? 'Continue' : 'Devam et',
-            onPress: () => addItemToCart(item),
-          },
-        ]
-      );
+      setPendingAllergenItem(item);
+      setAllergenMatches(matches);
+      setAllergenModalVisible(true);
       return;
     }
 
     addItemToCart(item);
+  };
+
+  const closeAllergenModal = () => {
+    setAllergenModalVisible(false);
+    setAllergenMatches([]);
+    setPendingAllergenItem(null);
+  };
+
+  const confirmAllergenAddToCart = () => {
+    if (pendingAllergenItem) {
+      addItemToCart(pendingAllergenItem);
+    }
+    closeAllergenModal();
   };
 
   return (
@@ -338,9 +407,16 @@ export const HomePreview: React.FC = () => {
         <View style={styles.searchWrap}>
           <View style={styles.searchInputWrap}>
             <MaterialIcons name="search" size={20} color="#7A7A7A" />
-            <Text style={styles.searchText}>
-              {currentLanguage === 'en' ? 'What would you like to eat today?' : 'Bugün ne yemek istersin?'}
-            </Text>
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={currentLanguage === 'en' ? 'What would you like to eat today?' : 'Bugün ne yemek istersin?'}
+              placeholderTextColor="#7A7A7A"
+              returnKeyType="search"
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
           </View>
           <TouchableOpacity style={styles.filterButton} activeOpacity={0.85} onPress={handleFilterPress}>
             <MaterialIcons name="filter-list" size={18} color="#7A7A7A" />
@@ -426,7 +502,7 @@ export const HomePreview: React.FC = () => {
 
               <View style={styles.cardBody}>
                 <View style={styles.cardBodyTop}>
-                  <Text style={styles.metaTitle}>{item.category}</Text>
+                  <Text style={styles.metaTitle}>{item.cuisine}</Text>
                   <Text style={styles.metaDescription} numberOfLines={3} ellipsizeMode="tail">
                     {item.description}
                   </Text>
@@ -486,6 +562,43 @@ export const HomePreview: React.FC = () => {
         onApply={handleApplyFilters}
         initialFilters={searchFilters}
       />
+      <Modal visible={allergenModalVisible} transparent animationType="fade" onRequestClose={closeAllergenModal}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalIcon}>
+                <Text style={styles.modalIconText}>!</Text>
+              </View>
+              <Text variant="subheading" weight="bold" style={styles.modalTitle}>
+                {t('allergenWarning.title')}
+              </Text>
+            </View>
+            <View style={styles.modalWarningBox}>
+              <Text variant="body" style={styles.modalText}>
+                {t('allergenWarning.warningMessage', { allergen: allergenMatches.join(', ') })}
+              </Text>
+              <Text variant="body" weight="bold" style={styles.modalAllergenText}>
+                {allergenMatches.join(', ')}
+              </Text>
+              <Text variant="body" weight="bold" style={styles.modalEmphasis}>
+                {t('allergenWarning.question')}
+              </Text>
+            </View>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalPrimaryButton} onPress={closeAllergenModal} activeOpacity={0.85}>
+                <Text variant="body" weight="bold" style={styles.modalPrimaryButtonText}>
+                  {t('allergenWarning.cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSecondaryButton} onPress={confirmAllergenAddToCart} activeOpacity={0.85}>
+                <Text variant="body" weight="bold" style={styles.modalSecondaryButtonText}>
+                  {t('allergenWarning.confirm')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -544,9 +657,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  searchText: {
+  searchInput: {
     color: '#7A7A7A',
     fontSize: 15,
+    flex: 1,
+    paddingVertical: 8,
   },
   filterButton: {
     width: 28,
@@ -791,5 +906,86 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#374151',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.38)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: Spacing.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  modalIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE4E2',
+  },
+  modalIconText: {
+    color: '#B42318',
+    fontWeight: '800',
+  },
+  modalTitle: {
+    color: '#111827',
+  },
+  modalWarningBox: {
+    backgroundColor: '#FEF3F2',
+    borderColor: '#FEE4E2',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  modalText: {
+    color: '#374151',
+    marginBottom: Spacing.xs,
+  },
+  modalAllergenText: {
+    color: '#B42318',
+    fontWeight: '700',
+    marginBottom: Spacing.xs,
+  },
+  modalEmphasis: {
+    color: '#111827',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  modalPrimaryButton: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: PREVIEW_COLORS.border,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalPrimaryButtonText: {
+    color: '#374151',
+  },
+  modalSecondaryButton: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: PREVIEW_COLORS.accent,
+  },
+  modalSecondaryButtonText: {
+    color: '#FFFFFF',
   },
 });

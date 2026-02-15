@@ -127,7 +127,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           borderColor: isFocused ? colors.primary : colors.border,
         }
       ]}>
-        <MaterialIcons name="search" size={16} color={colors.textSecondary} style={styles.searchIcon} />
+        <TouchableOpacity onPress={handleSubmit} style={styles.searchIconButton} activeOpacity={0.7}>
+          <MaterialIcons name="search" size={16} color={colors.textSecondary} style={styles.searchIcon} />
+        </TouchableOpacity>
         
         <TextInput
           ref={inputRef}
@@ -214,7 +216,11 @@ const styles = StyleSheet.create({
     minHeight: 34, // Further reduced height for thinner appearance
   },
   searchIcon: {
+    marginRight: 0,
+  },
+  searchIconButton: {
     marginRight: Spacing.sm,
+    padding: 2,
   },
   input: {
     flex: 1,
@@ -275,6 +281,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
 
 

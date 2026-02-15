@@ -1527,5 +1527,514 @@
     "createdAt": "2026-02-14T12:00:00.000Z",
     "updatedAt": "2026-02-14T12:00:00.000Z",
     "favoriteCount": 7
+  },
+  {
+    "id": "38",
+    "name": "Japon Ramen Bowl",
+    "cookName": "Mika Şef",
+    "cookDescription": "Japon mutfağına odaklanan sıcak noodle tarifleri hazırlar.",
+    "rating": 4.8,
+    "price": 82,
+    "distance": "4.3 km",
+    "category": "Ana Yemek",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 9,
+    "dailyStock": 12,
+    "maxDeliveryDistance": 5,
+    "allergens": [
+      "Buğday (Gluten)",
+      "Soya"
+    ],
+    "hygieneRating": "5",
+    "deliveryFee": 8,
+    "ingredients": [
+      "Noodle",
+      "Tavuk Suyu",
+      "Yumurta",
+      "Nori"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1557872943-16a5ac26437e?w=400&h=300&fit=crop",
+    "cardSummary": "Japon mutfağından ramen bowl, sıcak servis edilir.",
+    "description": "Japon mutfağına ait ramen bowl, dengeli et suyu ve taze malzemelerle hazırlanır.",
+    "recipe": "1. Et suyu hazırlanır.\n2. Noodle haşlanır.\n3. Toppinglerle servis edilir.",
+    "country": "Japan",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1557872943-16a5ac26437e?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Mika Şef",
+    "sellerId": "seller_mika_sef",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 5
+  },
+  {
+    "id": "39",
+    "name": "Çin Usulü Sebzeli Noodle",
+    "cookName": "Lin Usta",
+    "cookDescription": "Çin mutfağı wok tariflerinde deneyimlidir.",
+    "rating": 4.7,
+    "price": 69,
+    "distance": "4.8 km",
+    "category": "Ana Yemek",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 10,
+    "dailyStock": 14,
+    "maxDeliveryDistance": 5,
+    "allergens": [
+      "Buğday (Gluten)",
+      "Soya"
+    ],
+    "hygieneRating": "5",
+    "deliveryFee": 8,
+    "ingredients": [
+      "Noodle",
+      "Biber",
+      "Havuç",
+      "Soya Sosu"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=300&fit=crop",
+    "cardSummary": "Çin mutfağı lezzeti sebzeli noodle.",
+    "description": "Çin usulü sebzeli noodle wok ateşinde hızlıca hazırlanır.",
+    "recipe": "1. Sebzeler sotelenir.\n2. Noodle eklenir.\n3. Sosla karıştırılır.",
+    "country": "China",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Lin Usta",
+    "sellerId": "seller_lin_usta",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 6
+  },
+  {
+    "id": "40",
+    "name": "Meksika Tavuk Taco",
+    "cookName": "Carlos Şef",
+    "cookDescription": "Meksika mutfağı sokak lezzetlerinde uzman.",
+    "rating": 4.6,
+    "price": 74,
+    "distance": "5.1 km",
+    "category": "Ana Yemek",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 11,
+    "dailyStock": 15,
+    "maxDeliveryDistance": 6,
+    "allergens": [
+      "Buğday (Gluten)"
+    ],
+    "hygieneRating": "5",
+    "deliveryFee": 9,
+    "ingredients": [
+      "Tortilla",
+      "Tavuk",
+      "Salsa",
+      "Avokado"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400&h=300&fit=crop",
+    "cardSummary": "Meksika mutfağı tavuk taco.",
+    "description": "Meksika mutfağından tavuk taco taze salsa ile servis edilir.",
+    "recipe": "1. Tavuk pişirilir.\n2. Tortilla hazırlanır.\n3. İç malzeme eklenir.",
+    "country": "Mexico",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Carlos Şef",
+    "sellerId": "seller_carlos_sef",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 4
+  },
+  {
+    "id": "41",
+    "name": "İtalyan Makarna Alfredo",
+    "cookName": "Luca Usta",
+    "cookDescription": "İtalyan mutfağı makarna ve soslarında uzmandır.",
+    "rating": 4.7,
+    "price": 79,
+    "distance": "3.9 km",
+    "category": "Ana Yemek",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 8,
+    "dailyStock": 11,
+    "maxDeliveryDistance": 5,
+    "allergens": [
+      "Buğday (Gluten)",
+      "Süt"
+    ],
+    "hygieneRating": "5",
+    "deliveryFee": 9,
+    "ingredients": [
+      "Penne",
+      "Krema",
+      "Parmesan",
+      "Mantar"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop",
+    "cardSummary": "İtalyan mutfağı alfredo makarna.",
+    "description": "İtalyan mutfağının klasiklerinden alfredo makarna kremalı sosla hazırlanır.",
+    "recipe": "1. Makarna haşlanır.\n2. Sos hazırlanır.\n3. Birleştirilip servis edilir.",
+    "country": "Italy",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Luca Usta",
+    "sellerId": "seller_luca_usta",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 5
+  },
+  {
+    "id": "42",
+    "name": "Fransız Soğan Çorbası",
+    "cookName": "Claire Şef",
+    "cookDescription": "Fransız mutfağı çorba ve soslarında deneyimli.",
+    "rating": 4.6,
+    "price": 58,
+    "distance": "4.0 km",
+    "category": "Çorba",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 13,
+    "dailyStock": 16,
+    "maxDeliveryDistance": 5,
+    "allergens": [
+      "Buğday (Gluten)",
+      "Süt"
+    ],
+    "hygieneRating": "5",
+    "deliveryFee": 7,
+    "ingredients": [
+      "Soğan",
+      "Et Suyu",
+      "Peynir",
+      "Ekmek"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop",
+    "cardSummary": "Fransız mutfağı soğan çorbası.",
+    "description": "Fransız mutfağından soğan çorbası peynirli krutonla servis edilir.",
+    "recipe": "1. Soğan karamelize edilir.\n2. Et suyu eklenir.\n3. Fırınlanıp servis edilir.",
+    "country": "France",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Claire Şef",
+    "sellerId": "seller_claire_sef",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 3
+  },
+  {
+    "id": "43",
+    "name": "Hatay Tepsi Kebabı",
+    "cookName": "Nesrin Usta",
+    "cookDescription": "Hatay mutfağı et yemeklerinde uzman.",
+    "rating": 4.8,
+    "price": 77,
+    "distance": "2.7 km",
+    "category": "Ana Yemek",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 10,
+    "dailyStock": 12,
+    "maxDeliveryDistance": 4,
+    "allergens": [],
+    "hygieneRating": "5",
+    "deliveryFee": 7,
+    "ingredients": [
+      "Kıyma",
+      "Biber",
+      "Domates",
+      "Maydanoz"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop",
+    "cardSummary": "Hatay mutfağı tepsi kebabı.",
+    "description": "Hatay mutfağından tepsi kebabı zengin baharatlarla hazırlanır.",
+    "recipe": "1. Harç hazırlanır.\n2. Tepsiye yayılır.\n3. Fırınlanır.",
+    "country": "Türkiye",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Nesrin Usta",
+    "sellerId": "seller_nesrin_usta",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 8
+  },
+  {
+    "id": "44",
+    "name": "Maraş Tava",
+    "cookName": "Ahmet Usta",
+    "cookDescription": "Maraş mutfağı yöresel et yemekleri hazırlar.",
+    "rating": 4.7,
+    "price": 72,
+    "distance": "3.2 km",
+    "category": "Ana Yemek",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 9,
+    "dailyStock": 11,
+    "maxDeliveryDistance": 4,
+    "allergens": [],
+    "hygieneRating": "5",
+    "deliveryFee": 7,
+    "ingredients": [
+      "Kuzu Eti",
+      "Biber",
+      "Sarımsak",
+      "Domates"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1529042410759-befb1204b468?w=400&h=300&fit=crop",
+    "cardSummary": "Maraş mutfağına ait Maraş tava.",
+    "description": "Maraş mutfağından Maraş tava fırında pişirilerek servis edilir.",
+    "recipe": "1. Et marine edilir.\n2. Tepsiye alınır.\n3. Fırında pişirilir.",
+    "country": "Türkiye",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1529042410759-befb1204b468?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Ahmet Usta",
+    "sellerId": "seller_ahmet_usta",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 6
+  },
+  {
+    "id": "45",
+    "name": "Trabzon Kuymak",
+    "cookName": "Selim Usta",
+    "cookDescription": "Trabzon mutfağı kahvaltı tarifleri sunar.",
+    "rating": 4.8,
+    "price": 56,
+    "distance": "2.0 km",
+    "category": "Kahvaltı",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 12,
+    "dailyStock": 15,
+    "maxDeliveryDistance": 3,
+    "allergens": [
+      "Süt"
+    ],
+    "hygieneRating": "5",
+    "deliveryFee": 6,
+    "ingredients": [
+      "Mısır Unu",
+      "Peynir",
+      "Tereyağı"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop",
+    "cardSummary": "Trabzon mutfağı kuymak.",
+    "description": "Trabzon mutfağının simgesi kuymak, uzayan peynir kıvamıyla hazırlanır.",
+    "recipe": "1. Tereyağı eritilir.\n2. Mısır unu kavrulur.\n3. Peynir eklenir.",
+    "country": "Türkiye",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Selim Usta",
+    "sellerId": "seller_selim_usta",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 7
+  },
+  {
+    "id": "46",
+    "name": "Hakkari Keledoş",
+    "cookName": "Zilan Hanım",
+    "cookDescription": "Hakkari mutfağı yöresel tariflerini ev usulü hazırlar.",
+    "rating": 4.7,
+    "price": 63,
+    "distance": "3.6 km",
+    "category": "Ana Yemek",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 8,
+    "dailyStock": 10,
+    "maxDeliveryDistance": 4,
+    "allergens": [
+      "Süt"
+    ],
+    "hygieneRating": "5",
+    "deliveryFee": 7,
+    "ingredients": [
+      "Nohut",
+      "Dövme",
+      "Yoğurt",
+      "Et"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop",
+    "cardSummary": "Hakkari mutfağına ait keledoş.",
+    "description": "Hakkari mutfağından keledoş, yoğurtlu ve bakliyatlı yapısıyla hazırlanır.",
+    "recipe": "1. Bakliyatlar haşlanır.\n2. Yoğurtlu sos hazırlanır.\n3. Birleştirilip servis edilir.",
+    "country": "Türkiye",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Zilan Hanım",
+    "sellerId": "seller_zilan_hanim",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 4
+  },
+  {
+    "id": "47",
+    "name": "Muş Köftesi",
+    "cookName": "Dilan Teyze",
+    "cookDescription": "Muş mutfağına ait yöresel et tarifleri sunar.",
+    "rating": 4.6,
+    "price": 61,
+    "distance": "3.9 km",
+    "category": "Ana Yemek",
+    "hasPickup": true,
+    "hasDelivery": true,
+    "availableDeliveryOptions": [
+      "pickup",
+      "delivery"
+    ],
+    "availableDates": "20-28 Şubat",
+    "currentStock": 9,
+    "dailyStock": 12,
+    "maxDeliveryDistance": 4,
+    "allergens": [
+      "Buğday (Gluten)"
+    ],
+    "hygieneRating": "5",
+    "deliveryFee": 7,
+    "ingredients": [
+      "Kıyma",
+      "Bulgur",
+      "Soğan",
+      "Baharat"
+    ],
+    "imageUrl": "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&h=300&fit=crop",
+    "cardSummary": "Muş mutfağı köftesi.",
+    "description": "Muş mutfağına özgü köfte, baharatlı harçla hazırlanır.",
+    "recipe": "1. Harç yoğrulur.\n2. Köfteler şekillenir.\n3. Izgarada pişirilir.",
+    "country": "Türkiye",
+    "startDate": "20/02/2026",
+    "endDate": "28/02/2026",
+    "deliveryOptions": {
+      "pickup": true,
+      "delivery": true
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&h=300&fit=crop"
+    ],
+    "sellerName": "Dilan Teyze",
+    "sellerId": "seller_dilan_teyze",
+    "isActive": true,
+    "createdAt": "2026-02-15T12:00:00.000Z",
+    "updatedAt": "2026-02-15T12:00:00.000Z",
+    "favoriteCount": 4
   }
 ]
