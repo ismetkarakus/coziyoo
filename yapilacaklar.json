@@ -1,0 +1,60 @@
+{
+  "tasks": [
+    {
+      "text": "ana menu mesaj hedefi ayarlanacak",
+      "status": "pending"
+    },
+    {
+      "text": "c butonuna sayfa yapilacak",
+      "status": "pending"
+    },
+    {
+      "text": "profil sayfasi icin ana menude bir yere ikon konacak",
+      "status": "pending"
+    },
+    {
+      "text": "profildeki mesaja tikladigimizda mesajlar neyin nesi",
+      "status": "pending"
+    },
+    {
+      "text": "mesaj bolumu duzenlenecek sbit texti ekleyecegiz",
+      "status": "pending"
+    },
+    {
+      "text": "satici ve alici direk mesjlasamayacak ordr bazli mesajlasacak",
+      "status": "pending"
+    },
+    {
+      "text": "iki bilsirim sistemi ollacak biri order bildirimi digeri sistem bikdirimi",
+      "status": "pending"
+    },
+    {
+      "text": "yemek katagorisi menusunu biraz assagi alalim",
+      "status": "pending"
+    },
+    {
+      "text": "notification allergen uyarisindan sonra gelsin",
+      "status": "completed"
+    },
+    {
+      "text": "kalan urun sayisi 0 sa mantik kurgula",
+      "status": "pending"
+    },
+    {
+      "text": "ana menudeki mesajlarimi degistirip siparislerim yapiyoruz acilan sayfada su anki adi musteri mesajlari olan sayfayi kullanacagiz",
+      "status": "pending"
+    },
+    {
+      "text": "her bir siparis tiklandiginda bu siparisle ilgili mesajlara gider",
+      "status": "pending"
+    },
+    {
+      "text": "siparisle ilgili bildirinm geldiginde tiklanildiginda o siparisle ilgili mesaj sayfasi acilicak",
+      "status": "pending"
+    },
+    {
+      "text": "alici ve satici mesazlasma sayfasindan neden tabottombar ve ana yemek sayfasindan bobottombar daki mesaj ikonu ne ise yariyor bunu bildirim olarakmi kullanacagiz",
+      "status": "pending"
+    }
+  ]
+}
