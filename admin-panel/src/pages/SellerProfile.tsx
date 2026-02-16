@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useParams, Link } from 'react-router-dom'
 import {
   Avatar,
@@ -22,32 +22,12 @@ const formatValue = (value: unknown) => {
 
 const SellerProfile = () => {
   const { id } = useParams()
-  const [seller, setSeller] = useState<UserRecord | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!id) return
-    let cancelled = false
-
-    const run = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await api.getUser(id)
-        if (!cancelled) setSeller(data)
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load seller')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    run()
-    return () => {
-      cancelled = true
-    }
-  }, [id])
+  const { data: seller, isLoading: loading, error } = useQuery<UserRecord>({
+    queryKey: ['seller', id],
+    queryFn: () => api.getUser(String(id)),
+    enabled: Boolean(id),
+    staleTime: 15000,
+  })
 
   if (loading) {
     return (
@@ -63,7 +43,7 @@ const SellerProfile = () => {
         <Typography variant="h5" fontWeight={600}>
           Seller not found
         </Typography>
-        {error && <Typography color="error.main">{error}</Typography>}
+        {error && <Typography color="error.main">{error instanceof Error ? error.message : 'Failed to load seller'}</Typography>}
         <Button component={Link} to="/sellers" sx={{ mt: 2 }}>
           Back to Sellers
         </Button>

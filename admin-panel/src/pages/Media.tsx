@@ -1,37 +1,24 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@mui/material'
 import { api } from '../lib/api'
 import { EntityTablePage } from './EntityTablePage'
 
 const Media = () => {
-  const [rows, setRows] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      setRows(await api.getMedia(500))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load media')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const queryClient = useQueryClient()
+  const { data: rows = [], isLoading: loading, error } = useQuery({
+    queryKey: ['media'],
+    queryFn: () => api.getMedia({ limit: 500 }),
+    staleTime: 15000,
+  })
 
   return (
     <EntityTablePage
       title="Media"
       rows={rows}
       loading={loading}
-      error={error}
+      error={error instanceof Error ? error.message : null}
       preferredColumns={['id', 'provider', 'bucket', 'objectKey', 'publicUrl', 'ownerUserId', 'relatedEntityType', 'relatedEntityId', 'status', 'createdAt']}
-      trailing={<Button onClick={load}>Refresh</Button>}
+      trailing={<Button onClick={() => queryClient.invalidateQueries({ queryKey: ['media'] })}>Refresh</Button>}
     />
   )
 }

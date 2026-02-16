@@ -11,6 +11,7 @@
     "web": "expo start --web",
     "db:migrate": "node server/scripts/migrate.js",
     "db:seed": "node server/scripts/seed-sample.js",
+    "server:test:admin": "node server/tests/admin-api.test.js",
     "server": "node server/index.js",
     "server:dev": "node --watch server/index.js",
     "test": "jest --watchAll",

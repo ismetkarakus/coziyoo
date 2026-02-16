@@ -1,37 +1,24 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@mui/material'
 import { api } from '../lib/api'
 import { EntityTablePage } from './EntityTablePage'
 
 const Reviews = () => {
-  const [rows, setRows] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      setRows(await api.getReviews(500))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load reviews')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const queryClient = useQueryClient()
+  const { data: rows = [], isLoading: loading, error } = useQuery({
+    queryKey: ['reviews'],
+    queryFn: () => api.getReviews({ limit: 500 }),
+    staleTime: 15000,
+  })
 
   return (
     <EntityTablePage
       title="Reviews"
       rows={rows}
       loading={loading}
-      error={error}
+      error={error instanceof Error ? error.message : null}
       preferredColumns={['id', 'foodId', 'userId', 'sellerId', 'rating', 'comment', 'createdAt']}
-      trailing={<Button onClick={load}>Refresh</Button>}
+      trailing={<Button onClick={() => queryClient.invalidateQueries({ queryKey: ['reviews'] })}>Refresh</Button>}
     />
   )
 }

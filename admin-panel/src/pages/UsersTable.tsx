@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -13,6 +13,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import type { UserRecord } from '../lib/api'
 
@@ -44,34 +45,14 @@ interface UsersTableProps {
 
 export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersTableProps) => {
   const [search, setSearch] = useState('')
-  const [rows, setRows] = useState<UserRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const detailBase = filterType === 'seller' ? '/sellers' : '/buyers'
   const navigate = useNavigate()
 
-  useEffect(() => {
-    let cancelled = false
-
-    const run = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const users = await api.getUsers({ role: filterType, q: search, limit: 500 })
-        if (!cancelled) setRows(users)
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load users')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    const timer = setTimeout(run, 250)
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [filterType, search])
+  const { data: rows = [], isLoading: loading, error } = useQuery<UserRecord[]>({
+    queryKey: ['users', filterType, search],
+    queryFn: () => api.getUsers({ role: filterType, q: search, limit: 500 }),
+    staleTime: 15000,
+  })
 
   const columns = useMemo(() => {
     if (forcedColumns && forcedColumns.length > 0) return forcedColumns
@@ -103,7 +84,7 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
 
       {error && (
         <Paper sx={{ p: 2, borderRadius: 3, color: 'error.main' }}>
-          {error}
+          {error instanceof Error ? error.message : 'Failed to load users'}
         </Paper>
       )}
 

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Button, TextField } from '@mui/material'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import type { AuditLogRecord } from '../lib/api'
 import { EntityTablePage } from './EntityTablePage'
@@ -15,32 +16,18 @@ const compactJson = (value: unknown) => {
 }
 
 const AuditLogs = () => {
-  const [logs, setLogs] = useState<AuditLogRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [entityType, setEntityType] = useState('')
   const [entityId, setEntityId] = useState('')
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await api.getAuditLogs({
-        limit: 500,
-        entityType: entityType.trim() || undefined,
-        entityId: entityId.trim() || undefined,
-      })
-      setLogs(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load audit logs')
-    } finally {
-      setLoading(false)
-    }
-  }, [entityId, entityType])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const queryClient = useQueryClient()
+  const { data: logs = [], isLoading: loading, error } = useQuery<AuditLogRecord[]>({
+    queryKey: ['audit-logs', entityType, entityId],
+    queryFn: () => api.getAuditLogs({
+      limit: 500,
+      entityType: entityType.trim() || undefined,
+      entityId: entityId.trim() || undefined,
+    }),
+    staleTime: 15000,
+  })
 
   const rows = useMemo(
     () =>
@@ -63,7 +50,7 @@ const AuditLogs = () => {
       title="Audit Logs"
       rows={rows}
       loading={loading}
-      error={error}
+      error={error instanceof Error ? error.message : null}
       preferredColumns={['createdAt', 'actorEmail', 'actorRole', 'action', 'entityType', 'entityId', 'before', 'after', 'id']}
       trailing={
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -79,7 +66,7 @@ const AuditLogs = () => {
             value={entityId}
             onChange={(event) => setEntityId(event.target.value)}
           />
-          <Button onClick={load}>Apply</Button>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['audit-logs'] })}>Apply</Button>
         </Box>
       }
     />

@@ -1185,6 +1185,54 @@ const normalizePositiveInt = (value, fallback, max = 500) => {
   return Math.min(parsed, max);
 };
 
+const toSortDirection = (value) => (String(value || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC');
+
+const parseListParams = (query, defaults = {}) => {
+  const page = normalizePositiveInt(query.page, defaults.page || 1, 1000000);
+  const pageSize = normalizePositiveInt(query.pageSize, defaults.pageSize || 50, defaults.maxPageSize || 500);
+  const offset = (page - 1) * pageSize;
+  const sortBy = String(query.sortBy || defaults.sortBy || '').trim();
+  const sortDir = toSortDirection(query.sortDir || defaults.sortDir || 'desc');
+  const q = String(query.q || '').trim().toLowerCase();
+  return { page, pageSize, offset, sortBy, sortDir, q };
+};
+
+const paginated = (items, page, pageSize, total) => ({
+  items,
+  page,
+  pageSize,
+  total,
+  totalPages: Math.max(1, Math.ceil(total / pageSize)),
+});
+
+const resolveUserSortColumn = (sortBy) => {
+  const allowed = {
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    email: 'email',
+    userType: 'user_type',
+  };
+  return allowed[sortBy] || 'created_at';
+};
+
+const resolveOrderSortColumn = (sortBy) => {
+  const allowed = {
+    orderDate: 'order_date',
+    status: 'status',
+    id: 'id',
+  };
+  return allowed[sortBy] || 'order_date';
+};
+
+const resolveAuditSortColumn = (sortBy) => {
+  const allowed = {
+    createdAt: 'created_at',
+    action: 'action',
+    entityType: 'entity_type',
+  };
+  return allowed[sortBy] || 'created_at';
+};
+
 app.get('/admin/dashboard', requireAdminAuth, async (_req, res) => {
   try {
     const [usersResult, foodsResult, ordersResult, chatsResult, reviewsResult, mediaResult] = await Promise.all([
@@ -1209,11 +1257,26 @@ app.get('/admin/dashboard', requireAdminAuth, async (_req, res) => {
   }
 });
 
+const getAdminUserById = async (id) => {
+  const result = await pool.query(
+    'SELECT uid, email, password, user_type, created_at, updated_at, data FROM users WHERE uid = $1 OR lower(email) = lower($1) LIMIT 1',
+    [id]
+  );
+  return result.rowCount ? result.rows[0] : null;
+};
+
+const isSellerType = (userType) => userType === 'seller' || userType === 'both';
+
 app.get('/admin/users', requireAdminAuth, async (req, res) => {
   try {
     const role = String(req.query.role || '').trim().toLowerCase();
-    const queryText = String(req.query.q || '').trim().toLowerCase();
-    const limit = normalizePositiveInt(req.query.limit, 200);
+    const { page, pageSize, offset, sortBy, sortDir, q } = parseListParams(req.query, {
+      pageSize: 50,
+      sortBy: 'createdAt',
+      sortDir: 'desc',
+      maxPageSize: 500,
+    });
+    const sortColumn = resolveUserSortColumn(sortBy);
 
     const conditions = [];
     const values = [];
@@ -1226,17 +1289,22 @@ app.get('/admin/users', requireAdminAuth, async (req, res) => {
       conditions.push(`user_type = ANY($${values.length}::text[])`);
     }
 
-    if (queryText) {
-      values.push(`%${queryText}%`);
+    if (q) {
+      values.push(`%${q}%`);
       const idx = values.length;
       conditions.push(`(lower(email) LIKE $${idx} OR lower(coalesce(data->>'displayName','')) LIKE $${idx})`);
     }
 
-    values.push(limit);
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-    const sqlText = `SELECT data FROM users ${whereClause} ORDER BY created_at DESC LIMIT $${values.length}`;
-    const result = await pool.query(sqlText, values);
-    return send(res, 200, result.rows.map((row) => row.data));
+    const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM users ${whereClause}`, values);
+    const total = Number(countResult.rows[0]?.total || 0);
+
+    values.push(pageSize, offset);
+    const rowsResult = await pool.query(
+      `SELECT data FROM users ${whereClause} ORDER BY ${sortColumn} ${sortDir} LIMIT $${values.length - 1} OFFSET $${values.length}`,
+      values
+    );
+    return send(res, 200, paginated(rowsResult.rows.map((row) => row.data), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1244,12 +1312,262 @@ app.get('/admin/users', requireAdminAuth, async (req, res) => {
 
 app.get('/admin/users/:id', requireAdminAuth, async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT data FROM users WHERE uid = $1 OR lower(email) = lower($1) LIMIT 1',
-      [req.params.id]
+    const row = await getAdminUserById(req.params.id);
+    if (!row) return send(res, 404, null, 'User not found');
+    return send(res, 200, row.data);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/admin/users', requireAdminAuth, async (req, res) => {
+  try {
+    const now = nowIso();
+    const email = String(req.body?.email || '').trim();
+    const password = String(req.body?.password || '').trim();
+    if (!email || !password) return send(res, 400, null, 'email and password are required');
+
+    const user = {
+      uid: req.body?.uid || makeId('user'),
+      email,
+      password,
+      displayName: String(req.body?.displayName || ''),
+      userType: String(req.body?.userType || 'buyer'),
+      status: String(req.body?.status || 'active'),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await pool.query(
+      `INSERT INTO users (uid, email, password, user_type, created_at, updated_at, data)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb)`,
+      [user.uid, user.email, user.password, user.userType, user.createdAt, user.updatedAt, JSON.stringify(user)]
     );
-    if (!result.rowCount) return send(res, 404, null, 'User not found');
-    return send(res, 200, result.rows[0].data);
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'user.create',
+      entityType: 'user',
+      entityId: user.uid,
+      before: null,
+      after: user,
+    });
+
+    return send(res, 201, user);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/admin/users/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const existing = await getAdminUserById(req.params.id);
+    if (!existing) return send(res, 404, null, 'User not found');
+
+    const nextUserType = req.body?.userType ? String(req.body.userType) : existing.user_type;
+    const nextEmail = req.body?.email ? String(req.body.email).trim() : existing.email;
+    const nextPassword = req.body?.password ? String(req.body.password) : existing.password;
+    const nextData = {
+      ...(existing.data || {}),
+      ...req.body,
+      uid: existing.uid,
+      email: nextEmail,
+      userType: nextUserType,
+      updatedAt: nowIso(),
+    };
+
+    await pool.query(
+      `UPDATE users
+       SET email = $1,
+           password = $2,
+           user_type = $3,
+           updated_at = NOW(),
+           data = $4::jsonb
+       WHERE uid = $5`,
+      [nextEmail, nextPassword, nextUserType, JSON.stringify(nextData), existing.uid]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'user.update',
+      entityType: 'user',
+      entityId: existing.uid,
+      before: existing.data,
+      after: nextData,
+    });
+
+    return send(res, 200, nextData);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.delete('/admin/users/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const existing = await getAdminUserById(req.params.id);
+    if (!existing) return send(res, 404, null, 'User not found');
+
+    await pool.query('DELETE FROM users WHERE uid = $1', [existing.uid]);
+    await logAdminAction({
+      admin: req.admin,
+      action: 'user.delete',
+      entityType: 'user',
+      entityId: existing.uid,
+      before: existing.data,
+      after: null,
+    });
+    return send(res, 200, { uid: existing.uid });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/sellers', requireAdminAuth, async (req, res) => {
+  try {
+    const { page, pageSize, offset, sortBy, sortDir, q } = parseListParams(req.query, {
+      pageSize: 50,
+      sortBy: 'createdAt',
+      sortDir: 'desc',
+      maxPageSize: 500,
+    });
+    const sortColumn = resolveUserSortColumn(sortBy);
+
+    const conditions = ['user_type = ANY($1::text[])'];
+    const values = [['seller', 'both']];
+
+    if (q) {
+      values.push(`%${q}%`);
+      const idx = values.length;
+      conditions.push(`(lower(email) LIKE $${idx} OR lower(coalesce(data->>'displayName','')) LIKE $${idx})`);
+    }
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+    const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM users ${whereClause}`, values);
+    const total = Number(countResult.rows[0]?.total || 0);
+
+    values.push(pageSize, offset);
+    const rowsResult = await pool.query(
+      `SELECT data FROM users ${whereClause} ORDER BY ${sortColumn} ${sortDir} LIMIT $${values.length - 1} OFFSET $${values.length}`,
+      values
+    );
+    return send(res, 200, paginated(rowsResult.rows.map((row) => row.data), page, pageSize, total));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/sellers/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const row = await getAdminUserById(req.params.id);
+    if (!row || !isSellerType(row.user_type)) return send(res, 404, null, 'Seller not found');
+    return send(res, 200, row.data);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/admin/sellers', requireAdminAuth, async (req, res) => {
+  try {
+    const now = nowIso();
+    const email = String(req.body?.email || '').trim();
+    const password = String(req.body?.password || '').trim();
+    if (!email || !password) return send(res, 400, null, 'email and password are required');
+
+    const userType = req.body?.userType ? String(req.body.userType) : 'seller';
+    if (!isSellerType(userType)) return send(res, 400, null, 'seller userType must be seller or both');
+
+    const seller = {
+      uid: req.body?.uid || makeId('user'),
+      email,
+      password,
+      displayName: String(req.body?.displayName || ''),
+      userType,
+      status: String(req.body?.status || 'active'),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await pool.query(
+      `INSERT INTO users (uid, email, password, user_type, created_at, updated_at, data)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb)`,
+      [seller.uid, seller.email, seller.password, seller.userType, seller.createdAt, seller.updatedAt, JSON.stringify(seller)]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'seller.create',
+      entityType: 'seller',
+      entityId: seller.uid,
+      before: null,
+      after: seller,
+    });
+
+    return send(res, 201, seller);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/admin/sellers/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const row = await getAdminUserById(req.params.id);
+    if (!row || !isSellerType(row.user_type)) return send(res, 404, null, 'Seller not found');
+    if (req.body?.userType && !isSellerType(String(req.body.userType))) {
+      return send(res, 400, null, 'seller userType must be seller or both');
+    }
+
+    const nextUserType = req.body?.userType ? String(req.body.userType) : row.user_type;
+    const nextEmail = req.body?.email ? String(req.body.email).trim() : row.email;
+    const nextPassword = req.body?.password ? String(req.body.password) : row.password;
+    const nextData = {
+      ...(row.data || {}),
+      ...req.body,
+      uid: row.uid,
+      email: nextEmail,
+      userType: nextUserType,
+      updatedAt: nowIso(),
+    };
+
+    await pool.query(
+      `UPDATE users
+       SET email = $1,
+           password = $2,
+           user_type = $3,
+           updated_at = NOW(),
+           data = $4::jsonb
+       WHERE uid = $5`,
+      [nextEmail, nextPassword, nextUserType, JSON.stringify(nextData), row.uid]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'seller.update',
+      entityType: 'seller',
+      entityId: row.uid,
+      before: row.data,
+      after: nextData,
+    });
+
+    return send(res, 200, nextData);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.delete('/admin/sellers/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const row = await getAdminUserById(req.params.id);
+    if (!row || !isSellerType(row.user_type)) return send(res, 404, null, 'Seller not found');
+    await pool.query('DELETE FROM users WHERE uid = $1', [row.uid]);
+    await logAdminAction({
+      admin: req.admin,
+      action: 'seller.delete',
+      entityType: 'seller',
+      entityId: row.uid,
+      before: row.data,
+      after: null,
+    });
+    return send(res, 200, { uid: row.uid });
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1258,7 +1576,13 @@ app.get('/admin/users/:id', requireAdminAuth, async (req, res) => {
 app.get('/admin/orders', requireAdminAuth, async (req, res) => {
   try {
     const status = String(req.query.status || '').trim().toLowerCase();
-    const limit = normalizePositiveInt(req.query.limit, 200);
+    const { page, pageSize, offset, sortBy, sortDir } = parseListParams(req.query, {
+      pageSize: 50,
+      sortBy: 'orderDate',
+      sortDir: 'desc',
+      maxPageSize: 500,
+    });
+    const sortColumn = resolveOrderSortColumn(sortBy);
     const values = [];
     let whereClause = '';
 
@@ -1267,12 +1591,15 @@ app.get('/admin/orders', requireAdminAuth, async (req, res) => {
       whereClause = `WHERE lower(status) = $${values.length}`;
     }
 
-    values.push(limit);
+    const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM orders ${whereClause}`, values);
+    const total = Number(countResult.rows[0]?.total || 0);
+
+    values.push(pageSize, offset);
     const result = await pool.query(
-      `SELECT data FROM orders ${whereClause} ORDER BY order_date DESC LIMIT $${values.length}`,
+      `SELECT data FROM orders ${whereClause} ORDER BY ${sortColumn} ${sortDir} LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values
     );
-    return send(res, 200, result.rows.map((row) => row.data));
+    return send(res, 200, paginated(result.rows.map((row) => row.data), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1312,9 +1639,30 @@ app.put('/admin/orders/:id/status', requireAdminAuth, async (req, res) => {
 
 app.get('/admin/foods', requireAdminAuth, async (req, res) => {
   try {
-    const limit = normalizePositiveInt(req.query.limit, 300);
-    const result = await pool.query('SELECT data FROM foods ORDER BY created_at DESC LIMIT $1', [limit]);
-    return send(res, 200, result.rows.map((row) => row.data));
+    const { page, pageSize, offset, sortBy, sortDir, q } = parseListParams(req.query, {
+      pageSize: 50,
+      sortBy: 'createdAt',
+      sortDir: 'desc',
+      maxPageSize: 500,
+    });
+    const sortColumn = sortBy === 'updatedAt' ? 'updated_at' : 'created_at';
+    const values = [];
+    let whereClause = '';
+
+    if (q) {
+      values.push(`%${q}%`);
+      whereClause = `WHERE lower(coalesce(data->>'name','')) LIKE $${values.length}`;
+    }
+
+    const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM foods ${whereClause}`, values);
+    const total = Number(countResult.rows[0]?.total || 0);
+
+    values.push(pageSize, offset);
+    const result = await pool.query(
+      `SELECT data FROM foods ${whereClause} ORDER BY ${sortColumn} ${sortDir} LIMIT $${values.length - 1} OFFSET $${values.length}`,
+      values
+    );
+    return send(res, 200, paginated(result.rows.map((row) => row.data), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1322,9 +1670,19 @@ app.get('/admin/foods', requireAdminAuth, async (req, res) => {
 
 app.get('/admin/reviews', requireAdminAuth, async (req, res) => {
   try {
-    const limit = normalizePositiveInt(req.query.limit, 300);
-    const result = await pool.query('SELECT data FROM reviews ORDER BY created_at DESC LIMIT $1', [limit]);
-    return send(res, 200, result.rows.map((row) => row.data));
+    const { page, pageSize, offset, sortDir } = parseListParams(req.query, {
+      pageSize: 50,
+      sortBy: 'createdAt',
+      sortDir: 'desc',
+      maxPageSize: 500,
+    });
+    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM reviews');
+    const total = Number(countResult.rows[0]?.total || 0);
+    const result = await pool.query(
+      `SELECT data FROM reviews ORDER BY created_at ${sortDir} LIMIT $1 OFFSET $2`,
+      [pageSize, offset]
+    );
+    return send(res, 200, paginated(result.rows.map((row) => row.data), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1332,12 +1690,19 @@ app.get('/admin/reviews', requireAdminAuth, async (req, res) => {
 
 app.get('/admin/chats', requireAdminAuth, async (req, res) => {
   try {
-    const limit = normalizePositiveInt(req.query.limit, 300);
+    const { page, pageSize, offset, sortDir } = parseListParams(req.query, {
+      pageSize: 50,
+      sortBy: 'lastMessageTime',
+      sortDir: 'desc',
+      maxPageSize: 500,
+    });
+    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM chats');
+    const total = Number(countResult.rows[0]?.total || 0);
     const result = await pool.query(
-      'SELECT data FROM chats ORDER BY last_message_time DESC NULLS LAST LIMIT $1',
-      [limit]
+      `SELECT data FROM chats ORDER BY last_message_time ${sortDir} NULLS LAST LIMIT $1 OFFSET $2`,
+      [pageSize, offset]
     );
-    return send(res, 200, result.rows.map((row) => row.data));
+    return send(res, 200, paginated(result.rows.map((row) => row.data), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1345,16 +1710,23 @@ app.get('/admin/chats', requireAdminAuth, async (req, res) => {
 
 app.get('/admin/media', requireAdminAuth, async (req, res) => {
   try {
-    const limit = normalizePositiveInt(req.query.limit, 300);
+    const { page, pageSize, offset, sortDir } = parseListParams(req.query, {
+      pageSize: 50,
+      sortBy: 'createdAt',
+      sortDir: 'desc',
+      maxPageSize: 500,
+    });
+    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM media_assets');
+    const total = Number(countResult.rows[0]?.total || 0);
     const result = await pool.query(
       `SELECT id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum,
               owner_user_id, related_entity_type, related_entity_id, status, metadata, created_at, updated_at
        FROM media_assets
-       ORDER BY created_at DESC
-       LIMIT $1`,
-      [limit]
+       ORDER BY created_at ${sortDir}
+       LIMIT $1 OFFSET $2`,
+      [pageSize, offset]
     );
-    return send(res, 200, result.rows.map((row) => ({
+    return send(res, 200, paginated(result.rows.map((row) => ({
       id: row.id,
       provider: row.provider,
       bucket: row.bucket,
@@ -1370,7 +1742,7 @@ app.get('/admin/media', requireAdminAuth, async (req, res) => {
       metadata: row.metadata || {},
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-    })));
+    })), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1378,7 +1750,13 @@ app.get('/admin/media', requireAdminAuth, async (req, res) => {
 
 app.get('/admin/audit-logs', requireAdminAuth, async (req, res) => {
   try {
-    const limit = normalizePositiveInt(req.query.limit, 200, 1000);
+    const { page, pageSize, offset, sortBy, sortDir } = parseListParams(req.query, {
+      pageSize: 50,
+      sortBy: 'createdAt',
+      sortDir: 'desc',
+      maxPageSize: 1000,
+    });
+    const sortColumn = resolveAuditSortColumn(sortBy);
     const entityType = String(req.query.entityType || '').trim().toLowerCase();
     const entityId = String(req.query.entityId || '').trim();
 
@@ -1394,18 +1772,20 @@ app.get('/admin/audit-logs', requireAdminAuth, async (req, res) => {
       conditions.push(`entity_id = $${values.length}`);
     }
 
-    values.push(limit);
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM admin_audit_logs ${whereClause}`, values);
+    const total = Number(countResult.rows[0]?.total || 0);
+    values.push(pageSize, offset);
     const result = await pool.query(
       `SELECT id, actor_email, actor_role, action, entity_type, entity_id, before_json, after_json, created_at
        FROM admin_audit_logs
        ${whereClause}
-       ORDER BY created_at DESC
-       LIMIT $${values.length}`,
+       ORDER BY ${sortColumn} ${sortDir}
+       LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values
     );
 
-    return send(res, 200, result.rows.map((row) => ({
+    return send(res, 200, paginated(result.rows.map((row) => ({
       id: row.id,
       actorEmail: row.actor_email,
       actorRole: row.actor_role,
@@ -1415,7 +1795,7 @@ app.get('/admin/audit-logs', requireAdminAuth, async (req, res) => {
       before: row.before_json,
       after: row.after_json,
       createdAt: row.created_at,
-    })));
+    })), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }

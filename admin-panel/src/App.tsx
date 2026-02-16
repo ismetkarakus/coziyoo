@@ -3,6 +3,7 @@ import './App.css'
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { ThemeProvider } from '@mui/material/styles'
 import { Box, Button, CssBaseline, Paper, TextField, Typography } from '@mui/material'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { lightTheme, darkTheme } from './theme'
 import Buyers from './pages/Buyers'
 import Sellers from './pages/Sellers'
@@ -53,39 +54,27 @@ const toDateString = (value: unknown) => {
 }
 
 function Dashboard() {
-  const [stats, setStats] = useState<DashboardSummary>({
+  const queryClient = useQueryClient()
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: async () => {
+      const [summary, orders] = await Promise.all([
+        api.getDashboardSummary(),
+        api.getOrders({ limit: 8 }),
+      ])
+      return { summary, orders }
+    },
+    staleTime: 15000,
+  })
+  const stats: DashboardSummary = data?.summary || {
     users: 0,
     foods: 0,
     orders: 0,
     chats: 0,
     reviews: 0,
     media: 0,
-  })
-  const [recentOrders, setRecentOrders] = useState<OrderRecord[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const loadDashboard = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const [summary, orders] = await Promise.all([
-        api.getDashboardSummary(),
-        api.getOrders({ limit: 8 }),
-      ])
-
-      setStats(summary)
-      setRecentOrders(orders)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown API error')
-    } finally {
-      setIsLoading(false)
-    }
   }
-
-  useEffect(() => {
-    loadDashboard()
-  }, [])
+  const recentOrders: OrderRecord[] = data?.orders || []
 
   const cards = useMemo<StatCard[]>(
     () => [
@@ -110,13 +99,13 @@ function Dashboard() {
           </p>
         </div>
         <div className="topbar-actions">
-          <button className="ghost" onClick={loadDashboard}>Refresh</button>
+          <button className="ghost" onClick={() => queryClient.invalidateQueries({ queryKey: ['dashboard'] })}>Refresh</button>
         </div>
       </header>
 
       {error && (
         <div className="alert">
-          <strong>API error:</strong> {error}
+          <strong>API error:</strong> {error instanceof Error ? error.message : 'Unknown error'}
         </div>
       )}
 

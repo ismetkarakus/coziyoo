@@ -48,6 +48,14 @@ type ApiEnvelope<T> = {
   error?: string
 }
 
+type PaginatedResult<T> = {
+  items: T[]
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+}
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/+$/, '')
 const ADMIN_TOKEN_KEY = 'admin_token'
 
@@ -80,6 +88,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return payload.data as T
 }
 
+const asItems = <T>(data: T[] | PaginatedResult<T>): T[] => {
+  if (Array.isArray(data)) return data
+  return data.items || []
+}
+
 export const api = {
   baseUrl: API_BASE_URL,
   getToken: () => localStorage.getItem(ADMIN_TOKEN_KEY),
@@ -99,13 +112,13 @@ export const api = {
 
   getDashboardSummary: () => request<DashboardSummary>('/admin/dashboard'),
 
-  getUsers: (params?: { role?: 'buyer' | 'seller'; q?: string; limit?: number }) =>
-    request<UserRecord[]>(`/admin/users${buildQuery(params)}`),
+  getUsers: (params?: { role?: 'buyer' | 'seller'; q?: string; page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; limit?: number }) =>
+    request<UserRecord[] | PaginatedResult<UserRecord>>(`/admin/users${buildQuery(params)}`).then(asItems),
 
   getUser: (id: string) => request<UserRecord>(`/admin/users/${encodeURIComponent(id)}`),
 
-  getOrders: (params?: { status?: string; limit?: number }) =>
-    request<OrderRecord[]>(`/admin/orders${buildQuery(params)}`),
+  getOrders: (params?: { status?: string; page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; limit?: number }) =>
+    request<OrderRecord[] | PaginatedResult<OrderRecord>>(`/admin/orders${buildQuery(params)}`).then(asItems),
 
   updateOrderStatus: (id: string, status: string) =>
     request<{ id: string; status: string }>(`/admin/orders/${encodeURIComponent(id)}/status`, {
@@ -113,16 +126,20 @@ export const api = {
       body: JSON.stringify({ status }),
     }),
 
-  getFoods: (limit = 300) => request<Record<string, unknown>[]>(`/admin/foods${buildQuery({ limit })}`),
+  getFoods: (params?: { page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; q?: string; limit?: number }) =>
+    request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/foods${buildQuery(params || { limit: 300 })}`).then(asItems),
 
-  getReviews: (limit = 300) => request<Record<string, unknown>[]>(`/admin/reviews${buildQuery({ limit })}`),
+  getReviews: (params?: { page?: number; pageSize?: number; sortDir?: 'asc' | 'desc'; limit?: number }) =>
+    request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/reviews${buildQuery(params || { limit: 300 })}`).then(asItems),
 
-  getChats: (limit = 300) => request<Record<string, unknown>[]>(`/admin/chats${buildQuery({ limit })}`),
+  getChats: (params?: { page?: number; pageSize?: number; sortDir?: 'asc' | 'desc'; limit?: number }) =>
+    request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/chats${buildQuery(params || { limit: 300 })}`).then(asItems),
 
-  getMedia: (limit = 300) => request<Record<string, unknown>[]>(`/admin/media${buildQuery({ limit })}`),
+  getMedia: (params?: { page?: number; pageSize?: number; sortDir?: 'asc' | 'desc'; limit?: number }) =>
+    request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/media${buildQuery(params || { limit: 300 })}`).then(asItems),
 
   getAuditLogs: (params?: { limit?: number; entityType?: string; entityId?: string }) =>
-    request<AuditLogRecord[]>(`/admin/audit-logs${buildQuery(params)}`),
+    request<AuditLogRecord[] | PaginatedResult<AuditLogRecord>>(`/admin/audit-logs${buildQuery(params)}`).then(asItems),
 
   getAuditLog: (id: string) => request<AuditLogRecord>(`/admin/audit-logs/${encodeURIComponent(id)}`),
 }
