@@ -33,6 +33,29 @@ npm run android
 npm run web
 ```
 
+## PostgreSQL Backend (Remote API)
+You can run the app against a real PostgreSQL-backed API server.
+
+### 1) Configure environment
+Create `.env` (or export vars) based on `.env.example`:
+- `EXPO_PUBLIC_API_MODE=remote`
+- `EXPO_PUBLIC_API_BASE_URL=http://localhost:4000` (or your deployed API URL)
+- `DATABASE_URL=postgresql://USERNAME:PASSWORD@proxy.drascom.uk:45432/DATABASE_NAME`
+
+Important:
+- Keep DB credentials only in backend/server environment.
+- Do not expose DB credentials in Expo client env vars.
+
+### 2) Start backend API
+```bash
+npm run server
+```
+
+### 3) Start Expo app
+```bash
+npm run start
+```
+
 ## Admin Panel (Web)
 The admin panel is a separate React + Vite app under `admin-panel/`.
 
@@ -63,6 +86,11 @@ Firebase configuration is currently hardcoded for web and native:
 The internal app API now supports a pluggable data mode for testing:
 - `sqlite` (default): Persistent local SQLite database, seeded once from mock JSON.
 - `mock`: In-memory mock JSON database (previous behavior).
+- `remote`: Network API via `EXPO_PUBLIC_API_MODE=remote` (PostgreSQL backend server).
+
+Web note:
+- If `SharedArrayBuffer` is unavailable in the browser/runtime, web automatically falls back to `mock`.
+- `sqlite` mode remains available on native (iOS/Android).
 
 Set mode with:
 ```bash

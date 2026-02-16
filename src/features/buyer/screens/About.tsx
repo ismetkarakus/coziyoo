@@ -29,6 +29,13 @@ export const About: React.FC = () => {
       };
 
   const activeDataMode = getDatabaseMode();
+  const configuredApiMode =
+    (process.env.EXPO_PUBLIC_API_MODE || (process.env.EXPO_PUBLIC_API_BASE_URL ? 'remote' : 'internal'))
+      .toString()
+      .toLowerCase() === 'remote'
+      ? 'remote'
+      : 'internal';
+  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || '-';
 
   const appInfo = [
     { label: t('aboutScreen.appInfo.version'), value: '1.0.0' },
@@ -42,6 +49,16 @@ export const About: React.FC = () => {
           ? t('aboutScreen.appInfo.dataModeValues.sqlite')
           : t('aboutScreen.appInfo.dataModeValues.mock'),
     },
+    {
+      label: t('aboutScreen.appInfo.apiMode'),
+      value:
+        configuredApiMode === 'remote'
+          ? t('aboutScreen.appInfo.apiModeValues.remote')
+          : t('aboutScreen.appInfo.apiModeValues.internal'),
+    },
+    ...(configuredApiMode === 'remote'
+      ? [{ label: t('aboutScreen.appInfo.apiBaseUrl'), value: apiBaseUrl }]
+      : []),
     { label: t('aboutScreen.appInfo.testDataLayer'), value: appInfoValues.testDataLayer },
   ];
 
@@ -318,5 +335,4 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
 });
-
 

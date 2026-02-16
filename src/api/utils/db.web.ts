@@ -16,6 +16,10 @@ const initSQLite = (): void => {
   console.log('🌐 Web data layer initialized with SQLite DB (persistent)');
 };
 
+const isWebSQLiteSyncSupported = (): boolean => {
+  return typeof SharedArrayBuffer !== 'undefined';
+};
+
 export const initDatabase = (): void => {
   const requestedMode = getRequestedDataMode();
   if (requestedMode === 'mock') {
@@ -23,10 +27,18 @@ export const initDatabase = (): void => {
     return;
   }
 
+  if (!isWebSQLiteSyncSupported()) {
+    console.warn(
+      '⚠️ Web runtime lacks SharedArrayBuffer; using mock DB. (SQLite remains available on native.)'
+    );
+    initMock();
+    return;
+  }
+
   try {
     initSQLite();
   } catch (error) {
-    console.warn('⚠️ Web SQLite initialization failed, falling back to mock DB:', error);
+    console.warn('⚠️ Web SQLite initialization failed, falling back to mock DB.');
     initMock();
   }
 };

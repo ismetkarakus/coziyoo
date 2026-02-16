@@ -1884,9 +1884,15 @@ export const translations = {
         platform: 'Platform',
         dataMode: 'Veri Modu',
         testDataLayer: 'Test Veri Katmani',
+        apiMode: 'API Modu',
+        apiBaseUrl: 'API Adresi',
         dataModeValues: {
           sqlite: 'SQLite',
           mock: 'Mock JSON',
+        },
+        apiModeValues: {
+          internal: 'Dahili',
+          remote: 'Uzak (PostgreSQL API)',
         },
       },
       legalLinks: {
@@ -4065,9 +4071,15 @@ export const translations = {
         platform: 'Platform',
         dataMode: 'Data Mode',
         testDataLayer: 'Test Data Layer',
+        apiMode: 'API Mode',
+        apiBaseUrl: 'API Base URL',
         dataModeValues: {
           sqlite: 'SQLite',
           mock: 'Mock JSON',
+        },
+        apiModeValues: {
+          internal: 'Internal',
+          remote: 'Remote (PostgreSQL API)',
         },
       },
       legalLinks: {
