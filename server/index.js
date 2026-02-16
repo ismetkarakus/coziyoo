@@ -185,6 +185,18 @@ const sql = {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS admin_audit_logs (
+      id TEXT PRIMARY KEY,
+      actor_email TEXT NOT NULL,
+      actor_role TEXT NOT NULL,
+      action TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NULL,
+      before_json JSONB NULL,
+      after_json JSONB NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE INDEX IF NOT EXISTS idx_users_email ON users ((lower(email)));
     CREATE INDEX IF NOT EXISTS idx_foods_cook_id ON foods (cook_id);
     CREATE INDEX IF NOT EXISTS idx_orders_buyer_id ON orders (buyer_id);
@@ -201,6 +213,8 @@ const sql = {
     CREATE UNIQUE INDEX IF NOT EXISTS uniq_media_provider_object_key ON media_assets (provider, object_key);
     CREATE INDEX IF NOT EXISTS idx_media_owner_user_id ON media_assets (owner_user_id);
     CREATE INDEX IF NOT EXISTS idx_media_related_entity ON media_assets (related_entity_type, related_entity_id);
+    CREATE INDEX IF NOT EXISTS idx_admin_audit_entity ON admin_audit_logs (entity_type, entity_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_admin_audit_actor ON admin_audit_logs (actor_email, created_at DESC);
   `,
 };
 
@@ -392,6 +406,35 @@ const requireAdminAuth = (req, res, next) => {
   } catch (error) {
     return send(res, 401, null, error.message || 'Invalid token');
   }
+};
+
+const logAdminAction = async ({ admin, action, entityType, entityId, before, after }) => {
+  const payload = {
+    id: makeId('audit'),
+    actorEmail: String(admin?.email || 'unknown'),
+    actorRole: String(admin?.role || 'admin'),
+    action: String(action || 'unknown'),
+    entityType: String(entityType || 'unknown'),
+    entityId: entityId ? String(entityId) : null,
+    before: before ?? null,
+    after: after ?? null,
+  };
+
+  await pool.query(
+    `INSERT INTO admin_audit_logs (
+      id, actor_email, actor_role, action, entity_type, entity_id, before_json, after_json, created_at
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,NOW())`,
+    [
+      payload.id,
+      payload.actorEmail,
+      payload.actorRole,
+      payload.action,
+      payload.entityType,
+      payload.entityId,
+      JSON.stringify(payload.before),
+      JSON.stringify(payload.after),
+    ]
+  );
 };
 
 app.get('/health', async (_req, res) => {
@@ -1240,15 +1283,27 @@ app.put('/admin/orders/:id/status', requireAdminAuth, async (req, res) => {
     const { status } = req.body || {};
     if (!status) return send(res, 400, null, 'status is required');
 
+    const previous = await pool.query('SELECT data FROM orders WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Order not found');
+
     const update = await pool.query(
       `UPDATE orders
        SET status = $1,
            data = jsonb_set(data, '{status}', to_jsonb($1::text), true)
        WHERE id = $2
-       RETURNING id`,
+       RETURNING data`,
       [status, req.params.id]
     );
-    if (!update.rowCount) return send(res, 404, null, 'Order not found');
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'order.status.update',
+      entityType: 'order',
+      entityId: req.params.id,
+      before: previous.rows[0].data,
+      after: update.rows[0].data,
+    });
+
     return send(res, 200, { id: req.params.id, status });
   } catch (error) {
     return send(res, 500, null, error.message);
@@ -1316,6 +1371,79 @@ app.get('/admin/media', requireAdminAuth, async (req, res) => {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     })));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/audit-logs', requireAdminAuth, async (req, res) => {
+  try {
+    const limit = normalizePositiveInt(req.query.limit, 200, 1000);
+    const entityType = String(req.query.entityType || '').trim().toLowerCase();
+    const entityId = String(req.query.entityId || '').trim();
+
+    const values = [];
+    const conditions = [];
+
+    if (entityType) {
+      values.push(entityType);
+      conditions.push(`lower(entity_type) = $${values.length}`);
+    }
+    if (entityId) {
+      values.push(entityId);
+      conditions.push(`entity_id = $${values.length}`);
+    }
+
+    values.push(limit);
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const result = await pool.query(
+      `SELECT id, actor_email, actor_role, action, entity_type, entity_id, before_json, after_json, created_at
+       FROM admin_audit_logs
+       ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT $${values.length}`,
+      values
+    );
+
+    return send(res, 200, result.rows.map((row) => ({
+      id: row.id,
+      actorEmail: row.actor_email,
+      actorRole: row.actor_role,
+      action: row.action,
+      entityType: row.entity_type,
+      entityId: row.entity_id,
+      before: row.before_json,
+      after: row.after_json,
+      createdAt: row.created_at,
+    })));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/audit-logs/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, actor_email, actor_role, action, entity_type, entity_id, before_json, after_json, created_at
+       FROM admin_audit_logs
+       WHERE id = $1
+       LIMIT 1`,
+      [req.params.id]
+    );
+    if (!result.rowCount) return send(res, 404, null, 'Audit log not found');
+
+    const row = result.rows[0];
+    return send(res, 200, {
+      id: row.id,
+      actorEmail: row.actor_email,
+      actorRole: row.actor_role,
+      action: row.action,
+      entityType: row.entity_type,
+      entityId: row.entity_id,
+      before: row.before_json,
+      after: row.after_json,
+      createdAt: row.created_at,
+    });
   } catch (error) {
     return send(res, 500, null, error.message);
   }

@@ -13,7 +13,7 @@
 - [ ] Add admin CRUD endpoints for users, sellers, foods, orders, chats, reviews, media (partial: read endpoints + order status update shipped)
 - [ ] Add dashboard endpoints: summary, alerts, activity (partial: summary shipped at `GET /admin/dashboard`)
 - [ ] Add WebSocket endpoint `/admin/ws` with event contracts
-- [ ] Add `admin_audit_logs` table and write-on-mutation logging
+- [x] Add `admin_audit_logs` table and write-on-mutation logging
 - [ ] Add indexes for admin filtering/sorting performance
 - [ ] Add backend tests for auth/RBAC, CRUD, audit, realtime
 

@@ -30,6 +30,18 @@ export interface DashboardSummary {
   media: number
 }
 
+export interface AuditLogRecord {
+  id: string
+  actorEmail: string
+  actorRole: string
+  action: string
+  entityType: string
+  entityId?: string | null
+  before?: unknown
+  after?: unknown
+  createdAt: string
+}
+
 type ApiEnvelope<T> = {
   status: number
   data?: T
@@ -108,4 +120,9 @@ export const api = {
   getChats: (limit = 300) => request<Record<string, unknown>[]>(`/admin/chats${buildQuery({ limit })}`),
 
   getMedia: (limit = 300) => request<Record<string, unknown>[]>(`/admin/media${buildQuery({ limit })}`),
+
+  getAuditLogs: (params?: { limit?: number; entityType?: string; entityId?: string }) =>
+    request<AuditLogRecord[]>(`/admin/audit-logs${buildQuery(params)}`),
+
+  getAuditLog: (id: string) => request<AuditLogRecord>(`/admin/audit-logs/${encodeURIComponent(id)}`),
 }

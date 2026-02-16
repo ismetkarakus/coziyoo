@@ -13,6 +13,7 @@ import Foods from './pages/Foods'
 import Reviews from './pages/Reviews'
 import Chats from './pages/Chats'
 import Media from './pages/Media'
+import AuditLogs from './pages/AuditLogs'
 import { api } from './lib/api'
 import type { DashboardSummary, OrderRecord } from './lib/api'
 
@@ -171,6 +172,7 @@ function Dashboard() {
             <Link className="ghost" to="/reviews">Moderate reviews</Link>
             <Link className="ghost" to="/chats">Inspect chats</Link>
             <Link className="ghost" to="/media">Inspect media</Link>
+            <Link className="ghost" to="/audit-logs">Audit logs</Link>
           </div>
         </div>
       </section>
@@ -315,6 +317,7 @@ function App() {
                 <Link to="/reviews" className="nav-link">Reviews</Link>
                 <Link to="/chats" className="nav-link">Chats</Link>
                 <Link to="/media" className="nav-link">Media</Link>
+                <Link to="/audit-logs" className="nav-link">Audit</Link>
               </nav>
             </div>
             <button
@@ -337,6 +340,7 @@ function App() {
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/chats" element={<Chats />} />
               <Route path="/media" element={<Media />} />
+              <Route path="/audit-logs" element={<AuditLogs />} />
               <Route path="/sellers/:id" element={<SellerProfile />} />
               <Route path="/buyers/:id" element={<BuyerProfile />} />
             </Routes>
