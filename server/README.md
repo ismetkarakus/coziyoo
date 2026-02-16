@@ -16,6 +16,8 @@ This server exposes the same endpoint contract used by the mobile/web app servic
 - `POST /chats/:id/messages`
 - `POST /reviews`
 - `GET /reviews?foodId=...`
+- `POST /media/register`
+- `GET /media/:id`
 - `GET /health`
 
 ## Run
@@ -28,7 +30,10 @@ npm run server
 - `API_PORT` (default: `4000`)
 - `PGSSL=true|false` (default: `false`)
 - `AUTO_SEED_MOCK=true|false` (default: `true`)
+- `STORAGE_PROVIDER=mock|firebase` (firebase placeholder, currently falls back to mock)
+- `PG_SEARCH_PATH` (default: `public`)
 
 ## Notes
 - Schema is auto-created on server startup.
 - If DB is empty and `AUTO_SEED_MOCK=true`, seed data is imported from `src/mock/*.json`.
+- Storage is provider-agnostic. Current `mock` provider stores media metadata and returns placeholder URLs.

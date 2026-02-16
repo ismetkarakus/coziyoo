@@ -2,9 +2,7 @@ import { useState } from 'react'
 import {
   Box,
   Button,
-  MenuItem,
   Paper,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -14,10 +12,8 @@ import {
   Typography,
 } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { SelectChangeEvent } from '@mui/material'
 import { api } from '../lib/api'
-
-const ORDER_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled']
+import { StatusToggle } from '../components/StatusToggle'
 
 const formatValue = (value: unknown) => (value == null || value === '' ? '—' : String(value))
 
@@ -37,8 +33,7 @@ const Orders = () => {
     },
   })
 
-  const onStatusChange = async (id: string, event: SelectChangeEvent) => {
-    const nextStatus = event.target.value
+  const onStatusChange = async (id: string, nextStatus: 'enabled' | 'disabled') => {
     setSaving((prev) => ({ ...prev, [id]: true }))
     try {
       await mutation.mutateAsync({ id, status: nextStatus })
@@ -123,16 +118,11 @@ const Orders = () => {
                 <TableCell>{formatValue(order.cookName || order.sellerId)}</TableCell>
                 <TableCell>{formatValue(order.totalPrice)}</TableCell>
                 <TableCell>
-                  <Select
-                    size="small"
-                    value={String(order.status || 'pending')}
-                    onChange={(event) => onStatusChange(order.id, event)}
+                  <StatusToggle
+                    value={String(order.status || '').toLowerCase() === 'disabled' || String(order.status || '').toLowerCase() === 'cancelled' ? 'disabled' : 'enabled'}
+                    onChange={(next) => onStatusChange(order.id, next)}
                     disabled={Boolean(saving[order.id])}
-                  >
-                    {ORDER_STATUSES.map((status) => (
-                      <MenuItem key={status} value={status}>{status}</MenuItem>
-                    ))}
-                  </Select>
+                  />
                 </TableCell>
                 <TableCell>{formatValue(order.orderDate || order.createdAt)}</TableCell>
                 <TableCell>

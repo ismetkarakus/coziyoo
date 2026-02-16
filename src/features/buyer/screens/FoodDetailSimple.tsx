@@ -216,7 +216,7 @@ export default function FoodDetailSimple() {
       try {
         const resolvedId = resolveFoodId(foodId);
         if (!resolvedId) return;
-        const meta = await getFavoriteMeta();
+        const meta = await getFavoriteMeta(userData?.uid || user?.uid);
         setIsFavorite(meta.favoriteIds.has(String(resolvedId)));
         setFavoriteCount(Number(meta.favoriteCounts[String(resolvedId)] ?? 0));
       } catch (error) {
@@ -354,7 +354,7 @@ export default function FoodDetailSimple() {
         rating: foodMeta.rating,
         imageUrl: foodImageUrl,
         category: (params.category as string) || (currentLanguage === 'en' ? 'Main Dish' : 'Ana Yemek'),
-      });
+      }, userData?.uid || user?.uid);
       setIsFavorite(result.isFavorite);
       setFavoriteCount(result.favoriteCount);
     } catch (error) {

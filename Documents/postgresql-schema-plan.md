@@ -237,6 +237,28 @@ Note:
 - `is_read BOOLEAN NOT NULL DEFAULT FALSE`
 - `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
 
+### 5.5 `media_assets` (Provider-Agnostic Storage Bridge)
+- `id TEXT PRIMARY KEY`
+- `provider TEXT NOT NULL` (`mock`, later `firebase`)
+- `bucket TEXT NULL`
+- `object_key TEXT NOT NULL`
+- `public_url TEXT NOT NULL`
+- `content_type TEXT NULL`
+- `size_bytes BIGINT NULL`
+- `checksum TEXT NULL`
+- `owner_user_id TEXT NULL REFERENCES users(id)`
+- `related_entity_type TEXT NULL`
+- `related_entity_id TEXT NULL`
+- `status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','deleted'))`
+- `metadata JSONB NOT NULL DEFAULT '{}'::jsonb`
+- `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+- `updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+
+Constraints/Indexes:
+- unique `(provider, object_key)`
+- index `(owner_user_id)`
+- index `(related_entity_type, related_entity_id)`
+
 ## 6) Migration Sequence
 
 1. Create Phase 1 tables and indexes.

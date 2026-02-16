@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Card, Button, Checkbox } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -9,6 +8,8 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { FormField } from '../../../components/forms';
+import { useAuth } from '../../../context/AuthContext';
+import { addressService } from '../../../services/addressService';
 
 interface Address {
   id: string;
@@ -21,6 +22,7 @@ export const Addresses: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
+  const { user, userData } = useAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [newAddress, setNewAddress] = useState({
@@ -29,17 +31,24 @@ export const Addresses: React.FC = () => {
     isDefault: false,
   });
 
+  const currentUserId = String(userData?.uid || user?.uid || '');
+
   useEffect(() => {
     loadAddresses();
-  }, []);
+  }, [currentUserId, t]);
 
   const loadAddresses = async () => {
     try {
-      const data = await AsyncStorage.getItem('addresses');
-      if (data) {
-        setAddresses(JSON.parse(data));
+      if (currentUserId) {
+        const remoteAddresses = await addressService.list(currentUserId);
+        setAddresses(remoteAddresses);
+        return;
+      }
+
+      if (addresses.length > 0) {
+        setAddresses(addresses);
       } else {
-        // Default addresses
+        // Fallback defaults when user session is not ready
         const defaultAddresses: Address[] = [
           {
             id: '1',
@@ -55,7 +64,6 @@ export const Addresses: React.FC = () => {
           },
         ];
         setAddresses(defaultAddresses);
-        await AsyncStorage.setItem('addresses', JSON.stringify(defaultAddresses));
       }
     } catch (error) {
       console.error('Error loading addresses:', error);
@@ -63,12 +71,19 @@ export const Addresses: React.FC = () => {
   };
 
   const setDefaultAddress = async (addressId: string) => {
-    const updatedAddresses = addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === addressId
-    }));
-    setAddresses(updatedAddresses);
-    await AsyncStorage.setItem('addresses', JSON.stringify(updatedAddresses));
+    if (!currentUserId) {
+      const updatedAddresses = addresses.map(addr => ({
+        ...addr,
+        isDefault: addr.id === addressId
+      }));
+      setAddresses(updatedAddresses);
+      return;
+    }
+
+    const ok = await addressService.setDefault(currentUserId, addressId);
+    if (ok) {
+      await loadAddresses();
+    }
   };
 
   const deleteAddress = (addressId: string) => {
@@ -81,9 +96,13 @@ export const Addresses: React.FC = () => {
           text: t('addressesScreen.deleteConfirm'),
           style: 'destructive',
           onPress: async () => {
-            const updatedAddresses = addresses.filter(addr => addr.id !== addressId);
-            setAddresses(updatedAddresses);
-            await AsyncStorage.setItem('addresses', JSON.stringify(updatedAddresses));
+            if (!currentUserId) {
+              const updatedAddresses = addresses.filter(addr => addr.id !== addressId);
+              setAddresses(updatedAddresses);
+              return;
+            }
+            await addressService.remove(currentUserId, addressId);
+            await loadAddresses();
           },
         },
       ]
@@ -113,8 +132,18 @@ export const Addresses: React.FC = () => {
       ? [createdAddress, ...addresses.map(addr => ({ ...addr, isDefault: false }))]
       : [createdAddress, ...addresses];
 
-    setAddresses(updatedAddresses);
-    await AsyncStorage.setItem('addresses', JSON.stringify(updatedAddresses));
+    if (!currentUserId) {
+      setAddresses(updatedAddresses);
+      setAddModalVisible(false);
+      return;
+    }
+
+    await addressService.create(currentUserId, {
+      title: createdAddress.title,
+      address: createdAddress.address,
+      isDefault: createdAddress.isDefault,
+    });
+    await loadAddresses();
     setAddModalVisible(false);
   };
 
@@ -352,4 +381,3 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
 });
-

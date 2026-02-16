@@ -37,3 +37,7 @@
 - [ ] Configure env vars for admin panel and backend JWT/CORS
 - [ ] Execute big-bang cutover from current admin routes
 - [ ] Run UAT scenarios and sign off
+
+## UI Memory Notes
+- [x] In admin edit forms, every input-like field must use a visible label with the same style pattern.
+- [x] For dropdowns/selects, use `FormControl + InputLabel + Select` (do not render unlabeled selects).

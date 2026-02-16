@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { Colors, Spacing } from '../../../theme';
@@ -9,6 +8,8 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useCountry } from '../../../context/CountryContext';
+import { useAuth } from '../../../context/AuthContext';
+import { getFavorites, removeFavorite as removeFavoriteItem } from '../../../services/favoriteService';
 
 interface FavoriteItem {
   id: string;
@@ -71,30 +72,30 @@ export const Favorites: React.FC = () => {
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
+  const { user, userData } = useAuth();
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const currentUserId = String(userData?.uid || user?.uid || '');
 
   useEffect(() => {
     loadFavorites();
-  }, [currentLanguage]);
+  }, [currentLanguage, currentUserId]);
 
   const loadFavorites = async () => {
     try {
-      const data = await AsyncStorage.getItem('favorites');
-      if (data) {
-        setFavorites(JSON.parse(data));
-      } else {
-        // Mock favorites
-        setFavorites(getMockFavorites(currentLanguage));
+      const items = await getFavorites(currentUserId);
+      if (currentUserId) {
+        setFavorites(items as FavoriteItem[]);
+        return;
       }
+      setFavorites(getMockFavorites(currentLanguage));
     } catch (error) {
       console.error('Error loading favorites:', error);
     }
   };
 
   const removeFavorite = async (itemId: string) => {
-    const updatedFavorites = favorites.filter(item => item.id !== itemId);
-    setFavorites(updatedFavorites);
-    await AsyncStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+    await removeFavoriteItem(itemId, currentUserId);
+    await loadFavorites();
   };
 
   const navigateToFood = (item: FavoriteItem) => {

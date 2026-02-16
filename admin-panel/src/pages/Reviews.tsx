@@ -1,7 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button } from '@mui/material'
+import {
+  Box,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import { api } from '../lib/api'
-import { EntityTablePage } from './EntityTablePage'
+import { StatusToggle } from '../components/StatusToggle'
 
 const Reviews = () => {
   const queryClient = useQueryClient()
@@ -44,22 +55,81 @@ const Reviews = () => {
     await deleteMutation.mutateAsync(id)
   }
 
+  const handleStatusChange = async (row: Record<string, unknown>, nextStatus: 'enabled' | 'disabled') => {
+    const id = String(row.id || '')
+    if (!id) return
+    await updateMutation.mutateAsync({
+      id,
+      payload: {
+        ...row,
+        status: nextStatus,
+      },
+    })
+  }
+
   return (
-    <EntityTablePage
-      title="Reviews"
-      rows={rows}
-      loading={loading}
-      error={error instanceof Error ? error.message : null}
-      preferredColumns={['id', 'foodId', 'userId', 'sellerId', 'rating', 'comment', 'createdAt']}
-      trailing={
-        <>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" fontWeight={700}>Reviews</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <Button onClick={handleCreate}>Add</Button>
           <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['reviews'] })}>Refresh</Button>
-        </>
-      }
-      onEditRow={handleEdit}
-      onDeleteRow={handleDelete}
-    />
+        </Box>
+      </Box>
+
+      {error && <Paper sx={{ p: 2, borderRadius: 3, color: 'error.main' }}>{error instanceof Error ? error.message : 'Failed to load reviews'}</Paper>}
+
+      <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, width: '100%', overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 1000 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell>Food</TableCell>
+              <TableCell>User</TableCell>
+              <TableCell>Seller</TableCell>
+              <TableCell>Rating</TableCell>
+              <TableCell>Comment</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Created</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row, idx) => (
+              <TableRow key={String(row.id || idx)}>
+                <TableCell>{String(row.id || '—')}</TableCell>
+                <TableCell>{String(row.foodId || '—')}</TableCell>
+                <TableCell>{String(row.userId || '—')}</TableCell>
+                <TableCell>{String(row.sellerId || '—')}</TableCell>
+                <TableCell>{String(row.rating ?? '—')}</TableCell>
+                <TableCell>{String(row.comment || '—')}</TableCell>
+                <TableCell>
+                  <StatusToggle
+                    value={String(row.status || 'enabled').toLowerCase() === 'disabled' ? 'disabled' : 'enabled'}
+                    onChange={(next) => handleStatusChange(row, next)}
+                  />
+                </TableCell>
+                <TableCell>{String(row.createdAt || '—')}</TableCell>
+                <TableCell>
+                  <Button size="small" onClick={() => handleEdit(row)}>Edit</Button>
+                  <Button size="small" color="error" onClick={() => handleDelete(row)}>Delete</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {!loading && rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={9} align="center">No reviews found.</TableCell>
+              </TableRow>
+            )}
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={9} align="center">Loading...</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   )
 }
 

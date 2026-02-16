@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import {
   Box,
   Button,
-  Chip,
   Paper,
+  Switch,
   Stack,
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import type { UserRecord } from '../lib/api'
+import { StatusToggle } from '../components/StatusToggle'
 
 const normalizeValue = (value: unknown) => {
   if (value === null || value === undefined) return '—'
@@ -60,12 +61,25 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
   })
 
   const columns = useMemo(() => {
-    if (forcedColumns && forcedColumns.length > 0) return forcedColumns
+    if (forcedColumns && forcedColumns.length > 0) {
+      const preferredFirst = ['status', 'verified']
+      const rest = forcedColumns.filter((column) => !preferredFirst.includes(column))
+      return [
+        ...preferredFirst.filter((column) => forcedColumns.includes(column)),
+        ...rest,
+      ]
+    }
     const keys = new Set<string>()
     rows.forEach((row) => {
       Object.keys(row).forEach((key) => keys.add(key))
     })
-    return Array.from(keys)
+    const collected = Array.from(keys)
+    const preferredFirst = ['status', 'verified']
+    const rest = collected.filter((column) => !preferredFirst.includes(column))
+    return [
+      ...preferredFirst.filter((column) => collected.includes(column)),
+      ...rest,
+    ]
   }, [forcedColumns, rows])
 
   const updateMutation = useMutation({
@@ -86,28 +100,11 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
     },
   })
 
-  const handleEdit = async (event: MouseEvent, row: UserRecord) => {
+  const handleEdit = (event: MouseEvent, row: UserRecord) => {
     event.stopPropagation()
     const id = resolveRowId(row)
     if (!id) return
-
-    const nextDisplayName = window.prompt('Display name', String(row.displayName || ''))
-    if (nextDisplayName === null) return
-    const nextStatus = window.prompt('Status', String(row.status || 'active'))
-    if (nextStatus === null) return
-
-    setActionError(null)
-    try {
-      await updateMutation.mutateAsync({
-        id,
-        payload: {
-          displayName: nextDisplayName,
-          status: nextStatus,
-        },
-      })
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Failed to update user')
-    }
+    navigate(`${detailBase}/${id}?edit=1`)
   }
 
   const handleDelete = async (event: MouseEvent, row: UserRecord) => {
@@ -122,6 +119,36 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
       await deleteMutation.mutateAsync(id)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Failed to delete user')
+    }
+  }
+
+  const handleStatusChange = async (status: 'enabled' | 'disabled' | 'pending', row: UserRecord) => {
+    const id = resolveRowId(row)
+    if (!id) return
+
+    setActionError(null)
+    try {
+      await updateMutation.mutateAsync({
+        id,
+        payload: { status },
+      })
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to change status')
+    }
+  }
+
+  const handleVerifiedChange = async (verified: boolean, row: UserRecord) => {
+    const id = resolveRowId(row)
+    if (!id) return
+
+    setActionError(null)
+    try {
+      await updateMutation.mutateAsync({
+        id,
+        payload: { verified },
+      })
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to change verification')
     }
   }
 
@@ -182,14 +209,49 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
                   onClick={() => rowId && navigate(`${detailBase}/${rowId}`)}
                 >
                   {columns.map((column) => {
-                    const value = row[column]
                     if (column === 'status') {
                       return (
                         <TableCell key={column}>
-                          <Chip label={normalizeValue(value)} size="small" />
+                          <Box onClick={(event) => event.stopPropagation()}>
+                            <StatusToggle
+                              value={String(row.status || 'enabled').toLowerCase() === 'enabled' ? 'enabled' : 'disabled'}
+                              onChange={(next) => handleStatusChange(next, row)}
+                            />
+                          </Box>
                         </TableCell>
                       )
                     }
+                    if (column === 'verified') {
+                      const checked = row.verified === true || String(row.verified).toLowerCase() === 'true'
+                      return (
+                        <TableCell key={column}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }} onClick={(event) => event.stopPropagation()}>
+                            <Switch
+                              size="small"
+                              checked={checked}
+                              onChange={(_event, nextChecked) => handleVerifiedChange(nextChecked, row)}
+                              sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                  color: '#2e7d32',
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                  backgroundColor: '#2e7d32',
+                                  opacity: 1,
+                                },
+                                '& .MuiSwitch-switchBase': {
+                                  color: '#d32f2f',
+                                },
+                                '& .MuiSwitch-switchBase + .MuiSwitch-track': {
+                                  backgroundColor: '#d32f2f',
+                                  opacity: 1,
+                                },
+                              }}
+                            />
+                          </Box>
+                        </TableCell>
+                      )
+                    }
+                    const value = row[column]
                     return (
                       <TableCell key={column}>{normalizeValue(value)}</TableCell>
                     )

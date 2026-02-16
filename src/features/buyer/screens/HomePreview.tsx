@@ -396,7 +396,7 @@ export const HomePreview: React.FC = () => {
   React.useEffect(() => {
     const loadFavoriteState = async () => {
       try {
-        const meta = await getFavoriteMeta();
+        const meta = await getFavoriteMeta(userData?.uid || user?.uid);
         setFavoriteIds(meta.favoriteIds);
         setFavoriteCounts(meta.favoriteCounts);
       } catch (error) {
@@ -416,7 +416,7 @@ export const HomePreview: React.FC = () => {
         rating: item.rating,
         imageUrl: item.img,
         category: item.category,
-      });
+      }, userData?.uid || user?.uid);
 
       setFavoriteIds(result.meta.favoriteIds);
       setFavoriteCounts(result.meta.favoriteCounts);
