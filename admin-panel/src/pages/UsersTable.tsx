@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import usersData from '../../../src/mock/users.json'
 import {
   Box,
   Chip,
@@ -14,14 +13,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-
-type UserRecord = Record<string, unknown> & {
-  id: string
-  userType?: string
-  displayName?: string
-  email?: string
-  status?: string
-}
+import { api } from '../lib/api'
+import type { UserRecord } from '../lib/api'
 
 const normalizeValue = (value: unknown) => {
   if (value === null || value === undefined) return '—'
@@ -41,6 +34,8 @@ const formatHeader = (value: string) => {
     .join(' ')
 }
 
+const resolveRowId = (row: UserRecord) => String(row.uid || row.id || '')
+
 interface UsersTableProps {
   title: string
   filterType: 'buyer' | 'seller'
@@ -49,23 +44,33 @@ interface UsersTableProps {
 
 export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersTableProps) => {
   const [search, setSearch] = useState('')
+  const [rows, setRows] = useState<UserRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const detailBase = filterType === 'seller' ? '/sellers' : '/buyers'
   const navigate = useNavigate()
 
-  const rows = useMemo<UserRecord[]>(() => {
-    const base = (usersData as UserRecord[]).filter((user) => {
-      if (filterType === 'buyer') return user.userType === 'buyer' || user.userType === 'both'
-      return user.userType === 'seller' || user.userType === 'both'
-    })
+  useEffect(() => {
+    let cancelled = false
 
-    if (!search.trim()) return base
-    const term = search.toLowerCase()
+    const run = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const users = await api.getUsers({ role: filterType, q: search, limit: 500 })
+        if (!cancelled) setRows(users)
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load users')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
 
-    return base.filter((user) =>
-      [user.id, user.displayName, user.email, user.status, user.userType]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term))
-    )
+    const timer = setTimeout(run, 250)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
   }, [filterType, search])
 
   const columns = useMemo(() => {
@@ -89,12 +94,19 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
         )}
         <TextField
           size="small"
-          placeholder="Search by name, email, status"
+          placeholder="Search by name, email"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           sx={{ minWidth: 260 }}
         />
       </Box>
+
+      {error && (
+        <Paper sx={{ p: 2, borderRadius: 3, color: 'error.main' }}>
+          {error}
+        </Paper>
+      )}
+
       <TableContainer
         component={Paper}
         elevation={0}
@@ -111,32 +123,42 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
-              <TableRow
-                key={row.id}
-                hover
-                sx={{ cursor: 'pointer' }}
-                onClick={() => navigate(`${detailBase}/${row.id}`)}
-              >
-                {columns.map((column) => {
-                  const value = row[column]
-                  if (column === 'status') {
+            {rows.map((row) => {
+              const rowId = resolveRowId(row)
+              return (
+                <TableRow
+                  key={rowId}
+                  hover
+                  sx={{ cursor: rowId ? 'pointer' : 'default' }}
+                  onClick={() => rowId && navigate(`${detailBase}/${rowId}`)}
+                >
+                  {columns.map((column) => {
+                    const value = row[column]
+                    if (column === 'status') {
+                      return (
+                        <TableCell key={column}>
+                          <Chip label={normalizeValue(value)} size="small" />
+                        </TableCell>
+                      )
+                    }
                     return (
-                      <TableCell key={column}>
-                        <Chip label={normalizeValue(value)} size="small" />
-                      </TableCell>
+                      <TableCell key={column}>{normalizeValue(value)}</TableCell>
                     )
-                  }
-                  return (
-                    <TableCell key={column}>{normalizeValue(value)}</TableCell>
-                  )
-                })}
-              </TableRow>
-            ))}
-            {rows.length === 0 && (
+                  })}
+                </TableRow>
+              )
+            })}
+            {!loading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center">
+                <TableCell colSpan={Math.max(columns.length, 1)} align="center">
                   No users found.
+                </TableCell>
+              </TableRow>
+            )}
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={Math.max(columns.length, 1)} align="center">
+                  Loading...
                 </TableCell>
               </TableRow>
             )}

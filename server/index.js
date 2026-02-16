@@ -7,6 +7,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
+const { createStorageProvider } = require('./storage');
 
 const app = express();
 app.use(cors());
@@ -15,6 +16,8 @@ app.use(express.json({ limit: '2mb' }));
 const PORT = Number(process.env.API_PORT || 4000);
 
 const shouldUseSsl = String(process.env.PGSSL || '').toLowerCase() === 'true';
+const searchPath = process.env.PG_SEARCH_PATH || 'public';
+const storageProvider = createStorageProvider();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || undefined,
@@ -24,6 +27,7 @@ const pool = new Pool({
   user: process.env.PGUSER || undefined,
   password: process.env.PGPASSWORD || undefined,
   ssl: shouldUseSsl ? { rejectUnauthorized: false } : undefined,
+  options: `-c search_path=${searchPath}`,
 });
 
 const makeId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -31,6 +35,8 @@ const nowIso = () => new Date().toISOString();
 
 const sql = {
   init: `
+    CREATE SCHEMA IF NOT EXISTS cazi;
+
     CREATE TABLE IF NOT EXISTS users (
       uid TEXT PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
@@ -88,6 +94,41 @@ const sql = {
       data JSONB NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS favorites (
+      user_id TEXT NOT NULL,
+      food_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (user_id, food_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS user_addresses (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      address_line TEXT NOT NULL,
+      is_default BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS media_assets (
+      id TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      bucket TEXT NULL,
+      object_key TEXT NOT NULL,
+      public_url TEXT NOT NULL,
+      content_type TEXT NULL,
+      size_bytes BIGINT NULL,
+      checksum TEXT NULL,
+      owner_user_id TEXT NULL,
+      related_entity_type TEXT NULL,
+      related_entity_id TEXT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE INDEX IF NOT EXISTS idx_users_email ON users ((lower(email)));
     CREATE INDEX IF NOT EXISTS idx_foods_cook_id ON foods (cook_id);
     CREATE INDEX IF NOT EXISTS idx_orders_buyer_id ON orders (buyer_id);
@@ -98,6 +139,12 @@ const sql = {
     CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages (chat_id);
     CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp ASC);
     CREATE INDEX IF NOT EXISTS idx_reviews_food_id ON reviews (food_id);
+    CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites (user_id);
+    CREATE INDEX IF NOT EXISTS idx_favorites_food_id ON favorites (food_id);
+    CREATE INDEX IF NOT EXISTS idx_user_addresses_user_id ON user_addresses (user_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS uniq_media_provider_object_key ON media_assets (provider, object_key);
+    CREATE INDEX IF NOT EXISTS idx_media_owner_user_id ON media_assets (owner_user_id);
+    CREATE INDEX IF NOT EXISTS idx_media_related_entity ON media_assets (related_entity_type, related_entity_id);
   `,
 };
 
@@ -633,6 +680,530 @@ app.get('/reviews', async (req, res) => {
     if (!foodId) return send(res, 400, null, 'foodId is required');
     const result = await pool.query('SELECT data FROM reviews WHERE food_id = $1 ORDER BY created_at DESC', [foodId]);
     return send(res, 200, result.rows.map((row) => row.data));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/favorites', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return send(res, 400, null, 'userId is required');
+
+    const result = await pool.query(
+      `SELECT
+         f.food_id,
+         d.data AS food_data,
+         (SELECT COUNT(*)::int FROM favorites fc WHERE fc.food_id = f.food_id) AS favorite_count
+       FROM favorites f
+       LEFT JOIN foods d ON d.id = f.food_id
+       WHERE f.user_id = $1
+       ORDER BY f.created_at DESC`,
+      [userId]
+    );
+
+    const items = result.rows.map((row) => {
+      const food = row.food_data || {};
+      return {
+        id: String(row.food_id),
+        name: food.name || '',
+        cookName: food.cookName || '',
+        price: Number(food.price || 0),
+        rating: Number(food.rating || 0),
+        imageUrl: food.imageUrl || '',
+        category: food.category || '',
+        favoriteCount: Number(row.favorite_count || 0),
+      };
+    });
+
+    return send(res, 200, items);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/favorites/toggle', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId, foodId } = req.body || {};
+    if (!userId || !foodId) return send(res, 400, null, 'userId and foodId are required');
+
+    await client.query('BEGIN');
+
+    const existing = await client.query(
+      'SELECT 1 FROM favorites WHERE user_id = $1 AND food_id = $2 LIMIT 1',
+      [userId, foodId]
+    );
+
+    let isFavorite = false;
+    if (existing.rowCount) {
+      await client.query('DELETE FROM favorites WHERE user_id = $1 AND food_id = $2', [userId, foodId]);
+      isFavorite = false;
+    } else {
+      await client.query(
+        'INSERT INTO favorites (user_id, food_id, created_at) VALUES ($1, $2, NOW()) ON CONFLICT DO NOTHING',
+        [userId, foodId]
+      );
+      isFavorite = true;
+    }
+
+    const countResult = await client.query(
+      'SELECT COUNT(*)::int AS favorite_count FROM favorites WHERE food_id = $1',
+      [foodId]
+    );
+    const favoriteCount = Number(countResult.rows[0]?.favorite_count || 0);
+
+    await client.query('COMMIT');
+    return send(res, 200, { foodId, isFavorite, favoriteCount });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    return send(res, 500, null, error.message);
+  } finally {
+    client.release();
+  }
+});
+
+app.delete('/favorites/:foodId', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const { foodId } = req.params;
+    if (!userId || !foodId) return send(res, 400, null, 'userId and foodId are required');
+
+    await pool.query('DELETE FROM favorites WHERE user_id = $1 AND food_id = $2', [userId, foodId]);
+    return send(res, 200, { foodId });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/addresses', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return send(res, 400, null, 'userId is required');
+
+    const result = await pool.query(
+      `SELECT id, title, address_line, is_default
+       FROM user_addresses
+       WHERE user_id = $1
+       ORDER BY is_default DESC, created_at DESC`,
+      [userId]
+    );
+
+    const addresses = result.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      address: row.address_line,
+      isDefault: Boolean(row.is_default),
+    }));
+
+    return send(res, 200, addresses);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/addresses', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId, title, address, isDefault } = req.body || {};
+    if (!userId || !title || !address) return send(res, 400, null, 'userId, title and address are required');
+
+    const payload = {
+      id: req.body?.id || makeId('addr'),
+      userId: String(userId),
+      title: String(title),
+      address: String(address),
+      isDefault: Boolean(isDefault),
+    };
+
+    await client.query('BEGIN');
+    if (payload.isDefault) {
+      await client.query('UPDATE user_addresses SET is_default = FALSE, updated_at = NOW() WHERE user_id = $1', [payload.userId]);
+    }
+
+    await client.query(
+      `INSERT INTO user_addresses (id, user_id, title, address_line, is_default, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+      [payload.id, payload.userId, payload.title, payload.address, payload.isDefault]
+    );
+
+    await client.query('COMMIT');
+    return send(res, 201, { id: payload.id, title: payload.title, address: payload.address, isDefault: payload.isDefault });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    return send(res, 500, null, error.message);
+  } finally {
+    client.release();
+  }
+});
+
+app.put('/addresses/:id/default', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { userId } = req.body || {};
+    const { id } = req.params;
+    if (!userId || !id) return send(res, 400, null, 'userId and id are required');
+
+    await client.query('BEGIN');
+    await client.query('UPDATE user_addresses SET is_default = FALSE, updated_at = NOW() WHERE user_id = $1', [userId]);
+    const updated = await client.query(
+      `UPDATE user_addresses
+       SET is_default = TRUE, updated_at = NOW()
+       WHERE id = $1 AND user_id = $2
+       RETURNING id`,
+      [id, userId]
+    );
+    if (!updated.rowCount) {
+      await client.query('ROLLBACK');
+      return send(res, 404, null, 'Address not found');
+    }
+    await client.query('COMMIT');
+    return send(res, 200, { id, isDefault: true });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    return send(res, 500, null, error.message);
+  } finally {
+    client.release();
+  }
+});
+
+app.delete('/addresses/:id', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const { id } = req.params;
+    if (!userId || !id) return send(res, 400, null, 'userId and id are required');
+
+    const deleted = await pool.query(
+      'DELETE FROM user_addresses WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId]
+    );
+    if (!deleted.rowCount) return send(res, 404, null, 'Address not found');
+    return send(res, 200, { id });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/media/register', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const {
+      objectKey,
+      contentType,
+      sizeBytes,
+      checksum,
+      ownerUserId,
+      relatedEntityType,
+      relatedEntityId,
+      metadata,
+      prefix,
+    } = req.body || {};
+
+    const asset = await storageProvider.createAsset({
+      objectKey: objectKey ? String(objectKey) : undefined,
+      contentType: contentType ? String(contentType) : undefined,
+      sizeBytes: sizeBytes == null ? undefined : Number(sizeBytes),
+      metadata: metadata || {},
+      prefix: prefix ? String(prefix) : 'media',
+    });
+
+    const existing = await client.query(
+      `SELECT id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum,
+              owner_user_id, related_entity_type, related_entity_id, status, metadata, created_at, updated_at
+       FROM media_assets
+       WHERE provider = $1 AND object_key = $2
+       LIMIT 1`,
+      [asset.provider, asset.objectKey]
+    );
+
+    if (existing.rowCount) {
+      const row = existing.rows[0];
+      return send(res, 200, {
+        id: row.id,
+        provider: row.provider,
+        bucket: row.bucket,
+        objectKey: row.object_key,
+        publicUrl: row.public_url,
+        contentType: row.content_type,
+        sizeBytes: row.size_bytes,
+        checksum: row.checksum,
+        ownerUserId: row.owner_user_id,
+        relatedEntityType: row.related_entity_type,
+        relatedEntityId: row.related_entity_id,
+        status: row.status,
+        metadata: row.metadata || {},
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      });
+    }
+
+    const id = makeId('media');
+    const now = nowIso();
+    await client.query(
+      `INSERT INTO media_assets (
+        id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum, owner_user_id,
+        related_entity_type, related_entity_id, status, metadata, created_at, updated_at
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14,$15
+      )`,
+      [
+        id,
+        asset.provider,
+        asset.bucket || null,
+        asset.objectKey,
+        asset.publicUrl,
+        contentType || null,
+        sizeBytes == null ? null : Number(sizeBytes),
+        checksum || null,
+        ownerUserId || null,
+        relatedEntityType || null,
+        relatedEntityId || null,
+        'active',
+        JSON.stringify(metadata || {}),
+        now,
+        now,
+      ]
+    );
+
+    return send(res, 201, {
+      id,
+      provider: asset.provider,
+      bucket: asset.bucket || null,
+      objectKey: asset.objectKey,
+      publicUrl: asset.publicUrl,
+      contentType: contentType || null,
+      sizeBytes: sizeBytes == null ? null : Number(sizeBytes),
+      checksum: checksum || null,
+      ownerUserId: ownerUserId || null,
+      relatedEntityType: relatedEntityType || null,
+      relatedEntityId: relatedEntityId || null,
+      status: 'active',
+      metadata: metadata || {},
+      createdAt: now,
+      updatedAt: now,
+    });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  } finally {
+    client.release();
+  }
+});
+
+app.get('/media/:id', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum,
+              owner_user_id, related_entity_type, related_entity_id, status, metadata, created_at, updated_at
+       FROM media_assets
+       WHERE id = $1
+       LIMIT 1`,
+      [req.params.id]
+    );
+    if (!result.rowCount) return send(res, 404, null, 'Media not found');
+
+    const row = result.rows[0];
+    return send(res, 200, {
+      id: row.id,
+      provider: row.provider,
+      bucket: row.bucket,
+      objectKey: row.object_key,
+      publicUrl: row.public_url,
+      contentType: row.content_type,
+      sizeBytes: row.size_bytes,
+      checksum: row.checksum,
+      ownerUserId: row.owner_user_id,
+      relatedEntityType: row.related_entity_type,
+      relatedEntityId: row.related_entity_id,
+      status: row.status,
+      metadata: row.metadata || {},
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+const normalizePositiveInt = (value, fallback, max = 500) => {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.min(parsed, max);
+};
+
+app.get('/admin/dashboard', async (_req, res) => {
+  try {
+    const [usersResult, foodsResult, ordersResult, chatsResult, reviewsResult, mediaResult] = await Promise.all([
+      pool.query('SELECT COUNT(*)::int AS count FROM users'),
+      pool.query('SELECT COUNT(*)::int AS count FROM foods'),
+      pool.query('SELECT COUNT(*)::int AS count FROM orders'),
+      pool.query('SELECT COUNT(*)::int AS count FROM chats'),
+      pool.query('SELECT COUNT(*)::int AS count FROM reviews'),
+      pool.query('SELECT COUNT(*)::int AS count FROM media_assets'),
+    ]);
+
+    return send(res, 200, {
+      users: Number(usersResult.rows[0]?.count || 0),
+      foods: Number(foodsResult.rows[0]?.count || 0),
+      orders: Number(ordersResult.rows[0]?.count || 0),
+      chats: Number(chatsResult.rows[0]?.count || 0),
+      reviews: Number(reviewsResult.rows[0]?.count || 0),
+      media: Number(mediaResult.rows[0]?.count || 0),
+    });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/users', async (req, res) => {
+  try {
+    const role = String(req.query.role || '').trim().toLowerCase();
+    const queryText = String(req.query.q || '').trim().toLowerCase();
+    const limit = normalizePositiveInt(req.query.limit, 200);
+
+    const conditions = [];
+    const values = [];
+
+    if (role === 'buyer') {
+      values.push(['buyer', 'both']);
+      conditions.push(`user_type = ANY($${values.length}::text[])`);
+    } else if (role === 'seller') {
+      values.push(['seller', 'both']);
+      conditions.push(`user_type = ANY($${values.length}::text[])`);
+    }
+
+    if (queryText) {
+      values.push(`%${queryText}%`);
+      const idx = values.length;
+      conditions.push(`(lower(email) LIKE $${idx} OR lower(coalesce(data->>'displayName','')) LIKE $${idx})`);
+    }
+
+    values.push(limit);
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const sqlText = `SELECT data FROM users ${whereClause} ORDER BY created_at DESC LIMIT $${values.length}`;
+    const result = await pool.query(sqlText, values);
+    return send(res, 200, result.rows.map((row) => row.data));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/users/:id', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT data FROM users WHERE uid = $1 OR lower(email) = lower($1) LIMIT 1',
+      [req.params.id]
+    );
+    if (!result.rowCount) return send(res, 404, null, 'User not found');
+    return send(res, 200, result.rows[0].data);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/orders', async (req, res) => {
+  try {
+    const status = String(req.query.status || '').trim().toLowerCase();
+    const limit = normalizePositiveInt(req.query.limit, 200);
+    const values = [];
+    let whereClause = '';
+
+    if (status) {
+      values.push(status);
+      whereClause = `WHERE lower(status) = $${values.length}`;
+    }
+
+    values.push(limit);
+    const result = await pool.query(
+      `SELECT data FROM orders ${whereClause} ORDER BY order_date DESC LIMIT $${values.length}`,
+      values
+    );
+    return send(res, 200, result.rows.map((row) => row.data));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/admin/orders/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body || {};
+    if (!status) return send(res, 400, null, 'status is required');
+
+    const update = await pool.query(
+      `UPDATE orders
+       SET status = $1,
+           data = jsonb_set(data, '{status}', to_jsonb($1::text), true)
+       WHERE id = $2
+       RETURNING id`,
+      [status, req.params.id]
+    );
+    if (!update.rowCount) return send(res, 404, null, 'Order not found');
+    return send(res, 200, { id: req.params.id, status });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/foods', async (req, res) => {
+  try {
+    const limit = normalizePositiveInt(req.query.limit, 300);
+    const result = await pool.query('SELECT data FROM foods ORDER BY created_at DESC LIMIT $1', [limit]);
+    return send(res, 200, result.rows.map((row) => row.data));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/reviews', async (req, res) => {
+  try {
+    const limit = normalizePositiveInt(req.query.limit, 300);
+    const result = await pool.query('SELECT data FROM reviews ORDER BY created_at DESC LIMIT $1', [limit]);
+    return send(res, 200, result.rows.map((row) => row.data));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/chats', async (req, res) => {
+  try {
+    const limit = normalizePositiveInt(req.query.limit, 300);
+    const result = await pool.query(
+      'SELECT data FROM chats ORDER BY last_message_time DESC NULLS LAST LIMIT $1',
+      [limit]
+    );
+    return send(res, 200, result.rows.map((row) => row.data));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/media', async (req, res) => {
+  try {
+    const limit = normalizePositiveInt(req.query.limit, 300);
+    const result = await pool.query(
+      `SELECT id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum,
+              owner_user_id, related_entity_type, related_entity_id, status, metadata, created_at, updated_at
+       FROM media_assets
+       ORDER BY created_at DESC
+       LIMIT $1`,
+      [limit]
+    );
+    return send(res, 200, result.rows.map((row) => ({
+      id: row.id,
+      provider: row.provider,
+      bucket: row.bucket,
+      objectKey: row.object_key,
+      publicUrl: row.public_url,
+      contentType: row.content_type,
+      sizeBytes: row.size_bytes,
+      checksum: row.checksum,
+      ownerUserId: row.owner_user_id,
+      relatedEntityType: row.related_entity_type,
+      relatedEntityId: row.related_entity_id,
+      status: row.status,
+      metadata: row.metadata || {},
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    })));
   } catch (error) {
     return send(res, 500, null, error.message);
   }

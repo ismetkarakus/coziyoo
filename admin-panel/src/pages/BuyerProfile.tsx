@@ -1,30 +1,17 @@
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import usersData from '../../../src/mock/users.json'
 import {
   Avatar,
   Box,
   Button,
   Chip,
   Divider,
-  Grid,
   Paper,
   Stack,
   Typography,
 } from '@mui/material'
-
-type UserRecord = Record<string, unknown> & {
-  id: string
-  userType?: string
-  displayName?: string
-  email?: string
-  phone?: string
-  status?: string
-  totalOrders?: number
-  totalSpend?: number
-  city?: string
-  address?: string
-}
+import { api } from '../lib/api'
+import type { UserRecord } from '../lib/api'
 
 const formatValue = (value: unknown) => {
   if (value === null || value === undefined || value === '') return '—'
@@ -35,18 +22,48 @@ const formatValue = (value: unknown) => {
 
 const BuyerProfile = () => {
   const { id } = useParams()
+  const [buyer, setBuyer] = useState<UserRecord | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const buyer = useMemo(() => {
-    const allUsers = usersData as UserRecord[]
-    return allUsers.find((user) => user.id === id) ?? null
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+
+    const run = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await api.getUser(id)
+        if (!cancelled) setBuyer(data)
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load buyer')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    run()
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
-  if (!buyer) {
+  if (loading) {
+    return (
+      <Paper sx={{ p: 3, borderRadius: 4 }}>
+        <Typography>Loading buyer...</Typography>
+      </Paper>
+    )
+  }
+
+  if (!buyer || error) {
     return (
       <Paper sx={{ p: 3, borderRadius: 4 }}>
         <Typography variant="h5" fontWeight={600}>
           Buyer not found
         </Typography>
+        {error && <Typography color="error.main">{error}</Typography>}
         <Button component={Link} to="/buyers" sx={{ mt: 2 }}>
           Back to Buyers
         </Button>
@@ -54,23 +71,24 @@ const BuyerProfile = () => {
     )
   }
 
+  const displayName = String(buyer.displayName || buyer.email || 'Buyer')
+
   return (
     <Stack spacing={3}>
       <Paper sx={{ p: 3, borderRadius: 4 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center">
           <Avatar sx={{ width: 84, height: 84 }}>
-            {(buyer.displayName ?? 'B').slice(0, 1)}
+            {displayName.slice(0, 1).toUpperCase()}
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography variant="h4" fontWeight={700}>
-              {buyer.displayName ?? '—'}
+              {displayName}
             </Typography>
-            <Typography color="text.secondary">{buyer.email ?? '—'}</Typography>
+            <Typography color="text.secondary">{String(buyer.email || '—')}</Typography>
             <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
-              <Chip label={buyer.userType ?? 'buyer'} />
-              <Chip label={buyer.status ?? '—'} />
-              <Chip label={`Orders: ${buyer.totalOrders ?? '—'}`} />
-              <Chip label={`Spend: ₺${buyer.totalSpend ?? '—'}`} />
+              <Chip label={String(buyer.userType || 'buyer')} />
+              <Chip label={String(buyer.status || '—')} />
+              <Chip label={`UID: ${String(buyer.uid || buyer.id || '—')}`} />
             </Stack>
           </Box>
           <Button component={Link} to="/buyers">
@@ -79,35 +97,21 @@ const BuyerProfile = () => {
         </Stack>
       </Paper>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr' } }}>
+        <Box>
           <Paper sx={{ p: 3, borderRadius: 4 }}>
             <Typography variant="h6" fontWeight={600}>
-              Contact & Location
+              Contact
             </Typography>
             <Divider sx={{ my: 2 }} />
             <Stack spacing={1}>
               <Typography>Email: {formatValue(buyer.email)}</Typography>
               <Typography>Phone: {formatValue(buyer.phone)}</Typography>
-              <Typography>City: {formatValue(buyer.city)}</Typography>
-              <Typography>Address: {formatValue(buyer.address)}</Typography>
-            </Stack>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, borderRadius: 4 }}>
-            <Typography variant="h6" fontWeight={600}>
-              Buyer Details
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-            <Stack spacing={1}>
-              <Typography>Total Orders: {formatValue(buyer.totalOrders)}</Typography>
-              <Typography>Total Spend: ₺{formatValue(buyer.totalSpend)}</Typography>
               <Typography>Status: {formatValue(buyer.status)}</Typography>
             </Stack>
           </Paper>
-        </Grid>
-        <Grid item xs={12}>
+        </Box>
+        <Box>
           <Paper sx={{ p: 3, borderRadius: 4 }}>
             <Typography variant="h6" fontWeight={600}>
               Raw Data
@@ -117,8 +121,8 @@ const BuyerProfile = () => {
               {JSON.stringify(buyer, null, 2)}
             </Typography>
           </Paper>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Stack>
   )
 }

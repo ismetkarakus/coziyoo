@@ -4,26 +4,21 @@ import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { ThemeProvider } from '@mui/material/styles'
 import { CssBaseline } from '@mui/material'
 import { lightTheme, darkTheme } from './theme'
-import { db } from './lib/firebase'
-import {
-  collection,
-  getCountFromServer,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-} from 'firebase/firestore'
 import Buyers from './pages/Buyers'
 import Sellers from './pages/Sellers'
 import SellerProfile from './pages/SellerProfile'
 import BuyerProfile from './pages/BuyerProfile'
+import Orders from './pages/Orders'
+import Foods from './pages/Foods'
+import Reviews from './pages/Reviews'
+import Chats from './pages/Chats'
+import Media from './pages/Media'
+import { api } from './lib/api'
+import type { DashboardSummary, OrderRecord } from './lib/api'
 
-// Dark mode desteğini ekle
 const initializeDarkMode = () => {
   const stored = localStorage.getItem('darkMode')
-  if (stored !== null) {
-    return stored === 'true'
-  }
+  if (stored !== null) return stored === 'true'
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
@@ -39,16 +34,6 @@ const applyDarkMode = (isDark: boolean) => {
 type StatCard = {
   label: string
   value: string
-  helper?: string
-}
-
-type OrderRow = {
-  id: string
-  buyerName?: string
-  cookName?: string
-  totalPrice?: number
-  status?: string
-  createdAt?: string
 }
 
 const formatCurrency = (value?: number) => {
@@ -62,81 +47,42 @@ const formatCurrency = (value?: number) => {
 
 const toDateString = (value: unknown) => {
   if (!value) return '—'
-  if (typeof value === 'string' || typeof value === 'number') {
-    const date = new Date(value)
-    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('tr-TR')
-  }
-  if (typeof value === 'object') {
-    const maybeTimestamp = value as { toDate?: () => Date; seconds?: number }
-    if (maybeTimestamp.toDate) {
-      return maybeTimestamp.toDate().toLocaleString('tr-TR')
-    }
-    if (typeof maybeTimestamp.seconds === 'number') {
-      return new Date(maybeTimestamp.seconds * 1000).toLocaleString('tr-TR')
-    }
-  }
-  return '—'
+  const date = new Date(String(value))
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('tr-TR')
 }
 
 function Dashboard() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardSummary>({
     users: 0,
     foods: 0,
     orders: 0,
+    chats: 0,
+    reviews: 0,
+    media: 0,
   })
-  const [recentOrders, setRecentOrders] = useState<OrderRow[]>([])
+  const [recentOrders, setRecentOrders] = useState<OrderRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
+  const loadDashboard = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const [summary, orders] = await Promise.all([
+        api.getDashboardSummary(),
+        api.getOrders({ limit: 8 }),
+      ])
 
-        const usersRef = collection(db, 'users')
-        const foodsRef = collection(db, 'foods')
-        const ordersRef = collection(db, 'orders')
-
-        const [usersSnap, foodsSnap, ordersSnap] = await Promise.all([
-          getCountFromServer(usersRef),
-          getCountFromServer(foodsRef),
-          getCountFromServer(ordersRef),
-        ])
-
-        setStats({
-          users: usersSnap.data().count,
-          foods: foodsSnap.data().count,
-          orders: ordersSnap.data().count,
-        })
-
-        const recentOrdersQuery = query(
-          ordersRef,
-          orderBy('createdAt', 'desc'),
-          limit(8)
-        )
-        const recentOrdersSnap = await getDocs(recentOrdersQuery)
-        const ordersData = recentOrdersSnap.docs.map((doc) => {
-          const data = doc.data()
-          return {
-            id: doc.id,
-            buyerName: data.buyerName || data.customerName || '—',
-            cookName: data.cookName || data.sellerName || '—',
-            totalPrice: data.totalPrice || data.total || 0,
-            status: data.status || '—',
-            createdAt: toDateString(data.createdAt),
-          }
-        })
-
-        setRecentOrders(ordersData)
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error'
-        setError(message)
-      } finally {
-        setIsLoading(false)
-      }
+      setStats(summary)
+      setRecentOrders(orders)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown API error')
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadDashboard()
   }, [])
 
@@ -145,6 +91,9 @@ function Dashboard() {
       { label: 'Users', value: stats.users.toString() },
       { label: 'Meals', value: stats.foods.toString() },
       { label: 'Orders', value: stats.orders.toString() },
+      { label: 'Chats', value: stats.chats.toString() },
+      { label: 'Reviews', value: stats.reviews.toString() },
+      { label: 'Media', value: stats.media.toString() },
     ],
     [stats]
   )
@@ -156,18 +105,17 @@ function Dashboard() {
           <p className="eyebrow">Cazi Admin</p>
           <h1>Operations Dashboard</h1>
           <p className="subtext">
-            Live stats from Firestore with recent orders and quick metrics.
+            Single API source: <span className="mono">{api.baseUrl}</span>
           </p>
         </div>
         <div className="topbar-actions">
-          <button className="ghost">Refresh</button>
-          <button className="primary">Add Seller</button>
+          <button className="ghost" onClick={loadDashboard}>Refresh</button>
         </div>
       </header>
 
       {error && (
         <div className="alert">
-          <strong>Firebase error:</strong> {error}
+          <strong>API error:</strong> {error}
         </div>
       )}
 
@@ -176,7 +124,6 @@ function Dashboard() {
           <div className="card" key={card.label}>
             <p className="card-label">{card.label}</p>
             <p className="card-value">{isLoading ? '—' : card.value}</p>
-            {card.helper && <p className="card-helper">{card.helper}</p>}
           </div>
         ))}
       </section>
@@ -194,16 +141,16 @@ function Dashboard() {
               <span>Seller</span>
               <span>Amount</span>
               <span>Status</span>
-              <span>Created</span>
+              <span>Date</span>
             </div>
             {recentOrders.map((order) => (
               <div className="table-row" key={order.id}>
                 <span className="mono">{order.id}</span>
-                <span>{order.buyerName}</span>
-                <span>{order.cookName}</span>
+                <span>{order.buyerName || order.buyerId || '—'}</span>
+                <span>{order.cookName || order.sellerId || '—'}</span>
                 <span>{formatCurrency(order.totalPrice)}</span>
-                <span className={`status status-${order.status}`}>{order.status}</span>
-                <span>{order.createdAt}</span>
+                <span className={`status status-${order.status}`}>{order.status || '—'}</span>
+                <span>{toDateString(order.orderDate || order.createdAt)}</span>
               </div>
             ))}
             {!isLoading && recentOrders.length === 0 && (
@@ -214,20 +161,16 @@ function Dashboard() {
 
         <div className="panel">
           <div className="panel-header">
-            <h2>Quick Actions</h2>
+            <h2>Coverage</h2>
           </div>
           <div className="actions">
-            <button className="primary">Review Sellers</button>
-            <button className="ghost">Flag Order</button>
-            <button className="ghost">Export Report</button>
-            <button className="ghost">Send Announcement</button>
-          </div>
-          <div className="divider" />
-          <div className="panel-note">
-            <p>
-              Connect this panel to your Firebase Admin workflows next. The
-              scaffold is ready for real-time data and auth gating.
-            </p>
+            <Link className="ghost" to="/buyers">Manage buyers</Link>
+            <Link className="ghost" to="/sellers">Manage sellers</Link>
+            <Link className="ghost" to="/orders">Control orders</Link>
+            <Link className="ghost" to="/foods">View foods</Link>
+            <Link className="ghost" to="/reviews">Moderate reviews</Link>
+            <Link className="ghost" to="/chats">Inspect chats</Link>
+            <Link className="ghost" to="/media">Inspect media</Link>
           </div>
         </div>
       </section>
@@ -259,16 +202,21 @@ function App() {
                 <span className="brand-dot" />
                 <div>
                   <p className="brand-title">Cazi Admin</p>
-                  <p className="brand-subtitle">Operations</p>
+                  <p className="brand-subtitle">Single API</p>
                 </div>
               </div>
               <nav className="nav">
                 <Link to="/" className="nav-link">Dashboard</Link>
                 <Link to="/buyers" className="nav-link">Buyers</Link>
                 <Link to="/sellers" className="nav-link">Sellers</Link>
+                <Link to="/orders" className="nav-link">Orders</Link>
+                <Link to="/foods" className="nav-link">Foods</Link>
+                <Link to="/reviews" className="nav-link">Reviews</Link>
+                <Link to="/chats" className="nav-link">Chats</Link>
+                <Link to="/media" className="nav-link">Media</Link>
               </nav>
             </div>
-            <button 
+            <button
               className="theme-toggle"
               onClick={toggleDarkMode}
               aria-label="Toggle dark mode"
@@ -282,6 +230,11 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/buyers" element={<Buyers />} />
               <Route path="/sellers" element={<Sellers />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/foods" element={<Foods />} />
+              <Route path="/reviews" element={<Reviews />} />
+              <Route path="/chats" element={<Chats />} />
+              <Route path="/media" element={<Media />} />
               <Route path="/sellers/:id" element={<SellerProfile />} />
               <Route path="/buyers/:id" element={<BuyerProfile />} />
             </Routes>

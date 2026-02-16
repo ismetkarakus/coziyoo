@@ -10,25 +10,25 @@
 ## Pending - Backend
 - [ ] Add admin auth endpoints: `POST /admin/auth/login`, `GET /admin/auth/me`
 - [ ] Implement RBAC middleware for all `/admin/*` routes
-- [ ] Add admin CRUD endpoints for users, sellers, foods, orders, chats, reviews, media
-- [ ] Add dashboard endpoints: summary, alerts, activity
+- [ ] Add admin CRUD endpoints for users, sellers, foods, orders, chats, reviews, media (partial: read endpoints + order status update shipped)
+- [ ] Add dashboard endpoints: summary, alerts, activity (partial: summary shipped at `GET /admin/dashboard`)
 - [ ] Add WebSocket endpoint `/admin/ws` with event contracts
 - [ ] Add `admin_audit_logs` table and write-on-mutation logging
 - [ ] Add indexes for admin filtering/sorting performance
 - [ ] Add backend tests for auth/RBAC, CRUD, audit, realtime
 
 ## Pending - Frontend (admin-panel)
-- [ ] Remove Firebase/mock JSON dependencies from admin pages
-- [ ] Create API client layer with JWT handling
+- [x] Remove Firebase/mock JSON dependencies from admin pages
+- [ ] Create API client layer with JWT handling (partial: API client shipped without JWT)
 - [ ] Add React Query data layer and cache invalidation
 - [ ] Implement protected routes + permission-aware navigation
-- [ ] Build shared components: `EntityTable`, `EntityForm`, danger confirm modal, audit drawer
+- [ ] Build shared components: `EntityTable`, `EntityForm`, danger confirm modal, audit drawer (partial: reusable `EntityTablePage` shipped)
 - [ ] Implement modules in priority order:
-  - [ ] Orders (first)
-  - [ ] Sellers (second)
-  - [ ] Users
-  - [ ] Foods/Reviews
-  - [ ] Chats/Media + dashboard polish
+  - [x] Orders (first)
+  - [x] Sellers (second)
+  - [x] Users
+  - [x] Foods/Reviews
+  - [x] Chats/Media + dashboard polish
 - [ ] Add WebSocket subscription integration for realtime UI updates
 - [ ] Add frontend tests (guards, query state, mutation flows, error handling)
 
