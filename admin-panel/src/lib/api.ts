@@ -37,6 +37,7 @@ type ApiEnvelope<T> = {
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/+$/, '')
+const ADMIN_TOKEN_KEY = 'admin_token'
 
 const buildQuery = (params?: Record<string, string | number | undefined>) => {
   if (!params) return ''
@@ -50,9 +51,11 @@ const buildQuery = (params?: Record<string, string | number | undefined>) => {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = api.getToken()
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
     ...init,
@@ -67,6 +70,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   baseUrl: API_BASE_URL,
+  getToken: () => localStorage.getItem(ADMIN_TOKEN_KEY),
+  setToken: (token: string) => localStorage.setItem(ADMIN_TOKEN_KEY, token),
+  clearToken: () => localStorage.removeItem(ADMIN_TOKEN_KEY),
+
+  adminLogin: (email: string, password: string) =>
+    request<{ token: string; tokenType: string; expiresIn: number; admin: { email: string; role: string } }>(
+      '/admin/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }
+    ),
+
+  adminMe: () => request<{ email: string; role: string; exp: number }>('/admin/auth/me'),
 
   getDashboardSummary: () => request<DashboardSummary>('/admin/dashboard'),
 

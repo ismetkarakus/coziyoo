@@ -8,8 +8,8 @@
 - [x] Produce decision-complete implementation plan
 
 ## Pending - Backend
-- [ ] Add admin auth endpoints: `POST /admin/auth/login`, `GET /admin/auth/me`
-- [ ] Implement RBAC middleware for all `/admin/*` routes
+- [x] Add admin auth endpoints: `POST /admin/auth/login`, `GET /admin/auth/me`
+- [x] Implement RBAC middleware for all `/admin/*` routes
 - [ ] Add admin CRUD endpoints for users, sellers, foods, orders, chats, reviews, media (partial: read endpoints + order status update shipped)
 - [ ] Add dashboard endpoints: summary, alerts, activity (partial: summary shipped at `GET /admin/dashboard`)
 - [ ] Add WebSocket endpoint `/admin/ws` with event contracts

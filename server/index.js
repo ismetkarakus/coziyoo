@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { Pool } = require('pg');
 const { createStorageProvider } = require('./storage');
 
@@ -14,6 +15,8 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
 const PORT = Number(process.env.API_PORT || 4000);
+const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || process.env.JWT_SECRET || 'change-me-admin-secret';
+const ADMIN_TOKEN_TTL_SECONDS = Number(process.env.ADMIN_TOKEN_TTL_SECONDS || 60 * 60 * 12);
 
 const shouldUseSsl = String(process.env.PGSSL || '').toLowerCase() === 'true';
 const searchPath = process.env.PG_SEARCH_PATH || 'public';
@@ -32,6 +35,59 @@ const pool = new Pool({
 
 const makeId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 const nowIso = () => new Date().toISOString();
+const base64UrlEncode = (value) => Buffer.from(value).toString('base64url');
+const base64UrlDecode = (value) => Buffer.from(value, 'base64url').toString('utf-8');
+
+const signAdminToken = (payload) => {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const encodedHeader = base64UrlEncode(JSON.stringify(header));
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const toSign = `${encodedHeader}.${encodedPayload}`;
+  const signature = crypto.createHmac('sha256', ADMIN_TOKEN_SECRET).update(toSign).digest('base64url');
+  return `${toSign}.${signature}`;
+};
+
+const verifyAdminToken = (token) => {
+  const parts = String(token || '').split('.');
+  if (parts.length !== 3) throw new Error('Invalid token');
+  const [encodedHeader, encodedPayload, signature] = parts;
+  const expected = crypto.createHmac('sha256', ADMIN_TOKEN_SECRET).update(`${encodedHeader}.${encodedPayload}`).digest('base64url');
+  if (signature !== expected) throw new Error('Invalid signature');
+  const payload = JSON.parse(base64UrlDecode(encodedPayload));
+  if (!payload?.exp || Date.now() >= Number(payload.exp) * 1000) throw new Error('Token expired');
+  return payload;
+};
+
+const getAdminAccounts = () => {
+  const fromJson = String(process.env.ADMIN_ACCOUNTS_JSON || '').trim();
+  if (fromJson) {
+    try {
+      const parsed = JSON.parse(fromJson);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+          .filter((item) => item?.email && item?.password)
+          .map((item) => ({
+            email: String(item.email).toLowerCase(),
+            password: String(item.password),
+            role: item.role === 'super_admin' ? 'super_admin' : 'admin',
+          }));
+      }
+    } catch (_error) {
+      // fallback to single-account env vars below
+    }
+  }
+
+  const singleEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const singlePassword = String(process.env.ADMIN_PASSWORD || '').trim();
+  const singleRole = String(process.env.ADMIN_ROLE || 'super_admin').trim().toLowerCase();
+  if (singleEmail && singlePassword) {
+    return [{ email: singleEmail, password: singlePassword, role: singleRole === 'admin' ? 'admin' : 'super_admin' }];
+  }
+
+  return [{ email: 'admin@cazi.local', password: 'admin123', role: 'super_admin' }];
+};
+
+const adminAccounts = getAdminAccounts();
 
 const sql = {
   init: `
@@ -319,6 +375,25 @@ const send = (res, status, data, error) => {
   return res.status(status).json({ status, data });
 };
 
+const extractBearerToken = (authHeader) => {
+  const value = String(authHeader || '');
+  if (!value.startsWith('Bearer ')) return null;
+  return value.slice('Bearer '.length).trim();
+};
+
+const requireAdminAuth = (req, res, next) => {
+  const token = extractBearerToken(req.headers.authorization);
+  if (!token) return send(res, 401, null, 'Admin token is required');
+
+  try {
+    const payload = verifyAdminToken(token);
+    req.admin = payload;
+    return next();
+  } catch (error) {
+    return send(res, 401, null, error.message || 'Invalid token');
+  }
+};
+
 app.get('/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
@@ -326,6 +401,43 @@ app.get('/health', async (_req, res) => {
   } catch (error) {
     send(res, 500, null, error.message);
   }
+});
+
+app.post('/admin/auth/login', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    if (!email || !password) return send(res, 400, null, 'Email and password are required');
+
+    const account = adminAccounts.find((item) => item.email === email && item.password === password);
+    if (!account) return send(res, 401, null, 'Invalid admin credentials');
+
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      sub: account.email,
+      email: account.email,
+      role: account.role,
+      iat: now,
+      exp: now + ADMIN_TOKEN_TTL_SECONDS,
+    };
+    const token = signAdminToken(payload);
+    return send(res, 200, {
+      token,
+      tokenType: 'Bearer',
+      expiresIn: ADMIN_TOKEN_TTL_SECONDS,
+      admin: { email: account.email, role: account.role },
+    });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/auth/me', requireAdminAuth, async (req, res) => {
+  return send(res, 200, {
+    email: req.admin.email,
+    role: req.admin.role,
+    exp: req.admin.exp,
+  });
 });
 
 app.post('/auth/register', async (req, res) => {
@@ -1030,7 +1142,7 @@ const normalizePositiveInt = (value, fallback, max = 500) => {
   return Math.min(parsed, max);
 };
 
-app.get('/admin/dashboard', async (_req, res) => {
+app.get('/admin/dashboard', requireAdminAuth, async (_req, res) => {
   try {
     const [usersResult, foodsResult, ordersResult, chatsResult, reviewsResult, mediaResult] = await Promise.all([
       pool.query('SELECT COUNT(*)::int AS count FROM users'),
@@ -1054,7 +1166,7 @@ app.get('/admin/dashboard', async (_req, res) => {
   }
 });
 
-app.get('/admin/users', async (req, res) => {
+app.get('/admin/users', requireAdminAuth, async (req, res) => {
   try {
     const role = String(req.query.role || '').trim().toLowerCase();
     const queryText = String(req.query.q || '').trim().toLowerCase();
@@ -1087,7 +1199,7 @@ app.get('/admin/users', async (req, res) => {
   }
 });
 
-app.get('/admin/users/:id', async (req, res) => {
+app.get('/admin/users/:id', requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT data FROM users WHERE uid = $1 OR lower(email) = lower($1) LIMIT 1',
@@ -1100,7 +1212,7 @@ app.get('/admin/users/:id', async (req, res) => {
   }
 });
 
-app.get('/admin/orders', async (req, res) => {
+app.get('/admin/orders', requireAdminAuth, async (req, res) => {
   try {
     const status = String(req.query.status || '').trim().toLowerCase();
     const limit = normalizePositiveInt(req.query.limit, 200);
@@ -1123,7 +1235,7 @@ app.get('/admin/orders', async (req, res) => {
   }
 });
 
-app.put('/admin/orders/:id/status', async (req, res) => {
+app.put('/admin/orders/:id/status', requireAdminAuth, async (req, res) => {
   try {
     const { status } = req.body || {};
     if (!status) return send(res, 400, null, 'status is required');
@@ -1143,7 +1255,7 @@ app.put('/admin/orders/:id/status', async (req, res) => {
   }
 });
 
-app.get('/admin/foods', async (req, res) => {
+app.get('/admin/foods', requireAdminAuth, async (req, res) => {
   try {
     const limit = normalizePositiveInt(req.query.limit, 300);
     const result = await pool.query('SELECT data FROM foods ORDER BY created_at DESC LIMIT $1', [limit]);
@@ -1153,7 +1265,7 @@ app.get('/admin/foods', async (req, res) => {
   }
 });
 
-app.get('/admin/reviews', async (req, res) => {
+app.get('/admin/reviews', requireAdminAuth, async (req, res) => {
   try {
     const limit = normalizePositiveInt(req.query.limit, 300);
     const result = await pool.query('SELECT data FROM reviews ORDER BY created_at DESC LIMIT $1', [limit]);
@@ -1163,7 +1275,7 @@ app.get('/admin/reviews', async (req, res) => {
   }
 });
 
-app.get('/admin/chats', async (req, res) => {
+app.get('/admin/chats', requireAdminAuth, async (req, res) => {
   try {
     const limit = normalizePositiveInt(req.query.limit, 300);
     const result = await pool.query(
@@ -1176,7 +1288,7 @@ app.get('/admin/chats', async (req, res) => {
   }
 });
 
-app.get('/admin/media', async (req, res) => {
+app.get('/admin/media', requireAdminAuth, async (req, res) => {
   try {
     const limit = normalizePositiveInt(req.query.limit, 300);
     const result = await pool.query(

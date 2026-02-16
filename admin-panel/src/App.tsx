@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { ThemeProvider } from '@mui/material/styles'
-import { CssBaseline } from '@mui/material'
+import { Box, Button, CssBaseline, Paper, TextField, Typography } from '@mui/material'
 import { lightTheme, darkTheme } from './theme'
 import Buyers from './pages/Buyers'
 import Sellers from './pages/Sellers'
@@ -180,6 +180,12 @@ function Dashboard() {
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(initializeDarkMode)
+  const [isAuthChecking, setIsAuthChecking] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode
@@ -190,6 +196,101 @@ function App() {
   useEffect(() => {
     applyDarkMode(isDarkMode)
   }, [isDarkMode])
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      const token = api.getToken()
+      if (!token) {
+        if (!cancelled) {
+          setIsAuthenticated(false)
+          setIsAuthChecking(false)
+        }
+        return
+      }
+      try {
+        await api.adminMe()
+        if (!cancelled) setIsAuthenticated(true)
+      } catch (_error) {
+        api.clearToken()
+        if (!cancelled) setIsAuthenticated(false)
+      } finally {
+        if (!cancelled) setIsAuthChecking(false)
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleLogin = async () => {
+    try {
+      setIsLoggingIn(true)
+      setAuthError(null)
+      const result = await api.adminLogin(email, password)
+      api.setToken(result.token)
+      setIsAuthenticated(true)
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Login failed')
+      setIsAuthenticated(false)
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
+
+  const handleLogout = () => {
+    api.clearToken()
+    setIsAuthenticated(false)
+  }
+
+  if (isAuthChecking) {
+    return (
+      <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+        <CssBaseline />
+        <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+          <Paper sx={{ p: 3 }}>Checking admin session...</Paper>
+        </Box>
+      </ThemeProvider>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+        <CssBaseline />
+        <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
+          <Paper sx={{ p: 3, width: '100%', maxWidth: 420, display: 'grid', gap: 2, borderRadius: 3 }}>
+            <Typography variant="h5" fontWeight={700}>Admin Login</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Sign in to access protected admin endpoints.
+            </Typography>
+            <TextField
+              label="Email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              size="small"
+              fullWidth
+            />
+            <TextField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              size="small"
+              fullWidth
+            />
+            {authError && (
+              <Typography color="error.main" variant="body2">{authError}</Typography>
+            )}
+            <Button variant="contained" onClick={handleLogin} disabled={isLoggingIn || !email || !password}>
+              {isLoggingIn ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </Paper>
+        </Box>
+      </ThemeProvider>
+    )
+  }
 
   return (
     <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
@@ -224,6 +325,7 @@ function App() {
             >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
+            <button className="ghost" onClick={handleLogout}>Logout</button>
           </header>
           <main className="main">
             <Routes>
