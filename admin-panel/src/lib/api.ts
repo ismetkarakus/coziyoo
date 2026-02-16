@@ -116,6 +116,24 @@ export const api = {
     request<UserRecord[] | PaginatedResult<UserRecord>>(`/admin/users${buildQuery(params)}`).then(asItems),
 
   getUser: (id: string) => request<UserRecord>(`/admin/users/${encodeURIComponent(id)}`),
+  updateUser: (id: string, payload: Record<string, unknown>) =>
+    request<UserRecord>(`/admin/users/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteUser: (id: string) =>
+    request<{ uid: string }>(`/admin/users/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+  updateSeller: (id: string, payload: Record<string, unknown>) =>
+    request<UserRecord>(`/admin/sellers/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteSeller: (id: string) =>
+    request<{ uid: string }>(`/admin/sellers/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
 
   getOrders: (params?: { status?: string; page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; limit?: number }) =>
     request<OrderRecord[] | PaginatedResult<OrderRecord>>(`/admin/orders${buildQuery(params)}`).then(asItems),
@@ -124,6 +142,10 @@ export const api = {
     request<{ id: string; status: string }>(`/admin/orders/${encodeURIComponent(id)}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
+    }),
+  deleteOrder: (id: string) =>
+    request<{ id: string }>(`/admin/orders/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
     }),
 
   getFoods: (params?: { page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; q?: string; limit?: number }) =>

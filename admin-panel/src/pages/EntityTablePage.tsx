@@ -2,7 +2,9 @@ import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
   Box,
+  Button,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -36,6 +38,9 @@ interface EntityTablePageProps {
   error: string | null
   preferredColumns?: string[]
   trailing?: ReactNode
+  onEditRow?: (row: Record<string, unknown>) => void
+  onDeleteRow?: (row: Record<string, unknown>) => void
+  showActions?: boolean
 }
 
 export const EntityTablePage = ({
@@ -45,6 +50,9 @@ export const EntityTablePage = ({
   error,
   preferredColumns,
   trailing,
+  onEditRow,
+  onDeleteRow,
+  showActions = true,
 }: EntityTablePageProps) => {
   const columns = useMemo(() => {
     if (preferredColumns && preferredColumns.length > 0) return preferredColumns
@@ -71,6 +79,7 @@ export const EntityTablePage = ({
               {columns.map((column) => (
                 <TableCell key={column} sx={{ fontWeight: 600 }}>{formatHeader(column)}</TableCell>
               ))}
+              {showActions && <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -79,16 +88,28 @@ export const EntityTablePage = ({
                 {columns.map((column) => (
                   <TableCell key={column}>{normalizeValue(row[column])}</TableCell>
                 ))}
+                {showActions && (
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      <Button size="small" onClick={() => onEditRow?.(row)} disabled={!onEditRow}>
+                        Edit
+                      </Button>
+                      <Button size="small" color="error" onClick={() => onDeleteRow?.(row)} disabled={!onDeleteRow}>
+                        Delete
+                      </Button>
+                    </Stack>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {!loading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={Math.max(columns.length, 1)} align="center">No records found.</TableCell>
+                <TableCell colSpan={Math.max(columns.length + (showActions ? 1 : 0), 1)} align="center">No records found.</TableCell>
               </TableRow>
             )}
             {loading && (
               <TableRow>
-                <TableCell colSpan={Math.max(columns.length, 1)} align="center">Loading...</TableCell>
+                <TableCell colSpan={Math.max(columns.length + (showActions ? 1 : 0), 1)} align="center">Loading...</TableCell>
               </TableRow>
             )}
           </TableBody>

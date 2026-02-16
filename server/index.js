@@ -1637,6 +1637,26 @@ app.put('/admin/orders/:id/status', requireAdminAuth, async (req, res) => {
   }
 });
 
+app.delete('/admin/orders/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM orders WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Order not found');
+
+    await pool.query('DELETE FROM orders WHERE id = $1', [req.params.id]);
+    await logAdminAction({
+      admin: req.admin,
+      action: 'order.delete',
+      entityType: 'order',
+      entityId: req.params.id,
+      before: previous.rows[0].data,
+      after: null,
+    });
+    return send(res, 200, { id: req.params.id });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
 app.get('/admin/foods', requireAdminAuth, async (req, res) => {
   try {
     const { page, pageSize, offset, sortBy, sortDir, q } = parseListParams(req.query, {

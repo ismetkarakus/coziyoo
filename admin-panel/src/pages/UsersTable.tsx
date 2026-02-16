@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
+import type { MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
+  Button,
   Chip,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -13,7 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import type { UserRecord } from '../lib/api'
 
@@ -45,8 +48,10 @@ interface UsersTableProps {
 
 export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersTableProps) => {
   const [search, setSearch] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
   const detailBase = filterType === 'seller' ? '/sellers' : '/buyers'
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const { data: rows = [], isLoading: loading, error } = useQuery<UserRecord[]>({
     queryKey: ['users', filterType, search],
@@ -62,6 +67,63 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
     })
     return Array.from(keys)
   }, [forcedColumns, rows])
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Record<string, unknown> }) =>
+      filterType === 'seller' ? api.updateSeller(id, payload) : api.updateUser(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      filterType === 'seller' ? api.deleteSeller(id) : api.deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+
+  const handleEdit = async (event: MouseEvent, row: UserRecord) => {
+    event.stopPropagation()
+    const id = resolveRowId(row)
+    if (!id) return
+
+    const nextDisplayName = window.prompt('Display name', String(row.displayName || ''))
+    if (nextDisplayName === null) return
+    const nextStatus = window.prompt('Status', String(row.status || 'active'))
+    if (nextStatus === null) return
+
+    setActionError(null)
+    try {
+      await updateMutation.mutateAsync({
+        id,
+        payload: {
+          displayName: nextDisplayName,
+          status: nextStatus,
+        },
+      })
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to update user')
+    }
+  }
+
+  const handleDelete = async (event: MouseEvent, row: UserRecord) => {
+    event.stopPropagation()
+    const id = resolveRowId(row)
+    if (!id) return
+    const ok = window.confirm(`Delete user ${id}?`)
+    if (!ok) return
+
+    setActionError(null)
+    try {
+      await deleteMutation.mutateAsync(id)
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to delete user')
+    }
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -87,6 +149,11 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
           {error instanceof Error ? error.message : 'Failed to load users'}
         </Paper>
       )}
+      {actionError && (
+        <Paper sx={{ p: 2, borderRadius: 3, color: 'error.main' }}>
+          {actionError}
+        </Paper>
+      )}
 
       <TableContainer
         component={Paper}
@@ -101,6 +168,7 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
                   {formatHeader(column)}
                 </TableCell>
               ))}
+              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -126,19 +194,25 @@ export const UsersTable = ({ title, filterType, columns: forcedColumns }: UsersT
                       <TableCell key={column}>{normalizeValue(value)}</TableCell>
                     )
                   })}
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      <Button size="small" onClick={(event) => handleEdit(event, row)}>Edit</Button>
+                      <Button size="small" color="error" onClick={(event) => handleDelete(event, row)}>Delete</Button>
+                    </Stack>
+                  </TableCell>
                 </TableRow>
               )
             })}
             {!loading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={Math.max(columns.length, 1)} align="center">
+                <TableCell colSpan={Math.max(columns.length + 1, 1)} align="center">
                   No users found.
                 </TableCell>
               </TableRow>
             )}
             {loading && (
               <TableRow>
-                <TableCell colSpan={Math.max(columns.length, 1)} align="center">
+                <TableCell colSpan={Math.max(columns.length + 1, 1)} align="center">
                   Loading...
                 </TableCell>
               </TableRow>

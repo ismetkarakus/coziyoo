@@ -50,6 +50,18 @@ const Orders = () => {
     }
   }
 
+  const onDeleteOrder = async (id: string) => {
+    const ok = window.confirm(`Delete order ${id}?`)
+    if (!ok) return
+    try {
+      await api.deleteOrder(id)
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    } catch (_error) {
+      // query error banner handles this state
+    }
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -69,6 +81,7 @@ const Orders = () => {
               <TableCell>Amount</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Date</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -91,16 +104,21 @@ const Orders = () => {
                   </Select>
                 </TableCell>
                 <TableCell>{formatValue(order.orderDate || order.createdAt)}</TableCell>
+                <TableCell>
+                  <Button size="small" color="error" onClick={() => onDeleteOrder(order.id)}>
+                    Delete
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
             {!loading && data.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center">No orders found.</TableCell>
+                <TableCell colSpan={7} align="center">No orders found.</TableCell>
               </TableRow>
             )}
             {loading && (
               <TableRow>
-                <TableCell colSpan={6} align="center">Loading...</TableCell>
+                <TableCell colSpan={7} align="center">Loading...</TableCell>
               </TableRow>
             )}
           </TableBody>
