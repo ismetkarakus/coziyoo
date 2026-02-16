@@ -137,6 +137,17 @@ export const api = {
 
   getOrders: (params?: { status?: string; page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; limit?: number }) =>
     request<OrderRecord[] | PaginatedResult<OrderRecord>>(`/admin/orders${buildQuery(params)}`).then(asItems),
+  getOrder: (id: string) => request<OrderRecord>(`/admin/orders/${encodeURIComponent(id)}`),
+  createOrder: (payload: Record<string, unknown>) =>
+    request<OrderRecord>('/admin/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateOrder: (id: string, payload: Record<string, unknown>) =>
+    request<OrderRecord>(`/admin/orders/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
 
   updateOrderStatus: (id: string, status: string) =>
     request<{ id: string; status: string }>(`/admin/orders/${encodeURIComponent(id)}/status`, {
@@ -150,15 +161,75 @@ export const api = {
 
   getFoods: (params?: { page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; q?: string; limit?: number }) =>
     request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/foods${buildQuery(params || { limit: 300 })}`).then(asItems),
+  getFood: (id: string) => request<Record<string, unknown>>(`/admin/foods/${encodeURIComponent(id)}`),
+  createFood: (payload: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/admin/foods', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateFood: (id: string, payload: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/admin/foods/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteFood: (id: string) =>
+    request<{ id: string }>(`/admin/foods/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
 
   getReviews: (params?: { page?: number; pageSize?: number; sortDir?: 'asc' | 'desc'; limit?: number }) =>
     request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/reviews${buildQuery(params || { limit: 300 })}`).then(asItems),
+  getReview: (id: string) => request<Record<string, unknown>>(`/admin/reviews/${encodeURIComponent(id)}`),
+  createReview: (payload: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/admin/reviews', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateReview: (id: string, payload: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/admin/reviews/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteReview: (id: string) =>
+    request<{ id: string }>(`/admin/reviews/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
 
   getChats: (params?: { page?: number; pageSize?: number; sortDir?: 'asc' | 'desc'; limit?: number }) =>
     request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/chats${buildQuery(params || { limit: 300 })}`).then(asItems),
+  getChat: (id: string) => request<Record<string, unknown>>(`/admin/chats/${encodeURIComponent(id)}`),
+  createChat: (payload: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/admin/chats', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateChat: (id: string, payload: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/admin/chats/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteChat: (id: string) =>
+    request<{ id: string }>(`/admin/chats/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
 
   getMedia: (params?: { page?: number; pageSize?: number; sortDir?: 'asc' | 'desc'; limit?: number }) =>
     request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/media${buildQuery(params || { limit: 300 })}`).then(asItems),
+  getMediaById: (id: string) => request<Record<string, unknown>>(`/admin/media/${encodeURIComponent(id)}`),
+  createMedia: (payload: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/admin/media', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateMedia: (id: string, payload: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/admin/media/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteMedia: (id: string) =>
+    request<{ id: string }>(`/admin/media/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
 
   getAuditLogs: (params?: { limit?: number; entityType?: string; entityId?: string }) =>
     request<AuditLogRecord[] | PaginatedResult<AuditLogRecord>>(`/admin/audit-logs${buildQuery(params)}`).then(asItems),

@@ -10,7 +10,7 @@
 ## Pending - Backend
 - [x] Add admin auth endpoints: `POST /admin/auth/login`, `GET /admin/auth/me`
 - [x] Implement RBAC middleware for all `/admin/*` routes
-- [ ] Add admin CRUD endpoints for users, sellers, foods, orders, chats, reviews, media (users/sellers CRUD + order status update shipped; full entity CRUD pending)
+- [x] Add admin CRUD endpoints for users, sellers, foods, orders, chats, reviews, media
 - [ ] Add dashboard endpoints: summary, alerts, activity (partial: summary shipped at `GET /admin/dashboard`)
 - [ ] Add WebSocket endpoint `/admin/ws` with event contracts
 - [x] Add `admin_audit_logs` table and write-on-mutation logging

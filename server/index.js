@@ -1605,6 +1605,92 @@ app.get('/admin/orders', requireAdminAuth, async (req, res) => {
   }
 });
 
+app.get('/admin/orders/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT data FROM orders WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!result.rowCount) return send(res, 404, null, 'Order not found');
+    return send(res, 200, result.rows[0].data);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/admin/orders', requireAdminAuth, async (req, res) => {
+  try {
+    const payload = {
+      ...req.body,
+      id: req.body?.id || makeId('order'),
+      orderDate: req.body?.orderDate || nowIso(),
+      status: req.body?.status || 'pending',
+      buyerId: String(req.body?.buyerId || ''),
+      sellerId: String(req.body?.sellerId || ''),
+    };
+    if (!payload.buyerId || !payload.sellerId) return send(res, 400, null, 'buyerId and sellerId are required');
+
+    await pool.query(
+      `INSERT INTO orders (id, buyer_id, seller_id, status, order_date, data)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+      [payload.id, payload.buyerId, payload.sellerId, payload.status, payload.orderDate, JSON.stringify(payload)]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'order.create',
+      entityType: 'order',
+      entityId: payload.id,
+      before: null,
+      after: payload,
+    });
+
+    return send(res, 201, payload);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/admin/orders/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM orders WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Order not found');
+
+    const prevData = previous.rows[0].data || {};
+    const nextData = {
+      ...prevData,
+      ...req.body,
+      id: req.params.id,
+      buyerId: String(req.body?.buyerId || prevData.buyerId || ''),
+      sellerId: String(req.body?.sellerId || prevData.sellerId || ''),
+      status: String(req.body?.status || prevData.status || 'pending'),
+      orderDate: req.body?.orderDate || prevData.orderDate || nowIso(),
+      updatedAt: nowIso(),
+    };
+
+    await pool.query(
+      `UPDATE orders
+       SET buyer_id = $1,
+           seller_id = $2,
+           status = $3,
+           order_date = $4,
+           data = $5::jsonb
+       WHERE id = $6`,
+      [nextData.buyerId, nextData.sellerId, nextData.status, nextData.orderDate, JSON.stringify(nextData), req.params.id]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'order.update',
+      entityType: 'order',
+      entityId: req.params.id,
+      before: prevData,
+      after: nextData,
+    });
+
+    return send(res, 200, nextData);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
 app.put('/admin/orders/:id/status', requireAdminAuth, async (req, res) => {
   try {
     const { status } = req.body || {};
@@ -1688,6 +1774,135 @@ app.get('/admin/foods', requireAdminAuth, async (req, res) => {
   }
 });
 
+app.get('/admin/foods/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT data FROM foods WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!result.rowCount) return send(res, 404, null, 'Food not found');
+    return send(res, 200, result.rows[0].data);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/admin/foods', requireAdminAuth, async (req, res) => {
+  try {
+    const now = nowIso();
+    const payload = {
+      ...req.body,
+      id: req.body?.id || makeId('food'),
+      cookId: req.body?.cookId || 'unknown',
+      category: req.body?.category || 'other',
+      isAvailable: req.body?.isAvailable ?? true,
+      rating: req.body?.rating ?? 0,
+      reviewCount: req.body?.reviewCount ?? 0,
+      createdAt: req.body?.createdAt || now,
+      updatedAt: req.body?.updatedAt || now,
+    };
+
+    await pool.query(
+      `INSERT INTO foods (id, cook_id, category, is_available, rating, review_count, created_at, updated_at, data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
+      [
+        payload.id,
+        payload.cookId,
+        payload.category,
+        Boolean(payload.isAvailable),
+        Number(payload.rating || 0),
+        Number(payload.reviewCount || 0),
+        payload.createdAt,
+        payload.updatedAt,
+        JSON.stringify(payload),
+      ]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'food.create',
+      entityType: 'food',
+      entityId: payload.id,
+      before: null,
+      after: payload,
+    });
+
+    return send(res, 201, payload);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/admin/foods/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM foods WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Food not found');
+    const prevData = previous.rows[0].data || {};
+    const nextData = {
+      ...prevData,
+      ...req.body,
+      id: req.params.id,
+      cookId: req.body?.cookId || prevData.cookId || 'unknown',
+      category: req.body?.category || prevData.category || 'other',
+      isAvailable: req.body?.isAvailable ?? prevData.isAvailable ?? true,
+      rating: req.body?.rating ?? prevData.rating ?? 0,
+      reviewCount: req.body?.reviewCount ?? prevData.reviewCount ?? 0,
+      updatedAt: nowIso(),
+    };
+
+    await pool.query(
+      `UPDATE foods
+       SET cook_id = $1,
+           category = $2,
+           is_available = $3,
+           rating = $4,
+           review_count = $5,
+           updated_at = NOW(),
+           data = $6::jsonb
+       WHERE id = $7`,
+      [
+        nextData.cookId,
+        nextData.category,
+        Boolean(nextData.isAvailable),
+        Number(nextData.rating || 0),
+        Number(nextData.reviewCount || 0),
+        JSON.stringify(nextData),
+        req.params.id,
+      ]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'food.update',
+      entityType: 'food',
+      entityId: req.params.id,
+      before: prevData,
+      after: nextData,
+    });
+
+    return send(res, 200, nextData);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.delete('/admin/foods/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM foods WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Food not found');
+    await pool.query('DELETE FROM foods WHERE id = $1', [req.params.id]);
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'food.delete',
+      entityType: 'food',
+      entityId: req.params.id,
+      before: previous.rows[0].data,
+      after: null,
+    });
+    return send(res, 200, { id: req.params.id });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
 app.get('/admin/reviews', requireAdminAuth, async (req, res) => {
   try {
     const { page, pageSize, offset, sortDir } = parseListParams(req.query, {
@@ -1708,6 +1923,109 @@ app.get('/admin/reviews', requireAdminAuth, async (req, res) => {
   }
 });
 
+app.get('/admin/reviews/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT data FROM reviews WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!result.rowCount) return send(res, 404, null, 'Review not found');
+    return send(res, 200, result.rows[0].data);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/admin/reviews', requireAdminAuth, async (req, res) => {
+  try {
+    const now = nowIso();
+    const payload = {
+      ...req.body,
+      id: req.body?.id || makeId('review'),
+      foodId: String(req.body?.foodId || ''),
+      rating: Number(req.body?.rating || 0),
+      createdAt: req.body?.createdAt || now,
+      updatedAt: req.body?.updatedAt || now,
+    };
+    if (!payload.foodId) return send(res, 400, null, 'foodId is required');
+
+    await pool.query(
+      `INSERT INTO reviews (id, food_id, rating, created_at, data)
+       VALUES ($1, $2, $3, $4, $5::jsonb)`,
+      [payload.id, payload.foodId, payload.rating, payload.createdAt, JSON.stringify(payload)]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'review.create',
+      entityType: 'review',
+      entityId: payload.id,
+      before: null,
+      after: payload,
+    });
+
+    return send(res, 201, payload);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/admin/reviews/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM reviews WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Review not found');
+    const prevData = previous.rows[0].data || {};
+    const nextData = {
+      ...prevData,
+      ...req.body,
+      id: req.params.id,
+      foodId: String(req.body?.foodId || prevData.foodId || ''),
+      rating: Number(req.body?.rating ?? prevData.rating ?? 0),
+      updatedAt: nowIso(),
+    };
+    if (!nextData.foodId) return send(res, 400, null, 'foodId is required');
+
+    await pool.query(
+      `UPDATE reviews
+       SET food_id = $1,
+           rating = $2,
+           data = $3::jsonb
+       WHERE id = $4`,
+      [nextData.foodId, Number(nextData.rating || 0), JSON.stringify(nextData), req.params.id]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'review.update',
+      entityType: 'review',
+      entityId: req.params.id,
+      before: prevData,
+      after: nextData,
+    });
+
+    return send(res, 200, nextData);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.delete('/admin/reviews/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM reviews WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Review not found');
+    await pool.query('DELETE FROM reviews WHERE id = $1', [req.params.id]);
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'review.delete',
+      entityType: 'review',
+      entityId: req.params.id,
+      before: previous.rows[0].data,
+      after: null,
+    });
+    return send(res, 200, { id: req.params.id });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
 app.get('/admin/chats', requireAdminAuth, async (req, res) => {
   try {
     const { page, pageSize, offset, sortDir } = parseListParams(req.query, {
@@ -1723,6 +2041,114 @@ app.get('/admin/chats', requireAdminAuth, async (req, res) => {
       [pageSize, offset]
     );
     return send(res, 200, paginated(result.rows.map((row) => row.data), page, pageSize, total));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/chats/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT data FROM chats WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!result.rowCount) return send(res, 404, null, 'Chat not found');
+    return send(res, 200, result.rows[0].data);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/admin/chats', requireAdminAuth, async (req, res) => {
+  try {
+    const now = nowIso();
+    const payload = {
+      ...req.body,
+      id: req.body?.id || makeId('chat'),
+      buyerId: String(req.body?.buyerId || ''),
+      sellerId: String(req.body?.sellerId || ''),
+      isActive: req.body?.isActive ?? true,
+      createdAt: req.body?.createdAt || now,
+      lastMessageTime: req.body?.lastMessageTime || now,
+    };
+    if (!payload.buyerId || !payload.sellerId) return send(res, 400, null, 'buyerId and sellerId are required');
+
+    await pool.query(
+      `INSERT INTO chats (id, buyer_id, seller_id, is_active, last_message_time, data)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+      [payload.id, payload.buyerId, payload.sellerId, Boolean(payload.isActive), payload.lastMessageTime, JSON.stringify(payload)]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'chat.create',
+      entityType: 'chat',
+      entityId: payload.id,
+      before: null,
+      after: payload,
+    });
+
+    return send(res, 201, payload);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/admin/chats/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM chats WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Chat not found');
+    const prevData = previous.rows[0].data || {};
+    const nextData = {
+      ...prevData,
+      ...req.body,
+      id: req.params.id,
+      buyerId: String(req.body?.buyerId || prevData.buyerId || ''),
+      sellerId: String(req.body?.sellerId || prevData.sellerId || ''),
+      isActive: req.body?.isActive ?? prevData.isActive ?? true,
+      lastMessageTime: req.body?.lastMessageTime || prevData.lastMessageTime || nowIso(),
+      updatedAt: nowIso(),
+    };
+    if (!nextData.buyerId || !nextData.sellerId) return send(res, 400, null, 'buyerId and sellerId are required');
+
+    await pool.query(
+      `UPDATE chats
+       SET buyer_id = $1,
+           seller_id = $2,
+           is_active = $3,
+           last_message_time = $4,
+           data = $5::jsonb
+       WHERE id = $6`,
+      [nextData.buyerId, nextData.sellerId, Boolean(nextData.isActive), nextData.lastMessageTime, JSON.stringify(nextData), req.params.id]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'chat.update',
+      entityType: 'chat',
+      entityId: req.params.id,
+      before: prevData,
+      after: nextData,
+    });
+
+    return send(res, 200, nextData);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.delete('/admin/chats/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM chats WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Chat not found');
+    await pool.query('DELETE FROM chats WHERE id = $1', [req.params.id]);
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'chat.delete',
+      entityType: 'chat',
+      entityId: req.params.id,
+      before: previous.rows[0].data,
+      after: null,
+    });
+    return send(res, 200, { id: req.params.id });
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1763,6 +2189,255 @@ app.get('/admin/media', requireAdminAuth, async (req, res) => {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     })), page, pageSize, total));
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/admin/media/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum,
+              owner_user_id, related_entity_type, related_entity_id, status, metadata, created_at, updated_at
+       FROM media_assets
+       WHERE id = $1
+       LIMIT 1`,
+      [req.params.id]
+    );
+    if (!result.rowCount) return send(res, 404, null, 'Media not found');
+    const row = result.rows[0];
+    return send(res, 200, {
+      id: row.id,
+      provider: row.provider,
+      bucket: row.bucket,
+      objectKey: row.object_key,
+      publicUrl: row.public_url,
+      contentType: row.content_type,
+      sizeBytes: row.size_bytes,
+      checksum: row.checksum,
+      ownerUserId: row.owner_user_id,
+      relatedEntityType: row.related_entity_type,
+      relatedEntityId: row.related_entity_id,
+      status: row.status,
+      metadata: row.metadata || {},
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.post('/admin/media', requireAdminAuth, async (req, res) => {
+  try {
+    const {
+      objectKey,
+      contentType,
+      sizeBytes,
+      checksum,
+      ownerUserId,
+      relatedEntityType,
+      relatedEntityId,
+      metadata,
+      prefix,
+      status,
+    } = req.body || {};
+    if (!objectKey) return send(res, 400, null, 'objectKey is required');
+
+    const asset = await storageProvider.createAsset({
+      objectKey: String(objectKey),
+      contentType: contentType ? String(contentType) : undefined,
+      sizeBytes: sizeBytes == null ? undefined : Number(sizeBytes),
+      metadata: metadata || {},
+      prefix: prefix ? String(prefix) : 'media',
+    });
+
+    const id = makeId('media');
+    const now = nowIso();
+    const payload = {
+      id,
+      provider: asset.provider,
+      bucket: asset.bucket || null,
+      objectKey: asset.objectKey,
+      publicUrl: asset.publicUrl,
+      contentType: contentType || null,
+      sizeBytes: sizeBytes == null ? null : Number(sizeBytes),
+      checksum: checksum || null,
+      ownerUserId: ownerUserId || null,
+      relatedEntityType: relatedEntityType || null,
+      relatedEntityId: relatedEntityId || null,
+      status: status || 'active',
+      metadata: metadata || {},
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await pool.query(
+      `INSERT INTO media_assets (
+        id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum, owner_user_id,
+        related_entity_type, related_entity_id, status, metadata, created_at, updated_at
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14,$15
+      )`,
+      [
+        payload.id,
+        payload.provider,
+        payload.bucket,
+        payload.objectKey,
+        payload.publicUrl,
+        payload.contentType,
+        payload.sizeBytes,
+        payload.checksum,
+        payload.ownerUserId,
+        payload.relatedEntityType,
+        payload.relatedEntityId,
+        payload.status,
+        JSON.stringify(payload.metadata),
+        payload.createdAt,
+        payload.updatedAt,
+      ]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'media.create',
+      entityType: 'media',
+      entityId: payload.id,
+      before: null,
+      after: payload,
+    });
+    return send(res, 201, payload);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/admin/media/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query(
+      `SELECT id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum,
+              owner_user_id, related_entity_type, related_entity_id, status, metadata, created_at, updated_at
+       FROM media_assets
+       WHERE id = $1
+       LIMIT 1`,
+      [req.params.id]
+    );
+    if (!previous.rowCount) return send(res, 404, null, 'Media not found');
+    const prev = previous.rows[0];
+    const next = {
+      id: prev.id,
+      provider: prev.provider,
+      bucket: req.body?.bucket ?? prev.bucket,
+      objectKey: req.body?.objectKey ?? prev.object_key,
+      publicUrl: req.body?.publicUrl ?? prev.public_url,
+      contentType: req.body?.contentType ?? prev.content_type,
+      sizeBytes: req.body?.sizeBytes ?? prev.size_bytes,
+      checksum: req.body?.checksum ?? prev.checksum,
+      ownerUserId: req.body?.ownerUserId ?? prev.owner_user_id,
+      relatedEntityType: req.body?.relatedEntityType ?? prev.related_entity_type,
+      relatedEntityId: req.body?.relatedEntityId ?? prev.related_entity_id,
+      status: req.body?.status ?? prev.status,
+      metadata: req.body?.metadata ?? prev.metadata ?? {},
+      createdAt: prev.created_at,
+      updatedAt: nowIso(),
+    };
+
+    await pool.query(
+      `UPDATE media_assets
+       SET bucket = $1,
+           object_key = $2,
+           public_url = $3,
+           content_type = $4,
+           size_bytes = $5,
+           checksum = $6,
+           owner_user_id = $7,
+           related_entity_type = $8,
+           related_entity_id = $9,
+           status = $10,
+           metadata = $11::jsonb,
+           updated_at = NOW()
+       WHERE id = $12`,
+      [
+        next.bucket,
+        next.objectKey,
+        next.publicUrl,
+        next.contentType,
+        next.sizeBytes == null ? null : Number(next.sizeBytes),
+        next.checksum,
+        next.ownerUserId,
+        next.relatedEntityType,
+        next.relatedEntityId,
+        next.status,
+        JSON.stringify(next.metadata || {}),
+        req.params.id,
+      ]
+    );
+
+    await logAdminAction({
+      admin: req.admin,
+      action: 'media.update',
+      entityType: 'media',
+      entityId: req.params.id,
+      before: {
+        id: prev.id,
+        provider: prev.provider,
+        bucket: prev.bucket,
+        objectKey: prev.object_key,
+        publicUrl: prev.public_url,
+        contentType: prev.content_type,
+        sizeBytes: prev.size_bytes,
+        checksum: prev.checksum,
+        ownerUserId: prev.owner_user_id,
+        relatedEntityType: prev.related_entity_type,
+        relatedEntityId: prev.related_entity_id,
+        status: prev.status,
+        metadata: prev.metadata || {},
+      },
+      after: next,
+    });
+    return send(res, 200, next);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.delete('/admin/media/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const previous = await pool.query(
+      `SELECT id, provider, bucket, object_key, public_url, content_type, size_bytes, checksum,
+              owner_user_id, related_entity_type, related_entity_id, status, metadata
+       FROM media_assets
+       WHERE id = $1
+       LIMIT 1`,
+      [req.params.id]
+    );
+    if (!previous.rowCount) return send(res, 404, null, 'Media not found');
+
+    await pool.query('DELETE FROM media_assets WHERE id = $1', [req.params.id]);
+    const prev = previous.rows[0];
+    await logAdminAction({
+      admin: req.admin,
+      action: 'media.delete',
+      entityType: 'media',
+      entityId: req.params.id,
+      before: {
+        id: prev.id,
+        provider: prev.provider,
+        bucket: prev.bucket,
+        objectKey: prev.object_key,
+        publicUrl: prev.public_url,
+        contentType: prev.content_type,
+        sizeBytes: prev.size_bytes,
+        checksum: prev.checksum,
+        ownerUserId: prev.owner_user_id,
+        relatedEntityType: prev.related_entity_type,
+        relatedEntityId: prev.related_entity_id,
+        status: prev.status,
+        metadata: prev.metadata || {},
+      },
+      after: null,
+    });
+    return send(res, 200, { id: req.params.id });
   } catch (error) {
     return send(res, 500, null, error.message);
   }

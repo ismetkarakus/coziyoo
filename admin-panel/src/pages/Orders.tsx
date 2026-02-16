@@ -62,11 +62,42 @@ const Orders = () => {
     }
   }
 
+  const onCreateOrder = async () => {
+    const raw = window.prompt(
+      'New order JSON',
+      JSON.stringify({ buyerId: '', sellerId: '', status: 'pending', totalPrice: 0 })
+    )
+    if (!raw) return
+    try {
+      await api.createOrder(JSON.parse(raw) as Record<string, unknown>)
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    } catch (_error) {
+      // query error banner handles this state
+    }
+  }
+
+  const onEditOrder = async (order: Record<string, unknown>) => {
+    const id = String(order.id || '')
+    if (!id) return
+    const raw = window.prompt('Edit order JSON', JSON.stringify(order, null, 2))
+    if (!raw) return
+    try {
+      await api.updateOrder(id, JSON.parse(raw) as Record<string, unknown>)
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+    } catch (_error) {
+      // query error banner handles this state
+    }
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" fontWeight={700}>Orders</Typography>
-        <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}>Refresh</Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button onClick={onCreateOrder}>Add</Button>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}>Refresh</Button>
+        </Box>
       </Box>
 
       {error && <Paper sx={{ p: 2, borderRadius: 3, color: 'error.main' }}>{error instanceof Error ? error.message : 'Failed to load orders'}</Paper>}
@@ -105,6 +136,9 @@ const Orders = () => {
                 </TableCell>
                 <TableCell>{formatValue(order.orderDate || order.createdAt)}</TableCell>
                 <TableCell>
+                  <Button size="small" onClick={() => onEditOrder(order as Record<string, unknown>)}>
+                    Edit
+                  </Button>
                   <Button size="small" color="error" onClick={() => onDeleteOrder(order.id)}>
                     Delete
                   </Button>
