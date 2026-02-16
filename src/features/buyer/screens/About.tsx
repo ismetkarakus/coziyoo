@@ -7,6 +7,7 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { getDatabaseMode } from '../../../api/utils/db';
 
 export const About: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -18,18 +19,30 @@ export const About: React.FC = () => {
         lastUpdate: 'January 7, 2026',
         developer: 'Coziyoo Team',
         platform: 'iOS & Android',
+        testDataLayer: 'SQLite (persistent) with Mock JSON fallback',
       }
     : {
         lastUpdate: '7 Ocak 2026',
         developer: 'Coziyoo Team',
         platform: 'iOS & Android',
+        testDataLayer: "SQLite (kalici) + Mock JSON yedegi",
       };
+
+  const activeDataMode = getDatabaseMode();
 
   const appInfo = [
     { label: t('aboutScreen.appInfo.version'), value: '1.0.0' },
     { label: t('aboutScreen.appInfo.lastUpdate'), value: appInfoValues.lastUpdate },
     { label: t('aboutScreen.appInfo.developer'), value: appInfoValues.developer },
     { label: t('aboutScreen.appInfo.platform'), value: appInfoValues.platform },
+    {
+      label: t('aboutScreen.appInfo.dataMode'),
+      value:
+        activeDataMode === 'sqlite'
+          ? t('aboutScreen.appInfo.dataModeValues.sqlite')
+          : t('aboutScreen.appInfo.dataModeValues.mock'),
+    },
+    { label: t('aboutScreen.appInfo.testDataLayer'), value: appInfoValues.testDataLayer },
   ];
 
   const legalLinks = [
@@ -305,11 +318,5 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
 });
-
-
-
-
-
-
 
 

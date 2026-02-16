@@ -58,3 +58,18 @@ Firebase configuration is currently hardcoded for web and native:
 ## Notes
 - Payment service is a demo/mock implementation.
 - Notifications are local-only unless you add a backend push flow.
+
+## Test Data Layer (More Robust Than Static JSON)
+The internal app API now supports a pluggable data mode for testing:
+- `sqlite` (default): Persistent local SQLite database, seeded once from mock JSON.
+- `mock`: In-memory mock JSON database (previous behavior).
+
+Set mode with:
+```bash
+EXPO_PUBLIC_DATA_MODE=sqlite npm run start
+```
+
+or:
+```bash
+EXPO_PUBLIC_DATA_MODE=mock npm run start
+```

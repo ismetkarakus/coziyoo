@@ -1882,6 +1882,12 @@ export const translations = {
         lastUpdate: 'Son Güncelleme',
         developer: 'Geliştirici',
         platform: 'Platform',
+        dataMode: 'Veri Modu',
+        testDataLayer: 'Test Veri Katmani',
+        dataModeValues: {
+          sqlite: 'SQLite',
+          mock: 'Mock JSON',
+        },
       },
       legalLinks: {
         terms: 'Kullanım Koşulları',
@@ -4057,6 +4063,12 @@ export const translations = {
         lastUpdate: 'Last Update',
         developer: 'Developer',
         platform: 'Platform',
+        dataMode: 'Data Mode',
+        testDataLayer: 'Test Data Layer',
+        dataModeValues: {
+          sqlite: 'SQLite',
+          mock: 'Mock JSON',
+        },
       },
       legalLinks: {
         terms: 'Terms of Use',
