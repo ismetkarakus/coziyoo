@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Text, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -9,9 +8,11 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { WebSafeIcon } from '../../../components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useAuth } from '../../../context/AuthContext';
 
 interface PersonalInfoData {
   name: string;
+  displayName: string;
   email: string;
   phone: string;
   birthDate: string;
@@ -29,10 +30,20 @@ interface CardData {
   cardCvv: string;
 }
 
+const normalizeCards = (value: unknown): CardData[] => {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => ({
+    cardNumber: String((item as any)?.cardNumber || ''),
+    cardExpiry: String((item as any)?.cardExpiry || ''),
+    cardCvv: String((item as any)?.cardCvv || ''),
+  }));
+};
+
 const getDefaultPersonalInfo = (language: 'tr' | 'en'): PersonalInfoData => {
   if (language === 'tr') {
     return {
       name: 'Ahmet Yılmaz',
+      displayName: 'Ahmet Yılmaz',
       email: 'ahmet@example.com',
       phone: '+90 555 123 4567',
       birthDate: '15/03/1990',
@@ -53,6 +64,7 @@ const getDefaultPersonalInfo = (language: 'tr' | 'en'): PersonalInfoData => {
 
   return {
     name: 'Ahmet Yilmaz',
+    displayName: 'Ahmet Yilmaz',
     email: 'ahmet@example.com',
     phone: '+44 7700 900123',
     birthDate: '15/03/1990',
@@ -74,11 +86,14 @@ const getDefaultPersonalInfo = (language: 'tr' | 'en'): PersonalInfoData => {
 export const PersonalInfo: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const cardHeaderDividerColor = colorScheme === 'dark' ? colors.textSecondary : colors.border;
   const { t, currentLanguage } = useTranslation();
+  const { userData, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(true);
   const [showCards, setShowCards] = useState(false);
   const [formData, setFormData] = useState<PersonalInfoData>({
     name: '',
+    displayName: '',
     email: '',
     phone: '',
     birthDate: '',
@@ -92,36 +107,47 @@ export const PersonalInfo: React.FC = () => {
 
   useEffect(() => {
     loadPersonalInfo();
-  }, [currentLanguage]);
+  }, [currentLanguage, userData]);
 
-  const loadPersonalInfo = async () => {
-    try {
-      const data = await AsyncStorage.getItem('personalInfo');
-      if (data) {
-        const parsed = JSON.parse(data);
-        setFormData({
-          ...parsed,
-          cards: Array.isArray(parsed?.cards) ? parsed.cards : [],
-        });
-      } else {
-        // Default data
-        setFormData(getDefaultPersonalInfo(currentLanguage));
-    }
-  } catch (error) {
-      console.error('Error loading personal info:', error);
-    }
+  const loadPersonalInfo = () => {
+    const defaults = getDefaultPersonalInfo(currentLanguage);
+    const cardsFromApi = normalizeCards(userData?.paymentCards);
+    setFormData({
+      name: userData?.fullName || userData?.displayName || defaults.name,
+      displayName: userData?.displayName || defaults.displayName,
+      email: userData?.email || defaults.email,
+      phone: userData?.phone || defaults.phone,
+      birthDate: userData?.birthDate || defaults.birthDate,
+      gender: userData?.gender || defaults.gender,
+      avatar: userData?.avatarUri || defaults.avatar,
+      cards: cardsFromApi.length > 0 ? cardsFromApi : defaults.cards,
+      addressLine1: userData?.addressLine1 || defaults.addressLine1,
+      city: userData?.city || defaults.city,
+      postcode: userData?.postcode || defaults.postcode,
+    });
   };
 
   const savePersonalInfo = async () => {
     try {
-      await AsyncStorage.setItem('personalInfo', JSON.stringify(formData));
-      
-      // Ana profil sayfası için de avatar'ı kaydet
-      const buyerProfile = {
-        avatarUri: formData.avatar,
-        updatedAt: new Date().toISOString(),
-      };
-      await AsyncStorage.setItem('buyerProfile', JSON.stringify(buyerProfile));
+      if (userData?.uid) {
+        await updateProfile({
+          email: formData.email,
+          fullName: formData.name,
+          displayName: formData.displayName,
+          phone: formData.phone,
+          birthDate: formData.birthDate,
+          gender: formData.gender,
+          avatarUri: formData.avatar,
+          addressLine1: formData.addressLine1,
+          city: formData.city,
+          postcode: formData.postcode,
+          paymentCards: formData.cards.map((card) => ({
+            cardNumber: card.cardNumber,
+            cardExpiry: card.cardExpiry,
+            cardCvv: card.cardCvv,
+          })),
+        });
+      }
       
       setIsEditing(false);
       Alert.alert(t('personalInfoScreen.alerts.successTitle'), t('personalInfoScreen.alerts.successMessage'));
@@ -178,14 +204,17 @@ export const PersonalInfo: React.FC = () => {
     >
       <TopBar 
         title={t('personalInfoScreen.title')}
+        showThemeToggle={false}
+        leftSideWidth={112}
+        rightSideWidth={112}
         leftComponent={
           <TouchableOpacity onPress={() => router.back()}>
             <WebSafeIcon name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         }
         rightComponent={
-          <TouchableOpacity onPress={() => isEditing ? savePersonalInfo() : setIsEditing(true)}>
-            <Text variant="body" color="primary" weight="medium">
+          <TouchableOpacity onPress={() => isEditing ? savePersonalInfo() : setIsEditing(true)} style={styles.topBarAction}>
+            <Text variant="body" color="primary" weight="medium" style={styles.topBarActionText} numberOfLines={1}>
               {isEditing ? t('personalInfoScreen.save') : t('personalInfoScreen.edit')}
             </Text>
           </TouchableOpacity>
@@ -232,9 +261,16 @@ export const PersonalInfo: React.FC = () => {
         {/* Personal Info Form */}
         <Card style={styles.formCard}>
           <View style={styles.formSection}>
-            <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              {t('personalInfoScreen.sectionTitle')}
-            </Text>
+            <View
+              style={[
+                styles.cardHeader,
+                { borderBottomColor: cardHeaderDividerColor },
+              ]}
+            >
+              <Text variant="title" weight="semibold" style={styles.cardHeaderTitle}>
+                {t('personalInfoScreen.sectionTitle')}
+              </Text>
+            </View>
             
             <View style={styles.inputGroup}>
               <Text variant="body" color="textSecondary" style={styles.label}>
@@ -250,6 +286,24 @@ export const PersonalInfo: React.FC = () => {
                 onChangeText={(text) => setFormData({ ...formData, name: text })}
                 editable={isEditing}
                 placeholder={t('personalInfoScreen.placeholders.name')}
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text variant="body" color="textSecondary" style={styles.label}>
+                {currentLanguage === 'en' ? 'Display Name' : 'Gorunen Ad'}
+              </Text>
+              <TextInput
+                style={[styles.input, {
+                  backgroundColor: isEditing ? colors.surface : colors.background,
+                  borderColor: colors.border,
+                  color: colors.text
+                }]}
+                value={formData.displayName}
+                onChangeText={(text) => setFormData({ ...formData, displayName: text })}
+                editable={isEditing}
+                placeholder={currentLanguage === 'en' ? 'e.g. Cozy Kitchen' : 'or. Cozy Kitchen'}
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -333,9 +387,11 @@ export const PersonalInfo: React.FC = () => {
         {/* Address Details */}
         <Card style={styles.formCard}>
           <View style={styles.formSection}>
-            <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-              {t('personalInfoScreen.addressSectionTitle')}
-            </Text>
+            <View style={[styles.cardHeader, { borderBottomColor: cardHeaderDividerColor }]}>
+              <Text variant="title" weight="semibold" style={styles.cardHeaderTitle}>
+                {t('personalInfoScreen.addressSectionTitle')}
+              </Text>
+            </View>
 
             <View style={styles.inputGroup}>
               <Text variant="body" color="textSecondary" style={styles.label}>
@@ -398,6 +454,12 @@ export const PersonalInfo: React.FC = () => {
         {/* Card Details */}
         <Card style={styles.formCard}>
           <View style={styles.formSection}>
+            <View style={[styles.cardHeader, { borderBottomColor: cardHeaderDividerColor }]}>
+              <Text variant="title" weight="semibold" style={styles.cardHeaderTitle}>
+                {t('personalInfoScreen.cardSectionTitle')}
+              </Text>
+            </View>
+
             <TouchableOpacity
               style={[styles.cardActionButton, { backgroundColor: colors.primary }]}
               activeOpacity={0.9}
@@ -410,10 +472,6 @@ export const PersonalInfo: React.FC = () => {
 
             {(showCards || (formData.cards && formData.cards.length > 0)) && (
               <View style={styles.cardList}>
-                <Text variant="subheading" weight="medium" style={styles.sectionTitle}>
-                  {t('personalInfoScreen.cardSectionTitle')}
-                </Text>
-
                 {formData.cards?.map((card, index) => (
                   <View key={`card-${index}`} style={styles.cardItem}>
                     <Text variant="body" color="textSecondary" style={styles.cardItemTitle}>
@@ -572,6 +630,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: Spacing.md,
   },
+  cardHeader: {
+    paddingBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    borderBottomWidth: 1,
+  },
+  cardHeaderTitle: {
+    letterSpacing: 0.2,
+  },
   cardList: {
     marginTop: Spacing.md,
   },
@@ -614,5 +680,12 @@ const styles = StyleSheet.create({
   },
   cardActionText: {
     color: '#ffffff',
+  },
+  topBarAction: {
+    paddingHorizontal: Spacing.xs,
+    marginRight: Spacing.sm,
+  },
+  topBarActionText: {
+    fontSize: 14,
   },
 });

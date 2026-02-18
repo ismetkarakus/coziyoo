@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Text, Button, Card, Input } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
@@ -10,16 +9,18 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import sellerMock from '../../../mock/seller.json';
+import sellerMock from '../../../constants/sellerMock';
 import { useCountry } from '../../../context/CountryContext';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export const SellerProfile: React.FC = () => {
   const { section } = useLocalSearchParams<{ section?: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
-  const { signOut } = useAuth();
+  const { setLanguage } = useLanguage();
+  const { signOut, userData, updateProfile } = useAuth();
   const { currentCountry } = useCountry();
   const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
   const complianceCopy = currentCountry.code === 'TR' ? localizedMock.panel.compliance.tr : localizedMock.panel.compliance.uk;
@@ -44,6 +45,7 @@ export const SellerProfile: React.FC = () => {
   const [formData, setFormData] = useState({
     firstName: sellerData.name.split(' ')[0] || sellerData.name,
     lastName: sellerData.name.split(' ').slice(1).join(' ').trim(),
+    displayName: userData?.displayName || sellerData.name,
     nickname: localizedMock.profile.nickname || '', // Nickname alanı eklendi
     email: sellerData.email,
     phone: sellerData.phone,
@@ -60,7 +62,7 @@ export const SellerProfile: React.FC = () => {
   };
 
   // Uzmanlık alanları state'i
-  const [specialties, setSpecialties] = useState(sellerData.specialties);
+  const [specialties, setSpecialties] = useState<string[]>(sellerData.specialties);
   const [newSpecialty, setNewSpecialty] = useState('');
   const [complianceExpanded, setComplianceExpanded] = useState(false);
   const isContactEditing = editingSection === 'contact';
@@ -69,23 +71,20 @@ export const SellerProfile: React.FC = () => {
   const isIdentityEditing = editingSection === 'identity';
   const isBankEditing = editingSection === 'bank';
 
-  const isComplianceComplete = () => {
-    const complianceStatus = {
-      councilRegistered: true,
-      hygieneCertificate: true,
-      allergensDeclared: true,
-      hygieneRating: true,
-      insurance: true,
-      termsAccepted: true,
-      approved: true,
-    };
-
-    return Object.values(complianceStatus).every(status => status === true);
+  const complianceStatus = {
+    councilRegistered: !!userData?.complianceCouncilRegistered,
+    hygieneCertificate: !!userData?.complianceHygieneCertificate,
+    allergensDeclared: !!userData?.complianceAllergensDeclared,
+    hygieneRating: !!userData?.complianceHygieneRating,
+    insurance: !!userData?.complianceInsurance,
+    termsAccepted: !!userData?.complianceTermsAccepted,
+    approved: !!userData?.complianceApproved,
   };
-
-  const complianceComplete = isComplianceComplete();
+  const complianceComplete = Object.values(complianceStatus).every(Boolean);
   const complianceItemCount = complianceCopy.items?.length || 0;
-  const complianceProgress = complianceComplete ? 100 : 65;
+  const complianceCompletedCount = Object.values(complianceStatus).filter(Boolean).length;
+  const complianceProgress =
+    complianceItemCount > 0 ? Math.round((complianceCompletedCount / complianceItemCount) * 100) : 0;
 
   // Kimlik ve banka bilgileri state'leri
   const [identityImages, setIdentityImages] = useState({
@@ -109,10 +108,10 @@ export const SellerProfile: React.FC = () => {
   });
 
 
-  // Load profile data on component mount
+  // Load profile data from API-backed auth state
   useEffect(() => {
     loadProfileData();
-  }, []);
+  }, [userData, currentLanguage]);
 
   useEffect(() => {
     if (section === 'bank') {
@@ -125,58 +124,72 @@ export const SellerProfile: React.FC = () => {
     console.log('Avatar URI changed:', avatarUri);
   }, [avatarUri]);
 
-  const loadProfileData = async () => {
-    try {
-      const savedProfile = await AsyncStorage.getItem('sellerProfile');
-      if (savedProfile) {
-        const profileData = JSON.parse(savedProfile);
-        if (profileData.formData) {
-          const incoming = profileData.formData;
-          setFormData({
-            firstName: incoming.firstName || incoming.name?.split(' ')[0] || sellerData.name.split(' ')[0],
-            lastName: incoming.lastName || incoming.name?.split(' ').slice(1).join(' ').trim() || sellerData.name.split(' ').slice(1).join(' '),
-            nickname: incoming.nickname || '',
-            email: incoming.email || sellerData.email,
-            phone: incoming.phone || sellerData.phone,
-            location: incoming.location || sellerData.location,
-            address: incoming.address || sellerData.address,
-            description: incoming.description || sellerData.description,
-            deliveryDistance: incoming.deliveryDistance || '',
-          });
-        } else {
-          setFormData(formData);
-        }
-        setAvatarUri(profileData.avatarUri || null);
-        setSpecialties(profileData.specialties || sellerData.specialties);
-        setBankDetails(profileData.bankDetails || bankDetails);
-        setIdentityImages(profileData.identityImages || identityImages);
-        setIdentityVerification(profileData.identityVerification || identityVerification);
-      }
-    } catch (error) {
-      console.error('Error loading profile data:', error);
-    }
+  const loadProfileData = () => {
+    const baseName = userData?.fullName || userData?.displayName || sellerData.name;
+    const firstName = baseName.split(' ')[0] || sellerData.name.split(' ')[0];
+    const lastName = baseName.split(' ').slice(1).join(' ').trim() || sellerData.name.split(' ').slice(1).join(' ');
+
+    setFormData({
+      firstName,
+      lastName,
+      displayName: userData?.displayName || baseName,
+      nickname: userData?.sellerNickname || localizedMock.profile.nickname || '',
+      email: userData?.email || sellerData.email,
+      phone: userData?.phone || sellerData.phone,
+      location: userData?.sellerLocation || sellerData.location,
+      address: userData?.sellerAddress || sellerData.address,
+      description: userData?.sellerDescription || sellerData.description,
+      deliveryDistance: userData?.sellerDeliveryDistance || '',
+    });
+
+    setAvatarUri(userData?.avatarUri || null);
+    setSpecialties(
+      Array.isArray(userData?.sellerSpecialties) && userData?.sellerSpecialties.length
+        ? userData.sellerSpecialties
+        : sellerData.specialties
+    );
+    setBankDetails({
+      bankName: userData?.bankName || '',
+      accountHolderName: userData?.bankAccountHolderName || '',
+      iban: userData?.bankIban || '',
+      accountNumber: userData?.bankAccountNumber || '',
+    });
+    setIdentityImages({
+      front: userData?.identityFrontImage || null,
+      back: userData?.identityBackImage || null,
+    });
+    setIdentityVerification({
+      status: userData?.identityStatus || 'pending',
+      submittedAt: userData?.identitySubmittedAt || null,
+      verifiedAt: userData?.identityVerifiedAt || null,
+      rejectionReason: userData?.identityRejectionReason || null,
+    });
   };
 
   const saveProfileData = async () => {
-    try {
-      const profileData = {
-        formData: {
-          ...formData,
-          name: getFullName(formData),
-        },
-        avatarUri,
-        specialties,
-        bankDetails,
-        identityImages,
-        identityVerification,
-        updatedAt: new Date().toISOString(),
-      };
-      await AsyncStorage.setItem('sellerProfile', JSON.stringify(profileData));
-      console.log('Profile data saved successfully');
-    } catch (error) {
-      console.error('Error saving profile data:', error);
-      throw error;
-    }
+    await updateProfile({
+      email: formData.email,
+      fullName: getFullName(formData),
+      displayName: formData.displayName?.trim() || getFullName(formData),
+      phone: formData.phone,
+      avatarUri: avatarUri || '',
+      sellerNickname: formData.nickname,
+      sellerLocation: formData.location,
+      sellerAddress: formData.address,
+      sellerDescription: formData.description,
+      sellerDeliveryDistance: formData.deliveryDistance,
+      sellerSpecialties: specialties,
+      identityFrontImage: identityImages.front || '',
+      identityBackImage: identityImages.back || '',
+      identityStatus: identityVerification.status,
+      identitySubmittedAt: identityVerification.submittedAt,
+      identityVerifiedAt: identityVerification.verifiedAt,
+      identityRejectionReason: identityVerification.rejectionReason,
+      bankName: bankDetails.bankName,
+      bankAccountHolderName: bankDetails.accountHolderName,
+      bankIban: bankDetails.iban,
+      bankAccountNumber: bankDetails.accountNumber,
+    });
   };
 
   const handleBackPress = () => {
@@ -235,6 +248,43 @@ export const SellerProfile: React.FC = () => {
     // Reset form data
     loadProfileData(); // Reload saved data
     setEditingSection(null);
+  };
+
+  const handleAccountItemPress = (itemId: 'change-password' | 'language') => {
+    if (itemId === 'change-password') {
+      router.push('/change-password');
+      return;
+    }
+
+    if (Platform.OS === 'web') {
+      void setLanguage(currentLanguage === 'tr' ? 'en' : 'tr');
+      return;
+    }
+
+    Alert.alert(
+      currentLanguage === 'tr' ? 'Dil secin' : 'Choose language',
+      currentLanguage === 'tr'
+        ? 'Uygulama dilini buradan degistirebilirsiniz.'
+        : 'You can change the app language here.',
+      [
+        {
+          text: currentLanguage === 'tr' ? 'Turkce' : 'Turkish',
+          onPress: () => {
+            void setLanguage('tr');
+          },
+        },
+        {
+          text: 'English',
+          onPress: () => {
+            void setLanguage('en');
+          },
+        },
+        {
+          text: currentLanguage === 'tr' ? 'Iptal' : 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
   };
 
   // Avatar image picker
@@ -403,14 +453,29 @@ export const SellerProfile: React.FC = () => {
     );
   };
 
-  const submitIdentityVerification = () => {
+  const submitIdentityVerification = async () => {
     // Kimlik doğrulama durumunu güncelle
-    setIdentityVerification({
+    const nextState = {
       status: 'pending',
       submittedAt: new Date().toISOString(),
       verifiedAt: null,
       rejectionReason: null,
-    });
+    };
+    setIdentityVerification(nextState);
+
+    try {
+      await updateProfile({
+        identityStatus: nextState.status,
+        identitySubmittedAt: nextState.submittedAt,
+        identityVerifiedAt: nextState.verifiedAt,
+        identityRejectionReason: nextState.rejectionReason,
+        identityFrontImage: identityImages.front || '',
+        identityBackImage: identityImages.back || '',
+      });
+    } catch (error) {
+      Alert.alert(t('sellerProfileScreen.alerts.errorTitle'), t('sellerProfileScreen.alerts.profileSaveError'));
+      return;
+    }
 
     Alert.alert(
       t('sellerProfileScreen.alerts.successTitle'),
@@ -583,6 +648,168 @@ export const SellerProfile: React.FC = () => {
           </View>
         )}
 
+        {/* Identity Documents */}
+        <Card variant="default" padding="md" style={styles.sectionCard}>
+          {!isIdentityEditing && (
+            <TouchableOpacity
+              onPress={() => setEditingSection('identity')}
+              style={styles.sectionEditFloating}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="edit" size={16} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.identityHeader}>
+            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
+              {t('sellerProfileScreen.sections.identity')}
+            </Text>
+          </View>
+          
+          {identityVerification.status === 'rejected' && identityVerification.rejectionReason && (
+            <View style={[styles.rejectionNote, { backgroundColor: colors.error + '10', borderColor: colors.error }]}>
+              <Text variant="caption" color="error">
+                {t('sellerProfileScreen.identity.rejectionReason', { reason: identityVerification.rejectionReason })}
+              </Text>
+            </View>
+          )}
+      
+          {isIdentityEditing ? (
+            <View style={styles.identityContainer}>
+              {/* Kimlik Ön Yüz */}
+              <View style={styles.identitySection}>
+                <Text variant="body" weight="medium" style={styles.identityLabel}>
+                  {t('sellerProfileScreen.identity.frontLabel')}
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.identityImageContainer,
+                    { borderColor: colors.border },
+                  ]}
+                  onPress={() => handleIdentityImagePicker('front')}
+                  activeOpacity={0.7}
+                >
+                  {identityImages.front ? (
+                    <Image source={{ uri: identityImages.front }} style={styles.identityImage} />
+                  ) : (
+                    <View style={styles.identityPlaceholder}>
+                      <MaterialIcons name="badge" size={40} color={colors.textSecondary} />
+                      <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
+                        {t('sellerProfileScreen.identity.addFront')}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Kimlik Arka Yüz */}
+              <View style={styles.identitySection}>
+                <Text variant="body" weight="medium" style={styles.identityLabel}>
+                  {t('sellerProfileScreen.identity.backLabel')}
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.identityImageContainer,
+                    { borderColor: colors.border },
+                  ]}
+                  onPress={() => handleIdentityImagePicker('back')}
+                  activeOpacity={0.7}
+                >
+                  {identityImages.back ? (
+                    <Image source={{ uri: identityImages.back }} style={styles.identityImage} />
+                  ) : (
+                    <View style={styles.identityPlaceholder}>
+                      <MaterialIcons name="badge" size={40} color={colors.textSecondary} />
+                      <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
+                        {t('sellerProfileScreen.identity.addBack')}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.identityStatusRow}>
+              <Text variant="body" style={styles.infoText}>
+                Kimlik Bilgileri
+              </Text>
+              <View
+                style={[
+                  styles.identityStatusPill,
+                  {
+                    backgroundColor:
+                      identityVerification.status === 'verified'
+                        ? colors.success + '20'
+                        : identityImages.front && identityImages.back
+                        ? colors.warning + '20'
+                        : colors.textSecondary + '20',
+                  },
+                ]}
+              >
+                <Text
+                  variant="caption"
+                  style={{
+                    color:
+                      identityVerification.status === 'verified'
+                        ? colors.success
+                        : identityImages.front && identityImages.back
+                        ? colors.warning
+                        : colors.textSecondary,
+                  }}
+                >
+                  {identityVerification.status === 'verified'
+                    ? 'Onaylandı'
+                    : identityImages.front && identityImages.back
+                    ? 'Onay Bekleniyor'
+                    : 'Yükleme Bekleniyor'}
+                </Text>
+              </View>
+            </View>
+          )}
+          {!isIdentityEditing && (
+            <Text variant="caption" color="textSecondary" style={styles.identityNote}>
+              Düzenle butonuna tıklayarak ekleyebilirsiniz.
+            </Text>
+          )}
+
+          {/* Submit Identity Verification */}
+          {isIdentityEditing && identityImages.front && identityImages.back && identityVerification.status === 'pending' && (
+            <View style={styles.submitSection}>
+              <Button
+                variant="primary"
+                onPress={handleSubmitIdentityVerification}
+                style={styles.submitButton}
+              >
+                {t('sellerProfileScreen.identity.submit')}
+              </Button>
+            </View>
+          )}
+
+          <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
+            <MaterialIcons name="info" size={16} color={colors.warning} />
+            <Text variant="caption" color="warning" style={styles.warningText}>
+              {t('sellerProfileScreen.identity.warning')}
+            </Text>
+          </View>
+          {isIdentityEditing && (
+            <View style={styles.sectionActions}>
+              <Button
+                variant="outline"
+                onPress={handleCancelSection}
+                style={styles.cancelButton}
+              >
+                {t('sellerProfileScreen.actions.cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                onPress={handleSaveSection}
+                style={styles.saveButton}
+              >
+                {t('sellerProfileScreen.actions.save')}
+              </Button>
+            </View>
+          )}
+        </Card>
+
         {/* Contact Information */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
             <View style={styles.sectionHeaderRow}>
@@ -607,6 +834,13 @@ export const SellerProfile: React.FC = () => {
                   value={formData.nickname}
                   onChangeText={(text) => setFormData(prev => ({ ...prev, nickname: text }))}
                   placeholder={t('sellerProfileScreen.placeholders.nickname')}
+                />
+
+                <FormField
+                  label={currentLanguage === 'en' ? 'Display Name' : 'Gorunen Ad'}
+                  value={formData.displayName}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, displayName: text }))}
+                  placeholder={currentLanguage === 'en' ? 'e.g. Cozy Kitchen' : 'or. Cozy Kitchen'}
                 />
                 
                 <FormField
@@ -647,6 +881,12 @@ export const SellerProfile: React.FC = () => {
                     {identityVerification.status === 'verified' && (
                       <Text style={styles.verifiedBadge}> ✓ {t('sellerProfileScreen.identity.status.verified')}</Text>
                     )}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="alternate-email" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>
+                    {formData.displayName || getFullName(formData)}
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
@@ -895,168 +1135,6 @@ export const SellerProfile: React.FC = () => {
         </Card>
 
 
-        {/* Identity Documents */}
-        <Card variant="default" padding="md" style={styles.sectionCard}>
-          {!isIdentityEditing && (
-            <TouchableOpacity
-              onPress={() => setEditingSection('identity')}
-              style={styles.sectionEditFloating}
-              activeOpacity={0.7}
-            >
-              <MaterialIcons name="edit" size={16} color={colors.primary} />
-            </TouchableOpacity>
-          )}
-          <View style={styles.identityHeader}>
-            <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-              {t('sellerProfileScreen.sections.identity')}
-            </Text>
-          </View>
-          
-          {identityVerification.status === 'rejected' && identityVerification.rejectionReason && (
-            <View style={[styles.rejectionNote, { backgroundColor: colors.error + '10', borderColor: colors.error }]}>
-              <Text variant="caption" color="error">
-                {t('sellerProfileScreen.identity.rejectionReason', { reason: identityVerification.rejectionReason })}
-              </Text>
-            </View>
-          )}
-      
-          {isIdentityEditing ? (
-            <View style={styles.identityContainer}>
-              {/* Kimlik Ön Yüz */}
-              <View style={styles.identitySection}>
-                <Text variant="body" weight="medium" style={styles.identityLabel}>
-                  {t('sellerProfileScreen.identity.frontLabel')}
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.identityImageContainer,
-                    { borderColor: colors.border },
-                  ]}
-                  onPress={() => handleIdentityImagePicker('front')}
-                  activeOpacity={0.7}
-                >
-                  {identityImages.front ? (
-                    <Image source={{ uri: identityImages.front }} style={styles.identityImage} />
-                  ) : (
-                    <View style={styles.identityPlaceholder}>
-                      <MaterialIcons name="badge" size={40} color={colors.textSecondary} />
-                      <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
-                        {t('sellerProfileScreen.identity.addFront')}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {/* Kimlik Arka Yüz */}
-              <View style={styles.identitySection}>
-                <Text variant="body" weight="medium" style={styles.identityLabel}>
-                  {t('sellerProfileScreen.identity.backLabel')}
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.identityImageContainer,
-                    { borderColor: colors.border },
-                  ]}
-                  onPress={() => handleIdentityImagePicker('back')}
-                  activeOpacity={0.7}
-                >
-                  {identityImages.back ? (
-                    <Image source={{ uri: identityImages.back }} style={styles.identityImage} />
-                  ) : (
-                    <View style={styles.identityPlaceholder}>
-                      <MaterialIcons name="badge" size={40} color={colors.textSecondary} />
-                      <Text variant="caption" color="textSecondary" style={styles.identityPlaceholderText}>
-                        {t('sellerProfileScreen.identity.addBack')}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.identityStatusRow}>
-              <Text variant="body" style={styles.infoText}>
-                Kimlik Bilgileri
-              </Text>
-              <View
-                style={[
-                  styles.identityStatusPill,
-                  {
-                    backgroundColor:
-                      identityVerification.status === 'verified'
-                        ? colors.success + '20'
-                        : identityImages.front && identityImages.back
-                        ? colors.warning + '20'
-                        : colors.textSecondary + '20',
-                  },
-                ]}
-              >
-                <Text
-                  variant="caption"
-                  style={{
-                    color:
-                      identityVerification.status === 'verified'
-                        ? colors.success
-                        : identityImages.front && identityImages.back
-                        ? colors.warning
-                        : colors.textSecondary,
-                  }}
-                >
-                  {identityVerification.status === 'verified'
-                    ? 'Onaylandı'
-                    : identityImages.front && identityImages.back
-                    ? 'Onay Bekleniyor'
-                    : 'Yükleme Bekleniyor'}
-                </Text>
-              </View>
-            </View>
-          )}
-          {!isIdentityEditing && (
-            <Text variant="caption" color="textSecondary" style={styles.identityNote}>
-              Düzenle butonuna tıklayarak ekleyebilirsiniz.
-            </Text>
-          )}
-
-          {/* Submit Identity Verification */}
-          {isIdentityEditing && identityImages.front && identityImages.back && identityVerification.status === 'pending' && (
-            <View style={styles.submitSection}>
-              <Button
-                variant="primary"
-                onPress={handleSubmitIdentityVerification}
-                style={styles.submitButton}
-              >
-                {t('sellerProfileScreen.identity.submit')}
-              </Button>
-            </View>
-          )}
-
-          <View style={[styles.warningBox, { backgroundColor: colors.warning + '20', borderColor: colors.warning }]}>
-            <MaterialIcons name="info" size={16} color={colors.warning} />
-            <Text variant="caption" color="warning" style={styles.warningText}>
-              {t('sellerProfileScreen.identity.warning')}
-            </Text>
-          </View>
-          {isIdentityEditing && (
-            <View style={styles.sectionActions}>
-              <Button
-                variant="outline"
-                onPress={handleCancelSection}
-                style={styles.cancelButton}
-              >
-                {t('sellerProfileScreen.actions.cancel')}
-              </Button>
-              <Button
-                variant="primary"
-                onPress={handleSaveSection}
-                style={styles.saveButton}
-              >
-                {t('sellerProfileScreen.actions.save')}
-              </Button>
-            </View>
-          )}
-        </Card>
-
         {/* Bank Details */}
         <Card variant="default" padding="md" style={styles.sectionCard}>
           <View style={styles.bankHeader}>
@@ -1158,6 +1236,42 @@ export const SellerProfile: React.FC = () => {
           )}
         </Card>
 
+        <Text variant="subheading" weight="bold" style={[styles.accountSectionTitle, { color: colors.text }]}>
+          {currentLanguage === 'tr' ? 'Hesap' : 'Account'}
+        </Text>
+        <View style={[styles.accountGroupCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.accountRowItem, { borderBottomColor: colors.border, borderBottomWidth: 1 }]}
+            activeOpacity={0.75}
+            onPress={() => handleAccountItemPress('change-password')}
+          >
+            <View style={styles.accountRowLeft}>
+              <MaterialIcons name="lock" size={20} color={colors.primary} />
+              <Text variant="body" weight="semibold" style={styles.accountRowTitle}>
+                {t('profileScreen.items.changePassword')}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.accountRowItem}
+            activeOpacity={0.75}
+            onPress={() => handleAccountItemPress('language')}
+          >
+            <View style={styles.accountRowLeft}>
+              <MaterialIcons name="translate" size={20} color={colors.primary} />
+              <Text variant="body" weight="semibold" style={styles.accountRowTitle}>
+                {currentLanguage === 'tr' ? 'Dil' : 'Language'}
+              </Text>
+            </View>
+            <View style={styles.accountRowRight}>
+              <Text variant="body" color="textSecondary" style={styles.accountRowValue}>
+                {currentLanguage === 'tr' ? 'Turkce' : 'English'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
           onPress={handleSignOut}
           style={[styles.signOutButton, { backgroundColor: colors.error }]}
@@ -1191,6 +1305,41 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: 12,
     alignItems: 'center',
+  },
+  accountSectionTitle: {
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+    marginHorizontal: Spacing.md,
+  },
+  accountGroupCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  accountRowItem: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  accountRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  accountRowTitle: {
+    marginLeft: 10,
+  },
+  accountRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  accountRowValue: {
+    maxWidth: 130,
   },
   backButton: {
     padding: Spacing.xs,

@@ -17,6 +17,8 @@ interface TopBarProps {
   showBack?: boolean;
   showThemeToggle?: boolean;
   titleStyle?: object;
+  leftSideWidth?: number;
+  rightSideWidth?: number;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -28,6 +30,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   showBack = false,
   showThemeToggle = true,
   titleStyle,
+  leftSideWidth = 48,
+  rightSideWidth = 48,
 }) => {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
@@ -68,7 +72,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         ]}
       >
         <View style={styles.content}>
-          <View style={styles.side}>
+          <View style={[styles.side, styles.leftSide, { width: leftSideWidth }]}>
             {renderLeftComponent()}
           </View>
           
@@ -80,7 +84,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             )}
           </View>
           
-          <View style={styles.side}>
+          <View style={[styles.side, styles.rightSide, { width: rightSideWidth }]}>
             <View style={styles.rightContainer}>
               {rightComponent}
               {showThemeToggle && (
@@ -112,20 +116,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 56,
-    paddingHorizontal: 4,
+    paddingHorizontal: Spacing.sm,
     paddingBottom: Spacing.xs,
   },
   side: {
-    width: 48,
     zIndex: 1,
-    alignItems: 'flex-start',
     justifyContent: 'center',
+  },
+  leftSide: {
+    alignItems: 'flex-start',
+  },
+  rightSide: {
+    alignItems: 'flex-end',
   },
   rightContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
     gap: Spacing.sm,
+    paddingRight: Spacing.sm,
   },
   centerContainer: {
     flex: 1,

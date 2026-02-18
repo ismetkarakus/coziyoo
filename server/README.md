@@ -29,11 +29,10 @@ npm run server
 - `DATABASE_URL` (or `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`)
 - `API_PORT` (default: `4000`)
 - `PGSSL=true|false` (default: `false`)
-- `AUTO_SEED_MOCK=true|false` (default: `true`)
 - `STORAGE_PROVIDER=mock|firebase` (firebase placeholder, currently falls back to mock)
 - `PG_SEARCH_PATH` (default: `public`)
 
 ## Notes
 - Schema is auto-created on server startup.
-- If DB is empty and `AUTO_SEED_MOCK=true`, seed data is imported from `src/mock/*.json`.
+- DB-only mode is enabled; JSON mock seed import has been removed.
 - Storage is provider-agnostic. Current `mock` provider stores media metadata and returns placeholder URLs.

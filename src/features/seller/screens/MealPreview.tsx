@@ -1,18 +1,19 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, FoodCard } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { useAuth } from '../../../context/AuthContext';
 
 export const MealPreview: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
+  const { userData } = useAuth();
   const { previewData } = useLocalSearchParams();
 
   // Format date range for display (e.g., "1-3 Ocak")
@@ -63,26 +64,11 @@ export const MealPreview: React.FC = () => {
   console.log('MealPreview - Images:', data.images);
   console.log('MealPreview - Name:', data.name);
 
-  // Get seller name from profile
-  const [sellerName, setSellerName] = React.useState(t('mealPreviewScreen.yourName'));
-
-  React.useEffect(() => {
-    const loadSellerName = async () => {
-      try {
-        const savedProfile = await AsyncStorage.getItem('sellerProfile');
-        if (savedProfile) {
-          const profile = JSON.parse(savedProfile);
-          if (profile.formData) {
-            // Nickname varsa onu kullan, yoksa gerçek ismi kullan
-            setSellerName(profile.formData.nickname || profile.formData.name || t('mealPreviewScreen.yourName'));
-          }
-        }
-      } catch (error) {
-        console.error('Error loading seller name:', error);
-      }
-    };
-    loadSellerName();
-  }, []);
+  // Get seller name from API-backed user profile
+  const sellerName =
+    userData?.sellerNickname?.trim() ||
+    userData?.displayName?.trim() ||
+    t('mealPreviewScreen.yourName');
 
   // Create mock food card data from form data
   const mockFoodData = {

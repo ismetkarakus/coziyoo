@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
-import { authService, UserData } from '../services/authService';
+import { authService, UserData, UserProfileUpdates } from '../services/authService';
 import { router, useRootNavigationState } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -17,7 +17,14 @@ interface AuthContextType {
   loading: boolean;
   profileLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both') => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    userType: 'buyer' | 'seller' | 'both',
+    displayName?: string
+  ) => Promise<void>;
+  updateProfile: (updates: UserProfileUpdates) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -126,16 +133,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signUp = async (email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both') => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    userType: 'buyer' | 'seller' | 'both',
+    displayName?: string
+  ) => {
     setLoading(true);
     try {
-      await authService.signUp(email, password, displayName, userType);
+      await authService.signUp(email, password, fullName, userType, displayName);
       await authService.signOut();
       setUser(null);
       setUserData(null);
       safeReplace('/(auth)/sign-in');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateProfile = async (updates: UserProfileUpdates) => {
+    if (!user?.uid) return;
+    setProfileLoading(true);
+    try {
+      const updated = await authService.updateProfile(user.uid, updates);
+      setUserData(updated);
+      setUser((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              email: updated.email,
+              displayName: updated.displayName,
+            }
+          : prev
+      );
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -160,6 +193,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     profileLoading,
     signIn,
     signUp,
+    updateProfile,
     signOut,
     resetPassword,
   };

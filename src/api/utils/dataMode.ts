@@ -1,8 +1,8 @@
-export type DataMode = 'sqlite' | 'mock';
+export type DataMode = 'sqlite';
 
 const normalizeDataMode = (value?: string): DataMode | null => {
   const normalized = (value || '').trim().toLowerCase();
-  if (normalized === 'sqlite' || normalized === 'mock') {
+  if (normalized === 'sqlite') {
     return normalized;
   }
   return null;

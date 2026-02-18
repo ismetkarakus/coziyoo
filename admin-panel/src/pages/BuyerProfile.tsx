@@ -32,7 +32,10 @@ const BuyerProfile = () => {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const [form, setForm] = useState({
+    fullName: '',
     displayName: '',
+    birthDate: '',
+    gender: '',
     email: '',
     phone: '',
     status: 'enabled',
@@ -57,7 +60,10 @@ const BuyerProfile = () => {
   useEffect(() => {
     if (!buyer) return
     setForm({
+      fullName: String(buyer.fullName || ''),
       displayName: String(buyer.displayName || ''),
+      birthDate: String(buyer.birthDate || ''),
+      gender: String(buyer.gender || ''),
       email: String(buyer.email || ''),
       phone: String(buyer.phone || ''),
       status: String(buyer.status || 'enabled'),
@@ -67,7 +73,10 @@ const BuyerProfile = () => {
 
   const onSave = async () => {
     await updateMutation.mutateAsync({
+      fullName: form.fullName,
       displayName: form.displayName,
+      birthDate: form.birthDate,
+      gender: form.gender,
       email: form.email,
       phone: form.phone,
       status: form.status,
@@ -140,9 +149,27 @@ const BuyerProfile = () => {
               <Stack spacing={2}>
                 <TextField
                   size="small"
+                  label="Full Name"
+                  value={form.fullName}
+                  onChange={(event) => setForm((prev) => ({ ...prev, fullName: event.target.value }))}
+                />
+                <TextField
+                  size="small"
                   label="Display Name"
                   value={form.displayName}
                   onChange={(event) => setForm((prev) => ({ ...prev, displayName: event.target.value }))}
+                />
+                <TextField
+                  size="small"
+                  label="Date of Birth"
+                  value={form.birthDate}
+                  onChange={(event) => setForm((prev) => ({ ...prev, birthDate: event.target.value }))}
+                />
+                <TextField
+                  size="small"
+                  label="Gender"
+                  value={form.gender}
+                  onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
                 />
                 <TextField
                   size="small"
@@ -202,6 +229,10 @@ const BuyerProfile = () => {
             </Typography>
             <Divider sx={{ my: 2 }} />
             <Stack spacing={1}>
+              <Typography>Full Name: {formatValue(buyer.fullName)}</Typography>
+              <Typography>Display Name: {formatValue(buyer.displayName)}</Typography>
+              <Typography>Date of Birth: {formatValue(buyer.birthDate)}</Typography>
+              <Typography>Gender: {formatValue(buyer.gender)}</Typography>
               <Typography>Email: {formatValue(buyer.email)}</Typography>
               <Typography>Phone: {formatValue(buyer.phone)}</Typography>
               <Typography>Status: {formatValue(buyer.status)}</Typography>

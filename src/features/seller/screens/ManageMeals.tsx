@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
+import { foodService } from '../../../services/foodService';
+import { useAuth } from '../../../context/AuthContext';
 
 interface Meal {
   id: string;
@@ -36,12 +37,12 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { width, height } = useWindowDimensions();
   const [pagerWidth, setPagerWidth] = useState(width);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [expiredMeals, setExpiredMeals] = useState<Meal[]>([]);
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
-  const [sellerProfile, setSellerProfile] = useState<any>(null);
   const [stockDrafts, setStockDrafts] = useState<Record<string, number>>({});
   const pagerRef = React.useRef<ScrollView | null>(null);
   const embeddedListHeight = Math.max(320, Math.min(560, height * 0.62));
@@ -57,122 +58,26 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   useFocusEffect(
     React.useCallback(() => {
       loadMeals();
-      loadSellerProfile();
     }, [])
   );
 
-  const loadSellerProfile = async () => {
-    try {
-      const savedProfile = await AsyncStorage.getItem('sellerProfile');
-      if (savedProfile) {
-        const profile = JSON.parse(savedProfile);
-        setSellerProfile(profile);
-      }
-    } catch (error) {
-      console.error('Error loading seller profile:', error);
-    }
-  };
-
   const loadMeals = async () => {
     try {
-      const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-      const expiredMealsJson = await AsyncStorage.getItem('expiredMeals');
-      
-      let allMeals: Meal[] = [];
-
       const normalizeMeal = (meal: any): Meal => ({
         ...meal,
+        id: String(meal.id),
+        availableDates: String(meal.availableDates || ''),
         currentStock: Number(meal.currentStock ?? 0),
         dailyStock: Number(meal.dailyStock ?? 0),
         isActive: meal.isActive !== false,
       });
-      
-      // Demo meals are used only as an initial seed, then persisted.
-      const mockMealsForDemo = [
-        {
-          id: 'mock_1',
-          name: t('manageMealsScreen.mock.mantiName'),
-          cookName: t('manageMealsScreen.mock.cookName'),
-          price: 35,
-          category: t('manageMealsScreen.mock.mainDishCategory'),
-          description: t('manageMealsScreen.mock.mantiDesc'),
-          imageUrl: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=300&fit=crop',
-          availableDates: t('manageMealsScreen.mock.mantiDates'),
-          currentStock: 8,
-          dailyStock: 10,
-          hasPickup: true,
-          hasDelivery: true,
-          createdAt: new Date().toISOString(),
-          startDate: '15/01/2026',
-          endDate: '31/12/2099',
-          isActive: true,
-        },
-        {
-          id: 'mock_9',
-          name: t('manageMealsScreen.mock.menemenName'),
-          cookName: t('manageMealsScreen.mock.cookName'),
-          price: 22,
-          category: t('manageMealsScreen.mock.breakfastCategory'),
-          description: t('manageMealsScreen.mock.menemenDesc'),
-          imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
-          availableDates: t('manageMealsScreen.mock.menemenDates'),
-          currentStock: 7,
-          dailyStock: 10,
-          hasPickup: true,
-          hasDelivery: true,
-          createdAt: new Date().toISOString(),
-          startDate: '17/01/2026',
-          endDate: '31/12/2099',
-          isActive: true,
-        },
-        {
-          id: 'mock_17',
-          name: t('manageMealsScreen.mock.veggieKofteName'),
-          cookName: t('manageMealsScreen.mock.cookName'),
-          price: 24,
-          category: t('manageMealsScreen.mock.vegetarianCategory'),
-          description: t('manageMealsScreen.mock.veggieKofteDesc'),
-          imageUrl: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=400&h=300&fit=crop',
-          availableDates: t('manageMealsScreen.mock.veggieKofteDates'),
-          currentStock: 8,
-          dailyStock: 10,
-          hasPickup: true,
-          hasDelivery: true,
-          createdAt: new Date().toISOString(),
-          startDate: '17/01/2026',
-          endDate: '31/12/2099',
-          isActive: true,
-        },
-        {
-          id: 'mock_23',
-          name: t('manageMealsScreen.mock.sutlacName'),
-          cookName: t('manageMealsScreen.mock.cookName'),
-          price: 16,
-          category: t('manageMealsScreen.mock.dessertCategory'),
-          description: t('manageMealsScreen.mock.sutlacDesc'),
-          imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop',
-          availableDates: t('manageMealsScreen.mock.sutlacDates'),
-          currentStock: 12,
-          dailyStock: 15,
-          hasPickup: true,
-          hasDelivery: true,
-          createdAt: new Date().toISOString(),
-          startDate: '18/01/2026',
-          endDate: '31/12/2099',
-          isActive: true,
-        },
-      ];
-
-      const publishedMeals: Meal[] = publishedMealsJson
-        ? JSON.parse(publishedMealsJson).map(normalizeMeal)
-        : [];
-
-      if (publishedMeals.length > 0) {
-        allMeals = publishedMeals;
-      } else {
-        allMeals = mockMealsForDemo.map(normalizeMeal);
-        await AsyncStorage.setItem('publishedMeals', JSON.stringify(allMeals));
-      }
+      const allFoods = await foodService.getAllFoods();
+      const allMeals = allFoods
+        .filter((meal: any) => {
+          if (!user?.uid) return true;
+          return String(meal.cookId || meal.sellerId || '') === String(user.uid);
+        })
+        .map(normalizeMeal);
       
       // Check for expired meals
       const currentDate = new Date();
@@ -200,14 +105,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
       
       setMeals(activeMeals);
       
-      // Load existing expired meals and add new ones
-      if (expiredMealsJson) {
-        const existingExpired = JSON.parse(expiredMealsJson);
-        const allExpiredMeals = [...existingExpired.map(normalizeMeal), ...newExpiredMeals];
-        setExpiredMeals(allExpiredMeals);
-      } else {
-        setExpiredMeals(newExpiredMeals);
-      }
+      setExpiredMeals(newExpiredMeals);
       
     } catch (error) {
       console.error('Error loading meals:', error);
@@ -228,14 +126,7 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
   };
 
   const persistMealPatch = async (mealId: string, patch: Partial<Meal>) => {
-    const existingMeals = await AsyncStorage.getItem('publishedMeals');
-    if (!existingMeals) return;
-
-    const parsed = JSON.parse(existingMeals);
-    const updatedStoredMeals = parsed.map((meal: Meal) =>
-      meal.id === mealId ? { ...meal, ...patch } : meal
-    );
-    await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedStoredMeals));
+    await foodService.updateFood(mealId, patch as any);
   };
 
   const getDraftStock = (meal: Meal) => {
@@ -502,7 +393,6 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           variant="primary"
           onPress={() => router.push('/(seller)/add-meal')}
           style={[styles.addMealButtonTop, { backgroundColor: colors.secondary }]}
-          textStyle={{ fontSize: 16 }}
         >
           {t('manageMealsScreen.addMeal')}
         </Button>

@@ -1,4 +1,4 @@
-{
+export const sellerMock = ({
   "tr": {
     "profile": {
       "name": "Ayşe Hanım",
@@ -438,4 +438,5 @@
       "signOut": "🚪 Sign Out"
     }
   }
-}
+}) as const;
+export default sellerMock;

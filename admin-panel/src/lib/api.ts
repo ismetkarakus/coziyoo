@@ -2,7 +2,10 @@ export interface UserRecord {
   uid?: string
   id?: string
   email?: string
+  fullName?: string
   displayName?: string
+  birthDate?: string
+  gender?: string
   userType?: string
   status?: string
   [key: string]: unknown

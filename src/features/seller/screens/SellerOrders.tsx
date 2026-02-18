@@ -1,56 +1,21 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, PanResponder, Animated, useWindowDimensions, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, Button, Card } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
-const getMockOrders = (t: (key: string, params?: Record<string, string | number>) => string) => ([
-  {
-    id: 'ORD-001',
-    customerName: t('sellerOrdersScreen.mock.customer1'),
-    foodName: t('sellerOrdersScreen.mock.food1'),
-    quantity: 2,
-    totalPrice: 50,
-    orderTime: '14:30',
-    deliveryType: 'pickup',
-    status: 'pending',
-    customerPhone: t('sellerOrdersScreen.mock.phone1'),
-  },
-  {
-    id: 'ORD-002',
-    customerName: t('sellerOrdersScreen.mock.customer2'),
-    foodName: t('sellerOrdersScreen.mock.food2'),
-    quantity: 1,
-    totalPrice: 18,
-    orderTime: '13:45',
-    deliveryType: 'delivery',
-    status: 'pending',
-    customerPhone: t('sellerOrdersScreen.mock.phone2'),
-    address: t('sellerOrdersScreen.mock.address2'),
-  },
-  {
-    id: 'ORD-003',
-    customerName: t('sellerOrdersScreen.mock.customer3'),
-    foodName: t('sellerOrdersScreen.mock.food3'),
-    quantity: 3,
-    totalPrice: 45,
-    orderTime: '12:15',
-    deliveryType: 'pickup',
-    status: 'confirmed',
-    customerPhone: t('sellerOrdersScreen.mock.phone3'),
-  },
-]);
+import { useAuth } from '../../../context/AuthContext';
+import { foodService } from '../../../services/foodService';
 
 export const SellerOrders: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
-  const [orders, setOrders] = useState(() => getMockOrders(t));
+  const { userData, user } = useAuth();
+  const [orders, setOrders] = useState<any[]>([]);
   const [realOrders, setRealOrders] = useState<any[]>([]);
   const locale = currentLanguage === 'en' ? 'en-GB' : 'tr-TR';
   const { width } = useWindowDimensions();
@@ -114,24 +79,25 @@ export const SellerOrders: React.FC = () => {
   );
 
   useEffect(() => {
-    setOrders(getMockOrders(t));
+    setOrders([]);
   }, [currentLanguage, t]);
 
   const loadOrders = async () => {
     try {
-      const savedOrders = await AsyncStorage.getItem('orders');
-      if (savedOrders) {
-        const allOrders = JSON.parse(savedOrders);
-        // Filter orders for this seller (in real app, use seller ID)
-        const sellerOrders = allOrders.filter((order: any) => 
-          order.status === 'pending_seller_approval' || 
-          order.status === 'seller_approved' ||
-          order.status === 'pending_buyer_approval' ||
-          order.status === 'confirmed' ||
-          order.status === 'rejected'
-        );
-        setRealOrders(sellerOrders);
+      const sellerId = user?.uid || userData?.uid || '';
+      if (sellerId) {
+        const dbOrders = await foodService.getSellerOrders(String(sellerId));
+        const normalized = dbOrders.map((order: any) => ({
+          ...order,
+          orderTime: order.requestedTime || '',
+          customerName: order.buyerName || '',
+          foodName: order.foodName || order.foodId,
+          customerPhone: order.customerPhone || '',
+        }));
+        setRealOrders(normalized);
+        return;
       }
+      setRealOrders([]);
     } catch (error) {
       console.error('Error loading orders:', error);
     }
@@ -152,33 +118,11 @@ export const SellerOrders: React.FC = () => {
           style: action === 'confirm' ? 'default' : 'destructive',
           onPress: async () => {
             try {
-              // Update local state
-              setOrders(prev => 
-                prev.map(order => 
-                  order.id === orderId 
-                    ? { ...order, status: action === 'confirm' ? 'confirmed' : 'rejected' }
-                    : order
-                )
-              );
-
-              // Update AsyncStorage
-              const savedOrders = await AsyncStorage.getItem('orders');
-              if (savedOrders) {
-                const allOrders = JSON.parse(savedOrders);
-                const updatedOrders = allOrders.map((order: any) => 
-                  order.id === orderId 
-                    ? { 
-                        ...order, 
-                        status: action === 'confirm' ? 'seller_approved' : 'rejected',
-                        sellerApprovedAt: action === 'confirm' ? new Date().toISOString() : undefined
-                      }
-                    : order
-                );
-                await AsyncStorage.setItem('orders', JSON.stringify(updatedOrders));
-                
-                // Reload orders
-                loadOrders();
-              }
+              await foodService.updateOrder(orderId, {
+                status: action === 'confirm' ? 'seller_approved' : 'rejected',
+                sellerApprovedAt: action === 'confirm' ? new Date() : undefined,
+              });
+              await loadOrders();
 
               Alert.alert(
                 t('sellerOrdersScreen.alerts.successTitle'),

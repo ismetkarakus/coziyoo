@@ -1,4 +1,4 @@
-{
+export const sellerPanelLayout = ({
   "type": "View",
   "style": ["container", { "$": "rootBackgroundStyle" }],
   "children": [
@@ -374,4 +374,5 @@
       ]
     }
   ]
-}
+}) as const;
+export default sellerPanelLayout;

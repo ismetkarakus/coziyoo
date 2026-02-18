@@ -336,6 +336,23 @@ The project currently has no test files. When adding tests:
 
 ## Development Conventions
 
+### Cross-Surface Data Sync Rule (Always Required)
+- When changing any shared data field (add, rename, remove, or behavior change), update **all affected layers in the same task**:
+  - Frontend UI/forms/screens
+  - API server request/response contracts and handlers
+  - Admin panel UI/forms/tables/detail pages
+  - Database schema/columns/migrations/backfills/indexes as needed
+- Do not leave partial updates across layers. A field change is only complete when all relevant surfaces are updated and consistent.
+- If old records may miss new fields, add safe fallback/backfill handling so admin/frontend do not show broken or empty states unexpectedly.
+- Verify with a quick end-to-end check (UI save -> API payload -> DB persistence -> admin display).
+
+### UI Convention: Personal Info Card Headers
+- On `/personal-info`, each card section header must use a distinct card-header row style (not the same style as field labels).
+- Use `title` + `semibold` for the section title and a bottom divider.
+- Divider color rule:
+  - Light mode: `colors.border`
+  - Dark mode: `colors.textSecondary` (for visible contrast)
+
 ### Adding a New Screen
 1. Create screen component in `src/features/{feature}/screens/`
 2. Export from `src/features/{feature}/screens/index.ts`

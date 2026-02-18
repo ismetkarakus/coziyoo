@@ -1,7 +1,5 @@
 import { openDatabaseSync, SQLiteDatabase } from 'expo-sqlite';
 
-import { mockData } from '@/src/mock/data';
-
 interface DBInterface {
   execSync(sql: string): void;
   getAllAsync(sql: string, params?: any[]): Promise<any[]>;
@@ -12,7 +10,6 @@ interface DBInterface {
 const DATABASE_NAME = 'coziyoo-test.db';
 
 let sqliteDb: SQLiteDatabase | null = null;
-const nowIso = (): string => new Date().toISOString();
 
 const getDatabase = (): SQLiteDatabase => {
   if (!sqliteDb) {
@@ -26,7 +23,42 @@ const createSchema = (db: SQLiteDatabase): void => {
     CREATE TABLE IF NOT EXISTS users (
       uid TEXT PRIMARY KEY NOT NULL,
       email TEXT,
+      fullName TEXT,
       displayName TEXT,
+      username TEXT,
+      phone TEXT,
+      birthDate TEXT,
+      gender TEXT,
+      avatarUri TEXT,
+      addressLine1 TEXT,
+      city TEXT,
+      postcode TEXT,
+      allergicTo TEXT,
+      paymentCards TEXT,
+      sellerNickname TEXT,
+      sellerLocation TEXT,
+      sellerAddress TEXT,
+      sellerDescription TEXT,
+      sellerDeliveryDistance TEXT,
+      sellerSpecialties TEXT,
+      identityFrontImage TEXT,
+      identityBackImage TEXT,
+      identityStatus TEXT,
+      identitySubmittedAt TEXT,
+      identityVerifiedAt TEXT,
+      identityRejectionReason TEXT,
+      bankName TEXT,
+      bankAccountHolderName TEXT,
+      bankIban TEXT,
+      bankAccountNumber TEXT,
+      complianceCouncilRegistered INTEGER,
+      complianceHygieneCertificate INTEGER,
+      complianceAllergensDeclared INTEGER,
+      complianceHygieneRating INTEGER,
+      complianceInsurance INTEGER,
+      complianceTermsAccepted INTEGER,
+      complianceApproved INTEGER,
+      complianceData TEXT,
       userType TEXT,
       password TEXT,
       createdAt TEXT,
@@ -43,6 +75,7 @@ const createSchema = (db: SQLiteDatabase): void => {
       category TEXT,
       imageUrl TEXT,
       ingredients TEXT,
+      extraData TEXT,
       preparationTime INTEGER,
       servingSize INTEGER,
       isAvailable INTEGER,
@@ -55,14 +88,34 @@ const createSchema = (db: SQLiteDatabase): void => {
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY NOT NULL,
       foodId TEXT NOT NULL,
+      foodName TEXT,
+      cookName TEXT,
+      cookId TEXT,
       buyerId TEXT NOT NULL,
+      buyerName TEXT,
       sellerId TEXT NOT NULL,
       quantity INTEGER,
+      price REAL,
       totalPrice REAL,
+      deliveryType TEXT,
+      requestedDate TEXT,
+      requestedTime TEXT,
       status TEXT,
+      trackingStatus TEXT,
       deliveryAddress TEXT,
+      paymentCompleted INTEGER,
+      buyerApprovedAt TEXT,
+      sellerApprovedAt TEXT,
+      createdAt TEXT,
+      updatedAt TEXT,
       orderDate TEXT,
       estimatedDeliveryTime TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS wallets (
+      userId TEXT PRIMARY KEY NOT NULL,
+      data TEXT,
+      updatedAt TEXT
     );
 
     CREATE TABLE IF NOT EXISTS chats (
@@ -123,144 +176,123 @@ const createSchema = (db: SQLiteDatabase): void => {
     CREATE INDEX IF NOT EXISTS idx_chats_sellerId ON chats(sellerId);
     CREATE INDEX IF NOT EXISTS idx_messages_chatId ON messages(chatId);
     CREATE INDEX IF NOT EXISTS idx_reviews_foodId ON reviews(foodId);
+    CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
   `);
 };
 
-const seedIfEmpty = (db: SQLiteDatabase): void => {
-  const userCountRow = db.getFirstSync<{ count: number }>('SELECT COUNT(*) as count FROM users');
-  const userCount = Number(userCountRow?.count || 0);
-  if (userCount > 0) return;
+const migrateUserSchema = (db: SQLiteDatabase): void => {
+  const userColumns = [
+    'fullName TEXT',
+    'username TEXT',
+    'phone TEXT',
+    'birthDate TEXT',
+    'gender TEXT',
+    'avatarUri TEXT',
+    'addressLine1 TEXT',
+    'city TEXT',
+    'postcode TEXT',
+    'allergicTo TEXT',
+    'paymentCards TEXT',
+    'sellerNickname TEXT',
+    'sellerLocation TEXT',
+    'sellerAddress TEXT',
+    'sellerDescription TEXT',
+    'sellerDeliveryDistance TEXT',
+    'sellerSpecialties TEXT',
+    'identityFrontImage TEXT',
+    'identityBackImage TEXT',
+    'identityStatus TEXT',
+    'identitySubmittedAt TEXT',
+    'identityVerifiedAt TEXT',
+    'identityRejectionReason TEXT',
+    'bankName TEXT',
+    'bankAccountHolderName TEXT',
+    'bankIban TEXT',
+    'bankAccountNumber TEXT',
+    'complianceCouncilRegistered INTEGER',
+    'complianceHygieneCertificate INTEGER',
+    'complianceAllergensDeclared INTEGER',
+    'complianceHygieneRating INTEGER',
+    'complianceInsurance INTEGER',
+    'complianceTermsAccepted INTEGER',
+    'complianceApproved INTEGER',
+    'complianceData TEXT',
+  ];
 
-  db.withTransactionSync(() => {
-    for (const user of mockData.users) {
-      db.runSync(
-        `INSERT INTO users (uid, email, displayName, userType, password, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          user.uid,
-          user.email || '',
-          user.displayName || '',
-          user.userType || 'buyer',
-          user.password || '',
-          user.createdAt || nowIso(),
-          user.updatedAt || nowIso(),
-        ]
-      );
-    }
-
-    for (const food of mockData.foods) {
-      db.runSync(
-        `INSERT INTO foods (id, name, description, price, cookName, cookId, category, imageUrl, ingredients, preparationTime, servingSize, isAvailable, rating, reviewCount, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          food.id,
-          food.name,
-          food.description || '',
-          food.price ?? 0,
-          food.cookName || '',
-          food.cookId || '',
-          food.category,
-          food.imageUrl || '',
-          JSON.stringify(food.ingredients || []),
-          food.preparationTime ?? 0,
-          food.servingSize ?? 0,
-          food.isAvailable ? 1 : 0,
-          food.rating ?? 0,
-          food.reviewCount ?? 0,
-          food.createdAt || nowIso(),
-          food.updatedAt || nowIso(),
-        ]
-      );
-    }
-
-    for (const order of mockData.orders) {
-      db.runSync(
-        `INSERT INTO orders (id, foodId, buyerId, sellerId, quantity, totalPrice, status, deliveryAddress, orderDate, estimatedDeliveryTime)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          order.id,
-          order.foodId,
-          order.buyerId,
-          order.sellerId,
-          order.quantity,
-          order.totalPrice,
-          order.status,
-          order.deliveryAddress,
-          order.orderDate,
-          order.estimatedDeliveryTime || null,
-        ]
-      );
-    }
-
-    for (const chat of mockData.chats) {
-      db.runSync(
-        `INSERT INTO chats (id, buyerId, buyerName, sellerId, sellerName, orderId, foodId, foodName, lastMessage, lastMessageTime, lastMessageSender, buyerUnreadCount, sellerUnreadCount, isActive, createdAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          chat.id,
-          chat.buyerId,
-          chat.buyerName,
-          chat.sellerId,
-          chat.sellerName,
-          chat.orderId || null,
-          chat.foodId || null,
-          chat.foodName || null,
-          chat.lastMessage,
-          chat.lastMessageTime,
-          chat.lastMessageSender,
-          chat.buyerUnreadCount,
-          chat.sellerUnreadCount,
-          chat.isActive ? 1 : 0,
-          chat.createdAt,
-        ]
-      );
-    }
-
-    for (const message of mockData.messages) {
-      db.runSync(
-        `INSERT INTO messages (id, chatId, senderId, senderName, senderType, message, messageType, timestamp, isRead, orderData)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          message.id,
-          message.chatId,
-          message.senderId,
-          message.senderName,
-          message.senderType,
-          message.message,
-          message.messageType,
-          message.timestamp,
-          message.isRead ? 1 : 0,
-          message.orderData ? JSON.stringify(message.orderData) : null,
-        ]
-      );
-    }
-
-    for (const review of mockData.reviews) {
-      db.runSync(
-        `INSERT INTO reviews (id, foodId, foodName, buyerId, buyerName, buyerAvatar, sellerId, sellerName, orderId, rating, comment, images, helpfulCount, reportCount, isVerifiedPurchase, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          review.id,
-          review.foodId,
-          review.foodName,
-          review.buyerId,
-          review.buyerName,
-          review.buyerAvatar || null,
-          review.sellerId,
-          review.sellerName,
-          review.orderId || null,
-          review.rating,
-          review.comment,
-          review.images ? JSON.stringify(review.images) : null,
-          review.helpfulCount,
-          review.reportCount,
-          review.isVerifiedPurchase ? 1 : 0,
-          review.createdAt,
-          review.updatedAt,
-        ]
-      );
+  userColumns.forEach((columnDef) => {
+    try {
+      db.execSync(`ALTER TABLE users ADD COLUMN ${columnDef};`);
+    } catch (_error) {
+      // Column already exists in existing installations.
     }
   });
+
+  db.execSync(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);`);
+  db.execSync(`
+    UPDATE users
+    SET fullName = COALESCE(NULLIF(trim(fullName), ''), displayName)
+    WHERE fullName IS NULL OR trim(fullName) = '';
+  `);
+  db.execSync(`
+    UPDATE users
+    SET username = (
+      CASE WHEN userType = 'buyer' THEN 'buyer_' ELSE 'seller_' END
+      || lower(replace(trim(COALESCE(displayName, 'user')), ' ', '-'))
+    )
+    WHERE username IS NULL OR trim(username) = '';
+  `);
+};
+
+const migrateOrderAndWalletSchema = (db: SQLiteDatabase): void => {
+  const orderColumns = [
+    'foodName TEXT',
+    'cookName TEXT',
+    'cookId TEXT',
+    'buyerName TEXT',
+    'price REAL',
+    'deliveryType TEXT',
+    'requestedDate TEXT',
+    'requestedTime TEXT',
+    'trackingStatus TEXT',
+    'paymentCompleted INTEGER',
+    'buyerApprovedAt TEXT',
+    'sellerApprovedAt TEXT',
+    'createdAt TEXT',
+    'updatedAt TEXT',
+  ];
+
+  orderColumns.forEach((columnDef) => {
+    try {
+      db.execSync(`ALTER TABLE orders ADD COLUMN ${columnDef};`);
+    } catch (_error) {
+      // Column already exists.
+    }
+  });
+
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS wallets (
+      userId TEXT PRIMARY KEY NOT NULL,
+      data TEXT,
+      updatedAt TEXT
+    );
+  `);
+};
+
+const migrateFoodSchema = (db: SQLiteDatabase): void => {
+  const foodColumns = ['extraData TEXT'];
+  foodColumns.forEach((columnDef) => {
+    try {
+      db.execSync(`ALTER TABLE foods ADD COLUMN ${columnDef};`);
+    } catch (_error) {
+      // Column already exists.
+    }
+  });
+};
+
+const seedIfEmpty = (db: SQLiteDatabase): void => {
+  // DB-only mode: do not auto-seed from local mock data.
+  // Initial records must come from API writes.
+  void db;
 };
 
 const mapRunResult = (result: {
@@ -274,6 +306,9 @@ const mapRunResult = (result: {
 export const initSQLiteDatabase = (): void => {
   const db = getDatabase();
   createSchema(db);
+  migrateUserSchema(db);
+  migrateFoodSchema(db);
+  migrateOrderAndWalletSchema(db);
   seedIfEmpty(db);
 };
 

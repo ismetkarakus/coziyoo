@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, Modal, Alert, Animated, Platform } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Text, Button, Card, WebSafeIcon, StarRating, ReviewCard, RatingStats, ReviewModal, PaymentModal, AllergenWarningModal } from '../../../components/ui';
 import { TopBar } from '../../../components/layout';
@@ -14,6 +13,7 @@ import { foodService, Food } from '../../../services/foodService';
 import { chatService } from '../../../services/chatService';
 import { reviewService, Review, ReviewStats } from '../../../services/reviewService';
 import { paymentService, PaymentRequest } from '../../../services/paymentService';
+import { normalizeUsername } from '../../../utils/username';
 
 const getMockReviews = (language: 'tr' | 'en') => {
   if (language === 'en') {
@@ -259,23 +259,14 @@ export const FoodDetail: React.FC = () => {
   };
   
   // Load seller profile data whenever screen comes into focus
-  const loadSellerProfile = async () => {
-    console.log('🚀 Hızlı yükleme - Mock seller profile kullanılıyor');
+  const loadSellerProfile = () => {
     setSellerProfile({
-      name: cookName || defaultCookName,
-      avatar: getCookAvatar(cookName || defaultCookName),
+      name: userData?.sellerNickname || cookName || defaultCookName,
+      avatar: userData?.avatarUri || getCookAvatar(cookName || defaultCookName),
       rating: 4.8,
       totalOrders: 245,
       responseTime: currentLanguage === 'en' ? '~15 min' : '~15 dk'
     });
-    try {
-      // İsocan verilerini temizle
-      await AsyncStorage.removeItem('sellerProfile');
-      console.log('🧹 Seller profile cleared (İsocan data removed)');
-      setSellerProfile(null);
-    } catch (error) {
-      console.error('Error clearing seller profile:', error);
-    }
   };
 
   // Load reviews and stats
@@ -338,7 +329,12 @@ export const FoodDetail: React.FC = () => {
     preparationTime: 30,
     servingSize: currentLanguage === 'en' ? '2-3 servings' : '2-3 kişilik',
     category: currentLanguage === 'en' ? 'Main Dish' : 'Ana Yemek',
+    allergens: Array.isArray(firebaseFood?.allergens) ? firebaseFood.allergens : [],
   };
+  const cookUsername =
+    (firebaseFood?.cookId && firebaseFood.cookId.startsWith('seller_'))
+      ? firebaseFood.cookId
+      : normalizeUsername(food.cookName || cookName || defaultCookName, 'seller');
 
   const handleBackPress = () => {
     console.log('Back button pressed from FoodDetail');
@@ -518,39 +514,25 @@ export const FoodDetail: React.FC = () => {
       // Firebase'e sipariş oluştur
       const orderId = await foodService.createOrder({
         foodId: food.id || 'mock_food_id',
-        buyerId: user.uid,
-        sellerId: firebaseFood?.cookId || 'mock_seller_id',
-        quantity: quantity,
-        totalPrice: food.price * quantity,
-        status: 'pending',
-        deliveryAddress: deliveryType === 'delivery'
-          ? t('foodDetailScreen.defaults.deliveryAddress')
-          : t('foodDetailScreen.defaults.pickupLabel'),
-      });
-
-      // AsyncStorage'a da kaydet (backward compatibility için)
-      const orderData = {
-        id: orderId,
-        foodId: food.id,
         foodName: food.name,
         cookName: food.cookName,
         cookId: firebaseFood?.cookId || 'seller1',
+        buyerId: user.uid,
+        buyerName: user.displayName || t('foodDetailScreen.defaults.userName'),
+        sellerId: firebaseFood?.cookId || 'mock_seller_id',
         quantity: quantity,
         price: food.price,
         totalPrice: food.price * quantity,
-        deliveryType: deliveryType,
+        deliveryType,
         requestedDate: selectedDate,
         requestedTime: selectedTime,
-        status: 'pending',
-        createdAt: '2024-01-15T12:00:00Z',
-        buyerId: user.uid,
-        buyerName: user.displayName || t('foodDetailScreen.defaults.userName'),
-      };
-
-      const existingOrders = await AsyncStorage.getItem('orders');
-      const orders = existingOrders ? JSON.parse(existingOrders) : [];
-      orders.push(orderData);
-      await AsyncStorage.setItem('orders', JSON.stringify(orders));
+        status: 'pending_seller_approval',
+        trackingStatus: 'preparing',
+        deliveryAddress: deliveryType === 'delivery'
+          ? t('foodDetailScreen.defaults.deliveryAddress')
+          : t('foodDetailScreen.defaults.pickupLabel'),
+        paymentCompleted: false,
+      });
 
       // Send notification to seller about new order
       await sendOrderNotification(orderId, 'pending_seller_approval', user.displayName || t('foodDetailScreen.defaults.customerName'), food.name);
@@ -840,6 +822,9 @@ export const FoodDetail: React.FC = () => {
                       </Text>
                     </TouchableOpacity>
                   </View>
+                  <Text variant="caption" color="textSecondary">
+                    {cookUsername}
+                  </Text>
                   <View style={styles.rating}>
                     <StarRating rating={food.rating} size="small" showNumber />
                     <Text variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
@@ -1284,7 +1269,7 @@ export const FoodDetail: React.FC = () => {
         visible={showAllergenModal}
         onClose={handleAllergenCancel}
         onConfirm={handleAllergenConfirm}
-        allergens={food?.allergens ?? []}
+        allergens={(food?.allergens ?? []) as any}
         foodName={food?.name ?? defaultFoodName}
       />
 

@@ -1,14 +1,7 @@
 import { getRequestedDataMode, type DataMode } from './dataMode';
-import { getMockDB, initMockDatabase } from './mockDb';
 import { getSQLiteDB, initSQLiteDatabase } from './sqliteDb';
 
-let activeMode: DataMode = 'mock';
-
-const initMock = (): void => {
-  initMockDatabase();
-  activeMode = 'mock';
-  console.log('✅ Data layer initialized with mock JSON DB (in-memory)');
-};
+let activeMode: DataMode = 'sqlite';
 
 const initSQLite = (): void => {
   initSQLiteDatabase();
@@ -17,20 +10,15 @@ const initSQLite = (): void => {
 };
 
 export const initDatabase = (): void => {
-  const requestedMode = getRequestedDataMode();
-  if (requestedMode === 'mock') {
-    initMock();
-    return;
-  }
-
+  getRequestedDataMode();
   try {
     initSQLite();
   } catch (error) {
-    console.warn('⚠️ SQLite initialization failed, falling back to mock DB:', error);
-    initMock();
+    console.error('❌ SQLite initialization failed:', error);
+    throw error;
   }
 };
 
-export const getDB = () => (activeMode === 'sqlite' ? getSQLiteDB() : getMockDB());
+export const getDB = () => getSQLiteDB();
 
 export const getDatabaseMode = (): DataMode => activeMode;

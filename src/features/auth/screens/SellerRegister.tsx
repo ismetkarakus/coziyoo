@@ -10,11 +10,12 @@ import { useAuth } from '../../../context/AuthContext';
 export const SellerRegister: React.FC = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { loading, signUp } = useAuth();
 
   const testSellerData = {
     fullName: 'Test Seller',
+    displayName: 'Cozy Seller',
     phone: '0555 222 33 44',
     email: 'seller@test.com',
     password: 'Test1234!',
@@ -37,6 +38,7 @@ export const SellerRegister: React.FC = () => {
       const next = !prev;
       setFormData(next ? testSellerData : {
         fullName: '',
+        displayName: '',
         phone: '',
         email: '',
         password: '',
@@ -52,6 +54,7 @@ export const SellerRegister: React.FC = () => {
     const nextErrors: Partial<Record<keyof typeof formData, string>> = {};
     const requiredFields: Array<keyof typeof formData> = [
       'fullName',
+      'displayName',
       'phone',
       'email',
       'password',
@@ -103,7 +106,7 @@ export const SellerRegister: React.FC = () => {
     };
 
     try {
-      await signUp(formData.email, formData.password, formData.fullName, 'seller');
+      await signUp(formData.email, formData.password, formData.fullName, 'seller', formData.displayName);
       showSuccess();
     } catch (error) {
       Alert.alert(t('authSellerRegister.registerErrorTitle'), t('authSellerRegister.registerErrorMessage'));
@@ -146,6 +149,15 @@ export const SellerRegister: React.FC = () => {
               onChangeText={handleInputChange('fullName')}
               placeholder={t('authSellerRegister.fullNamePlaceholder')}
               error={errors.fullName}
+              required
+            />
+
+            <FormField
+              label={currentLanguage === 'en' ? 'Display Name' : 'Gorunen Ad'}
+              value={formData.displayName}
+              onChangeText={handleInputChange('displayName')}
+              placeholder={currentLanguage === 'en' ? 'e.g. Cozy Kitchen' : 'or. Cozy Kitchen'}
+              error={errors.displayName}
               required
             />
 
@@ -248,6 +260,4 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 });
-
-
 

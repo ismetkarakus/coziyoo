@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/apiClient';
-import foods from '../mock/foods.json';
-import { MockFood } from '../mock/data';
+import { foodService } from './foodService';
 
 const FAVORITES_KEY = 'favorites';
 const FAVORITE_COUNTS_KEY = 'favoriteCounts';
@@ -21,26 +20,8 @@ export interface FavoriteMeta {
   favoriteCounts: Record<string, number>;
 }
 
-const buildFavoritePayloadFromMock = (foodId: string): FavoritePayload | null => {
-  const item = (foods as MockFood[]).find((food) => String(food.id) === String(foodId));
-  if (!item) return null;
-  return {
-    id: String(item.id),
-    name: item.name || '',
-    cookName: item.cookName || item.sellerName || '',
-    price: Number(item.price || 0),
-    rating: Number(item.rating || 0),
-    imageUrl: item.imageUrl || '',
-    category: item.category || '',
-  };
-};
-
 const buildDefaultFavoriteCounts = (): Record<string, number> => {
-  const counts: Record<string, number> = {};
-  (foods as MockFood[]).forEach((food) => {
-    counts[String(food.id)] = Math.max(0, Number(food.favoriteCount ?? 0));
-  });
-  return counts;
+  return {};
 };
 
 export const getFavorites = async (userId?: string | null): Promise<FavoritePayload[]> => {
@@ -133,6 +114,25 @@ export const toggleFavorite = async (
   }
 
   const id = String(payload.id);
+  let resolvedPayload = payload;
+  if (!resolvedPayload.name) {
+    try {
+      const food = await foodService.getFoodById(id);
+      if (food) {
+        resolvedPayload = {
+          id,
+          name: food.name || '',
+          cookName: food.cookName || food.sellerName || '',
+          price: Number(food.price || 0),
+          rating: Number(food.rating || 0),
+          imageUrl: food.imageUrl || '',
+          category: food.category || '',
+        };
+      }
+    } catch (_error) {
+      // keep payload fallback
+    }
+  }
   const rawFavorites = await AsyncStorage.getItem(FAVORITES_KEY);
   const favorites = rawFavorites ? JSON.parse(rawFavorites) : [];
   const { favoriteCounts } = await getFavoriteMeta();
@@ -146,7 +146,7 @@ export const toggleFavorite = async (
     favorites.splice(existingIndex, 1);
   } else {
     favorites.push({
-      ...payload,
+      ...resolvedPayload,
       id,
       favoriteCount: nextCount,
     });

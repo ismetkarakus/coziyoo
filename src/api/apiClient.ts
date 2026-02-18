@@ -1,5 +1,7 @@
 import { handleRequest } from './router';
 import { ApiRequest, ApiResponse } from './types';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 type ApiMode = 'internal' | 'remote';
 
@@ -14,11 +16,54 @@ const normalizeApiMode = (value?: string): ApiMode | null => {
 const getApiMode = (): ApiMode => {
   const explicit = normalizeApiMode(process.env.EXPO_PUBLIC_API_MODE);
   if (explicit) return explicit;
+  if (Platform.OS !== 'web') return 'remote';
   return process.env.EXPO_PUBLIC_API_BASE_URL ? 'remote' : 'internal';
 };
 
 const API_MODE = getApiMode();
-const API_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL || '').replace(/\/+$/, '');
+const getExpoDevHost = (): string | null => {
+  const constantsAny = Constants as any;
+  const hostUri =
+    constantsAny?.expoConfig?.hostUri ||
+    constantsAny?.manifest2?.extra?.expoGo?.debuggerHost ||
+    constantsAny?.manifest?.debuggerHost;
+  if (!hostUri || typeof hostUri !== 'string') return null;
+  const [host] = hostUri.split(':');
+  return host || null;
+};
+
+const resolveApiBaseUrl = (): string => {
+  const raw = (process.env.EXPO_PUBLIC_API_BASE_URL || '').replace(/\/+$/, '');
+  if (!raw) return '';
+  if (Platform.OS === 'web') return raw;
+
+  try {
+    const parsed = new URL(raw);
+    const isLocalhost =
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '::1';
+
+    if (!isLocalhost) return raw;
+
+    const expoHost = getExpoDevHost();
+    if (expoHost) {
+      parsed.hostname = expoHost;
+      return parsed.toString().replace(/\/+$/, '');
+    }
+
+    if (Platform.OS === 'android') {
+      parsed.hostname = '10.0.2.2';
+      return parsed.toString().replace(/\/+$/, '');
+    }
+
+    return raw;
+  } catch {
+    return raw;
+  }
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const buildQueryString = (query?: Record<string, unknown>): string => {
   if (!query) return '';

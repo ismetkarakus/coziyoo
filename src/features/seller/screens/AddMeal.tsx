@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Image, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text, Button } from '../../../components/ui';
 import { FormField } from '../../../components/forms';
@@ -14,10 +13,10 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../../../context/AuthContext';
 import { foodService } from '../../../services/foodService';
-import { storageService } from '../../../services/storageService';
-import categoriesData from '../../../mock/categories.json';
+import { categoriesData } from '../../../constants/categories';
 
 const CARD_SUMMARY_MAX_LENGTH = 80;
+const MAX_IMAGES = 5;
 
 const normalizeCuisineInput = (value: string): string => {
   const trimmed = value.trim();
@@ -128,6 +127,21 @@ export const AddMeal: React.FC = () => {
     }));
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
+    if (field === 'dailyStock') {
+      const numericValue = value.replace(/[^0-9]/g, '');
+      setFormData(prev => ({ ...prev, [field]: numericValue }));
+      return;
+    }
+
+    if (field === 'price' || field === 'deliveryFee') {
+      const normalized = value.replace(',', '.');
+      const sanitized = normalized
+        .replace(/[^0-9.]/g, '')
+        .replace(/(\..*?)\..*/g, '$1');
+      setFormData(prev => ({ ...prev, [field]: sanitized }));
+      return;
+    }
+
     if (field === 'cardSummary' && value.length > CARD_SUMMARY_MAX_LENGTH) {
       Alert.alert(
         t('addMealScreen.alerts.characterLimitTitle'),
@@ -161,6 +175,8 @@ export const AddMeal: React.FC = () => {
         setFilteredCountries([]);
         setCountryModalVisible(false);
       }
+    } else if (countryModalVisible) {
+      setCountryModalVisible(false);
     }
   };
 
@@ -239,193 +255,14 @@ export const AddMeal: React.FC = () => {
     setFilteredCountries([]);
   };
 
-  const handleSubmit = async () => {
-    // Validation
-    if (!formData.name.trim()) {
-      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.nameRequired'));
-      return;
-    }
-    if (!formData.description.trim()) {
-      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.descriptionRequired'));
-      return;
-    }
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.priceInvalid'));
-      return;
-    }
-    if (!formData.category) {
-      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.categoryRequired'));
-      return;
-    }
-    if (!user) {
-      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.loginRequired'));
-      return;
-    }
-
-    try {
-      setUploading(true);
-      setUploadProgress(0);
-
-      let imageUrl = '';
-      
-      // Firebase Storage'ı skip et, local image kullan
-      if (selectedImages.length > 0) {
-        console.log('Using local image (Firebase Storage bypassed)');
-        imageUrl = selectedImages[0]; // Local image URI kullan
-      } else {
-        imageUrl = 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop';
-      }
-
-      // Firebase'i skip et, direkt local storage kullan
-      const foodId = isEditing && editingMealId ? editingMealId : 'local_' + Date.now();
-      console.log('Using local storage only, foodId:', foodId);
-
-      // AsyncStorage'a da kaydet (backward compatibility için)
-      const mealData = {
-        id: foodId,
-        ...formData,
-        recipe: formData.recipe,
-        images: selectedImages,
-        deliveryOptions,
-        createdAt: isEditing && editingCreatedAt ? editingCreatedAt : new Date().toISOString(),
-        sellerId: user.uid,
-        sellerName: user.displayName || t('addMealScreen.defaults.sellerName'),
-        cookName: user.displayName || t('addMealScreen.defaults.sellerName'), // Usta ismi için
-        imageUrl,
-        // Tarih bilgileri
-        availableDates: formData.startDate && formData.endDate ? 
-          formatDateRange(formData.startDate, formData.endDate) : 
-          t('addMealScreen.date.unknown'),
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        price: parseFloat(formData.price) || 0,
-        dailyStock: parseInt(formData.dailyStock) || 0,
-        // Diğer eksik alanlar
-        currentStock: parseInt(formData.dailyStock) || 0,
-        hasPickup: deliveryOptions.pickup,
-        hasDelivery: deliveryOptions.delivery,
-        isActive: true,
-      };
-
-      const existingMeals = await AsyncStorage.getItem('publishedMeals');
-      const meals = existingMeals ? JSON.parse(existingMeals) : [];
-      const updatedMeals = isEditing
-        ? meals.map((meal: any) => (meal.id === mealData.id ? { ...meal, ...mealData } : meal))
-        : [...meals, mealData];
-      await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
-
-      const existingExpired = await AsyncStorage.getItem('expiredMeals');
-      const expiredMeals = existingExpired ? JSON.parse(existingExpired) : [];
-      if (expiredMeals.length > 0) {
-        const updatedExpired = expiredMeals.map((meal: any) => (meal.id === mealData.id ? { ...meal, ...mealData } : meal));
-        await AsyncStorage.setItem('expiredMeals', JSON.stringify(updatedExpired));
-      }
-
-      Alert.alert(
-        t('addMealScreen.alerts.successTitle'),
-        isEditing ? t('addMealScreen.alerts.updateSuccessMessage') : t('addMealScreen.alerts.successMessage'),
-        [
-          {
-            text: t('addMealScreen.alerts.ok'),
-            onPress: () => {
-              // Form'u temizle
-              setFormData({
-                name: '',
-                cardSummary: '',
-                description: '',
-                recipe: '',
-                price: '',
-                dailyStock: '',
-                deliveryFee: '',
-                startDate: '',
-                endDate: '',
-                category: '',
-                country: '',
-              });
-              setSelectedImages([]);
-              setDeliveryOptions({ pickup: true, delivery: false });
-              
-              // Ana sayfaya dön
-              router.replace('/(seller)/seller-panel');
-            }
-          }
-        ]
-      );
-
-    } catch (error) {
-      console.error('Error adding food:', error);
-      Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.publishError'));
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-    }
-  };
-
-  const handleImageSelection = async () => {
-    // İzin kontrolü
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        t('addMealScreen.alerts.permissionTitle'),
-        t('addMealScreen.alerts.galleryPermission'),
-        [
-          { text: t('addMealScreen.alerts.cancel'), style: 'cancel' },
-          { text: t('addMealScreen.alerts.goToSettings'), onPress: () => ImagePicker.requestMediaLibraryPermissionsAsync() }
-        ]
-      );
-      return;
-    }
-
-    // Kalan resim sayısını hesapla
-    const remainingSlots = 5 - selectedImages.length;
-    if (remainingSlots <= 0) {
-      Alert.alert(t('addMealScreen.alerts.imageLimitTitle'), t('addMealScreen.alerts.imageLimitMessage'));
-      return;
-    }
-
-    // Çoklu resim seçimi
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true, // Çoklu seçim aktif
-      selectionLimit: remainingSlots, // Kalan slot kadar seçim
-      quality: 0.8,
-      aspect: [4, 3],
-      allowsEditing: false, // Çoklu seçimde editing kapalı
-    });
-
-    if (!result.canceled && result.assets) {
-      const newImages = result.assets.map(asset => asset.uri);
-      setSelectedImages(prev => [...prev, ...newImages]);
-      
-      // Başarı mesajı
-      Alert.alert(
-        t('addMealScreen.alerts.imagesAddedTitle'),
-        t('addMealScreen.alerts.imagesAddedMessage', { count: newImages.length, total: selectedImages.length + newImages.length })
-      );
-    }
-  };
-
-  const handleRemoveImage = (indexToRemove: number) => {
-    Alert.alert(
-      t('addMealScreen.alerts.deleteImageTitle'),
-      t('addMealScreen.alerts.deleteImageMessage'),
-      [
-        { text: t('addMealScreen.alerts.cancel'), style: 'cancel' },
-        {
-          text: t('addMealScreen.alerts.delete'),
-          style: 'destructive',
-          onPress: () => {
-            setSelectedImages(prev => prev.filter((_, index) => index !== indexToRemove));
-          }
-        }
-      ]
-    );
-  };
-
   const handleImageAdd = async () => {
     // İzin kontrolü
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
+    const hasPermission =
+      Platform.OS === 'web'
+        ? true
+        : (await ImagePicker.requestMediaLibraryPermissionsAsync()).status === 'granted';
+
+    if (!hasPermission) {
       Alert.alert(
         t('addMealScreen.alerts.permissionTitle'),
         t('addMealScreen.alerts.galleryPermission'),
@@ -443,9 +280,16 @@ export const AddMeal: React.FC = () => {
     }
 
     // Kalan resim sayısını hesapla
-    const remainingSlots = 5 - selectedImages.length;
+    const remainingSlots = MAX_IMAGES - selectedImages.length;
     if (remainingSlots <= 0) {
       Alert.alert(t('addMealScreen.alerts.imageLimitTitle'), t('addMealScreen.alerts.imageLimitMessage'));
+      return;
+    }
+
+    // RN Web'de çok butonlu Alert aksiyonları tutarsız davranabildiği için
+    // doğrudan medya seçici açıyoruz.
+    if (Platform.OS === 'web') {
+      await pickMultipleImages();
       return;
     }
 
@@ -464,6 +308,12 @@ export const AddMeal: React.FC = () => {
 
   const pickSingleImage = async () => {
     try {
+      const remainingSlots = MAX_IMAGES - selectedImages.length;
+      if (remainingSlots <= 0) {
+        Alert.alert(t('addMealScreen.alerts.imageLimitTitle'), t('addMealScreen.alerts.imageLimitMessage'));
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsMultipleSelection: false,
@@ -474,7 +324,7 @@ export const AddMeal: React.FC = () => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newImage = result.assets[0].uri;
-        setSelectedImages(prev => [...prev, newImage]);
+        setSelectedImages(prev => [...prev, newImage].slice(0, MAX_IMAGES));
         
         Alert.alert(
           t('addMealScreen.alerts.successTitle'),
@@ -490,7 +340,11 @@ export const AddMeal: React.FC = () => {
 
   const pickMultipleImages = async () => {
     try {
-      const remainingSlots = 5 - selectedImages.length;
+      const remainingSlots = MAX_IMAGES - selectedImages.length;
+      if (remainingSlots <= 0) {
+        Alert.alert(t('addMealScreen.alerts.imageLimitTitle'), t('addMealScreen.alerts.imageLimitMessage'));
+        return;
+      }
       
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -502,7 +356,7 @@ export const AddMeal: React.FC = () => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newImages = result.assets.map(asset => asset.uri);
-        setSelectedImages(prev => [...prev, ...newImages]);
+        setSelectedImages(prev => [...prev, ...newImages].slice(0, MAX_IMAGES));
         
         Alert.alert(
           t('addMealScreen.alerts.successTitle'),
@@ -518,6 +372,12 @@ export const AddMeal: React.FC = () => {
 
   const takePhoto = async () => {
     try {
+      const remainingSlots = MAX_IMAGES - selectedImages.length;
+      if (remainingSlots <= 0) {
+        Alert.alert(t('addMealScreen.alerts.imageLimitTitle'), t('addMealScreen.alerts.imageLimitMessage'));
+        return;
+      }
+
       // Kamera izni kontrolü
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
@@ -534,7 +394,7 @@ export const AddMeal: React.FC = () => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newImage = result.assets[0].uri;
-        setSelectedImages(prev => [...prev, newImage]);
+        setSelectedImages(prev => [...prev, newImage].slice(0, MAX_IMAGES));
         
         Alert.alert(
           t('addMealScreen.alerts.successTitle'),
@@ -723,22 +583,18 @@ export const AddMeal: React.FC = () => {
         imageUrl = 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop';
       }
 
-      // Firebase'i skip et, direkt local storage kullan
-      const foodId = isEditing && editingMealId ? editingMealId : 'local_' + Date.now();
-      console.log('Using local storage only, foodId:', foodId);
-
-      // AsyncStorage'a da kaydet (backward compatibility için)
       const mealData = {
-        id: foodId,
         ...formData,
         country: normalizedCuisine,
         recipe: formData.recipe,
         images: selectedImages,
         deliveryOptions,
-        createdAt: isEditing && editingCreatedAt ? editingCreatedAt : new Date().toISOString(),
+        createdAt: isEditing && editingCreatedAt ? editingCreatedAt : new Date(),
+        updatedAt: new Date(),
         sellerId: user.uid,
         sellerName: user.displayName || t('addMealScreen.defaults.sellerName'),
         cookName: user.displayName || t('addMealScreen.defaults.sellerName'), // Usta ismi için
+        cookId: user.uid,
         imageUrl,
         // Tarih bilgileri
         availableDates: formData.startDate && formData.endDate ? 
@@ -752,21 +608,18 @@ export const AddMeal: React.FC = () => {
         currentStock: parseInt(formData.dailyStock) || 0,
         hasPickup: deliveryOptions.pickup,
         hasDelivery: deliveryOptions.delivery,
+        availableDeliveryOptions: [
+          ...(deliveryOptions.pickup ? (['pickup'] as const) : []),
+          ...(deliveryOptions.delivery ? (['delivery'] as const) : []),
+        ],
+        deliveryFee: Number(formData.deliveryFee || 0),
         isActive: true,
       };
 
-      const existingMeals = await AsyncStorage.getItem('publishedMeals');
-      const meals = existingMeals ? JSON.parse(existingMeals) : [];
-      const updatedMeals = isEditing
-        ? meals.map((meal: any) => (meal.id === mealData.id ? { ...meal, ...mealData } : meal))
-        : [...meals, mealData];
-      await AsyncStorage.setItem('publishedMeals', JSON.stringify(updatedMeals));
-
-      const existingExpired = await AsyncStorage.getItem('expiredMeals');
-      const expiredMeals = existingExpired ? JSON.parse(existingExpired) : [];
-      if (expiredMeals.length > 0) {
-        const updatedExpired = expiredMeals.map((meal: any) => (meal.id === mealData.id ? { ...meal, ...mealData } : meal));
-        await AsyncStorage.setItem('expiredMeals', JSON.stringify(updatedExpired));
+      if (isEditing && editingMealId) {
+        await foodService.updateFood(editingMealId, mealData as any);
+      } else {
+        await foodService.addFood(mealData as any);
       }
 
       Alert.alert(
@@ -860,7 +713,7 @@ export const AddMeal: React.FC = () => {
               ))}
               
               {/* Add Photo Button - Always visible if under limit */}
-              {selectedImages.length < 5 && (
+              {selectedImages.length < MAX_IMAGES && (
                 <TouchableOpacity
                   onPress={handleImageAdd}
                   style={[styles.photoPlaceholder, { backgroundColor: colors.surface }]}
@@ -872,7 +725,7 @@ export const AddMeal: React.FC = () => {
                     {t('addMealScreen.photos.add')}
                   </Text>
                   <Text variant="caption" style={[styles.photoCounter, { color: colors.textSecondary }]}>
-                    ({selectedImages.length}/5)
+                    ({selectedImages.length}/{MAX_IMAGES})
                   </Text>
                   <Text variant="caption" style={[styles.photoHint, { color: colors.textSecondary }]}>
                     {t('addMealScreen.photos.hint')}

@@ -9,22 +9,6 @@ export interface SyncedOrderStatus {
 }
 
 const STORAGE_KEY = 'synced_order_statuses_v1';
-const ORDERS_STORAGE_KEY = 'orders';
-
-const normalizeStatusForOrders = (statusKey: SyncedOrderStatusKey): string => {
-  switch (statusKey) {
-    case 'preparing':
-      return 'preparing';
-    case 'ready':
-      return 'ready';
-    case 'onTheWay':
-      return 'ready';
-    case 'delivered':
-      return 'completed';
-    default:
-      return 'preparing';
-  }
-};
 
 const parseSyncedStatuses = (value: string | null): Record<string, SyncedOrderStatus> => {
   if (!value) return {};
@@ -51,40 +35,6 @@ export const getSyncedOrderStatus = async (orderId: string): Promise<SyncedOrder
   return all[orderId] ?? null;
 };
 
-const syncLegacyOrdersStatus = async (orderId: string, statusKey: SyncedOrderStatusKey): Promise<void> => {
-  try {
-    const rawOrders = await AsyncStorage.getItem(ORDERS_STORAGE_KEY);
-    if (!rawOrders) return;
-
-    const parsedOrders = JSON.parse(rawOrders);
-    if (!Array.isArray(parsedOrders)) return;
-
-    let changed = false;
-    const normalizedStatus = normalizeStatusForOrders(statusKey);
-
-    const updatedOrders = parsedOrders.map((order) => {
-      const currentOrderId = order?.id ?? order?.orderId;
-      if (currentOrderId !== orderId) {
-        return order;
-      }
-
-      changed = true;
-      return {
-        ...order,
-        status: normalizedStatus,
-        trackingStatus: statusKey,
-        updatedAt: new Date().toISOString(),
-      };
-    });
-
-    if (changed) {
-      await AsyncStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
-    }
-  } catch (error) {
-    console.error('Failed to sync legacy orders status:', error);
-  }
-};
-
 export const setSyncedOrderStatus = async (orderId: string, statusKey: SyncedOrderStatusKey): Promise<void> => {
   if (!orderId) return;
 
@@ -96,7 +46,6 @@ export const setSyncedOrderStatus = async (orderId: string, statusKey: SyncedOrd
   };
 
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  await syncLegacyOrdersStatus(orderId, statusKey);
 };
 
 export const getLatestSyncedOrderStatus = async (): Promise<SyncedOrderStatus | null> => {

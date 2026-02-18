@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { TopBar } from '../../../components/layout';
 import { Text } from '../../../components/ui';
-import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
 import { useAuth } from '../../../context/AuthContext';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -45,27 +44,8 @@ export const Profile: React.FC = () => {
   const defaultUserData = getDefaultUserData(currentLanguage);
 
   useEffect(() => {
-    const loadProfileData = async () => {
-      try {
-        const savedProfile = await AsyncStorage.getItem('buyerProfile');
-        if (savedProfile) {
-          const profileData = JSON.parse(savedProfile);
-          setAvatarUri(profileData.avatarUri || null);
-          return;
-        }
-
-        const personalInfo = await AsyncStorage.getItem('personalInfo');
-        if (personalInfo) {
-          const personalData = JSON.parse(personalInfo);
-          setAvatarUri(personalData.avatar || null);
-        }
-      } catch (error) {
-        console.error('Error loading buyer profile data:', error);
-      }
-    };
-
-    loadProfileData();
-  }, []);
+    setAvatarUri(userData?.avatarUri || null);
+  }, [userData?.avatarUri]);
 
   const handleItemPress = (itemId: string) => {
     switch (itemId) {
@@ -109,6 +89,10 @@ export const Profile: React.FC = () => {
         router.push('/notification-settings');
         break;
       case 'language':
+        if (Platform.OS === 'web') {
+          void setLanguage(currentLanguage === 'tr' ? 'en' : 'tr');
+          break;
+        }
         Alert.alert(
           currentLanguage === 'tr' ? 'Dil secin' : 'Choose language',
           currentLanguage === 'tr'
@@ -236,7 +220,7 @@ export const Profile: React.FC = () => {
       {
         id: 'favorites',
         title: t('profileScreen.items.favorites'),
-        icon: 'heart',
+        icon: 'favorite-border',
       },
       {
         id: 'messages',
@@ -264,36 +248,33 @@ export const Profile: React.FC = () => {
       >
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
           <View style={styles.profileRow}>
-            <Image
-              source={avatarUri ? { uri: avatarUri } : { uri: defaultUserData.avatar }}
-              style={[styles.avatarImage, { borderColor: colors.primary }]}
-            />
+            <View style={[styles.avatarShell, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+              <Image
+                source={avatarUri ? { uri: avatarUri } : { uri: defaultUserData.avatar }}
+                style={[styles.avatarImage, { borderColor: colors.primary }]}
+              />
+            </View>
 
             <View style={styles.profileInfo}>
-              <Text variant="subheading" weight="bold" style={styles.profileName}>
-                {defaultUserData.name}
-              </Text>
-              <Text variant="body" color="textSecondary" style={styles.profileSubtext}>
-                {defaultUserData.location}
-              </Text>
-              <View style={styles.locationRow}>
-                <WebSafeIcon name="location-on" size={17} color={colors.textSecondary} />
-                <Text variant="caption" color="textSecondary">
-                  {defaultUserData.location}
+              <View style={styles.nameRow}>
+                <Text variant="subheading" weight="bold" style={styles.profileName} numberOfLines={1}>
+                  {userData?.displayName || defaultUserData.name}
+                </Text>
+                <TouchableOpacity
+                  style={styles.editInlineButton}
+                  onPress={() => handleItemPress('personal-info')}
+                  activeOpacity={0.75}
+                >
+                  <MaterialIcons name="edit" size={16} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+              <View style={[styles.locationPill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <MaterialIcons name="location-on" size={14} color={colors.textSecondary} />
+                <Text variant="caption" color="textSecondary" style={styles.locationText} numberOfLines={1}>
+                  {userData?.city || defaultUserData.location}
                 </Text>
               </View>
             </View>
-
-            <TouchableOpacity
-              style={[styles.editButton, { backgroundColor: colors.surface }]}
-              onPress={() => handleItemPress('personal-info')}
-              activeOpacity={0.75}
-            >
-              <Text variant="body" weight="semibold" color="textSecondary">
-                {currentLanguage === 'tr' ? 'Duzenle' : 'Edit'}
-              </Text>
-              <WebSafeIcon name="edit" size={18} color={colors.textSecondary} style={styles.editIcon} />
-            </TouchableOpacity>
           </View>
 
           <View style={[styles.quickGrid, { borderTopColor: colors.border }]}>
@@ -305,7 +286,7 @@ export const Profile: React.FC = () => {
                 onPress={() => handleItemPress(item.id)}
               >
                 <View style={styles.quickTitleRow}>
-                  <WebSafeIcon name={item.icon} size={20} color={colors.primary} />
+                  <MaterialIcons name={item.icon as any} size={20} color={colors.primary} />
                   <Text variant="body" weight="semibold" style={styles.quickTitle}>
                     {item.title}
                   </Text>
@@ -313,12 +294,6 @@ export const Profile: React.FC = () => {
                 <Text variant="caption" color="textSecondary">
                   {item.subtitle}
                 </Text>
-                <WebSafeIcon
-                  name="chevron-right"
-                  size={18}
-                  color={colors.textSecondary}
-                  style={styles.quickArrow}
-                />
               </TouchableOpacity>
             ))}
           </View>
@@ -345,12 +320,12 @@ export const Profile: React.FC = () => {
         </View>
 
         <TouchableOpacity
-          style={[styles.signOutButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[styles.signOutButton, { backgroundColor: colors.error, borderColor: colors.error }]}
           activeOpacity={0.75}
           onPress={handleSignOut}
         >
-          <WebSafeIcon name="logout" size={21} color={colors.text} />
-          <Text variant="body" weight="bold" style={styles.signOutLabel}>
+          <MaterialIcons name="logout" size={21} color="#FFFFFF" />
+          <Text variant="body" weight="bold" style={[styles.signOutLabel, { color: '#FFFFFF' }]}>
             {t('profileScreen.alerts.signOutConfirm')}
           </Text>
         </TouchableOpacity>
@@ -377,7 +352,7 @@ const SectionRow: React.FC<{
     onPress={() => onPress(item.id)}
   >
     <View style={styles.rowLeft}>
-      <WebSafeIcon name={item.icon} size={20} color={colors.primary} />
+      <MaterialIcons name={item.icon as any} size={20} color={colors.primary} />
       <Text variant="body" weight="semibold" style={styles.rowTitle}>
         {item.title}
       </Text>
@@ -389,7 +364,6 @@ const SectionRow: React.FC<{
           {item.value}
         </Text>
       ) : null}
-      <WebSafeIcon name="chevron-right" size={20} color={colors.textSecondary} />
     </View>
   </TouchableOpacity>
 );
@@ -405,7 +379,7 @@ const SquareActionCard: React.FC<{
     onPress={() => onPress(item.id)}
   >
     <View style={styles.squareLeft}>
-      <WebSafeIcon name={item.icon} size={20} color={colors.primary} />
+      <MaterialIcons name={item.icon as any} size={20} color={colors.primary} />
       <Text variant="body" weight="semibold" style={styles.squareTitle} numberOfLines={1}>
         {item.title}
       </Text>
@@ -419,7 +393,6 @@ const SquareActionCard: React.FC<{
           </Text>
         </View>
       ) : null}
-      <WebSafeIcon name="chevron-right" size={18} color={colors.textSecondary} />
     </View>
   </TouchableOpacity>
 );
@@ -444,8 +417,17 @@ const styles = StyleSheet.create({
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md,
     gap: Spacing.md,
+  },
+  avatarShell: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarImage: {
     width: 88,
@@ -456,31 +438,43 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 8,
+  },
   profileName: {
-    marginBottom: 2,
+    flex: 1,
+    fontSize: 22,
+    lineHeight: 26,
   },
-  profileSubtext: {
-    marginBottom: 4,
-  },
-  locationRow: {
+  locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderRadius: 999,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
+    borderWidth: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    alignSelf: 'flex-start',
   },
-  editIcon: {
-    marginLeft: 4,
+  locationText: { maxWidth: 220 },
+  editInlineButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    backgroundColor: Colors.light.surface,
+    borderColor: Colors.light.border,
   },
   quickGrid: {
     borderTopWidth: 1,
     borderTopColor: '#E7E3DD',
-    padding: Spacing.md,
+    padding: Spacing.sm,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
@@ -502,11 +496,6 @@ const styles = StyleSheet.create({
   },
   quickTitle: {
     flex: 1,
-  },
-  quickArrow: {
-    position: 'absolute',
-    right: 10,
-    top: 10,
   },
   groupCard: {
     borderRadius: 18,

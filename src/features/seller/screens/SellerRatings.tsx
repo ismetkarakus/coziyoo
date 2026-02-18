@@ -8,7 +8,7 @@ import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Review, ReviewStats } from '../../../services/reviewService';
-import sellerMock from '../../../mock/seller.json';
+import sellerMock from '../../../constants/sellerMock';
 
 const getMockSellerReviews = (language: 'tr' | 'en', sellerName: string): Review[] => {
   if (language === 'en') {

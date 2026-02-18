@@ -21,56 +21,7 @@ import { useColorScheme } from '../../../../components/useColorScheme';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useCountry } from '../../../context/CountryContext';
 import { useAuth } from '../../../context/AuthContext';
-
-const buildMockBuyerOrders = (buyerId: string, locale: string) => {
-  const now = Date.now();
-  const dateLabel = (offsetDays: number) =>
-    new Date(now + offsetDays * 24 * 60 * 60 * 1000).toLocaleDateString(locale);
-
-  return [
-    {
-      id: `mock_order_${buyerId}_1`,
-      buyerId,
-      foodName: 'Ev Yapımı Mantı',
-      cookName: 'Ayşe Hanım',
-      quantity: 2,
-      totalPrice: 70,
-      requestedDate: dateLabel(1),
-      requestedTime: '19:00',
-      deliveryType: 'delivery',
-      status: 'seller_approved',
-      createdAt: new Date(now - 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: `mock_order_${buyerId}_2`,
-      buyerId,
-      foodName: 'Karnıyarık',
-      cookName: 'Mehmet Usta',
-      quantity: 1,
-      totalPrice: 28,
-      requestedDate: dateLabel(0),
-      requestedTime: '13:30',
-      deliveryType: 'pickup',
-      status: 'pending_seller_approval',
-      createdAt: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: `mock_order_${buyerId}_3`,
-      buyerId,
-      foodName: 'Mercimek Çorbası',
-      cookName: 'Zeynep Hanım',
-      quantity: 3,
-      totalPrice: 45,
-      requestedDate: dateLabel(-1),
-      requestedTime: '12:00',
-      deliveryType: 'delivery',
-      status: 'confirmed',
-      buyerApprovedAt: new Date(now - 20 * 60 * 60 * 1000).toISOString(),
-      paymentCompleted: true,
-      createdAt: new Date(now - 28 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
-};
+import { foodService } from '../../../services/foodService';
 
 export const OrderHistory: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -97,20 +48,23 @@ export const OrderHistory: React.FC = () => {
 
   const loadOrders = async () => {
     try {
-      const savedOrders = await AsyncStorage.getItem('orders');
-      const allOrders = savedOrders ? JSON.parse(savedOrders) : [];
-      const buyerId = user?.uid || userData?.uid || userData?.email || user?.email || 'buyer1';
-      const buyerOrders = allOrders.filter((order: any) => order.buyerId === buyerId);
-
-      if (buyerOrders.length > 0) {
-        setOrders(buyerOrders);
+      const buyerId = user?.uid || userData?.uid;
+      if (!buyerId) {
+        setOrders([]);
         return;
       }
 
-      const mockOrders = buildMockBuyerOrders(String(buyerId), locale);
-      const updatedOrders = [...allOrders, ...mockOrders];
-      await AsyncStorage.setItem('orders', JSON.stringify(updatedOrders));
-      setOrders(mockOrders);
+      const dbOrders = await foodService.getUserOrders(String(buyerId));
+      const normalized = dbOrders.map((order: any) => ({
+        ...order,
+        createdAt: order.createdAt ? new Date(order.createdAt).toISOString() : new Date().toISOString(),
+        requestedDate: order.requestedDate || '',
+        requestedTime: order.requestedTime || '',
+        cookName: order.cookName || '',
+        foodName: order.foodName || '',
+        paymentCompleted: !!order.paymentCompleted,
+      }));
+      setOrders(normalized);
     } catch (error) {
       console.error('Error loading orders:', error);
     }
@@ -159,25 +113,12 @@ export const OrderHistory: React.FC = () => {
           style: action === 'approve' ? 'default' : 'destructive',
           onPress: async () => {
             try {
-              // Update AsyncStorage
-              const savedOrders = await AsyncStorage.getItem('orders');
-              if (savedOrders) {
-                const allOrders = JSON.parse(savedOrders);
-                const updatedOrders = allOrders.map((order: any) => 
-                  order.id === orderId 
-                    ? { 
-                        ...order, 
-                        status: action === 'approve' ? 'confirmed' : 'rejected',
-                        buyerApprovedAt: action === 'approve' ? new Date().toISOString() : undefined,
-                        paymentCompleted: action === 'approve' ? true : false
-                      }
-                    : order
-                );
-                await AsyncStorage.setItem('orders', JSON.stringify(updatedOrders));
-                
-                // Reload orders
-                loadOrders();
-              }
+              await foodService.updateOrder(orderId, {
+                status: action === 'approve' ? 'confirmed' : 'rejected',
+                buyerApprovedAt: action === 'approve' ? new Date() : undefined,
+                paymentCompleted: action === 'approve',
+              });
+              await loadOrders();
 
               Alert.alert(
                 t('orderHistoryScreen.approveFlow.successTitle'),

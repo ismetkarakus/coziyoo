@@ -17,19 +17,53 @@ export interface Food {
   isAvailable: boolean;
   rating?: number;
   reviewCount?: number;
+  sellerId?: string;
+  sellerName?: string;
+  country?: string;
+  images?: string[];
+  hasPickup?: boolean;
+  hasDelivery?: boolean;
+  availableDeliveryOptions?: ('pickup' | 'delivery')[];
+  availableDates?: string;
+  currentStock?: number;
+  dailyStock?: number;
+  deliveryFee?: number;
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+  allergens?: string[];
+  distance?: string;
+  prepTime?: string;
+  cookDescription?: string;
+  favoriteCount?: number;
   createdAt: Date;
   updatedAt: Date;
+  [key: string]: any;
 }
 
 export interface Order {
   id?: string;
   foodId: string;
+  foodName?: string;
+  cookName?: string;
+  cookId?: string;
   buyerId: string;
+  buyerName?: string;
   sellerId: string;
   quantity: number;
+  price?: number;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  deliveryType?: string;
+  requestedDate?: string;
+  requestedTime?: string;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled' | 'seller_approved' | 'pending_seller_approval' | 'pending_buyer_approval' | 'rejected' | 'completed';
+  trackingStatus?: string;
   deliveryAddress: string;
+  paymentCompleted?: boolean;
+  buyerApprovedAt?: Date;
+  sellerApprovedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
   orderDate: Date;
   estimatedDeliveryTime?: Date;
 }
@@ -49,6 +83,30 @@ class FoodService {
     } catch (error) {
       console.error('Yemek eklenirken hata:', error);
       throw new Error('Yemek eklenemedi');
+    }
+  }
+
+  async updateFood(foodId: string, updates: Partial<Food>): Promise<void> {
+    try {
+      const response = await apiClient.put(`/foods/${foodId}`, {
+        ...updates,
+        createdAt: updates.createdAt instanceof Date ? updates.createdAt.toISOString() : updates.createdAt,
+        updatedAt: updates.updatedAt instanceof Date ? updates.updatedAt.toISOString() : updates.updatedAt,
+      });
+      if (response.status !== 200) throw new Error(response.error || 'Food update failed');
+    } catch (error) {
+      console.error('Yemek güncellenirken hata:', error);
+      throw new Error('Yemek güncellenemedi');
+    }
+  }
+
+  async deleteFood(foodId: string): Promise<void> {
+    try {
+      const response = await apiClient.delete(`/foods/${foodId}`);
+      if (response.status !== 200) throw new Error(response.error || 'Food delete failed');
+    } catch (error) {
+      console.error('Yemek silinirken hata:', error);
+      throw new Error('Yemek silinemedi');
     }
   }
 
@@ -132,7 +190,12 @@ class FoodService {
       const response = await apiClient.post('/orders', {
         ...orderData,
         id,
-        orderDate: new Date().toISOString()
+        orderDate: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        paymentCompleted: orderData.paymentCompleted ? 1 : 0,
+        buyerApprovedAt: orderData.buyerApprovedAt ? orderData.buyerApprovedAt.toISOString() : null,
+        sellerApprovedAt: orderData.sellerApprovedAt ? orderData.sellerApprovedAt.toISOString() : null,
       });
       if (response.status !== 201 || !response.data) throw new Error(response.error || 'Sipariş oluşturulamadı');
       return response.data.id;
@@ -184,6 +247,26 @@ class FoodService {
     } catch (error) {
       console.error('Sipariş durumu güncellenirken hata:', error);
       throw new Error('Sipariş durumu güncellenemedi');
+    }
+  }
+
+  async updateOrder(orderId: string, updates: Partial<Order>): Promise<void> {
+    try {
+      const response = await apiClient.put(`/orders/${orderId}`, {
+        ...updates,
+        paymentCompleted:
+          typeof updates.paymentCompleted === 'boolean'
+            ? (updates.paymentCompleted ? 1 : 0)
+            : undefined,
+        buyerApprovedAt: updates.buyerApprovedAt ? updates.buyerApprovedAt.toISOString() : updates.buyerApprovedAt,
+        sellerApprovedAt: updates.sellerApprovedAt ? updates.sellerApprovedAt.toISOString() : updates.sellerApprovedAt,
+        createdAt: updates.createdAt ? updates.createdAt.toISOString() : updates.createdAt,
+        updatedAt: updates.updatedAt ? updates.updatedAt.toISOString() : updates.updatedAt,
+      });
+      if (response.status !== 200) throw new Error(response.error || 'Order update failed');
+    } catch (error) {
+      console.error('Order update error:', error);
+      throw new Error('Order update failed');
     }
   }
 

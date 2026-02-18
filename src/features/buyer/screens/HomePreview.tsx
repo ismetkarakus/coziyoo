@@ -3,12 +3,10 @@ import { Alert, Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacit
 import { router, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { FilterModal, Text } from '../../../components/ui';
 import { Spacing } from '../../../theme';
-import foods from '../../../mock/foods.json';
-import { MockFood } from '../../../mock/data';
+import { mockFoodService, MockFood } from '../../../services/mockFoodService';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useCountry } from '../../../context/CountryContext';
 import { useCart } from '../../../context/CartContext';
@@ -47,20 +45,23 @@ export const HomePreview: React.FC = () => {
   const [allergenMatches, setAllergenMatches] = useState<string[]>([]);
   const [pendingAllergenItem, setPendingAllergenItem] = useState<any | null>(null);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
+  const [apiFoods, setApiFoods] = useState<MockFood[]>([]);
 
   const loadPublishedMeals = React.useCallback(async () => {
     try {
-      const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-      if (!publishedMealsJson) {
-        setPublishedMeals([]);
-        return;
-      }
-
-      const parsedMeals = JSON.parse(publishedMealsJson);
-      setPublishedMeals(Array.isArray(parsedMeals) ? parsedMeals : []);
+      const allFoods = await mockFoodService.getFoods();
+      const normalized = allFoods.map((meal: any) => ({
+        ...meal,
+        currentStock: Number(meal?.currentStock ?? 0),
+        dailyStock: Number(meal?.dailyStock ?? 0),
+      }));
+      const visible = normalized.filter((meal: any) => meal.isActive !== false && meal.currentStock > 0);
+      setPublishedMeals(visible);
+      setApiFoods(normalized);
     } catch (error) {
-      console.error('Error loading published meals in HomePreview:', error);
+      console.error('Error loading foods in HomePreview:', error);
       setPublishedMeals([]);
+      setApiFoods([]);
     }
   }, []);
 
@@ -160,10 +161,10 @@ export const HomePreview: React.FC = () => {
       .filter((meal) => meal.isActive !== false && meal.currentStock > 0);
 
     const publishedIdentities = new Set(normalizedPublishedMeals.map(getFoodIdentity));
-    const fallbackFoods = (foods as MockFood[]).filter((food) => !publishedIdentities.has(getFoodIdentity(food)));
+    const fallbackFoods = apiFoods.filter((food) => !publishedIdentities.has(getFoodIdentity(food)));
 
     return [...visiblePublishedMeals, ...fallbackFoods];
-  }, [publishedMeals]);
+  }, [publishedMeals, apiFoods]);
 
   const homeItems = useMemo(
     () =>

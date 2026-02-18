@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity, useWindowDimensions, Modal, PanResponder } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -15,6 +14,7 @@ import { mockFoodService } from '../../../services/mockFoodService';
 import { mockUserService } from '../../../services/mockUserService';
 import { useAuth } from '../../../context/AuthContext';
 import { getFavoriteMeta, toggleFavorite } from '../../../services/favoriteService';
+import { normalizeUsername } from '../../../utils/username';
 
 export default function FoodDetailSimple() {
   const params = useLocalSearchParams();
@@ -96,6 +96,7 @@ export default function FoodDetailSimple() {
   const [sellerAvatar, setSellerAvatar] = useState(
     'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face'
   );
+  const [cookUsername, setCookUsername] = useState(normalizeUsername(cookName, 'seller'));
   const [sellerAvatarError, setSellerAvatarError] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteCount, setFavoriteCount] = useState(0);
@@ -122,22 +123,10 @@ export default function FoodDetailSimple() {
   );
 
   useEffect(() => {
-    const loadSellerProfile = async () => {
-      try {
-        const savedProfile = await AsyncStorage.getItem('sellerProfile');
-        if (savedProfile) {
-          const profile = JSON.parse(savedProfile);
-          if (profile.avatarUri) {
-            setSellerAvatar(profile.avatarUri);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading seller profile:', error);
-      }
-    };
-
-    loadSellerProfile();
-  }, []);
+    if (userData?.avatarUri) {
+      setSellerAvatar(userData.avatarUri);
+    }
+  }, [userData?.avatarUri]);
   
   const handleBackPress = () => {
     router.back();
@@ -162,18 +151,6 @@ export default function FoodDetailSimple() {
 
       let food: any | undefined;
 
-      try {
-        const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-        if (publishedMealsJson) {
-          const publishedMeals = JSON.parse(publishedMealsJson);
-          if (Array.isArray(publishedMeals)) {
-            food = publishedMeals.find((item: any) => String(item?.id) === String(foodId));
-          }
-        }
-      } catch (error) {
-        console.error('Error loading published meals in FoodDetailSimple:', error);
-      }
-
       if (!food && resolvedId) {
         const foods = await mockFoodService.getFoods(0);
         food = foods.find(item => item.id === resolvedId);
@@ -182,6 +159,12 @@ export default function FoodDetailSimple() {
       setIngredients(food?.ingredients ?? null);
       setAllergens(food?.allergens ?? null);
       if (!food) return;
+
+      if (typeof food.sellerId === 'string' && food.sellerId.startsWith('seller_')) {
+        setCookUsername(food.sellerId);
+      } else {
+        setCookUsername(normalizeUsername(cookName, 'seller'));
+      }
 
       const loadedBaseStock = typeof food.currentStock === 'number' ? food.currentStock : 8;
       setBaseStock(loadedBaseStock);
@@ -302,17 +285,6 @@ export default function FoodDetailSimple() {
     }
 
     let food: any | undefined;
-    try {
-      const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-      if (publishedMealsJson) {
-        const publishedMeals = JSON.parse(publishedMealsJson);
-        if (Array.isArray(publishedMeals)) {
-          food = publishedMeals.find((item: any) => String(item?.id) === String(foodId));
-        }
-      }
-    } catch (error) {
-      console.error('Error loading published meals for addToCart:', error);
-    }
 
     if (!food && resolvedId) {
       const foods = await mockFoodService.getFoods(0);
@@ -582,6 +554,9 @@ export default function FoodDetailSimple() {
                       {cookName}
                     </Text>
                   </View>
+                  <Text variant="caption" color="textSecondary">
+                    {cookUsername}
+                  </Text>
                   <View style={styles.rating}>
                     <StarRating rating={foodMeta.rating} size="small" showNumber />
                     <Text variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
@@ -1201,9 +1176,6 @@ const styles = StyleSheet.create({
   ingredientsText: {
     lineHeight: 22,
     marginTop: Spacing.sm,
-  },
-  sectionTitle: {
-    marginBottom: Spacing.sm,
   },
   fixedBottomBar: {
     position: 'absolute',

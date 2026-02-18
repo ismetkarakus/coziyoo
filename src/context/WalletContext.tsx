@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from './LanguageContext';
+import { useAuth } from './AuthContext';
+import { walletService } from '../services/walletService';
 
 // Types
 export interface Transaction {
@@ -78,6 +80,8 @@ const DEFAULT_WALLET: WalletData = {
   lastUpdated: new Date(),
 };
 
+const walletStorageKey = (uid?: string | null) => (uid ? `wallet_data_${uid}` : 'wallet_data_guest');
+
 const getMockWallet = (language: 'tr' | 'en'): WalletData => ({
   balance: 150.00,
   pendingEarnings: 85.00,
@@ -143,16 +147,35 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [wallet, setWallet] = useState<WalletData>(DEFAULT_WALLET);
   const [loading, setLoading] = useState(true);
   const { currentLanguage } = useLanguage();
+  const { userData, user } = useAuth();
 
   // Load wallet data on mount
   useEffect(() => {
     loadWalletData();
-  }, [currentLanguage]);
+  }, [currentLanguage, userData?.uid, user?.uid]);
 
   const loadWalletData = async () => {
     try {
       setLoading(true);
-      const storedWallet = await AsyncStorage.getItem('wallet_data');
+      const uid = userData?.uid || user?.uid;
+      const storageKey = walletStorageKey(uid);
+      if (uid) {
+        const remote = await walletService.getWalletByUserId(uid);
+        if (remote?.data) {
+          const parsedWallet = JSON.parse(remote.data);
+          parsedWallet.lastUpdated = new Date(parsedWallet.lastUpdated);
+          parsedWallet.transactions = parsedWallet.transactions.map((t: any) => ({
+            ...t,
+            createdAt: new Date(t.createdAt),
+            completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
+          }));
+          setWallet(parsedWallet);
+          await AsyncStorage.setItem(storageKey, JSON.stringify(parsedWallet));
+          return;
+        }
+      }
+
+      const storedWallet = await AsyncStorage.getItem(storageKey);
       
       if (storedWallet) {
         const parsedWallet = JSON.parse(storedWallet);
@@ -180,7 +203,12 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const saveWalletData = async (walletData: WalletData) => {
     try {
-      await AsyncStorage.setItem('wallet_data', JSON.stringify(walletData));
+      const uid = userData?.uid || user?.uid;
+      const storageKey = walletStorageKey(uid);
+      await AsyncStorage.setItem(storageKey, JSON.stringify(walletData));
+      if (uid) {
+        await walletService.saveWalletByUserId(uid, walletData);
+      }
     } catch (error) {
       console.error('Error saving wallet data:', error);
     }

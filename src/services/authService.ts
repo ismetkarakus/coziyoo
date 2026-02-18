@@ -1,12 +1,89 @@
 import { apiClient } from '../api/apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+type User = any;
+
 export interface UserData {
   uid: string;
   email: string;
+  fullName?: string;
   displayName: string;
+  username?: string;
+  phone?: string;
+  birthDate?: string;
+  gender?: string;
+  avatarUri?: string;
+  addressLine1?: string;
+  city?: string;
+  postcode?: string;
+  allergicTo?: string[];
+  paymentCards?: Array<Record<string, unknown>>;
+  sellerNickname?: string;
+  sellerLocation?: string;
+  sellerAddress?: string;
+  sellerDescription?: string;
+  sellerDeliveryDistance?: string;
+  sellerSpecialties?: string[];
+  identityFrontImage?: string;
+  identityBackImage?: string;
+  identityStatus?: string;
+  identitySubmittedAt?: string;
+  identityVerifiedAt?: string;
+  identityRejectionReason?: string;
+  bankName?: string;
+  bankAccountHolderName?: string;
+  bankIban?: string;
+  bankAccountNumber?: string;
+  complianceCouncilRegistered?: boolean;
+  complianceHygieneCertificate?: boolean;
+  complianceAllergensDeclared?: boolean;
+  complianceHygieneRating?: boolean;
+  complianceInsurance?: boolean;
+  complianceTermsAccepted?: boolean;
+  complianceApproved?: boolean;
+  complianceData?: Record<string, unknown>;
   userType: 'buyer' | 'seller' | 'both';
   createdAt: Date;
+}
+
+export interface UserProfileUpdates {
+  email?: string;
+  fullName?: string;
+  displayName?: string;
+  username?: string;
+  phone?: string;
+  birthDate?: string;
+  gender?: string;
+  avatarUri?: string;
+  addressLine1?: string;
+  city?: string;
+  postcode?: string;
+  allergicTo?: string[];
+  paymentCards?: Array<Record<string, unknown>>;
+  sellerNickname?: string;
+  sellerLocation?: string;
+  sellerAddress?: string;
+  sellerDescription?: string;
+  sellerDeliveryDistance?: string;
+  sellerSpecialties?: string[];
+  identityFrontImage?: string;
+  identityBackImage?: string;
+  identityStatus?: string;
+  identitySubmittedAt?: string | null;
+  identityVerifiedAt?: string | null;
+  identityRejectionReason?: string | null;
+  bankName?: string;
+  bankAccountHolderName?: string;
+  bankIban?: string;
+  bankAccountNumber?: string;
+  complianceCouncilRegistered?: boolean;
+  complianceHygieneCertificate?: boolean;
+  complianceAllergensDeclared?: boolean;
+  complianceHygieneRating?: boolean;
+  complianceInsurance?: boolean;
+  complianceTermsAccepted?: boolean;
+  complianceApproved?: boolean;
+  complianceData?: Record<string, unknown>;
 }
 
 interface MockAccount {
@@ -14,6 +91,7 @@ interface MockAccount {
   email: string;
   password: string;
   displayName: string;
+  username?: string;
   userType: 'buyer' | 'seller' | 'both';
 }
 
@@ -21,32 +99,80 @@ interface MockSession {
   uid: string;
   email: string;
   displayName: string;
+  username?: string;
   userType: 'buyer' | 'seller' | 'both';
 }
 
 const MOCK_SESSION_KEY = 'mock_session';
-const MOCK_ACCOUNTS: MockAccount[] = [
-  {
-    uid: 'mock_buyer_1',
-    email: 'test@cazi.com',
-    password: '123456',
-    displayName: 'Test Kullanıcı',
-    userType: 'buyer',
-  },
-  {
-    uid: 'mock_seller_1',
-    email: 'satici@cazi.com',
-    password: '123456',
-    displayName: 'Test Satıcı',
-    userType: 'seller',
-  },
-];
+const MOCK_ACCOUNTS: MockAccount[] = [];
 
 class AuthService {
   private currentUser: User | null = null;
   private async getLanguage(): Promise<'tr' | 'en'> {
     const stored = await AsyncStorage.getItem('userLanguage');
     return stored === 'en' ? 'en' : 'tr';
+  }
+
+  private parseJsonField<T>(value: unknown, fallback: T): T {
+    if (value === null || value === undefined || value === '') return fallback;
+    if (typeof value !== 'string') return value as T;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  private parseBooleanField(value: unknown): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    if (typeof value === 'string') return value === '1' || value.toLowerCase() === 'true';
+    return false;
+  }
+
+  private normalizeUserData(rawUserData: any): UserData {
+    return {
+      uid: rawUserData.uid,
+      email: rawUserData.email,
+      fullName: rawUserData.fullName || undefined,
+      displayName: rawUserData.displayName || rawUserData.fullName || '',
+      username: rawUserData.username || undefined,
+      phone: rawUserData.phone || undefined,
+      birthDate: rawUserData.birthDate || undefined,
+      gender: rawUserData.gender || undefined,
+      avatarUri: rawUserData.avatarUri || undefined,
+      addressLine1: rawUserData.addressLine1 || undefined,
+      city: rawUserData.city || undefined,
+      postcode: rawUserData.postcode || undefined,
+      allergicTo: this.parseJsonField(rawUserData.allergicTo, [] as string[]),
+      paymentCards: this.parseJsonField(rawUserData.paymentCards, [] as Array<Record<string, unknown>>),
+      sellerNickname: rawUserData.sellerNickname || undefined,
+      sellerLocation: rawUserData.sellerLocation || undefined,
+      sellerAddress: rawUserData.sellerAddress || undefined,
+      sellerDescription: rawUserData.sellerDescription || undefined,
+      sellerDeliveryDistance: rawUserData.sellerDeliveryDistance || undefined,
+      sellerSpecialties: this.parseJsonField(rawUserData.sellerSpecialties, [] as string[]),
+      identityFrontImage: rawUserData.identityFrontImage || undefined,
+      identityBackImage: rawUserData.identityBackImage || undefined,
+      identityStatus: rawUserData.identityStatus || undefined,
+      identitySubmittedAt: rawUserData.identitySubmittedAt || undefined,
+      identityVerifiedAt: rawUserData.identityVerifiedAt || undefined,
+      identityRejectionReason: rawUserData.identityRejectionReason || undefined,
+      bankName: rawUserData.bankName || undefined,
+      bankAccountHolderName: rawUserData.bankAccountHolderName || undefined,
+      bankIban: rawUserData.bankIban || undefined,
+      bankAccountNumber: rawUserData.bankAccountNumber || undefined,
+      complianceCouncilRegistered: this.parseBooleanField(rawUserData.complianceCouncilRegistered),
+      complianceHygieneCertificate: this.parseBooleanField(rawUserData.complianceHygieneCertificate),
+      complianceAllergensDeclared: this.parseBooleanField(rawUserData.complianceAllergensDeclared),
+      complianceHygieneRating: this.parseBooleanField(rawUserData.complianceHygieneRating),
+      complianceInsurance: this.parseBooleanField(rawUserData.complianceInsurance),
+      complianceTermsAccepted: this.parseBooleanField(rawUserData.complianceTermsAccepted),
+      complianceApproved: this.parseBooleanField(rawUserData.complianceApproved),
+      complianceData: this.parseJsonField(rawUserData.complianceData, {} as Record<string, unknown>),
+      userType: rawUserData.userType ?? 'buyer',
+      createdAt: rawUserData.createdAt ? new Date(rawUserData.createdAt) : new Date(),
+    };
   }
 
   async signIn(email: string, password: string): Promise<{ user: User; userData: UserData }> {
@@ -60,29 +186,32 @@ class AuthService {
     this.currentUser = {
       uid: rawUserData.uid,
       email: rawUserData.email,
-      displayName: rawUserData.displayName
+      displayName: rawUserData.displayName || rawUserData.fullName || ''
     };
 
-    const userData: UserData = {
-      uid: rawUserData.uid,
-      email: rawUserData.email,
-      displayName: rawUserData.displayName,
-      userType: rawUserData.userType ?? 'buyer',
-      createdAt: rawUserData.createdAt ? new Date(rawUserData.createdAt) : new Date()
-    };
+    const userData = this.normalizeUserData(rawUserData);
     
     await AsyncStorage.setItem('auth_user', JSON.stringify(this.currentUser));
     await AsyncStorage.setItem(`user_${this.currentUser.uid}`, JSON.stringify(userData));
     return { user: this.currentUser, userData };
   }
 
-  async signUp(email: string, password: string, displayName: string, userType: 'buyer' | 'seller' | 'both'): Promise<User> {
+  async signUp(
+    email: string,
+    password: string,
+    fullName: string,
+    userType: 'buyer' | 'seller' | 'both',
+    displayName?: string
+  ): Promise<User> {
     const uid = `user_${Date.now()}`;
+    const resolvedDisplayName = (displayName || fullName).trim();
+    const resolvedFullName = fullName.trim();
     const response = await apiClient.post('/auth/register', {
         uid,
         email,
         password,
-        displayName,
+        fullName: resolvedFullName,
+        displayName: resolvedDisplayName,
         userType
     });
     
@@ -91,17 +220,25 @@ class AuthService {
       throw new Error(response.error || (language === 'en' ? 'Registration failed' : 'Kayıt başarısız'));
     }
     
-    const userData = response.data ?? { uid, email, displayName, userType, createdAt: new Date().toISOString() };
+    const userData = response.data ?? {
+      uid,
+      email,
+      fullName: resolvedFullName,
+      displayName: resolvedDisplayName,
+      userType,
+      createdAt: new Date().toISOString(),
+    };
     this.currentUser = {
         uid: userData.uid ?? uid,
         email: userData.email ?? email,
-        displayName: userData.displayName ?? displayName
+        displayName: userData.displayName ?? resolvedDisplayName
     };
     
     await AsyncStorage.setItem('auth_user', JSON.stringify(this.currentUser));
     await AsyncStorage.setItem(`user_${this.currentUser.uid}`, JSON.stringify({
       uid: this.currentUser.uid,
       email: this.currentUser.email,
+      fullName: userData.fullName ?? resolvedFullName,
       displayName: this.currentUser.displayName,
       userType,
       createdAt: userData.createdAt ?? new Date().toISOString(),
@@ -111,9 +248,7 @@ class AuthService {
 
   async signInWithMockCredentials(email: string, password: string): Promise<{ user: User; userData: UserData } | null> {
     const match = this.getMockAccount(email, password);
-    if (!match) {
-      return null;
-    }
+    if (!match) return null;
 
     const language = await this.getLanguage();
     const displayName = language === 'en'
@@ -124,6 +259,7 @@ class AuthService {
       uid: match.uid,
       email: match.email,
       displayName,
+      username: match.username,
       userType: match.userType,
       createdAt: new Date(),
     };
@@ -132,6 +268,7 @@ class AuthService {
       uid: match.uid,
       email: match.email,
       displayName,
+      username: match.username,
       userType: match.userType,
     };
 
@@ -171,14 +308,48 @@ class AuthService {
   async getUserData(uid: string): Promise<UserData | null> {
     const response = await apiClient.get(`/auth/me/${uid}`);
     if (response.status !== 200 || !response.data) return null;
-    
-    return {
-        ...response.data,
-        createdAt: new Date(response.data.createdAt)
-    };
+
+    return this.normalizeUserData(response.data);
+  }
+
+  async updateProfile(uid: string, updates: UserProfileUpdates): Promise<UserData> {
+    const payload: Record<string, unknown> = { ...updates };
+    if (Array.isArray(payload.paymentCards)) {
+      payload.paymentCards = JSON.stringify(payload.paymentCards);
+    }
+    if (Array.isArray(payload.allergicTo)) {
+      payload.allergicTo = JSON.stringify(payload.allergicTo);
+    }
+    if (Array.isArray(payload.sellerSpecialties)) {
+      payload.sellerSpecialties = JSON.stringify(payload.sellerSpecialties);
+    }
+    if (payload.complianceData && typeof payload.complianceData === 'object') {
+      payload.complianceData = JSON.stringify(payload.complianceData);
+    }
+
+    const response = await apiClient.put(`/auth/me/${uid}`, payload);
+    if (response.status !== 200 || !response.data) {
+      const language = await this.getLanguage();
+      throw new Error(response.error || (language === 'en' ? 'Profile update failed' : 'Profil güncellenemedi'));
+    }
+
+    const userData = this.normalizeUserData(response.data);
+
+    if (this.currentUser?.uid === uid) {
+      this.currentUser = {
+        ...this.currentUser,
+        email: userData.email,
+        displayName: userData.displayName,
+      };
+      await AsyncStorage.setItem('auth_user', JSON.stringify(this.currentUser));
+    }
+
+    await AsyncStorage.setItem(`user_${uid}`, JSON.stringify(userData));
+    return userData;
   }
 
   async getMockSession(): Promise<{ user: User; userData: UserData } | null> {
+    if (MOCK_ACCOUNTS.length === 0) return null;
     try {
       const raw = await AsyncStorage.getItem(MOCK_SESSION_KEY);
       if (!raw) {
@@ -189,6 +360,7 @@ class AuthService {
         uid: session.uid,
         email: session.email,
         displayName: session.displayName,
+        username: session.username,
         userType: session.userType,
         createdAt: new Date(),
       };
@@ -231,6 +403,7 @@ class AuthService {
   }
 
   private getMockAccount(email: string, password: string): MockAccount | null {
+    if (MOCK_ACCOUNTS.length === 0) return null;
     const normalizedEmail = email.trim().toLowerCase();
     const match = MOCK_ACCOUNTS.find(
       account => account.email.toLowerCase() === normalizedEmail && account.password === password

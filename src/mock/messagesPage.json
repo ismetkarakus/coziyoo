@@ -1,6 +1,0 @@
-{
-  "route": "/(seller)/messages",
-  "titleKey": "messagesScreen.title",
-  "emptyTitleKey": "messagesScreen.emptyTitle",
-  "emptyDescriptionKey": "messagesScreen.emptyDescription"
-}

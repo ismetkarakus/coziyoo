@@ -19,9 +19,9 @@ import { searchService, SearchFilters } from '../../../services/searchService';
 import { seedSampleData, checkExistingData } from '../../../utils/seedData';
 import { mockFoodService } from '../../../services/mockFoodService';
 import { mockUserService } from '../../../services/mockUserService';
-import { MockFood } from '../../../mock/data';
-import sellerMock from '../../../mock/seller.json';
-import categoriesData from '../../../mock/categories.json';
+import { MockFood } from '../../../services/mockFoodService';
+import sellerMock from '../../../constants/sellerMock';
+import { categoriesData } from '../../../constants/categories';
 import { getLatestSyncedOrderStatus } from '../../../utils/orderStatusSync';
 
 const getCategoriesForLanguage = (language: 'tr' | 'en') => {
@@ -167,24 +167,10 @@ export const Home: React.FC = () => {
   }, [defaultCategory]);
 
   useEffect(() => {
-    const loadSellerNickname = async () => {
-      setSellerNickname(localizedSeller.profile.nickname?.trim() || '');
-      try {
-        const savedProfile = await AsyncStorage.getItem('sellerProfile');
-        if (savedProfile) {
-          const profile = JSON.parse(savedProfile);
-          const nickname = profile?.formData?.nickname?.trim();
-          if (nickname) {
-            setSellerNickname(nickname);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading seller nickname:', error);
-      }
-    };
-
-    loadSellerNickname();
-  }, [currentLanguage, localizedSeller.profile.nickname]);
+    setSellerNickname(
+      userData?.sellerNickname?.trim() || localizedSeller.profile.nickname?.trim() || ''
+    );
+  }, [currentLanguage, localizedSeller.profile.nickname, userData?.sellerNickname]);
 
   const loadLatestOrderStatus = React.useCallback(async () => {
     try {
@@ -321,62 +307,39 @@ export const Home: React.FC = () => {
     }
   }, [params.filterByCook, params.showCookFilter, defaultCategory]);
 
-  // Load published meals from AsyncStorage
-  useEffect(() => {
-    const loadPublishedMeals = async () => {
-      try {
-        const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-        if (publishedMealsJson) {
-          const meals = JSON.parse(publishedMealsJson);
-          const visibleMeals = getVisiblePublishedMeals(meals);
-          setPublishedMeals(visibleMeals);
-          setFoodStocks((prev) => {
-            const next = { ...prev };
-            visibleMeals.forEach((meal) => {
-              if (meal?.id) {
-                next[String(meal.id)] = Number(meal.currentStock ?? 0);
-              }
-            });
-            return next;
-          });
-        } else {
-          setPublishedMeals([]);
-        }
-      } catch (error) {
-        console.error('Error loading published meals:', error);
-      }
-    };
-
-    loadPublishedMeals();
+  const loadPublishedMeals = React.useCallback(async () => {
+    try {
+      const allFoods = await foodService.getAllFoods();
+      const asMeals = allFoods.map((meal) => ({
+        ...meal,
+        currentStock: Number((meal as any).currentStock ?? 0),
+        dailyStock: Number((meal as any).dailyStock ?? 0),
+        isActive: (meal as any).isActive !== false,
+      }));
+      const visibleMeals = getVisiblePublishedMeals(asMeals);
+      setPublishedMeals(visibleMeals);
+      setFoodStocks((prev) => {
+        const next = { ...prev };
+        visibleMeals.forEach((meal) => {
+          if (meal?.id) {
+            next[String(meal.id)] = Number(meal.currentStock ?? 0);
+          }
+        });
+        return next;
+      });
+    } catch (error) {
+      console.error('Error loading meals from API:', error);
+      setPublishedMeals([]);
+    }
   }, []);
+
+  useEffect(() => {
+    loadPublishedMeals();
+  }, [loadPublishedMeals]);
 
   // Reload data when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      const loadPublishedMeals = async () => {
-        try {
-          const publishedMealsJson = await AsyncStorage.getItem('publishedMeals');
-          if (publishedMealsJson) {
-            const meals = JSON.parse(publishedMealsJson);
-            const visibleMeals = getVisiblePublishedMeals(meals);
-            setPublishedMeals(visibleMeals);
-            setFoodStocks((prev) => {
-              const next = { ...prev };
-              visibleMeals.forEach((meal) => {
-                if (meal?.id) {
-                  next[String(meal.id)] = Number(meal.currentStock ?? 0);
-                }
-              });
-              return next;
-            });
-          } else {
-            setPublishedMeals([]);
-          }
-        } catch (error) {
-          console.error('Focus - Error loading published meals:', error);
-        }
-      };
-
       const loadCookFilter = async () => {
         try {
           const savedCookFilter = await AsyncStorage.getItem('cookFilter');
@@ -396,7 +359,7 @@ export const Home: React.FC = () => {
       loadPublishedMeals();
       loadCookFilter();
       loadMockFoods(); // Reload mock data on focus
-    }, [defaultCategory])
+    }, [defaultCategory, loadPublishedMeals])
   );
 
   // Firebase bağlantısını reset et

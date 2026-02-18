@@ -31,5 +31,16 @@ export const orderController = {
     } catch (error: any) {
       return { status: 500, error: error.message };
     }
-  }
+  },
+
+  update: async (req: ApiRequest): Promise<ApiResponse> => {
+    try {
+      const { id } = req.params;
+      const updates = req.body || {};
+      await orderModel.update(id, updates);
+      return { status: 200, data: { id, ...updates } };
+    } catch (error: any) {
+      return { status: 500, error: error.message };
+    }
+  },
 };

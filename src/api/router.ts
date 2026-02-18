@@ -4,6 +4,7 @@ import { foodController } from './controllers/foodController';
 import { orderController } from './controllers/orderController';
 import { chatController } from './controllers/chatController';
 import { reviewController } from './controllers/reviewController';
+import { walletController } from './controllers/walletController';
 
 // Simple regex router matching
 type Handler = (req: ApiRequest) => Promise<ApiResponse>;
@@ -37,16 +38,24 @@ const addRoute = (method: string, path: string, handler: Handler) => {
 addRoute('POST', '/auth/register', authController.register);
 addRoute('POST', '/auth/login', authController.login);
 addRoute('GET', '/auth/me/:uid', authController.getProfile);
+addRoute('PUT', '/auth/me/:uid', authController.updateProfile);
 
 // --- Food Routes ---
 addRoute('GET', '/foods', foodController.getAll);
 addRoute('POST', '/foods', foodController.create);
 addRoute('GET', '/foods/:id', foodController.getById);
+addRoute('PUT', '/foods/:id', foodController.update);
+addRoute('DELETE', '/foods/:id', foodController.remove);
 
 // --- Order Routes ---
 addRoute('POST', '/orders', orderController.create);
 addRoute('GET', '/orders', orderController.list);
 addRoute('PUT', '/orders/:id/status', orderController.updateStatus);
+addRoute('PUT', '/orders/:id', orderController.update);
+
+// --- Wallet Routes ---
+addRoute('GET', '/wallets/:uid', walletController.getByUser);
+addRoute('PUT', '/wallets/:uid', walletController.upsert);
 
 // --- Chat Routes ---
 addRoute('GET', '/chats', chatController.list);

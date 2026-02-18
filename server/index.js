@@ -4,8 +4,6 @@ dotenv.config();
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
 const crypto = require('crypto');
 const { Pool } = require('pg');
 const { createStorageProvider } = require('./storage');
@@ -98,10 +96,22 @@ const sql = {
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       user_type TEXT NOT NULL,
+      birth_date TEXT NULL,
+      gender TEXT NULL,
       created_at TIMESTAMPTZ NOT NULL,
       updated_at TIMESTAMPTZ NOT NULL,
       data JSONB NOT NULL
     );
+
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date TEXT NULL;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS gender TEXT NULL;
+    UPDATE users
+    SET
+      birth_date = COALESCE(birth_date, NULLIF(data->>'birthDate', '')),
+      gender = COALESCE(gender, NULLIF(data->>'gender', ''));
+    UPDATE users
+    SET data = data - 'username'
+    WHERE data ? 'username';
 
     CREATE TABLE IF NOT EXISTS foods (
       id TEXT PRIMARY KEY,
@@ -167,6 +177,12 @@ const sql = {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS wallets (
+      user_id TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE TABLE IF NOT EXISTS media_assets (
       id TEXT PRIMARY KEY,
       provider TEXT NOT NULL,
@@ -218,170 +234,8 @@ const sql = {
   `,
 };
 
-const readJson = (filename) => {
-  const filePath = path.resolve(__dirname, '..', 'src', 'mock', filename);
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-};
-
 const seedFromMockIfEmpty = async () => {
-  const shouldSeed = String(process.env.AUTO_SEED_MOCK || 'true').toLowerCase() === 'true';
-  if (!shouldSeed) return;
-
-  const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM users');
-  if (rows[0].count > 0) return;
-
-  const users = readJson('users.json');
-  const foods = readJson('foods.json');
-  const orders = readJson('orders.json');
-  const chats = readJson('chats.json');
-  const messages = readJson('messages.json');
-  const reviews = readJson('reviews.json');
-
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-
-    for (const user of users) {
-      const now = nowIso();
-      const payload = {
-        ...user,
-        createdAt: user.createdAt || now,
-        updatedAt: user.updatedAt || now,
-      };
-      await client.query(
-        `INSERT INTO users (uid, email, password, user_type, created_at, updated_at, data)
-         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
-        [
-          payload.uid,
-          payload.email,
-          payload.password || '',
-          payload.userType || 'buyer',
-          payload.createdAt,
-          payload.updatedAt,
-          JSON.stringify(payload),
-        ]
-      );
-    }
-
-    for (const food of foods) {
-      const now = nowIso();
-      const payload = {
-        ...food,
-        id: food.id || makeId('food'),
-        cookId: food.cookId || food.sellerId || 'unknown',
-        isAvailable: food.isAvailable ?? true,
-        rating: food.rating ?? 0,
-        reviewCount: food.reviewCount ?? 0,
-        createdAt: food.createdAt || now,
-        updatedAt: food.updatedAt || now,
-      };
-      await client.query(
-        `INSERT INTO foods (id, cook_id, category, is_available, rating, review_count, created_at, updated_at, data)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
-        [
-          payload.id,
-          payload.cookId,
-          payload.category || 'other',
-          Boolean(payload.isAvailable),
-          Number(payload.rating || 0),
-          Number(payload.reviewCount || 0),
-          payload.createdAt,
-          payload.updatedAt,
-          JSON.stringify(payload),
-        ]
-      );
-    }
-
-    for (const order of orders) {
-      const payload = {
-        ...order,
-        id: order.id || makeId('order'),
-        orderDate: order.orderDate || nowIso(),
-      };
-      await client.query(
-        `INSERT INTO orders (id, buyer_id, seller_id, status, order_date, data)
-         VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
-        [
-          payload.id,
-          payload.buyerId,
-          payload.sellerId,
-          payload.status || 'pending',
-          payload.orderDate,
-          JSON.stringify(payload),
-        ]
-      );
-    }
-
-    for (const chat of chats) {
-      const payload = {
-        ...chat,
-        id: chat.id || makeId('chat'),
-        createdAt: chat.createdAt || nowIso(),
-        lastMessageTime: chat.lastMessageTime || chat.createdAt || nowIso(),
-        isActive: chat.isActive ?? true,
-      };
-      await client.query(
-        `INSERT INTO chats (id, buyer_id, seller_id, is_active, last_message_time, data)
-         VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
-        [
-          payload.id,
-          payload.buyerId,
-          payload.sellerId,
-          Boolean(payload.isActive),
-          payload.lastMessageTime,
-          JSON.stringify(payload),
-        ]
-      );
-    }
-
-    for (const message of messages) {
-      const payload = {
-        ...message,
-        id: message.id || makeId('message'),
-        timestamp: message.timestamp || nowIso(),
-        isRead: message.isRead ?? false,
-      };
-      await client.query(
-        `INSERT INTO messages (id, chat_id, sender_id, timestamp, is_read, data)
-         VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
-        [
-          payload.id,
-          payload.chatId,
-          payload.senderId,
-          payload.timestamp,
-          Boolean(payload.isRead),
-          JSON.stringify(payload),
-        ]
-      );
-    }
-
-    for (const review of reviews) {
-      const payload = {
-        ...review,
-        id: review.id || makeId('review'),
-        createdAt: review.createdAt || nowIso(),
-      };
-      await client.query(
-        `INSERT INTO reviews (id, food_id, rating, created_at, data)
-         VALUES ($1, $2, $3, $4, $5::jsonb)`,
-        [
-          payload.id,
-          payload.foodId,
-          Number(payload.rating || 0),
-          payload.createdAt,
-          JSON.stringify(payload),
-        ]
-      );
-    }
-
-    await client.query('COMMIT');
-    console.log('✅ Seeded PostgreSQL from src/mock/*.json');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
+  // DB-only mode: no JSON-based auto seed.
 };
 
 const send = (res, status, data, error) => {
@@ -485,7 +339,7 @@ app.get('/admin/auth/me', requireAdminAuth, async (req, res) => {
 
 app.post('/auth/register', async (req, res) => {
   try {
-    const { uid, email, displayName, userType, password } = req.body || {};
+    const { uid, email, fullName, displayName, birthDate, gender, userType, password } = req.body || {};
     if (!email || !password) return send(res, 400, null, 'Email and password are required');
 
     const existing = await pool.query('SELECT uid FROM users WHERE lower(email) = lower($1) LIMIT 1', [email]);
@@ -495,7 +349,10 @@ app.post('/auth/register', async (req, res) => {
     const user = {
       uid: uid || makeId('user'),
       email,
-      displayName: displayName || '',
+      fullName: fullName || displayName || '',
+      displayName: displayName || fullName || '',
+      birthDate: birthDate || '',
+      gender: gender || '',
       userType: userType || 'buyer',
       password,
       createdAt: now,
@@ -503,9 +360,9 @@ app.post('/auth/register', async (req, res) => {
     };
 
     await pool.query(
-      `INSERT INTO users (uid, email, password, user_type, created_at, updated_at, data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
-      [user.uid, user.email, user.password, user.userType, user.createdAt, user.updatedAt, JSON.stringify(user)]
+      `INSERT INTO users (uid, email, password, user_type, birth_date, gender, created_at, updated_at, data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
+      [user.uid, user.email, user.password, user.userType, user.birthDate || null, user.gender || null, user.createdAt, user.updatedAt, JSON.stringify(user)]
     );
 
     return send(res, 201, user);
@@ -534,6 +391,177 @@ app.get('/auth/me/:uid', async (req, res) => {
     const result = await pool.query('SELECT data FROM users WHERE uid = $1 LIMIT 1', [req.params.uid]);
     if (!result.rowCount) return send(res, 404, null, 'User not found');
     return send(res, 200, result.rows[0].data);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+const AUTH_PROFILE_JSON_FIELDS = new Set(['allergicTo', 'paymentCards', 'sellerSpecialties', 'complianceData']);
+const AUTH_PROFILE_BOOLEAN_FIELDS = new Set([
+  'complianceCouncilRegistered',
+  'complianceHygieneCertificate',
+  'complianceAllergensDeclared',
+  'complianceHygieneRating',
+  'complianceInsurance',
+  'complianceTermsAccepted',
+  'complianceApproved',
+]);
+const AUTH_PROFILE_ALLOWED_FIELDS = new Set([
+  'fullName',
+  'displayName',
+  'phone',
+  'birthDate',
+  'gender',
+  'avatarUri',
+  'addressLine1',
+  'city',
+  'postcode',
+  'allergicTo',
+  'paymentCards',
+  'sellerNickname',
+  'sellerLocation',
+  'sellerAddress',
+  'sellerDescription',
+  'sellerDeliveryDistance',
+  'sellerSpecialties',
+  'identityFrontImage',
+  'identityBackImage',
+  'identityStatus',
+  'identitySubmittedAt',
+  'identityVerifiedAt',
+  'identityRejectionReason',
+  'bankName',
+  'bankAccountHolderName',
+  'bankIban',
+  'bankAccountNumber',
+  'complianceCouncilRegistered',
+  'complianceHygieneCertificate',
+  'complianceAllergensDeclared',
+  'complianceHygieneRating',
+  'complianceInsurance',
+  'complianceTermsAccepted',
+  'complianceApproved',
+  'complianceData',
+]);
+
+const normalizeProfileFieldValue = (key, value) => {
+  if (AUTH_PROFILE_JSON_FIELDS.has(key)) {
+    if (value === null || value === undefined || value === '') return '';
+    return typeof value === 'string' ? value : JSON.stringify(value);
+  }
+  if (AUTH_PROFILE_BOOLEAN_FIELDS.has(key)) {
+    return value ? true : false;
+  }
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+};
+
+app.put('/auth/me/:uid', async (req, res) => {
+  try {
+    const uid = String(req.params.uid || '').trim();
+    if (!uid) return send(res, 400, null, 'uid is required');
+
+    const existing = await pool.query('SELECT uid, email, user_type, data FROM users WHERE uid = $1 LIMIT 1', [uid]);
+    if (!existing.rowCount) return send(res, 404, null, 'User not found');
+
+    const current = existing.rows[0];
+    const currentData = current.data || {};
+    const updates = req.body || {};
+    const requestedEmail = typeof updates.email === 'string' ? updates.email.trim() : '';
+    let nextEmail = current.email;
+
+    if (requestedEmail && requestedEmail.toLowerCase() !== String(current.email || '').toLowerCase()) {
+      const emailInUse = await pool.query(
+        'SELECT uid FROM users WHERE lower(email) = lower($1) AND uid <> $2 LIMIT 1',
+        [requestedEmail, uid]
+      );
+      if (emailInUse.rowCount) return send(res, 400, null, 'Email already in use');
+      nextEmail = requestedEmail;
+    }
+
+    const nextData = {
+      ...currentData,
+      uid: current.uid,
+      email: nextEmail,
+      userType: current.user_type,
+      updatedAt: nowIso(),
+    };
+    delete nextData.username;
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (key === 'uid' || key === 'email' || key === 'userType' || key === 'createdAt' || key === 'updatedAt' || key === 'username') {
+        return;
+      }
+      if (!AUTH_PROFILE_ALLOWED_FIELDS.has(key)) return;
+      nextData[key] = normalizeProfileFieldValue(key, value);
+    });
+
+    await pool.query(
+      `UPDATE users
+       SET updated_at = NOW(),
+           email = $1,
+           birth_date = $2,
+           gender = $3,
+           data = $4::jsonb
+       WHERE uid = $5`,
+      [nextEmail, nextData.birthDate || null, nextData.gender || null, JSON.stringify(nextData), uid]
+    );
+
+    return send(res, 200, nextData);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.get('/wallets/:uid', async (req, res) => {
+  try {
+    const uid = String(req.params.uid || '').trim();
+    if (!uid) return send(res, 400, null, 'uid is required');
+
+    const result = await pool.query(
+      `SELECT user_id, data, updated_at
+       FROM wallets
+       WHERE user_id = $1
+       LIMIT 1`,
+      [uid]
+    );
+
+    if (!result.rowCount) return send(res, 404, null, 'Wallet not found');
+    const row = result.rows[0];
+    return send(res, 200, {
+      userId: row.user_id,
+      data: row.data,
+      updatedAt: row.updated_at,
+    });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.put('/wallets/:uid', async (req, res) => {
+  try {
+    const uid = String(req.params.uid || '').trim();
+    if (!uid) return send(res, 400, null, 'uid is required');
+
+    const payload = req.body?.data;
+    const data = typeof payload === 'string' ? payload : JSON.stringify(payload ?? {});
+
+    const result = await pool.query(
+      `INSERT INTO wallets (user_id, data, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id) DO UPDATE
+         SET data = EXCLUDED.data,
+             updated_at = NOW()
+       RETURNING user_id, data, updated_at`,
+      [uid, data]
+    );
+
+    const row = result.rows[0];
+    return send(res, 200, {
+      userId: row.user_id,
+      data: row.data,
+      updatedAt: row.updated_at,
+    });
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1233,6 +1261,27 @@ const resolveAuditSortColumn = (sortBy) => {
   return allowed[sortBy] || 'created_at';
 };
 
+const normalizeUserPayload = (row) => {
+  const base = { ...(row?.data || {}) };
+  const displayName = String(base.displayName || '').trim();
+  const fullName = String(base.fullName || '').trim() || displayName;
+  const birthDate = String(base.birthDate || '').trim() || String(row?.birth_date || '').trim();
+  const gender = String(base.gender || '').trim() || String(row?.gender || '').trim();
+
+  const normalized = {
+    ...base,
+    uid: base.uid || row?.uid,
+    email: base.email || row?.email,
+    userType: base.userType || row?.user_type,
+    displayName: displayName || base.email || '',
+    fullName: fullName || '',
+    birthDate: birthDate || '',
+    gender: gender || '',
+  };
+
+  return normalized;
+};
+
 app.get('/admin/dashboard', requireAdminAuth, async (_req, res) => {
   try {
     const [usersResult, foodsResult, ordersResult, chatsResult, reviewsResult, mediaResult] = await Promise.all([
@@ -1259,7 +1308,7 @@ app.get('/admin/dashboard', requireAdminAuth, async (_req, res) => {
 
 const getAdminUserById = async (id) => {
   const result = await pool.query(
-    'SELECT uid, email, password, user_type, created_at, updated_at, data FROM users WHERE uid = $1 OR lower(email) = lower($1) LIMIT 1',
+    'SELECT uid, email, password, user_type, birth_date, gender, created_at, updated_at, data FROM users WHERE uid = $1 OR lower(email) = lower($1) LIMIT 1',
     [id]
   );
   return result.rowCount ? result.rows[0] : null;
@@ -1301,10 +1350,13 @@ app.get('/admin/users', requireAdminAuth, async (req, res) => {
 
     values.push(pageSize, offset);
     const rowsResult = await pool.query(
-      `SELECT data FROM users ${whereClause} ORDER BY ${sortColumn} ${sortDir} LIMIT $${values.length - 1} OFFSET $${values.length}`,
+      `SELECT uid, email, user_type, birth_date, gender, data
+       FROM users ${whereClause}
+       ORDER BY ${sortColumn} ${sortDir}
+       LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values
     );
-    return send(res, 200, paginated(rowsResult.rows.map((row) => row.data), page, pageSize, total));
+    return send(res, 200, paginated(rowsResult.rows.map(normalizeUserPayload), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1314,7 +1366,7 @@ app.get('/admin/users/:id', requireAdminAuth, async (req, res) => {
   try {
     const row = await getAdminUserById(req.params.id);
     if (!row) return send(res, 404, null, 'User not found');
-    return send(res, 200, row.data);
+    return send(res, 200, normalizeUserPayload(row));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1331,7 +1383,10 @@ app.post('/admin/users', requireAdminAuth, async (req, res) => {
       uid: req.body?.uid || makeId('user'),
       email,
       password,
+      fullName: String(req.body?.fullName || req.body?.displayName || ''),
       displayName: String(req.body?.displayName || ''),
+      birthDate: String(req.body?.birthDate || ''),
+      gender: String(req.body?.gender || ''),
       userType: String(req.body?.userType || 'buyer'),
       status: String(req.body?.status || 'active'),
       createdAt: now,
@@ -1339,9 +1394,9 @@ app.post('/admin/users', requireAdminAuth, async (req, res) => {
     };
 
     await pool.query(
-      `INSERT INTO users (uid, email, password, user_type, created_at, updated_at, data)
-       VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb)`,
-      [user.uid, user.email, user.password, user.userType, user.createdAt, user.updatedAt, JSON.stringify(user)]
+      `INSERT INTO users (uid, email, password, user_type, birth_date, gender, created_at, updated_at, data)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
+      [user.uid, user.email, user.password, user.userType, user.birthDate || null, user.gender || null, user.createdAt, user.updatedAt, JSON.stringify(user)]
     );
 
     await logAdminAction({
@@ -1381,10 +1436,12 @@ app.put('/admin/users/:id', requireAdminAuth, async (req, res) => {
        SET email = $1,
            password = $2,
            user_type = $3,
+           birth_date = $4,
+           gender = $5,
            updated_at = NOW(),
-           data = $4::jsonb
-       WHERE uid = $5`,
-      [nextEmail, nextPassword, nextUserType, JSON.stringify(nextData), existing.uid]
+           data = $6::jsonb
+       WHERE uid = $7`,
+      [nextEmail, nextPassword, nextUserType, nextData.birthDate || null, nextData.gender || null, JSON.stringify(nextData), existing.uid]
     );
 
     await logAdminAction({
@@ -1447,10 +1504,13 @@ app.get('/admin/sellers', requireAdminAuth, async (req, res) => {
 
     values.push(pageSize, offset);
     const rowsResult = await pool.query(
-      `SELECT data FROM users ${whereClause} ORDER BY ${sortColumn} ${sortDir} LIMIT $${values.length - 1} OFFSET $${values.length}`,
+      `SELECT uid, email, user_type, birth_date, gender, data
+       FROM users ${whereClause}
+       ORDER BY ${sortColumn} ${sortDir}
+       LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values
     );
-    return send(res, 200, paginated(rowsResult.rows.map((row) => row.data), page, pageSize, total));
+    return send(res, 200, paginated(rowsResult.rows.map(normalizeUserPayload), page, pageSize, total));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1460,7 +1520,7 @@ app.get('/admin/sellers/:id', requireAdminAuth, async (req, res) => {
   try {
     const row = await getAdminUserById(req.params.id);
     if (!row || !isSellerType(row.user_type)) return send(res, 404, null, 'Seller not found');
-    return send(res, 200, row.data);
+    return send(res, 200, normalizeUserPayload(row));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -1480,7 +1540,10 @@ app.post('/admin/sellers', requireAdminAuth, async (req, res) => {
       uid: req.body?.uid || makeId('user'),
       email,
       password,
+      fullName: String(req.body?.fullName || req.body?.displayName || ''),
       displayName: String(req.body?.displayName || ''),
+      birthDate: String(req.body?.birthDate || ''),
+      gender: String(req.body?.gender || ''),
       userType,
       status: String(req.body?.status || 'active'),
       createdAt: now,
@@ -1488,9 +1551,9 @@ app.post('/admin/sellers', requireAdminAuth, async (req, res) => {
     };
 
     await pool.query(
-      `INSERT INTO users (uid, email, password, user_type, created_at, updated_at, data)
-       VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb)`,
-      [seller.uid, seller.email, seller.password, seller.userType, seller.createdAt, seller.updatedAt, JSON.stringify(seller)]
+      `INSERT INTO users (uid, email, password, user_type, birth_date, gender, created_at, updated_at, data)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
+      [seller.uid, seller.email, seller.password, seller.userType, seller.birthDate || null, seller.gender || null, seller.createdAt, seller.updatedAt, JSON.stringify(seller)]
     );
 
     await logAdminAction({
@@ -1533,10 +1596,12 @@ app.put('/admin/sellers/:id', requireAdminAuth, async (req, res) => {
        SET email = $1,
            password = $2,
            user_type = $3,
+           birth_date = $4,
+           gender = $5,
            updated_at = NOW(),
-           data = $4::jsonb
-       WHERE uid = $5`,
-      [nextEmail, nextPassword, nextUserType, JSON.stringify(nextData), row.uid]
+           data = $6::jsonb
+       WHERE uid = $7`,
+      [nextEmail, nextPassword, nextUserType, nextData.birthDate || null, nextData.gender || null, JSON.stringify(nextData), row.uid]
     );
 
     await logAdminAction({

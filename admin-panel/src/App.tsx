@@ -18,6 +18,9 @@ import AuditLogs from './pages/AuditLogs'
 import { api } from './lib/api'
 import type { DashboardSummary, OrderRecord } from './lib/api'
 
+const ADMIN_EMAIL = 'admin@cazi.local'
+const ADMIN_PASSWORD = 'admin123'
+
 const initializeDarkMode = () => {
   const stored = localStorage.getItem('darkMode')
   if (stored !== null) return stored === 'true'
@@ -173,9 +176,8 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(initializeDarkMode)
   const [isAuthChecking, setIsAuthChecking] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isNavOpen, setIsNavOpen] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const toggleDarkMode = () => {
@@ -219,7 +221,7 @@ function App() {
     try {
       setIsLoggingIn(true)
       setAuthError(null)
-      const result = await api.adminLogin(email, password)
+      const result = await api.adminLogin(ADMIN_EMAIL, ADMIN_PASSWORD)
       api.setToken(result.token)
       setIsAuthenticated(true)
     } catch (error) {
@@ -233,6 +235,7 @@ function App() {
   const handleLogout = () => {
     api.clearToken()
     setIsAuthenticated(false)
+    setIsNavOpen(false)
   }
 
   if (isAuthChecking) {
@@ -256,27 +259,36 @@ function App() {
             <Typography variant="body2" color="text.secondary">
               Sign in to access protected admin endpoints.
             </Typography>
-            <TextField
-              label="Email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              size="small"
-              fullWidth
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              size="small"
-              fullWidth
-            />
-            {authError && (
-              <Typography color="error.main" variant="body2">{authError}</Typography>
-            )}
-            <Button variant="contained" onClick={handleLogin} disabled={isLoggingIn || !email || !password}>
-              {isLoggingIn ? 'Signing in...' : 'Sign in'}
-            </Button>
+            <Box
+              component="form"
+              onSubmit={(event) => {
+                event.preventDefault()
+                void handleLogin()
+              }}
+              sx={{ display: 'grid', gap: 2 }}
+            >
+              <TextField
+                label="Email"
+                value={ADMIN_EMAIL}
+                size="small"
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={ADMIN_PASSWORD}
+                size="small"
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              {authError && (
+                <Typography color="error.main" variant="body2">{authError}</Typography>
+              )}
+              <Button type="submit" variant="contained" disabled={isLoggingIn}>
+                {isLoggingIn ? 'Signing in...' : 'Sign in'}
+              </Button>
+            </Box>
           </Paper>
         </Box>
       </ThemeProvider>
@@ -290,34 +302,46 @@ function App() {
         <div className="shell">
           <header className="navbar">
             <div className="navbar-left">
-              <div className="brand">
-                <span className="brand-dot" />
-                <div>
-                  <p className="brand-title">Cazi Admin</p>
-                  <p className="brand-subtitle">Single API</p>
+              <div className="navbar-top">
+                <div className="brand">
+                  <span className="brand-dot" />
+                  <div>
+                    <p className="brand-title">Cazi Admin</p>
+                    <p className="brand-subtitle">Single API</p>
+                  </div>
                 </div>
+                <button
+                  className="menu-toggle"
+                  onClick={() => setIsNavOpen((previous) => !previous)}
+                  aria-expanded={isNavOpen}
+                  aria-controls="admin-nav"
+                >
+                  {isNavOpen ? 'Close' : 'Menu'}
+                </button>
               </div>
-              <nav className="nav">
-                <Link to="/" className="nav-link">Dashboard</Link>
-                <Link to="/buyers" className="nav-link">Buyers</Link>
-                <Link to="/sellers" className="nav-link">Sellers</Link>
-                <Link to="/orders" className="nav-link">Orders</Link>
-                <Link to="/foods" className="nav-link">Foods</Link>
-                <Link to="/reviews" className="nav-link">Reviews</Link>
-                <Link to="/chats" className="nav-link">Chats</Link>
-                <Link to="/media" className="nav-link">Media</Link>
-                <Link to="/audit-logs" className="nav-link">Audit</Link>
+              <nav id="admin-nav" className={`nav ${isNavOpen ? 'is-open' : ''}`}>
+                <Link to="/" className="nav-link" onClick={() => setIsNavOpen(false)}>Dashboard</Link>
+                <Link to="/buyers" className="nav-link" onClick={() => setIsNavOpen(false)}>Buyers</Link>
+                <Link to="/sellers" className="nav-link" onClick={() => setIsNavOpen(false)}>Sellers</Link>
+                <Link to="/orders" className="nav-link" onClick={() => setIsNavOpen(false)}>Orders</Link>
+                <Link to="/foods" className="nav-link" onClick={() => setIsNavOpen(false)}>Foods</Link>
+                <Link to="/reviews" className="nav-link" onClick={() => setIsNavOpen(false)}>Reviews</Link>
+                <Link to="/chats" className="nav-link" onClick={() => setIsNavOpen(false)}>Chats</Link>
+                <Link to="/media" className="nav-link" onClick={() => setIsNavOpen(false)}>Media</Link>
+                <Link to="/audit-logs" className="nav-link" onClick={() => setIsNavOpen(false)}>Audit</Link>
               </nav>
             </div>
-            <button
-              className="theme-toggle"
-              onClick={toggleDarkMode}
-              aria-label="Toggle dark mode"
-              title={isDarkMode ? 'Light mode' : 'Dark mode'}
-            >
-              {isDarkMode ? '☀️' : '🌙'}
-            </button>
-            <button className="ghost" onClick={handleLogout}>Logout</button>
+            <div className="navbar-actions">
+              <button
+                className="theme-toggle"
+                onClick={toggleDarkMode}
+                aria-label="Toggle dark mode"
+                title={isDarkMode ? 'Light mode' : 'Dark mode'}
+              >
+                {isDarkMode ? '☀️' : '🌙'}
+              </button>
+              <button className="ghost" onClick={handleLogout}>Logout</button>
+            </div>
           </header>
           <main className="main">
             <Routes>

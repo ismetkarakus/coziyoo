@@ -11,7 +11,10 @@ const Buyers = () => {
         title=""
         filterType="buyer"
         columns={[
+          'fullName',
           'displayName',
+          'birthDate',
+          'gender',
           'email',
           'phone',
           'status',

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TouchableWithoutFeedback, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text, Card } from '../../../components/ui';
@@ -11,28 +10,49 @@ import { useCountry } from '../../../context/CountryContext';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useThemePreference } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
+import { useWallet } from '../../../context/WalletContext';
 import { WebSafeIcon } from '../../../components/ui/WebSafeIcon';
 import { JsonRenderer } from '../../../components/json/JsonRenderer';
-import sellerMock from '../../../mock/seller.json';
+import sellerMock from '../../../constants/sellerMock';
 import { ManageMeals } from './ManageMeals';
+import { sellerPanelLayout } from './sellerPanelLayout';
+import { foodService } from '../../../services/foodService';
+import { chatService } from '../../../services/chatService';
 
-const layout = require('./sellerPanelLayout.json');
+interface SellerDashboardStats {
+  orders: number;
+  wallet: string;
+  messages: number;
+  rating: number;
+}
 
 export const SellerPanel: React.FC = () => {
   const { preference, setPreference, colorScheme } = useThemePreference();
   const colors = Colors[colorScheme ?? 'light'];
   const { t, currentLanguage } = useTranslation();
-  const { signOut } = useAuth();
+  const { signOut, userData, user } = useAuth();
+  const { wallet } = useWallet();
   const localizedMock = (sellerMock as any)[currentLanguage] ?? sellerMock.tr;
-  const [profileData, setProfileData] = useState(localizedMock.profile);
-  const stats = localizedMock.stats;
+  const defaultStats: SellerDashboardStats = localizedMock.stats;
+  const buildProfileData = () => ({
+    ...localizedMock.profile,
+    name: userData?.displayName || localizedMock.profile.name,
+    nickname: userData?.sellerNickname || localizedMock.profile.nickname,
+    email: userData?.email || localizedMock.profile.email,
+    location: userData?.sellerLocation || localizedMock.profile.location,
+    avatar: userData?.avatarUri || localizedMock.profile.avatar,
+  });
+  const [profileData, setProfileData] = useState({
+    ...buildProfileData(),
+  });
+  const [stats, setStats] = useState<SellerDashboardStats>(defaultStats);
   const sellerDisplayName =
     (profileData.nickname && profileData.nickname.trim()) || profileData.name;
   
   const [themeExpanded, setThemeExpanded] = useState(false);
   
   // Hook'ları önce çağır
-  const { currentCountry, isBusinessComplianceRequired } = useCountry();
+  const { currentCountry, isBusinessComplianceRequired, formatCurrency } = useCountry();
   const panel = localizedMock.panel;
   const menuItems = localizedMock.panel.menu.map((item: any) => ({
     ...item,
@@ -47,22 +67,24 @@ export const SellerPanel: React.FC = () => {
 
   // UK Compliance Status Check
   const isComplianceComplete = () => {
-    // Mock data - gerçek uygulamada AsyncStorage veya API'den gelecek
     const complianceStatus = {
-      councilRegistered: true, // Test için true
-      hygieneCertificate: true,
-      allergensDeclared: true,
-      hygieneRating: true,
-      insurance: true,
-      termsAccepted: true,
-      approved: true // Admin onayı
+      councilRegistered: !!userData?.complianceCouncilRegistered,
+      hygieneCertificate: !!userData?.complianceHygieneCertificate,
+      allergensDeclared: !!userData?.complianceAllergensDeclared,
+      hygieneRating: !!userData?.complianceHygieneRating,
+      insurance: !!userData?.complianceInsurance,
+      termsAccepted: !!userData?.complianceTermsAccepted,
+      approved: !!userData?.complianceApproved,
     };
     
-    return Object.values(complianceStatus).every(status => status === true);
+    return Object.values(complianceStatus).every(Boolean);
   };
 
   const complianceComplete = isComplianceComplete();
-  const ratingValue = typeof profileData?.rating === 'number' ? profileData.rating : 4.8;
+  const numericStatRating = typeof stats.rating === 'number' ? stats.rating : Number(stats.rating);
+  const ratingValue = Number.isFinite(numericStatRating) && numericStatRating > 0
+    ? numericStatRating
+    : (typeof profileData?.rating === 'number' ? profileData.rating : 4.8);
   const ratingStars = Array.from({ length: 5 }, (_, index) => {
     const filled = index < Math.floor(ratingValue);
     return {
@@ -75,31 +97,76 @@ export const SellerPanel: React.FC = () => {
   // Load profile data when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      loadProfileData();
+      const loadDashboardStats = async () => {
+        const sellerId = user?.uid || userData?.uid;
+        if (!sellerId) {
+          setStats({
+            ...defaultStats,
+            wallet: formatCurrency(wallet.availableEarnings),
+          });
+          return;
+        }
+
+        const [ordersResult, chatsResult, foodsResult] = await Promise.allSettled([
+          foodService.getSellerOrders(String(sellerId)),
+          chatService.getUserChats(String(sellerId), 'seller'),
+          foodService.getFoodsBySeller(String(sellerId)),
+        ]);
+
+        const orders =
+          ordersResult.status === 'fulfilled' && Array.isArray(ordersResult.value)
+            ? ordersResult.value
+            : [];
+        const chats =
+          chatsResult.status === 'fulfilled' && Array.isArray(chatsResult.value)
+            ? chatsResult.value
+            : [];
+        const sellerFoods =
+          foodsResult.status === 'fulfilled' && Array.isArray(foodsResult.value)
+            ? foodsResult.value
+            : [];
+
+        const activeChatCount = chats.filter((chat: any) => chat?.isActive !== false).length;
+        const weightedRatingBase = sellerFoods.reduce(
+          (acc: { weightedTotal: number; reviewCount: number }, food: any) => {
+            const reviewCount = Number(food?.reviewCount ?? 0);
+            const rating = Number(food?.rating ?? 0);
+            if (reviewCount <= 0 || !Number.isFinite(rating) || rating <= 0) return acc;
+            return {
+              weightedTotal: acc.weightedTotal + (rating * reviewCount),
+              reviewCount: acc.reviewCount + reviewCount,
+            };
+          },
+          { weightedTotal: 0, reviewCount: 0 }
+        );
+
+        const computedRating = weightedRatingBase.reviewCount > 0
+          ? Number((weightedRatingBase.weightedTotal / weightedRatingBase.reviewCount).toFixed(1))
+          : Number(defaultStats.rating);
+
+        setStats({
+          orders: orders.length,
+          wallet: formatCurrency(wallet.availableEarnings),
+          messages: activeChatCount,
+          rating: Number.isFinite(computedRating) && computedRating > 0
+            ? computedRating
+            : Number(defaultStats.rating),
+        });
+      };
+
+      setProfileData(buildProfileData());
+      loadDashboardStats().catch((error) => {
+        console.error('Failed to load seller dashboard stats:', error);
+        setStats({
+          ...defaultStats,
+          wallet: formatCurrency(wallet.availableEarnings),
+        });
+      });
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       }
-    }, [])
+    }, [defaultStats, formatCurrency, localizedMock.profile, user?.uid, userData?.displayName, userData?.email, userData?.sellerLocation, userData?.sellerNickname, userData?.uid, userData?.avatarUri, wallet.availableEarnings])
   );
-
-  const loadProfileData = async () => {
-    try {
-      const savedProfile = await AsyncStorage.getItem('sellerProfile');
-      if (savedProfile) {
-        const profile = JSON.parse(savedProfile);
-        if (profile.formData) {
-          setProfileData({
-            name: profile.formData.nickname || profile.formData.name || localizedMock.profile.name, // Nickname öncelikli
-            email: profile.formData.email || localizedMock.profile.email,
-            location: profile.formData.location || localizedMock.profile.location,
-            avatar: profile.avatarUri || localizedMock.profile.avatar,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error loading profile data:', error);
-    }
-  };
 
   const handleMenuPress = (route: string) => {
     router.push(route as any);
@@ -263,7 +330,7 @@ export const SellerPanel: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar title={t('sellerPanelText')} onBack={handleBackPress} />
-      <JsonRenderer node={layout} context={context} registry={registry} />
+      <JsonRenderer node={sellerPanelLayout as any} context={context} registry={registry} />
     </View>
   );
 };

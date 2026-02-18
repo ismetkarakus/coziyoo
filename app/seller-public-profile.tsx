@@ -6,17 +6,12 @@ import { TopBar } from '@/src/components/layout';
 import { Colors, Spacing } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import sellerMock from '@/src/mock/seller.json';
-import foodsMock from '@/src/mock/foods.json';
-import { MockFood } from '@/src/mock/data';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import sellerMock from '@/src/constants/sellerMock';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useCountry } from '@/src/context/CountryContext';
 import { getFavoriteMeta, toggleFavorite } from '@/src/services/favoriteService';
-
-const getAllFoodsForSeller = (cookName: string) => {
-  return (foodsMock as MockFood[]).filter(food => food.cookName === cookName);
-};
+import { useAuth } from '@/src/context/AuthContext';
+import { foodService, Food } from '@/src/services/foodService';
 
 export default function SellerProfileScreen() {
   const colorScheme = useColorScheme();
@@ -24,11 +19,13 @@ export default function SellerProfileScreen() {
   const params = useLocalSearchParams();
   const { currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
+  const { userData } = useAuth();
   const [overrideNickname, setOverrideNickname] = useState<string>('');
   const [overrideName, setOverrideName] = useState<string>('');
   const [overrideAvatar, setOverrideAvatar] = useState<string>('');
   const [favoriteCounts, setFavoriteCounts] = useState<Record<string, number>>({});
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [sellerFoods, setSellerFoods] = useState<Food[]>([]);
   
   const cookName = params.cookName as string;
   const localizedProfile = (sellerMock as any)[currentLanguage]?.profile || (sellerMock as any).tr?.profile;
@@ -43,33 +40,34 @@ export default function SellerProfileScreen() {
   const displayNickname = overrideNickname || sellerData?.nickname || '';
   const displayAvatar = overrideAvatar || sellerData?.avatar;
   const headerTitle = displayNickname || displayName || cookName;
-  const sellerFoods = getAllFoodsForSeller(isCurrentSeller ? localizedProfile.name : cookName);
 
   useEffect(() => {
-    const loadSellerProfileNickname = async () => {
+    const loadSellerFoods = async () => {
       try {
-        const savedProfile = await AsyncStorage.getItem('sellerProfile');
-        if (!savedProfile) return;
-        const profile = JSON.parse(savedProfile);
-        const fullName = profile?.formData?.name?.trim();
-        const nickname = profile?.formData?.nickname?.trim();
-        const avatarUri = profile?.avatarUri?.trim();
-        if (isCurrentSeller && fullName) {
-          setOverrideName(fullName);
-          if (nickname) {
-            setOverrideNickname(nickname);
-          }
-          if (avatarUri) {
-            setOverrideAvatar(avatarUri);
-          }
-        }
+        const allFoods = await foodService.getAllFoods();
+        const matchName = isCurrentSeller ? localizedProfile.name : cookName;
+        const matched = allFoods.filter((food: any) => String(food.cookName || '') === String(matchName || ''));
+        setSellerFoods(matched);
       } catch (error) {
-        console.error('Error loading seller profile nickname:', error);
+        console.error('Error loading seller foods:', error);
+        setSellerFoods([]);
       }
     };
+    loadSellerFoods();
+  }, [cookName, isCurrentSeller, localizedProfile.name]);
 
-    loadSellerProfileNickname();
-  }, [cookName, isCurrentSeller]);
+  useEffect(() => {
+    if (!isCurrentSeller) return;
+    if (userData?.displayName) {
+      setOverrideName(userData.displayName);
+    }
+    if (userData?.sellerNickname) {
+      setOverrideNickname(userData.sellerNickname);
+    }
+    if (userData?.avatarUri) {
+      setOverrideAvatar(userData.avatarUri);
+    }
+  }, [cookName, isCurrentSeller, userData?.displayName, userData?.sellerNickname, userData?.avatarUri]);
 
   useEffect(() => {
     const loadFavoriteState = async () => {
@@ -94,13 +92,13 @@ export default function SellerProfileScreen() {
     return acc;
   }, {} as { [key: string]: any[] });
 
-  const openFoodDetail = (food: MockFood) => {
+  const openFoodDetail = (food: Food) => {
     router.push(
       `/food-detail-order?id=${encodeURIComponent(String(food.id ?? ''))}&name=${encodeURIComponent(food.name)}&cookName=${encodeURIComponent(food.cookName)}&imageUrl=${encodeURIComponent(food.imageUrl || '')}&price=${Number(food.price || 0)}` as any
     );
   };
 
-  const handleFavoritePress = async (food: MockFood) => {
+  const handleFavoritePress = async (food: Food) => {
     try {
       const result = await toggleFavorite({
         id: String(food.id),
@@ -205,7 +203,7 @@ export default function SellerProfileScreen() {
                 {category} ({foods.length})
               </Text>
               
-              {foods.map((food: MockFood) => (
+              {foods.map((food: Food) => (
                 <View key={food.id} style={styles.foodCard}>
                   <View style={styles.cardHeader}>
                     <TouchableOpacity
