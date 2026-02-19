@@ -230,30 +230,35 @@ export const ManageMeals: React.FC<ManageMealsProps> = ({ embedded = false }) =>
           </View>
 
         <View style={styles.mealInfo}>
-          <View style={styles.mealTitleRow}>
+          <View style={styles.mealTopRow}>
             <Text variant="subheading" weight="semibold" numberOfLines={1} style={styles.mealTitle}>
               {meal.name}
             </Text>
-            <Text variant="body" color="primary" weight="semibold" numberOfLines={1}>
-              ₺{meal.price}
-            </Text>
+            <TouchableOpacity
+              onPress={() => handleEditMeal(meal)}
+              style={styles.editInlineButton}
+              activeOpacity={0.75}
+            >
+              <MaterialIcons name="edit" size={16} color={colors.primary} />
+            </TouchableOpacity>
           </View>
-          <View style={styles.mealMetaRow}>
-            <Text variant="caption" color="textSecondary">
-              {meal.category} • {meal.availableDates}
-            </Text>
-            <Text variant="caption" color="textSecondary">
-              {t('manageMealsScreen.stockLabel')} {draftStock}/{meal.dailyStock}
-            </Text>
+          <View style={styles.mealMetaAndPriceRow}>
+            <View style={styles.mealMetaRow}>
+              <Text variant="caption" color="textSecondary">
+                {meal.category} • {meal.availableDates}
+              </Text>
+              <Text variant="caption" color="textSecondary">
+                {t('manageMealsScreen.stockLabel')} {draftStock}/{meal.dailyStock}
+              </Text>
+            </View>
+            <View style={[styles.priceTag, { backgroundColor: `${colors.primary}1F` }]}>
+              <Text variant="caption" weight="semibold" style={{ color: colors.primary }}>
+                ₺{meal.price}
+              </Text>
+            </View>
           </View>
           </View>
         </View>
-        <TouchableOpacity
-          onPress={() => handleEditMeal(meal)}
-          style={styles.editFloatingButton}
-        >
-          <MaterialIcons name="edit" size={16} color={colors.primary} />
-        </TouchableOpacity>
 
         {meal.description && (
           <Text variant="caption" color="textSecondary" style={styles.mealDescription} numberOfLines={2}>
@@ -581,31 +586,42 @@ const styles = StyleSheet.create({
   mealInfo: {
     flex: 1,
     gap: Spacing.xs,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.xs,
   },
-  mealTitleRow: {
+  mealTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.sm,
   },
-  mealMetaRow: {
+  mealMetaAndPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
     marginTop: Spacing.xs,
+  },
+  mealMetaRow: {
+    flex: 1,
     gap: 2,
   },
   mealTitle: {
     flex: 1,
   },
-  editFloatingButton: {
-    position: 'absolute',
-    top: Spacing.sm,
-    right: Spacing.sm,
-    padding: Spacing.xs,
-    borderRadius: 12,
-    backgroundColor: Colors.light.surface,
+  editInlineButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
     borderWidth: 1,
+    backgroundColor: Colors.light.surface,
     borderColor: Colors.light.border,
-    zIndex: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  priceTag: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 999,
   },
   mealDescription: {
     marginBottom: Spacing.sm,

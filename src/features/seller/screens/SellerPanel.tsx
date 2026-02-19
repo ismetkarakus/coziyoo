@@ -46,8 +46,16 @@ export const SellerPanel: React.FC = () => {
     ...buildProfileData(),
   });
   const [stats, setStats] = useState<SellerDashboardStats>(defaultStats);
-  const sellerDisplayName =
-    (profileData.nickname && profileData.nickname.trim()) || profileData.name;
+  const sellerFullName =
+    (userData?.fullName && userData.fullName.trim()) ||
+    (profileData.name && profileData.name.trim()) ||
+    localizedMock.profile.name;
+  const rawSellerHandle =
+    (userData?.displayName && userData.displayName.trim()) ||
+    (userData?.sellerNickname && userData.sellerNickname.trim()) ||
+    (profileData.nickname && profileData.nickname.trim()) ||
+    sellerFullName;
+  const sellerHandle = `@${rawSellerHandle.replace(/^@+/, '')}`;
   
   const [themeExpanded, setThemeExpanded] = useState(false);
   
@@ -263,7 +271,8 @@ export const SellerPanel: React.FC = () => {
     panel,
     stats,
     profileData,
-    sellerDisplayName,
+    sellerFullName,
+    sellerHandle,
     ratingStars,
     currentCountry,
     manageMealsSummary: panel.manageMealsSummary,
@@ -277,7 +286,8 @@ export const SellerPanel: React.FC = () => {
     themeMiniButtonBorderStyle: { borderColor: colors.border },
     themeDropdownBackgroundStyle: { backgroundColor: colors.card },
     statsAvatarBorderStyle: { borderColor: colors.primary },
-    editProfileButtonBackgroundStyle: { backgroundColor: colors.primary },
+    editProfileIconColor: '#FFFFFF',
+    editProfileButtonStyle: { backgroundColor: colors.primary, borderColor: colors.primaryDark },
     signOutButtonBackgroundStyle: { backgroundColor: colors.error },
     heroGradientColors: colorScheme === 'dark'
       ? ['#3F4A3E', colors.surface]
@@ -383,7 +393,10 @@ const styles = StyleSheet.create({
   },
   heroName: {
     textAlign: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
+  },
+  heroHandle: {
+    textAlign: 'center',
   },
   heroStars: {
     flexDirection: 'row',
@@ -395,12 +408,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   editProfileButton: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 6,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 999,
-  },
-  editProfileButtonText: {
-    color: '#FFFFFF',
+    borderWidth: 1,
   },
   themeMiniWrapper: {
     position: 'relative',
@@ -464,7 +477,8 @@ const styles = StyleSheet.create({
     maxWidth: '24%', // 4 kutu için eşit dağılım
   },
   compactCard: {
-    minHeight: 60, // Daha düşük yükseklik
+    height: 76,
+    justifyContent: 'center',
   },
   section: {
     marginBottom: Spacing.lg,

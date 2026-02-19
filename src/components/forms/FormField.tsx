@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Input } from '../ui/Input';
-import { Text } from '../ui/Text';
 import { Spacing } from '../../theme';
 
 interface FormFieldProps {
@@ -22,16 +21,18 @@ interface FormFieldProps {
   textAlignVertical?: 'auto' | 'top' | 'bottom' | 'center';
   maxLength?: number;
   style?: any;
+  containerStyle?: ViewStyle;
   onContentSizeChange?: (event: any) => void;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
   label,
   required,
+  containerStyle,
   ...inputProps
 }) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       <Input
         label={required ? `${label} *` : label}
         {...inputProps}

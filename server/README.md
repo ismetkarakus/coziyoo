@@ -7,6 +7,8 @@ This server exposes the same endpoint contract used by the mobile/web app servic
 - `GET /foods`
 - `POST /foods`
 - `GET /foods/:id`
+- `PUT /foods/:id`
+- `DELETE /foods/:id`
 - `POST /orders`
 - `GET /orders?userId=...&type=buyer|seller`
 - `PUT /orders/:id/status`

@@ -88,12 +88,20 @@ class FoodService {
 
   async updateFood(foodId: string, updates: Partial<Food>): Promise<void> {
     try {
-      const response = await apiClient.put(`/foods/${foodId}`, {
-        ...updates,
-        createdAt: updates.createdAt instanceof Date ? updates.createdAt.toISOString() : updates.createdAt,
-        updatedAt: updates.updatedAt instanceof Date ? updates.updatedAt.toISOString() : updates.updatedAt,
-      });
-      if (response.status !== 200) throw new Error(response.error || 'Food update failed');
+      const payload = Object.fromEntries(
+        Object.entries(updates).filter(([, value]) => value !== undefined)
+      );
+
+      for (const [key, value] of Object.entries(payload)) {
+        if (value instanceof Date) {
+          payload[key] = value.toISOString();
+        }
+      }
+
+      const response = await apiClient.put(`/foods/${foodId}`, payload);
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(response.error || `Food update failed (status: ${response.status})`);
+      }
     } catch (error) {
       console.error('Yemek güncellenirken hata:', error);
       throw new Error('Yemek güncellenemedi');

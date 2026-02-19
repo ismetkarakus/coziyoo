@@ -683,15 +683,19 @@ export const AddMeal: React.FC = () => {
       
       <KeyboardAvoidingView 
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <TouchableWithoutFeedback
+          onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}
+          accessible={false}
+          disabled={Platform.OS === 'web'}
+        >
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
           {/* Photo Upload */}
           <View style={styles.photoSection}>
-            <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: '#000000' }]}>
+            <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: colors.text }]}>
               {t('addMealScreen.sections.photos')}
             </Text>
             
@@ -751,15 +755,15 @@ export const AddMeal: React.FC = () => {
               
               {/* Country Autocomplete Modal */}
               {countryModalVisible && (
-                <View style={styles.autocompleteContainer}>
+                <View style={[styles.autocompleteContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <ScrollView style={styles.autocompleteList} keyboardShouldPersistTaps="handled">
                     {filteredCountries.map((country, index) => (
                       <TouchableOpacity
                         key={index}
                         onPress={() => handleCountrySelect(country)}
-                        style={styles.autocompleteItem}
+                        style={[styles.autocompleteItem, { borderBottomColor: colors.border }]}
                       >
-                        <Text variant="body" style={styles.autocompleteText}>
+                        <Text variant="body" style={[styles.autocompleteText, { color: colors.text }]}>
                           {country}
                         </Text>
                       </TouchableOpacity>
@@ -771,17 +775,17 @@ export const AddMeal: React.FC = () => {
             
             {/* Category Selection */}
             <View style={styles.categoryContainer}>
-              <Text variant="body" weight="medium" style={[styles.categoryLabel, { color: '#000000' }]}>
+              <Text variant="body" weight="medium" style={[styles.categoryLabel, { color: colors.text }]}>
                 {t('addMealScreen.labels.categorySelect')}
               </Text>
               <TouchableOpacity
                 onPress={() => setCategoryModalVisible(true)}
-                style={[styles.categoryButton, { borderColor: colors.border }]}
+                style={[styles.categoryButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
               >
-                <Text variant="body" style={{ color: formData.category ? '#000000' : '#666666', fontSize: 16 }}>
+                <Text variant="body" style={{ color: formData.category ? colors.text : colors.textSecondary, fontSize: 16 }}>
                   {formData.category || t('addMealScreen.placeholders.category')}
                 </Text>
-                <Text variant="body" style={{ color: '#666666' }}>📁</Text>
+                <Text variant="body" style={{ color: colors.textSecondary }}>📁</Text>
               </TouchableOpacity>
             </View>
 
@@ -809,10 +813,16 @@ export const AddMeal: React.FC = () => {
                 value={formData.description}
                 onChangeText={handleInputChange('description')}
                 placeholder={t('addMealScreen.placeholders.description')}
+                containerStyle={styles.tightFieldContainer}
                 multiline={true}
                 numberOfLines={3}
                 textAlignVertical="top"
-                style={[styles.descriptionInput, { height: descriptionHeight }]}
+                style={[styles.descriptionInput, {
+                  height: descriptionHeight,
+                  color: colors.text,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }]}
                 onContentSizeChange={handleDescriptionContentSizeChange}
                 required
               />
@@ -838,10 +848,16 @@ export const AddMeal: React.FC = () => {
                 value={formData.recipe}
                 onChangeText={handleInputChange('recipe')}
                 placeholder={t('addMealScreen.placeholders.recipe')}
+                containerStyle={styles.tightFieldContainer}
                 multiline={true}
                 numberOfLines={3}
                 textAlignVertical="top"
-                style={[styles.descriptionInput, { height: recipeHeight }]}
+                style={[styles.descriptionInput, {
+                  height: recipeHeight,
+                  color: colors.text,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }]}
                 onContentSizeChange={handleRecipeContentSizeChange}
               />
               
@@ -881,31 +897,31 @@ export const AddMeal: React.FC = () => {
 
             <View style={styles.dateInputs}>
               <View style={styles.dateInput}>
-                <Text variant="caption" style={[styles.dateLabel, { color: '#666666', fontSize: 14 }]}>
+                <Text variant="caption" style={[styles.dateLabel, { color: colors.textSecondary, fontSize: 14 }]}>
                   {t('addMealScreen.fields.startDate')}
                 </Text>
                 <TouchableOpacity
                   onPress={() => openDatePicker('startDate')}
-                  style={[styles.dateButton, { borderColor: colors.border }]}
+                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
                 >
-                  <Text variant="body" style={{ color: formData.startDate ? '#000000' : '#666666', fontSize: 16 }}>
+                  <Text variant="body" style={{ color: formData.startDate ? colors.text : colors.textSecondary, fontSize: 16 }}>
                     {formData.startDate || t('addMealScreen.placeholders.date')}
                   </Text>
-                  <Text variant="body" style={{ color: '#666666', fontSize: 18 }}>📅</Text>
+                  <Text variant="body" style={{ color: colors.textSecondary, fontSize: 18 }}>📅</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.dateInput}>
-                <Text variant="caption" style={[styles.dateLabel, { color: '#666666', fontSize: 14 }]}>
+                <Text variant="caption" style={[styles.dateLabel, { color: colors.textSecondary, fontSize: 14 }]}>
                   {t('addMealScreen.fields.endDate')}
                 </Text>
                 <TouchableOpacity
                   onPress={() => openDatePicker('endDate')}
-                  style={[styles.dateButton, { borderColor: colors.border }]}
+                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
                 >
-                  <Text variant="body" style={{ color: formData.endDate ? '#000000' : '#666666', fontSize: 16 }}>
+                  <Text variant="body" style={{ color: formData.endDate ? colors.text : colors.textSecondary, fontSize: 16 }}>
                     {formData.endDate || t('addMealScreen.placeholders.date')}
                   </Text>
-                  <Text variant="body" style={{ color: '#666666', fontSize: 18 }}>📅</Text>
+                  <Text variant="body" style={{ color: colors.textSecondary, fontSize: 18 }}>📅</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -913,7 +929,7 @@ export const AddMeal: React.FC = () => {
 
           {/* Delivery Options */}
           <View style={styles.section}>
-            <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: '#000000' }]}>
+            <Text variant="subheading" weight="medium" style={[styles.sectionTitle, { color: colors.text }]}>
               {t('addMealScreen.sections.deliveryOptions')}
             </Text>
             
@@ -1064,39 +1080,76 @@ export const AddMeal: React.FC = () => {
         onRequestClose={() => setCategoryModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.categoryModalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.categoryModalContainer, { backgroundColor: colors.card }]}>
             <View style={styles.categoryModalHeader}>
-              <Text variant="heading" weight="bold" style={styles.categoryModalTitle}>
+              <Text variant="heading" weight="bold" style={[styles.categoryModalTitle, { color: colors.text }]}>
                 {t('addMealScreen.modals.categoryTitle')}
               </Text>
               <TouchableOpacity
                 onPress={() => setCategoryModalVisible(false)}
-                style={styles.categoryCloseButton}
+                style={[styles.categoryCloseButton, { backgroundColor: colors.surface }]}
               >
                 <Text variant="heading" style={{ color: colors.text, fontSize: 24 }}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <Text variant="body" color="textSecondary" style={styles.categoryModalSubtitle}>
+            <Text variant="body" color="textSecondary" style={[styles.categoryModalSubtitle, { color: colors.textSecondary }]}>
               {t('addMealScreen.modals.categorySubtitle')}
             </Text>
 
-            <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
-              <Picker
-                selectedValue={formData.category || CATEGORIES[0]?.label}
-                onValueChange={(value) => handleCategorySelect(String(value))}
-                style={[styles.categoryPicker, { color: colors.text }]}
-                itemStyle={[styles.categoryPickerItem, { color: colors.text }]}
-              >
-                {CATEGORIES.map((category) => (
-                  <Picker.Item
-                    key={category.label}
-                    label={category.label}
-                    value={category.label}
-                  />
-                ))}
-              </Picker>
-            </View>
+            {Platform.OS === 'web' ? (
+              <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+                <ScrollView
+                  style={styles.webCategoryList}
+                  showsVerticalScrollIndicator
+                  {...(Platform.OS === 'web' ? ({ className: 'thin-green-scrollbar' } as any) : {})}
+                >
+                  {CATEGORIES.map((category) => {
+                    const isSelected = formData.category === category.label;
+                    return (
+                      <TouchableOpacity
+                        key={category.label}
+                        onPress={() => handleCategorySelect(category.label)}
+                        style={[
+                          styles.webCategoryItem,
+                          {
+                            backgroundColor: isSelected ? colors.primary : 'transparent',
+                            borderBottomColor: colors.border,
+                          },
+                        ]}
+                      >
+                        <Text
+                          variant="body"
+                          style={{
+                            color: isSelected ? colors.card : colors.text,
+                            fontWeight: isSelected ? '600' : '400',
+                          }}
+                        >
+                          {category.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            ) : (
+              <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Picker
+                  selectedValue={formData.category || CATEGORIES[0]?.label}
+                  onValueChange={(value) => handleCategorySelect(String(value))}
+                  style={[styles.categoryPicker, { color: colors.text }]}
+                  itemStyle={[styles.categoryPickerItem, { color: colors.text }]}
+                >
+                  {CATEGORIES.map((category) => (
+                    <Picker.Item
+                      key={category.label}
+                      label={category.label}
+                      value={category.label}
+                    />
+                  ))}
+                </Picker>
+              </View>
+            )}
 
             <View style={styles.categoryModalActions}>
               <Button
@@ -1396,6 +1449,15 @@ const styles = StyleSheet.create({
   categoryPickerItem: {
     fontSize: 18,
   },
+  webCategoryList: {
+    maxHeight: 220,
+  },
+  webCategoryItem: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+    borderBottomWidth: 1,
+  },
   categoryModalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1430,6 +1492,9 @@ const styles = StyleSheet.create({
   descriptionContainer: {
     marginBottom: Spacing.md,
   },
+  tightFieldContainer: {
+    marginBottom: 0,
+  },
   descriptionInput: {
     paddingTop: 12, // Üst padding
     paddingBottom: 12, // Alt padding
@@ -1452,8 +1517,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
+    marginTop: 0,
+    paddingHorizontal: 0,
   },
   counterText: {
     fontSize: 12,

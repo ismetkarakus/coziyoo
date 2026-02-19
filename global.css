@@ -1,0 +1,22 @@
+.thin-green-scrollbar,
+.thin-green-scrollbar > div {
+  scrollbar-width: thin;
+  scrollbar-color: #a9c7a6 rgba(169, 199, 166, 0.14);
+}
+
+.thin-green-scrollbar::-webkit-scrollbar,
+.thin-green-scrollbar > div::-webkit-scrollbar {
+  width: 3px;
+}
+
+.thin-green-scrollbar::-webkit-scrollbar-track,
+.thin-green-scrollbar > div::-webkit-scrollbar-track {
+  background: rgba(169, 199, 166, 0.14);
+  border-radius: 999px;
+}
+
+.thin-green-scrollbar::-webkit-scrollbar-thumb,
+.thin-green-scrollbar > div::-webkit-scrollbar-thumb {
+  background-color: #a9c7a6;
+  border-radius: 999px;
+}

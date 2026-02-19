@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import Toast, { BaseToast, ToastConfig } from 'react-native-toast-message';
+import '../global.css';
 
 import { ThemePreferenceProvider } from '@/src/context/ThemeContext';
 import { CartProvider } from '@/src/context/CartContext';

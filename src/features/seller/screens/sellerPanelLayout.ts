@@ -63,22 +63,13 @@ export const sellerPanelLayout = ({
                               "type": "Text",
                               "style": "heroName",
                               "props": { "variant": "subheading", "weight": "semibold", "color": "text" },
-                              "text": { "$": "sellerDisplayName" }
+                              "text": { "$": "sellerFullName" }
                             },
                             {
-                              "type": "View",
-                              "style": "heroStars",
-                              "children": [
-                                {
-                                  "type": "MaterialIcons",
-                                  "repeat": { "data": "ratingStars", "itemName": "star", "key": "id" },
-                                  "props": {
-                                    "name": { "$": "star.name" },
-                                    "size": 18,
-                                    "color": { "$": "star.color" }
-                                  }
-                                }
-                              ]
+                              "type": "Text",
+                              "style": "heroHandle",
+                              "props": { "variant": "caption", "weight": "medium", "color": "textSecondary" },
+                              "text": { "$": "sellerHandle" }
                             }
                           ]
                         },
@@ -88,14 +79,16 @@ export const sellerPanelLayout = ({
                           "children": [
                             {
                               "type": "TouchableOpacity",
-                              "style": ["editProfileButton", { "$": "editProfileButtonBackgroundStyle" }],
+                              "style": ["editProfileButton", { "$": "editProfileButtonStyle" }],
                               "props": { "onPress": { "$": "handlers.openProfile" }, "activeOpacity": 0.7 },
                               "children": [
                                 {
-                                  "type": "Text",
-                                  "style": "editProfileButtonText",
-                                  "props": { "variant": "caption", "weight": "semibold" },
-                                  "text": { "$": "panel.editProfileButton" }
+                                  "type": "MaterialIcons",
+                                  "props": {
+                                    "name": "edit",
+                                    "size": 16,
+                                    "color": { "$": "editProfileIconColor" }
+                                  }
                                 }
                               ]
                             }
@@ -119,7 +112,7 @@ export const sellerPanelLayout = ({
                       "children": [
                         {
                           "type": "Card",
-                          "props": { "variant": "default", "padding": "sm" },
+                          "props": { "variant": "default", "padding": "sm", "style": { "$": "styles.compactCard" } },
                           "children": [
                             {
                               "type": "Text",
@@ -154,7 +147,7 @@ export const sellerPanelLayout = ({
                       "children": [
                         {
                           "type": "Card",
-                          "props": { "variant": "default", "padding": "sm" },
+                          "props": { "variant": "default", "padding": "sm", "style": { "$": "styles.compactCard" } },
                           "children": [
                             {
                               "type": "Text",
@@ -189,7 +182,7 @@ export const sellerPanelLayout = ({
                       "children": [
                         {
                           "type": "Card",
-                          "props": { "variant": "default", "padding": "sm" },
+                          "props": { "variant": "default", "padding": "sm", "style": { "$": "styles.compactCard" } },
                           "children": [
                             {
                               "type": "Text",
@@ -224,7 +217,7 @@ export const sellerPanelLayout = ({
                       "children": [
                         {
                           "type": "Card",
-                          "props": { "variant": "default", "padding": "sm" },
+                          "props": { "variant": "default", "padding": "sm", "style": { "$": "styles.compactCard" } },
                           "children": [
                             {
                               "type": "Text",
@@ -241,9 +234,19 @@ export const sellerPanelLayout = ({
                               "text": { "$": "stats.rating" }
                             },
                             {
-                              "type": "Text",
-                              "props": { "variant": "caption", "center": true, "color": "textSecondary" },
-                              "text": { "$": "panel.statsLabels.rating" }
+                              "type": "View",
+                              "style": "heroStars",
+                              "children": [
+                                {
+                                  "type": "MaterialIcons",
+                                  "repeat": { "data": "ratingStars", "itemName": "star", "key": "id" },
+                                  "props": {
+                                    "name": { "$": "star.name" },
+                                    "size": 14,
+                                    "color": { "$": "star.color" }
+                                  }
+                                }
+                              ]
                             }
                           ]
                         }

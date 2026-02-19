@@ -622,6 +622,62 @@ app.post('/foods', async (req, res) => {
   }
 });
 
+app.put('/foods/:id', async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM foods WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Food not found');
+
+    const prevData = previous.rows[0].data || {};
+    const nextData = {
+      ...prevData,
+      ...req.body,
+      id: req.params.id,
+      cookId: req.body?.cookId || prevData.cookId || 'unknown',
+      category: req.body?.category || prevData.category || 'other',
+      isAvailable: req.body?.isAvailable ?? prevData.isAvailable ?? true,
+      rating: req.body?.rating ?? prevData.rating ?? 0,
+      reviewCount: req.body?.reviewCount ?? prevData.reviewCount ?? 0,
+      updatedAt: nowIso(),
+    };
+
+    await pool.query(
+      `UPDATE foods
+       SET cook_id = $1,
+           category = $2,
+           is_available = $3,
+           rating = $4,
+           review_count = $5,
+           updated_at = NOW(),
+           data = $6::jsonb
+       WHERE id = $7`,
+      [
+        nextData.cookId,
+        nextData.category,
+        Boolean(nextData.isAvailable),
+        Number(nextData.rating || 0),
+        Number(nextData.reviewCount || 0),
+        JSON.stringify(nextData),
+        req.params.id,
+      ]
+    );
+
+    return send(res, 200, nextData);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
+app.delete('/foods/:id', async (req, res) => {
+  try {
+    const previous = await pool.query('SELECT data FROM foods WHERE id = $1 LIMIT 1', [req.params.id]);
+    if (!previous.rowCount) return send(res, 404, null, 'Food not found');
+    await pool.query('DELETE FROM foods WHERE id = $1', [req.params.id]);
+    return send(res, 200, { id: req.params.id });
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
 app.post('/orders', async (req, res) => {
   try {
     const payload = {
