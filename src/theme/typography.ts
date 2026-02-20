@@ -1,22 +1,22 @@
 export const Typography = {
   // Font sizes
   fontSize: {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
-    xl: 20,
-    '2xl': 24,
-    '3xl': 30,
-    '4xl': 36,
+    xs: 11,
+    sm: 12,
+    base: 14,
+    lg: 16,
+    xl: 18,
+    '2xl': 21,
+    '3xl': 25,
+    '4xl': 30,
   },
   
   // Font weights
   fontWeight: {
     normal: '400' as const,
-    medium: '500' as const,
-    semibold: '600' as const,
-    bold: '700' as const,
+    medium: '400' as const,
+    semibold: '500' as const,
+    bold: '600' as const,
   },
   
   // Line heights
@@ -34,7 +34,6 @@ export const Typography = {
 
 export type FontSize = keyof typeof Typography.fontSize;
 export type FontWeight = keyof typeof Typography.fontWeight;
-
 
 
 

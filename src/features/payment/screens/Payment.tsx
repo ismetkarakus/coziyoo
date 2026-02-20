@@ -55,7 +55,7 @@ export const Payment: React.FC = () => {
     const options = item.availableOptions && item.availableOptions.length > 0
       ? item.availableOptions
       : (['pickup', 'delivery'] as ('pickup' | 'delivery')[]);
-    return options.includes('pickup') ? 'pickup' : options[0];
+    return options.includes('delivery') ? 'delivery' : options[0];
   };
 
   const subtotal = getTotalPrice();

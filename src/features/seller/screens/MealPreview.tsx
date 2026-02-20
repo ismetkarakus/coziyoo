@@ -83,7 +83,7 @@ export const MealPreview: React.FC = () => {
     category: data.category || t('mealPreviewScreen.defaultCategory'),
     country: data.country || t('mealPreviewScreen.defaultCountry'),
     hasPickup: data.hasPickup || false,
-    hasDelivery: data.hasDelivery || false,
+    hasDelivery: data.hasDelivery ?? true,
     availableDates: data.availableDates || formatDateRange(data.startDate, data.endDate),
     currentStock: parseInt(data.dailyStock) || 0,
     dailyStock: parseInt(data.dailyStock) || 0,

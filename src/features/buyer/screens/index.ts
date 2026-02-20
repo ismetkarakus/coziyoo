@@ -15,3 +15,5 @@ export { ChatScreen } from './ChatScreen';
 export { HelpCenter } from './HelpCenter';
 export { Contact } from './Contact';
 export { About } from './About';
+
+export { NewHomePage } from './NewHomePage';

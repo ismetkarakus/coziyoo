@@ -69,12 +69,37 @@ export interface Order {
 }
 
 class FoodService {
+  private toTimestampPart(date: Date): string {
+    return String(date.getTime());
+  }
+
+  private sanitizeIdPart(value: string, fallback: string): string {
+    const normalized = value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9_-]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .replace(/_+/g, '_');
+
+    return normalized || fallback;
+  }
+
+  private buildFoodId(cookId: string, date: Date): string {
+    const normalizedCookId = this.sanitizeIdPart(cookId, 'unknown');
+    const cookBase = normalizedCookId.replace(/_\d{10,13}(?:_\d+)?$/, '') || 'unknown';
+    return `${cookBase}_${this.toTimestampPart(date)}`;
+  }
+
   // Yemek ekleme (Satıcı)
   async addFood(foodData: Omit<Food, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
+      const createdDate = new Date();
       const response = await apiClient.post('/foods', {
           ...foodData,
-          id: `food_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: this.buildFoodId(foodData.cookId, createdDate),
+          createdAt: createdDate.toISOString(),
+          updatedAt: createdDate.toISOString(),
           rating: 0,
           reviewCount: 0
       });

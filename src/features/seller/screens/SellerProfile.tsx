@@ -13,6 +13,7 @@ import sellerMock from '../../../constants/sellerMock';
 import { useCountry } from '../../../context/CountryContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useLanguage } from '../../../context/LanguageContext';
+import { getAvatarByGender } from '../../../utils/avatarByGender';
 
 export const SellerProfile: React.FC = () => {
   const { section } = useLocalSearchParams<{ section?: string }>();
@@ -49,6 +50,8 @@ export const SellerProfile: React.FC = () => {
     nickname: localizedMock.profile.nickname || '', // Nickname alanı eklendi
     email: sellerData.email,
     phone: sellerData.phone,
+    birthDate: '—',
+    gender: '—',
     location: sellerData.location,
     address: sellerData.address,
     description: sellerData.description,
@@ -125,6 +128,7 @@ export const SellerProfile: React.FC = () => {
   }, [avatarUri]);
 
   const loadProfileData = () => {
+    const legacyPhone = (userData as any)?.phoneNumber;
     const baseName = userData?.fullName || userData?.displayName || sellerData.name;
     const firstName = baseName.split(' ')[0] || sellerData.name.split(' ')[0];
     const lastName = baseName.split(' ').slice(1).join(' ').trim() || sellerData.name.split(' ').slice(1).join(' ');
@@ -135,7 +139,9 @@ export const SellerProfile: React.FC = () => {
       displayName: userData?.displayName || baseName,
       nickname: userData?.sellerNickname || localizedMock.profile.nickname || '',
       email: userData?.email || sellerData.email,
-      phone: userData?.phone || sellerData.phone,
+      phone: userData?.phone || legacyPhone || '—',
+      birthDate: userData?.birthDate || '—',
+      gender: userData?.gender || '—',
       location: userData?.sellerLocation || sellerData.location,
       address: userData?.sellerAddress || sellerData.address,
       description: userData?.sellerDescription || sellerData.description,
@@ -172,6 +178,8 @@ export const SellerProfile: React.FC = () => {
       fullName: getFullName(formData),
       displayName: formData.displayName?.trim() || getFullName(formData),
       phone: formData.phone,
+      birthDate: formData.birthDate,
+      gender: formData.gender,
       avatarUri: avatarUri || '',
       sellerNickname: formData.nickname,
       sellerLocation: formData.location,
@@ -516,7 +524,9 @@ export const SellerProfile: React.FC = () => {
             <View style={styles.avatarContainer}>
               <Image
                 key={`${avatarUri || 'default'}-${forceUpdate}`} // Force re-render when avatar changes
-                source={avatarUri ? { uri: avatarUri } : { uri: sellerData.avatar }}
+                source={{
+                  uri: avatarUri || getAvatarByGender(userData?.gender, userData?.uid || userData?.email || 'seller-profile'),
+                }}
                 style={styles.avatar}
                 defaultSource={{ uri: 'https://placehold.co/100x100/7FAF9A/FFFFFF?text=S' }}
                 onLoad={() => console.log('Avatar loaded:', avatarUri)}
@@ -871,6 +881,18 @@ export const SellerProfile: React.FC = () => {
                   placeholder={t('sellerProfileScreen.placeholders.phone')}
                   keyboardType="phone-pad"
                 />
+                <FormField
+                  label={t('sellerProfileScreen.fields.birthDate')}
+                  value={formData.birthDate}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, birthDate: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.birthDate')}
+                />
+                <FormField
+                  label={t('sellerProfileScreen.fields.gender')}
+                  value={formData.gender}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, gender: text }))}
+                  placeholder={t('sellerProfileScreen.placeholders.gender')}
+                />
               </View>
             ) : (
               <View style={styles.infoContainer}>
@@ -896,6 +918,14 @@ export const SellerProfile: React.FC = () => {
                 <View style={styles.infoRow}>
                   <MaterialIcons name="phone" size={16} color={colors.textSecondary} />
                   <Text variant="body" style={styles.infoText}>{formData.phone}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="cake" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{formData.birthDate || '—'}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="wc" size={16} color={colors.textSecondary} />
+                  <Text variant="body" style={styles.infoText}>{formData.gender || '—'}</Text>
                 </View>
               </View>
             )}

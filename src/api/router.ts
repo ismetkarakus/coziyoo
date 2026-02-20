@@ -5,6 +5,7 @@ import { orderController } from './controllers/orderController';
 import { chatController } from './controllers/chatController';
 import { reviewController } from './controllers/reviewController';
 import { walletController } from './controllers/walletController';
+import { categoryController } from './controllers/categoryController';
 
 // Simple regex router matching
 type Handler = (req: ApiRequest) => Promise<ApiResponse>;
@@ -42,6 +43,7 @@ addRoute('PUT', '/auth/me/:uid', authController.updateProfile);
 
 // --- Food Routes ---
 addRoute('GET', '/foods', foodController.getAll);
+addRoute('GET', '/categories', categoryController.getAll);
 addRoute('POST', '/foods', foodController.create);
 addRoute('GET', '/foods/:id', foodController.getById);
 addRoute('PUT', '/foods/:id', foodController.update);

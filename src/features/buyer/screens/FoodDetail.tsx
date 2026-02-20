@@ -215,6 +215,7 @@ export const FoodDetail: React.FC = () => {
   const foodId = params.id as string;
   const foodName = params.name as string;
   const cookName = params.cookName as string;
+  const cookIdParam = params.cookId as string | undefined;
   const foodImageUrl = params.imageUrl as string;
   const paramDeliveryType = params.deliveryType as string || 'Pickup';
   const sourceParam = params.source as string | undefined;
@@ -812,8 +813,9 @@ export const FoodDetail: React.FC = () => {
                     <TouchableOpacity
                       style={styles.inlineViewAllButton}
                       onPress={() => {
+                        const resolvedCookId = firebaseFood?.cookId || cookIdParam || '';
                         router.push(
-                          `/seller-public-profile?cookName=${encodeURIComponent(food.cookName)}`
+                          `/seller-public-profile?cookName=${encodeURIComponent(food.cookName)}&cookId=${encodeURIComponent(String(resolvedCookId))}`
                         );
                       }}
                     >

@@ -14,6 +14,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../../../context/AuthContext';
 import { foodService } from '../../../services/foodService';
 import { categoriesData } from '../../../constants/categories';
+import { categoryService, Category } from '../../../services/categoryService';
 
 const CARD_SUMMARY_MAX_LENGTH = 80;
 const MAX_IMAGES = 5;
@@ -103,8 +104,8 @@ export const AddMeal: React.FC = () => {
   const [editingCreatedAt, setEditingCreatedAt] = useState<string | null>(null);
 
   const [deliveryOptions, setDeliveryOptions] = useState({
-    pickup: true,
-    delivery: false,
+    pickup: false,
+    delivery: true,
   });
 
   const [datePickerVisible, setDatePickerVisible] = useState(false);
@@ -118,13 +119,31 @@ export const AddMeal: React.FC = () => {
   const [recipeHeight, setRecipeHeight] = useState(60); // Başlangıç yüksekliği
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [categoryDefs, setCategoryDefs] = useState<Category[]>([]);
 
-  const CATEGORIES = (categoriesData.items ?? [])
-    .filter((item) => item.id !== 'all')
-    .map((item) => ({
-      label: currentLanguage === 'tr' ? item.tr : item.en,
-      icon: item.icon,
-    }));
+  const CATEGORIES = (categoryDefs.length > 0
+    ? categoryDefs.map((item) => ({
+        value: item.nameTr,
+        label: currentLanguage === 'tr' ? item.nameTr : item.nameEn,
+      }))
+    : (categoriesData.items ?? [])
+        .filter((item) => item.id !== 'all')
+        .map((item) => ({
+          value: item.tr,
+          label: currentLanguage === 'tr' ? item.tr : item.en,
+        })));
+
+  const getCategoryLabel = (value: string): string => {
+    if (!value) return '';
+    const fromOptions = CATEGORIES.find((item) => item.value === value);
+    if (fromOptions) return fromOptions.label;
+
+    const resolvedNameTr = categoryService.resolveCategoryNameTr(categoryDefs, value);
+    if (!resolvedNameTr) return value;
+    const resolved = categoryDefs.find((item) => item.nameTr === resolvedNameTr);
+    if (!resolved) return value;
+    return currentLanguage === 'tr' ? resolved.nameTr : resolved.nameEn;
+  };
 
   const handleInputChange = (field: keyof typeof formData) => (value: string) => {
     if (field === 'dailyStock') {
@@ -181,6 +200,14 @@ export const AddMeal: React.FC = () => {
   };
 
   useEffect(() => {
+    const loadCategories = async () => {
+      const records = await categoryService.getCategories(true);
+      setCategoryDefs(records);
+    };
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
     const raw = params.mealData as string | undefined;
     if (!raw) return;
     try {
@@ -204,12 +231,12 @@ export const AddMeal: React.FC = () => {
       if (parsed.deliveryOptions) {
         setDeliveryOptions({
           pickup: !!parsed.deliveryOptions.pickup,
-          delivery: !!parsed.deliveryOptions.delivery,
+          delivery: true,
         });
       } else {
         setDeliveryOptions({
           pickup: !!parsed.hasPickup,
-          delivery: !!parsed.hasDelivery,
+          delivery: true,
         });
       }
       if (Array.isArray(parsed.images) && parsed.images.length > 0) {
@@ -221,6 +248,15 @@ export const AddMeal: React.FC = () => {
       console.error('Error parsing mealData for edit:', error);
     }
   }, [params.mealData]);
+
+  useEffect(() => {
+    if (!categoryDefs.length) return;
+    setFormData((prev) => {
+      const resolved = categoryService.resolveCategoryNameTr(categoryDefs, prev.category || '');
+      if (!resolved || resolved === prev.category) return prev;
+      return { ...prev, category: resolved };
+    });
+  }, [categoryDefs]);
 
 
   const handleDescriptionContentSizeChange = (event: any) => {
@@ -469,7 +505,8 @@ export const AddMeal: React.FC = () => {
 
 
   const toggleDeliveryOption = (option: keyof typeof deliveryOptions) => {
-    setDeliveryOptions(prev => ({ ...prev, [option]: !prev[option] }));
+    if (option !== 'pickup') return;
+    setDeliveryOptions(prev => ({ ...prev, pickup: !prev.pickup }));
   };
 
 
@@ -477,7 +514,8 @@ export const AddMeal: React.FC = () => {
     console.log('Preview button pressed'); // Debug log
     
     // Basic validation for preview
-    if (!formData.name || !formData.price || !formData.category || !formData.description) {
+    const normalizedCuisine = normalizeCuisineInput(formData.country);
+    if (!formData.name || !formData.price || !formData.category || !formData.description || !normalizedCuisine) {
       Alert.alert(
         t('addMealScreen.alerts.missingInfoTitle'),
         t('addMealScreen.alerts.missingInfoMessage'),
@@ -496,8 +534,6 @@ export const AddMeal: React.FC = () => {
       return;
     }
 
-    const normalizedCuisine = normalizeCuisineInput(formData.country);
-
     // Navigate to preview screen with form data
     const previewData = {
       name: formData.name,
@@ -513,7 +549,7 @@ export const AddMeal: React.FC = () => {
       endDate: formData.endDate,
       availableDates: formatDateRange(formData.startDate, formData.endDate),
       hasPickup: deliveryOptions.pickup,
-      hasDelivery: deliveryOptions.delivery,
+      hasDelivery: true,
       images: selectedImages,
     };
 
@@ -541,6 +577,8 @@ export const AddMeal: React.FC = () => {
     if (!formData.price?.trim()) missingFields.push(t('addMealScreen.fields.price'));
     if (!formData.dailyStock?.trim()) missingFields.push(t('addMealScreen.fields.dailyStock'));
     if (!formData.category?.trim()) missingFields.push(t('addMealScreen.fields.category'));
+    const normalizedCuisine = normalizeCuisineInput(formData.country);
+    if (!normalizedCuisine) missingFields.push(t('addMealScreen.fields.country'));
     
     if (missingFields.length > 0) {
       Alert.alert(
@@ -566,8 +604,6 @@ export const AddMeal: React.FC = () => {
       Alert.alert(t('addMealScreen.alerts.errorTitle'), t('addMealScreen.alerts.loginRequired'));
       return;
     }
-
-    const normalizedCuisine = normalizeCuisineInput(formData.country);
 
     try {
       setUploading(true);
@@ -607,10 +643,10 @@ export const AddMeal: React.FC = () => {
         // Diğer eksik alanlar
         currentStock: parseInt(formData.dailyStock) || 0,
         hasPickup: deliveryOptions.pickup,
-        hasDelivery: deliveryOptions.delivery,
+        hasDelivery: true,
         availableDeliveryOptions: [
-          ...(deliveryOptions.pickup ? (['pickup'] as const) : []),
           ...(deliveryOptions.delivery ? (['delivery'] as const) : []),
+          ...(deliveryOptions.pickup ? (['pickup'] as const) : []),
         ],
         deliveryFee: Number(formData.deliveryFee || 0),
         isActive: true,
@@ -644,7 +680,7 @@ export const AddMeal: React.FC = () => {
                 country: '',
               });
               setSelectedImages([]);
-              setDeliveryOptions({ pickup: true, delivery: false });
+              setDeliveryOptions({ pickup: false, delivery: true });
               
               // Ana sayfaya dön
               router.replace('/(seller)/seller-panel');
@@ -783,7 +819,7 @@ export const AddMeal: React.FC = () => {
                 style={[styles.categoryButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
               >
                 <Text variant="body" style={{ color: formData.category ? colors.text : colors.textSecondary, fontSize: 16 }}>
-                  {formData.category || t('addMealScreen.placeholders.category')}
+                  {getCategoryLabel(formData.category) || t('addMealScreen.placeholders.category')}
                 </Text>
                 <Text variant="body" style={{ color: colors.textSecondary }}>📁</Text>
               </TouchableOpacity>
@@ -944,7 +980,7 @@ export const AddMeal: React.FC = () => {
               
               <Button
                 variant={deliveryOptions.delivery ? "primary" : "outline"}
-                onPress={() => toggleDeliveryOption('delivery')}
+                disabled
                 style={styles.deliveryButton}
               >
                 {deliveryOptions.delivery ? `✓ ${t('addMealScreen.delivery.delivery')}` : t('addMealScreen.delivery.delivery')}
@@ -1105,11 +1141,11 @@ export const AddMeal: React.FC = () => {
                   {...(Platform.OS === 'web' ? ({ className: 'thin-green-scrollbar' } as any) : {})}
                 >
                   {CATEGORIES.map((category) => {
-                    const isSelected = formData.category === category.label;
+                    const isSelected = formData.category === category.value;
                     return (
                       <TouchableOpacity
-                        key={category.label}
-                        onPress={() => handleCategorySelect(category.label)}
+                        key={category.value}
+                        onPress={() => handleCategorySelect(category.value)}
                         style={[
                           styles.webCategoryItem,
                           {
@@ -1135,16 +1171,16 @@ export const AddMeal: React.FC = () => {
             ) : (
               <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
                 <Picker
-                  selectedValue={formData.category || CATEGORIES[0]?.label}
+                  selectedValue={formData.category || CATEGORIES[0]?.value}
                   onValueChange={(value) => handleCategorySelect(String(value))}
                   style={[styles.categoryPicker, { color: colors.text }]}
                   itemStyle={[styles.categoryPickerItem, { color: colors.text }]}
                 >
                   {CATEGORIES.map((category) => (
                     <Picker.Item
-                      key={category.label}
+                      key={category.value}
                       label={category.label}
-                      value={category.label}
+                      value={category.value}
                     />
                   ))}
                 </Picker>

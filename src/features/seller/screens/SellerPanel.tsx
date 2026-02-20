@@ -18,6 +18,7 @@ import { ManageMeals } from './ManageMeals';
 import { sellerPanelLayout } from './sellerPanelLayout';
 import { foodService } from '../../../services/foodService';
 import { chatService } from '../../../services/chatService';
+import { getAvatarByGender } from '../../../utils/avatarByGender';
 
 interface SellerDashboardStats {
   orders: number;
@@ -40,7 +41,7 @@ export const SellerPanel: React.FC = () => {
     nickname: userData?.sellerNickname || localizedMock.profile.nickname,
     email: userData?.email || localizedMock.profile.email,
     location: userData?.sellerLocation || localizedMock.profile.location,
-    avatar: userData?.avatarUri || localizedMock.profile.avatar,
+    avatar: userData?.avatarUri || getAvatarByGender(userData?.gender, userData?.uid || userData?.email || 'seller-panel'),
   });
   const [profileData, setProfileData] = useState({
     ...buildProfileData(),

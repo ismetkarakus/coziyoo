@@ -15,6 +15,13 @@ import { mockUserService } from '../../../services/mockUserService';
 import { useAuth } from '../../../context/AuthContext';
 import { getFavoriteMeta, toggleFavorite } from '../../../services/favoriteService';
 import { normalizeUsername } from '../../../utils/username';
+import sellerMock from '../../../constants/sellerMock';
+import { getAvatarByGender } from '../../../utils/avatarByGender';
+
+const toDisplayHandle = (rawValue: string): string => {
+  const normalized = normalizeUsername(rawValue || 'seller', 'seller').replace(/^seller_/, '');
+  return `@${normalized}`;
+};
 
 export default function FoodDetailSimple() {
   const params = useLocalSearchParams();
@@ -26,11 +33,10 @@ export default function FoodDetailSimple() {
   const { user, userData } = useAuth();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const showIngredients = width >= 768;
-  const showSideBySideCards = width >= 768;
 
   const foodName = params.name as string || t('foodDetailSimpleScreen.defaults.foodName');
   const cookName = params.cookName as string || t('foodDetailSimpleScreen.defaults.cookName');
+  const cookIdParam = params.cookId as string | undefined;
   const foodImageUrl = params.imageUrl as string || 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&h=400&fit=crop';
   const rawImagesParam = params.images as string | undefined;
 
@@ -88,18 +94,18 @@ export default function FoodDetailSimple() {
   const endDate = foodMeta.availableDates.includes('-')
     ? foodMeta.availableDates.split('-').pop()?.trim() || foodMeta.availableDates
     : foodMeta.availableDates;
-  const deliveryTimeLabel = currentLanguage === 'en' ? 'Delivery Time' : 'Teslimat Süresi';
-  const deliveryTypeDescription =
-    foodMeta.deliveryType === 'delivery'
-      ? (currentLanguage === 'en' ? 'This product is delivered' : 'Bu urun teslim edilir')
-      : (currentLanguage === 'en' ? 'This product must be picked up' : 'Bu urunu gelip almaniz gerekir');
   const [sellerAvatar, setSellerAvatar] = useState(
     'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face'
   );
-  const [cookUsername, setCookUsername] = useState(normalizeUsername(cookName, 'seller'));
+  const [cookUsername, setCookUsername] = useState(toDisplayHandle(cookName));
   const [sellerAvatarError, setSellerAvatarError] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteCount, setFavoriteCount] = useState(0);
+  const [cookMenuCount, setCookMenuCount] = useState(0);
+  const [cookOrderCount, setCookOrderCount] = useState(0);
+  const [hasPickupOption, setHasPickupOption] = useState(
+    String(params.hasPickup || '').toLowerCase() === 'true' || String(params.hasPickup || '') === '1'
+  );
   const swipeToHomeResponder = useMemo(
     () =>
       PanResponder.create({
@@ -122,15 +128,16 @@ export default function FoodDetailSimple() {
     []
   );
 
-  useEffect(() => {
-    if (userData?.avatarUri) {
-      setSellerAvatar(userData.avatarUri);
-    }
-  }, [userData?.avatarUri]);
-  
   const handleBackPress = () => {
     router.back();
   };
+
+  const sellerProfileRoute = useMemo(() => {
+    const encodedCookName = encodeURIComponent(String(cookName || ''));
+    const encodedCookId = encodeURIComponent(String(cookIdParam || ''));
+    return `/seller-public-profile?cookName=${encodedCookName}&cookId=${encodedCookId}`;
+  }, [cookIdParam, cookName]);
+  const sellerCommentsRoute = useMemo(() => `${sellerProfileRoute}&section=comments`, [sellerProfileRoute]);
 
   const resolveFoodId = (id?: string) => (id ? id.replace(/^(firebase_|mock_|published_)/, '') : undefined);
   const resolvedStockId = resolveFoodId(foodId);
@@ -160,10 +167,25 @@ export default function FoodDetailSimple() {
       setAllergens(food?.allergens ?? null);
       if (!food) return;
 
-      if (typeof food.sellerId === 'string' && food.sellerId.startsWith('seller_')) {
-        setCookUsername(food.sellerId);
+      const pickupEnabled =
+        food?.hasPickup === true ||
+        (Array.isArray(food?.availableDeliveryOptions) && food.availableDeliveryOptions.includes('pickup'));
+      setHasPickupOption(pickupEnabled);
+
+      setCookUsername(toDisplayHandle(food.sellerName || food.cookName || cookName));
+      const sellerUid = String(food.sellerId || food.cookId || cookIdParam || '').trim();
+      if (sellerUid) {
+        const sellerUser = await mockUserService.getUserByUid(sellerUid);
+        if (sellerUser?.avatarUri) {
+          setSellerAvatar(sellerUser.avatarUri);
+          setSellerAvatarError(false);
+        } else {
+          setSellerAvatar(getAvatarByGender(sellerUser?.gender, sellerUid || cookName));
+          setSellerAvatarError(false);
+        }
       } else {
-        setCookUsername(normalizeUsername(cookName, 'seller'));
+        setSellerAvatar(getAvatarByGender(undefined, cookName));
+        setSellerAvatarError(false);
       }
 
       const loadedBaseStock = typeof food.currentStock === 'number' ? food.currentStock : 8;
@@ -182,7 +204,46 @@ export default function FoodDetailSimple() {
     };
 
     loadDetails();
-  }, [foodId]);
+  }, [foodId, cookName, cookIdParam]);
+
+  useEffect(() => {
+    setCookUsername(toDisplayHandle(cookName));
+  }, [cookName]);
+
+  useEffect(() => {
+    const loadCookCardData = async () => {
+      const foods = await mockFoodService.getFoods(0);
+      const resolvedCookId =
+        cookIdParam || (cookName && /^[sb]_[a-z0-9_]+$/i.test(cookName) ? cookName : '');
+
+      const sellerFoods = foods.filter((food) => {
+        const byCookId = resolvedCookId && String(food.cookId || '') === String(resolvedCookId);
+        const bySellerId = resolvedCookId && String(food.sellerId || '') === String(resolvedCookId);
+        const byCookName = String(food.cookName || '') === String(cookName || '');
+        return Boolean(byCookId || bySellerId || byCookName);
+      });
+
+      setCookMenuCount(sellerFoods.length);
+
+      const localizedSellers = ((sellerMock as any)[currentLanguage]?.sellers ||
+        (sellerMock as any).tr?.sellers ||
+        []) as Array<{ name?: string; nickname?: string; totalOrders?: number }>;
+      const matchedSeller = localizedSellers.find(
+        (seller) => seller.name === cookName || seller.nickname === cookName
+      );
+      const fallbackOrderCount = sellerFoods.reduce(
+        (sum, food) => sum + Math.max(0, Number(food.reviewCount || 0)),
+        0
+      );
+      setCookOrderCount(
+        typeof matchedSeller?.totalOrders === 'number'
+          ? matchedSeller.totalOrders
+          : Math.max(fallbackOrderCount, sellerFoods.length)
+      );
+    };
+
+    loadCookCardData();
+  }, [cookIdParam, cookName, currentLanguage]);
 
   useEffect(() => {
     if (remainingStock <= 0) {
@@ -531,7 +592,56 @@ export default function FoodDetailSimple() {
             </Text>
           </View>
 
-          <View style={[styles.cardsRow, showSideBySideCards ? styles.cardsRowSide : styles.cardsRowStack]}>
+          <View style={styles.greenStatusArea}>
+            <View style={styles.greenStatusCard}>
+              <Text variant="caption" weight="semibold" style={styles.greenStatusLabel}>
+                {t('foodDetailSimpleScreen.endDateLabel')}
+              </Text>
+              <Text variant="body" weight="bold" style={styles.greenStatusValue}>
+                {endDate}
+              </Text>
+            </View>
+            <View style={styles.greenStatusCard}>
+              <Text variant="caption" weight="semibold" style={styles.greenStatusLabel}>
+                {t('foodDetailSimpleScreen.remainingLabel')}
+              </Text>
+              <Text
+                variant="body"
+                weight="bold"
+                style={[
+                  styles.greenStatusValue,
+                  remainingStock <= 0 ? styles.greenStatusValueDanger : null,
+                ]}
+              >
+                {remainingStock} {t('foodDetailSimpleScreen.remainingValue')}
+              </Text>
+            </View>
+          </View>
+
+          {hasPickupOption ? (
+            <View style={styles.pickupNoticeSection}>
+              <View style={styles.pickupNoticeIconWrap}>
+                <MaterialIcons name="storefront" size={18} color="#0F5132" />
+              </View>
+              <View style={styles.pickupNoticeContent}>
+                <Text variant="subheading" weight="bold" style={styles.pickupNoticeTitle}>
+                  {currentLanguage === 'en' ? 'Pickup Option Available' : 'Gel Al Seçeneği Var'}
+                </Text>
+                <Text variant="body" style={styles.pickupNoticeText}>
+                  {currentLanguage === 'en'
+                    ? 'You can choose pickup for this meal at checkout.'
+                    : 'Bu yemek için ödeme adımında Gel Al seçeneğini seçebilirsiniz.'}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          <View style={styles.cardsRow}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => router.push(sellerProfileRoute as any)}
+              style={styles.cookInfoCardTouchable}
+            >
             <Card variant="default" padding="md" style={styles.cookInfoCard}>
             <View style={styles.cookInfo}>
               <View style={styles.cookProfile}>
@@ -553,69 +663,62 @@ export default function FoodDetailSimple() {
                     <Text variant="body" color="textSecondary" style={styles.cookName} numberOfLines={1}>
                       {cookName}
                     </Text>
+                    <MaterialIcons name="arrow-forward-ios" size={14} color="#6B7280" />
                   </View>
-                  <Text variant="caption" color="textSecondary">
+                  <Text variant="caption" color="textSecondary" style={styles.cookUsername}>
                     {cookUsername}
                   </Text>
                   <View style={styles.rating}>
                     <StarRating rating={foodMeta.rating} size="small" showNumber />
-                    <Text variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
+                    <Text variant="caption" color="textSecondary" style={styles.cookReviewCount}>
                       {t('foodDetailScreen.reviewCount', { count: foodMeta.reviewCount })}
                     </Text>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        router.push(sellerCommentsRoute as any);
+                      }}
+                      style={styles.seeAllCommentsButton}
+                    >
+                      <Text variant="caption" weight="semibold" style={styles.seeAllCommentsText}>
+                        {currentLanguage === 'en' ? 'See all' : 'Tumunu gor'}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
             </View>
 
-            <View style={styles.cookDescriptionRow}>
-              <Text variant="caption" color="textSecondary" style={styles.cookDescriptionText}>
-                {foodMeta.cookDescription}
-              </Text>
+            <View style={styles.cookStatsRow}>
+              <View style={styles.cookStatBox}>
+                <Text variant="caption" color="textSecondary" style={styles.cookStatLabel}>
+                  {currentLanguage === 'en' ? 'Menu Items' : 'Menu Sayisi'}
+                </Text>
+                <Text variant="body" weight="bold" style={styles.cookStatValue}>
+                  {cookMenuCount}
+                </Text>
+              </View>
+              <View style={styles.cookStatBox}>
+                <Text variant="caption" color="textSecondary" style={styles.cookStatLabel}>
+                  {currentLanguage === 'en' ? 'Total Orders' : 'Toplam Siparis'}
+                </Text>
+                <Text variant="body" weight="bold" style={styles.cookStatValue}>
+                  {cookOrderCount}
+                </Text>
+              </View>
             </View>
             </Card>
-
-            <Card variant="default" padding="md" style={styles.metaInfoCard}>
-              <View style={styles.deliveryDetailsSection}>
-                <Text variant="body" weight="medium" style={styles.deliveryDetailText}>
-                  {deliveryTimeLabel}: {foodMeta.prepTime}
-                </Text>
-                <Text variant="body" weight="medium" style={styles.deliveryDetailText}>
-                  {t('foodDetailScreen.distance')}: {foodMeta.distance}
-                </Text>
-              </View>
-
-              <View style={styles.deliveryTypeRow}>
-                <Text variant="body" weight="medium" color="primary" style={styles.deliveryTypeText}>
-                  {deliveryTypeDescription}
-                </Text>
-              </View>
-
-              <View style={styles.availabilitySection}>
-                <View style={styles.availabilityItem}>
-                  <Text variant="body" weight="medium" color="primary" style={styles.leftAlignedText}>
-                    {t('foodDetailSimpleScreen.endDateLabel')}: {endDate}
-                  </Text>
-                </View>
-                <View style={styles.availabilityItem}>
-                  <Text
-                    variant="body"
-                    weight="medium"
-                    color={remainingStock > 0 ? 'primary' : 'error'}
-                    style={styles.leftAlignedText}
-                  >
-                    {t('foodDetailSimpleScreen.remainingLabel')}: {remainingStock} {t('foodDetailSimpleScreen.remainingValue')}
-                  </Text>
-                </View>
-              </View>
-            </Card>
+            </TouchableOpacity>
           </View>
 
           <View style={[styles.infoContainer, { backgroundColor: colors.surface }]}>
             {/* İçindekiler */}
             <View style={styles.ingredientsSection}>
-              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                {t('foodDetailSimpleScreen.ingredientsTitle')}
-              </Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text variant="subheading" weight="semibold" style={styles.sectionHeaderText}>
+                  {t('foodDetailSimpleScreen.ingredientsTitle')}
+                </Text>
+              </View>
               <Text variant="body" style={styles.ingredientsText}>
                 {ingredients && ingredients.length > 0
                   ? ingredients.join(', ')
@@ -624,9 +727,11 @@ export default function FoodDetailSimple() {
             </View>
 
             <View style={styles.allergensSection}>
-              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                {t('foodDetailSimpleScreen.allergensTitle')}
-              </Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text variant="subheading" weight="semibold" style={styles.sectionHeaderText}>
+                  {t('foodDetailSimpleScreen.allergensTitle')}
+                </Text>
+              </View>
               {allergens && allergens.length > 0 ? (
                 <View style={styles.allergenPillsContainer}>
                   {allergens.map((allergen, index) => (
@@ -653,9 +758,11 @@ export default function FoodDetailSimple() {
 
             {/* Tarif */}
             <View style={styles.aboutSection}>
-              <Text variant="subheading" weight="semibold" style={styles.sectionTitle}>
-                {t('foodDetailSimpleScreen.recipeTitle')}
-              </Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text variant="subheading" weight="semibold" style={styles.sectionHeaderText}>
+                  {t('foodDetailSimpleScreen.recipeTitle')}
+                </Text>
+              </View>
               <Text variant="body" style={styles.description}>
                 {t('foodDetailSimpleScreen.recipe', { food: foodName })}
               </Text>
@@ -683,7 +790,7 @@ export default function FoodDetailSimple() {
         </View>
       </ScrollView>
 
-      <View style={[styles.fixedBottomBar, { backgroundColor: colors.card }]}>
+      <View style={[styles.fixedBottomBar, { backgroundColor: colors.primary }]}>
         <View style={[styles.counterGroup, { borderColor: colors.border }]}>
           <TouchableOpacity
             onPress={() => {
@@ -721,12 +828,12 @@ export default function FoodDetailSimple() {
         </View>
 
         <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
+          style={[styles.addButton, { backgroundColor: '#FFFFFF' }]}
           activeOpacity={0.85}
           accessibilityLabel="add-to-cart"
           onPress={handleAddToCart}
         >
-          <Text variant="body" weight="bold" style={styles.addButtonText}>
+          <Text variant="body" weight="bold" style={[styles.addButtonText, { color: colors.primary }]}>
             {t('foodDetailSimpleScreen.addButtonLabel', { price: totalPrice })}
           </Text>
         </TouchableOpacity>
@@ -858,22 +965,83 @@ const styles = StyleSheet.create({
   cookInfoCard: {
     marginBottom: Spacing.md,
     flex: 1,
+    borderWidth: 1,
+    borderColor: '#D9E5D9',
+    shadowColor: '#253627',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
-  metaInfoCard: {
-    marginBottom: Spacing.md,
+  cookInfoCardTouchable: {
     flex: 1,
   },
   cardsRow: {
     paddingHorizontal: Spacing.md,
-    gap: Spacing.md,
+    marginBottom: Spacing.sm,
   },
-  cardsRowSide: {
+  greenStatusArea: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    backgroundColor: '#EAF5EA',
+    borderColor: '#CFE3CF',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: Spacing.sm,
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  greenStatusCard: {
+    flex: 1,
+    backgroundColor: '#F5FBF5',
+    borderColor: '#D6E8D6',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    gap: 4,
+  },
+  greenStatusLabel: {
+    color: '#4B6A4B',
+  },
+  greenStatusValue: {
+    color: '#2D5B2D',
+  },
+  greenStatusValueDanger: {
+    color: '#B42318',
+  },
+  pickupNoticeSection: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1.5,
+    borderColor: '#A7D7B2',
+    backgroundColor: '#EAF7EE',
+    borderRadius: 12,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    gap: Spacing.sm,
   },
-  cardsRowStack: {
-    flexDirection: 'column',
+  pickupNoticeIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#CFEED9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  pickupNoticeContent: {
+    flex: 1,
+  },
+  pickupNoticeTitle: {
+    color: '#0F5132',
+    marginBottom: 2,
+  },
+  pickupNoticeText: {
+    color: '#1D6A44',
+    lineHeight: 20,
   },
   foodNameContainer: {
     flexDirection: 'row',
@@ -926,50 +1094,64 @@ const styles = StyleSheet.create({
   cookName: {
     flexShrink: 1,
     marginRight: Spacing.sm,
+    fontSize: 18,
+    lineHeight: 24,
+    color: '#1F2937',
+  },
+  cookUsername: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  cookReviewCount: {
+    marginLeft: 8,
+    fontSize: 13,
   },
   rating: {
     marginTop: Spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
   },
-  cookDescriptionRow: {
-    marginTop: Spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    paddingTop: Spacing.sm,
+  seeAllCommentsButton: {
+    marginLeft: 'auto',
+    borderWidth: 1,
+    borderColor: '#CFE3D0',
+    backgroundColor: '#EDF6EE',
+    borderRadius: 999,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
   },
-  cookDescriptionText: {
-    lineHeight: 18,
+  seeAllCommentsText: {
+    color: '#3B5F3F',
+    fontSize: 12,
   },
-  deliveryTypeRow: {
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  deliveryTypeText: {
-    textAlign: 'center',
-  },
-  deliveryDetailsSection: {
+  cookStatsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  deliveryDetailText: {
-    flex: 1,
-  },
-  availabilityItem: {
-    alignItems: 'flex-start',
-    flex: 1,
-  },
-  leftAlignedText: {
-    textAlign: 'left',
-  },
-  availabilitySection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: Spacing.sm,
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
+  },
+  cookStatBox: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#DCE8DC',
+    borderRadius: 10,
+    backgroundColor: '#F7FBF7',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    gap: 2,
+  },
+  cookStatLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  cookStatValue: {
+    color: '#2D4A2D',
+    fontSize: 18,
+    lineHeight: 24,
   },
   metaItem: {
     alignItems: 'center',
@@ -983,7 +1165,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xl,
+    paddingBottom: Spacing.xl,
   },
   reviewsTitle: {
     marginBottom: Spacing.md,
@@ -992,8 +1175,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     paddingLeft: Spacing.sm,
   },
-  sectionTitle: {
+  sectionHeaderRow: {
+    paddingBottom: Spacing.xs,
     marginBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  sectionHeaderText: {
+    color: '#1F2937',
   },
   ingredientsSection: {
     marginBottom: Spacing.lg,

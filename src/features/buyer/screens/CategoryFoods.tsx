@@ -267,7 +267,7 @@ export const CategoryFoods: React.FC = () => {
 
     const finalDeliveryOption =
       deliveryOption ||
-      (availableOptions.includes('pickup') ? 'pickup' : availableOptions[0]);
+      (availableOptions.includes('delivery') ? 'delivery' : availableOptions[0]);
 
     const cartCount = addToCart(
       {

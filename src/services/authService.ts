@@ -108,6 +108,30 @@ const MOCK_ACCOUNTS: MockAccount[] = [];
 
 class AuthService {
   private currentUser: User | null = null;
+  private toTimestampPart(date: Date): string {
+    return String(date.getTime());
+  }
+
+  private sanitizeIdPart(value: string, fallback: string): string {
+    const normalized = value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .replace(/_+/g, '_');
+
+    return normalized || fallback;
+  }
+
+  private buildUserUid(prefix: 's' | 'b', fullName: string, displayName: string, date: Date): string {
+    const source = `${fullName || ''}`.trim() || `${displayName || ''}`.trim();
+    const parts = source.split(/\s+/).filter(Boolean);
+    const firstName = this.sanitizeIdPart(parts[0] || 'user', 'user');
+    const surname = this.sanitizeIdPart(parts[parts.length - 1] || 'user', 'user');
+    return `${prefix}_${firstName}_${surname}_${this.toTimestampPart(date)}`;
+  }
+
   private async getLanguage(): Promise<'tr' | 'en'> {
     const stored = await AsyncStorage.getItem('userLanguage');
     return stored === 'en' ? 'en' : 'tr';
@@ -137,7 +161,7 @@ class AuthService {
       fullName: rawUserData.fullName || undefined,
       displayName: rawUserData.displayName || rawUserData.fullName || '',
       username: rawUserData.username || undefined,
-      phone: rawUserData.phone || undefined,
+      phone: rawUserData.phone || rawUserData.phoneNumber || undefined,
       birthDate: rawUserData.birthDate || undefined,
       gender: rawUserData.gender || undefined,
       avatarUri: rawUserData.avatarUri || undefined,
@@ -203,9 +227,13 @@ class AuthService {
     userType: 'buyer' | 'seller' | 'both',
     displayName?: string
   ): Promise<User> {
-    const uid = `user_${Date.now()}`;
+    const signupDate = new Date();
     const resolvedDisplayName = (displayName || fullName).trim();
     const resolvedFullName = fullName.trim();
+    const uid = userType === 'seller' || userType === 'both'
+      ? this.buildUserUid('s', resolvedFullName, resolvedDisplayName, signupDate)
+      : this.buildUserUid('b', resolvedFullName, resolvedDisplayName, signupDate);
+
     const response = await apiClient.post('/auth/register', {
         uid,
         email,
@@ -240,6 +268,8 @@ class AuthService {
       email: this.currentUser.email,
       fullName: userData.fullName ?? resolvedFullName,
       displayName: this.currentUser.displayName,
+      gender: userData.gender ?? undefined,
+      avatarUri: userData.avatarUri ?? undefined,
       userType,
       createdAt: userData.createdAt ?? new Date().toISOString(),
     }));

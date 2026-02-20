@@ -28,7 +28,7 @@ export const Cart: React.FC = () => {
   const resolveDeliveryOption = (item: typeof cartItems[number]) => {
     if (item.deliveryOption) return item.deliveryOption;
     const options = getAvailableOptions(item);
-    return options.includes('pickup') ? 'pickup' : options[0];
+    return options.includes('delivery') ? 'delivery' : options[0];
   };
 
   useEffect(() => {

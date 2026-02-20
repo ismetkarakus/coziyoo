@@ -11,6 +11,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { Colors, Spacing } from '../../../theme';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import { getMockChats } from '../../chat/screens/ChatList';
+import { getAvatarByGender } from '../../../utils/avatarByGender';
 
 interface QuickActionItem {
   id: string;
@@ -26,11 +27,11 @@ interface RowItem {
   value?: string;
 }
 
-const getDefaultUserData = (language: 'tr' | 'en') => ({
+const getDefaultUserData = (language: 'tr' | 'en', gender?: string) => ({
   name: language === 'en' ? 'Ahmet Yilmaz' : 'Ahmet Yilmaz',
   email: 'ahmet@example.com',
   location: language === 'en' ? 'Kadikoy, Istanbul' : 'Kadikoy, Istanbul',
-  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=180&h=180&fit=crop&crop=face',
+  avatar: getAvatarByGender(gender, 'buyer-profile-default'),
 });
 
 export const Profile: React.FC = () => {
@@ -41,7 +42,7 @@ export const Profile: React.FC = () => {
   const { signOut, userData } = useAuth();
 
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
-  const defaultUserData = getDefaultUserData(currentLanguage);
+  const defaultUserData = getDefaultUserData(currentLanguage, userData?.gender);
 
   useEffect(() => {
     setAvatarUri(userData?.avatarUri || null);

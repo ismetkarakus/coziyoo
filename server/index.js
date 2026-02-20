@@ -33,6 +33,146 @@ const pool = new Pool({
 
 const makeId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 const nowIso = () => new Date().toISOString();
+const toTimestampPart = (dateInput) => {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  return String(date.getTime());
+};
+const sanitizeIdPart = (value, fallback) => {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_');
+  return normalized || fallback;
+};
+const buildUserIdBase = (prefix, fullName, displayName, createdAt) => {
+  const source = String(fullName || '').trim() || String(displayName || '').trim();
+  const parts = source.split(/\s+/).filter(Boolean);
+  const firstName = sanitizeIdPart(parts[0] || 'user', 'user');
+  const surname = sanitizeIdPart(parts[parts.length - 1] || 'user', 'user');
+  return `${prefix}_${firstName}_${surname}_${toTimestampPart(createdAt)}`;
+};
+const buildFoodIdBase = (cookId, createdAt) => {
+  const normalizedCookId = sanitizeIdPart(cookId, 'unknown');
+  const cookBase = normalizedCookId.replace(/_\d{10,13}(?:_\d+)?$/, '') || 'unknown';
+  return `${cookBase}_${toTimestampPart(createdAt)}`;
+};
+const FEMALE_AVATARS = [
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=240&h=240&fit=crop&crop=face',
+];
+const MALE_AVATARS = [
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&h=240&fit=crop&crop=face',
+];
+const NEUTRAL_AVATARS = [
+  'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&h=240&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=240&h=240&fit=crop&crop=face',
+];
+const hashString = (value) => {
+  let hash = 0;
+  for (let i = 0; i < String(value || '').length; i += 1) {
+    hash = (hash * 31 + String(value)[i].charCodeAt(0)) >>> 0;
+  }
+  return hash;
+};
+const normalizeGenderBucket = (gender) => {
+  const normalized = String(gender || '').trim().toLowerCase();
+  if (['female', 'woman', 'kadin', 'kadın', 'f'].includes(normalized)) return 'female';
+  if (['male', 'man', 'erkek', 'm'].includes(normalized)) return 'male';
+  return 'neutral';
+};
+const resolveAvatarByGender = (gender, keySeed) => {
+  const bucket = normalizeGenderBucket(gender);
+  const source = bucket === 'female' ? FEMALE_AVATARS : bucket === 'male' ? MALE_AVATARS : NEUTRAL_AVATARS;
+  return source[hashString(String(keySeed || 'default')) % source.length];
+};
+const resolveUserAvatarUri = ({ avatarUri, gender, uid, email, displayName, fullName }) => {
+  const explicitAvatar = String(avatarUri || '').trim();
+  if (explicitAvatar) return explicitAvatar;
+  return resolveAvatarByGender(gender, uid || email || displayName || fullName || 'default');
+};
+const nextUniqueUserId = async (baseId) => {
+  let candidate = baseId;
+  let counter = 2;
+  while (true) {
+    const existing = await pool.query('SELECT uid FROM users WHERE uid = $1 LIMIT 1', [candidate]);
+    if (!existing.rowCount) return candidate;
+    candidate = `${baseId}_${counter}`;
+    counter += 1;
+  }
+};
+const nextUniqueFoodId = async (baseId) => {
+  let candidate = baseId;
+  let counter = 2;
+  while (true) {
+    const existing = await pool.query('SELECT id FROM foods WHERE id = $1 LIMIT 1', [candidate]);
+    if (!existing.rowCount) return candidate;
+    candidate = `${baseId}_${counter}`;
+    counter += 1;
+  }
+};
+const normalizeCategoryText = (value) =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+const getCategories = async (activeOnly = true) => {
+  const values = [];
+  let whereClause = '';
+  if (activeOnly) {
+    values.push(true);
+    whereClause = `WHERE is_active = $${values.length}`;
+  }
+
+  const result = await pool.query(
+    `SELECT id, name_tr, name_en, sort_order, is_active, created_at, updated_at
+     FROM categories
+     ${whereClause}
+     ORDER BY sort_order ASC, name_tr ASC`,
+    values
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    nameTr: row.name_tr,
+    nameEn: row.name_en,
+    sortOrder: Number(row.sort_order || 0),
+    isActive: Boolean(row.is_active),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+};
+const resolveCategoryForFood = async (inputValue, fallbackNameTr = 'Ana Yemek') => {
+  const categories = await getCategories(true);
+  if (!categories.length) return fallbackNameTr;
+
+  const normalizedInput = normalizeCategoryText(inputValue);
+  if (!normalizedInput) {
+    const fallback = categories.find((item) => item.nameTr === fallbackNameTr) || categories[0];
+    return fallback.nameTr;
+  }
+
+  const matched = categories.find((item) => {
+    return (
+      normalizeCategoryText(item.id) === normalizedInput ||
+      normalizeCategoryText(item.nameTr) === normalizedInput ||
+      normalizeCategoryText(item.nameEn) === normalizedInput
+    );
+  });
+
+  if (matched) return matched.nameTr;
+  const fallback = categories.find((item) => item.nameTr === fallbackNameTr) || categories[0];
+  return fallback.nameTr;
+};
 const base64UrlEncode = (value) => Buffer.from(value).toString('base64url');
 const base64UrlDecode = (value) => Buffer.from(value, 'base64url').toString('utf-8');
 
@@ -124,6 +264,38 @@ const sql = {
       updated_at TIMESTAMPTZ NOT NULL,
       data JSONB NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY,
+      name_tr TEXT NOT NULL,
+      name_en TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_categories_sort_order ON categories (sort_order ASC);
+    CREATE INDEX IF NOT EXISTS idx_categories_is_active ON categories (is_active);
+
+    INSERT INTO categories (id, name_tr, name_en, sort_order, is_active)
+    VALUES
+      ('ana_yemek', 'Ana Yemek', 'Main Course', 1, TRUE),
+      ('kahvalti', 'Kahvaltı', 'Breakfast', 2, TRUE),
+      ('salata', 'Salata', 'Salad', 3, TRUE),
+      ('meze', 'Meze', 'Mezes', 4, TRUE),
+      ('corba', 'Corba', 'Soups', 5, TRUE),
+      ('tatli', 'Tatli', 'Desserts', 6, TRUE),
+      ('glutensiz', 'Glutensiz', 'Gluten Free', 7, TRUE),
+      ('vejetaryen', 'Vejetaryen', 'Vegetarian', 8, TRUE),
+      ('icecekler', 'Icecekler', 'Drinks', 9, TRUE)
+    ON CONFLICT (id) DO UPDATE
+    SET
+      name_tr = EXCLUDED.name_tr,
+      name_en = EXCLUDED.name_en,
+      sort_order = EXCLUDED.sort_order,
+      is_active = EXCLUDED.is_active,
+      updated_at = NOW();
 
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY,
@@ -345,18 +517,34 @@ app.post('/auth/register', async (req, res) => {
     const existing = await pool.query('SELECT uid FROM users WHERE lower(email) = lower($1) LIMIT 1', [email]);
     if (existing.rowCount) return send(res, 400, null, 'Email already in use');
 
-    const now = nowIso();
+    const createdAt = nowIso();
+    const normalizedUserType = userType || 'buyer';
+    const shouldGenerateSellerId = normalizedUserType === 'seller' || normalizedUserType === 'both';
+    let resolvedUid = uid || makeId('user');
+
+    const userIdPrefix = shouldGenerateSellerId ? 's' : 'b';
+    const baseUserId = buildUserIdBase(userIdPrefix, fullName || '', displayName || '', createdAt);
+    resolvedUid = await nextUniqueUserId(baseUserId);
+
     const user = {
-      uid: uid || makeId('user'),
+      uid: resolvedUid,
       email,
       fullName: fullName || displayName || '',
       displayName: displayName || fullName || '',
       birthDate: birthDate || '',
       gender: gender || '',
-      userType: userType || 'buyer',
+      avatarUri: resolveUserAvatarUri({
+        avatarUri: req.body?.avatarUri,
+        gender: gender || '',
+        uid: resolvedUid,
+        email,
+        displayName: displayName || fullName || '',
+        fullName: fullName || displayName || '',
+      }),
+      userType: normalizedUserType,
       password,
-      createdAt: now,
-      updatedAt: now,
+      createdAt,
+      updatedAt: createdAt,
     };
 
     await pool.query(
@@ -376,11 +564,14 @@ app.post('/auth/login', async (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password) return send(res, 400, null, 'Email and password are required');
 
-    const result = await pool.query('SELECT data, password FROM users WHERE lower(email) = lower($1) LIMIT 1', [email]);
+    const result = await pool.query(
+      'SELECT uid, email, user_type, birth_date, gender, data, password FROM users WHERE lower(email) = lower($1) LIMIT 1',
+      [email]
+    );
     if (!result.rowCount || result.rows[0].password !== password) {
       return send(res, 401, null, 'Invalid credentials');
     }
-    return send(res, 200, result.rows[0].data);
+    return send(res, 200, normalizeUserPayload(result.rows[0]));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -388,9 +579,12 @@ app.post('/auth/login', async (req, res) => {
 
 app.get('/auth/me/:uid', async (req, res) => {
   try {
-    const result = await pool.query('SELECT data FROM users WHERE uid = $1 LIMIT 1', [req.params.uid]);
+    const result = await pool.query(
+      'SELECT uid, email, user_type, birth_date, gender, data FROM users WHERE uid = $1 LIMIT 1',
+      [req.params.uid]
+    );
     if (!result.rowCount) return send(res, 404, null, 'User not found');
-    return send(res, 200, result.rows[0].data);
+    return send(res, 200, normalizeUserPayload(result.rows[0]));
   } catch (error) {
     return send(res, 500, null, error.message);
   }
@@ -495,6 +689,14 @@ app.put('/auth/me/:uid', async (req, res) => {
       if (!AUTH_PROFILE_ALLOWED_FIELDS.has(key)) return;
       nextData[key] = normalizeProfileFieldValue(key, value);
     });
+    nextData.avatarUri = resolveUserAvatarUri({
+      avatarUri: nextData.avatarUri,
+      gender: nextData.gender,
+      uid,
+      email: nextEmail,
+      displayName: nextData.displayName,
+      fullName: nextData.fullName,
+    });
 
     await pool.query(
       `UPDATE users
@@ -576,6 +778,16 @@ app.get('/foods', async (_req, res) => {
   }
 });
 
+app.get('/categories', async (req, res) => {
+  try {
+    const activeOnly = String(req.query?.activeOnly ?? 'true').toLowerCase() !== 'false';
+    const categories = await getCategories(activeOnly);
+    return send(res, 200, categories);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
 app.get('/foods/:id', async (req, res) => {
   try {
     const result = await pool.query('SELECT data FROM foods WHERE id = $1 LIMIT 1', [req.params.id]);
@@ -589,11 +801,14 @@ app.get('/foods/:id', async (req, res) => {
 app.post('/foods', async (req, res) => {
   try {
     const now = nowIso();
+    const fallbackFoodBaseId = buildFoodIdBase(req.body?.cookId || '', now);
+    const resolvedFoodId = req.body?.id || await nextUniqueFoodId(fallbackFoodBaseId);
+    const resolvedCategory = await resolveCategoryForFood(req.body?.category, 'Ana Yemek');
     const payload = {
       ...req.body,
-      id: req.body?.id || makeId('food'),
+      id: resolvedFoodId,
       cookId: req.body?.cookId || 'unknown',
-      category: req.body?.category || 'other',
+      category: resolvedCategory,
       isAvailable: req.body?.isAvailable ?? true,
       rating: req.body?.rating ?? 0,
       reviewCount: req.body?.reviewCount ?? 0,
@@ -628,12 +843,13 @@ app.put('/foods/:id', async (req, res) => {
     if (!previous.rowCount) return send(res, 404, null, 'Food not found');
 
     const prevData = previous.rows[0].data || {};
+    const resolvedCategory = await resolveCategoryForFood(req.body?.category || prevData.category, 'Ana Yemek');
     const nextData = {
       ...prevData,
       ...req.body,
       id: req.params.id,
       cookId: req.body?.cookId || prevData.cookId || 'unknown',
-      category: req.body?.category || prevData.category || 'other',
+      category: resolvedCategory,
       isAvailable: req.body?.isAvailable ?? prevData.isAvailable ?? true,
       rating: req.body?.rating ?? prevData.rating ?? 0,
       reviewCount: req.body?.reviewCount ?? prevData.reviewCount ?? 0,
@@ -1321,8 +1537,17 @@ const normalizeUserPayload = (row) => {
   const base = { ...(row?.data || {}) };
   const displayName = String(base.displayName || '').trim();
   const fullName = String(base.fullName || '').trim() || displayName;
+  const phone = String(base.phone || base.phoneNumber || '').trim();
   const birthDate = String(base.birthDate || '').trim() || String(row?.birth_date || '').trim();
   const gender = String(base.gender || '').trim() || String(row?.gender || '').trim();
+  const avatarUri = resolveUserAvatarUri({
+    avatarUri: base.avatarUri,
+    gender,
+    uid: base.uid || row?.uid,
+    email: base.email || row?.email,
+    displayName,
+    fullName,
+  });
 
   const normalized = {
     ...base,
@@ -1331,8 +1556,10 @@ const normalizeUserPayload = (row) => {
     userType: base.userType || row?.user_type,
     displayName: displayName || base.email || '',
     fullName: fullName || '',
+    phone: phone || '',
     birthDate: birthDate || '',
     gender: gender || '',
+    avatarUri,
   };
 
   return normalized;
@@ -1435,15 +1662,30 @@ app.post('/admin/users', requireAdminAuth, async (req, res) => {
     const password = String(req.body?.password || '').trim();
     if (!email || !password) return send(res, 400, null, 'email and password are required');
 
+    const requestedUserType = String(req.body?.userType || 'buyer');
+    const shouldGenerateSellerId = requestedUserType === 'seller' || requestedUserType === 'both';
+    let resolvedUid = req.body?.uid || makeId('user');
+    const userIdPrefix = shouldGenerateSellerId ? 's' : 'b';
+    const baseUserId = buildUserIdBase(userIdPrefix, req.body?.fullName || '', req.body?.displayName || '', now);
+    resolvedUid = await nextUniqueUserId(baseUserId);
+
     const user = {
-      uid: req.body?.uid || makeId('user'),
+      uid: resolvedUid,
       email,
       password,
       fullName: String(req.body?.fullName || req.body?.displayName || ''),
       displayName: String(req.body?.displayName || ''),
       birthDate: String(req.body?.birthDate || ''),
       gender: String(req.body?.gender || ''),
-      userType: String(req.body?.userType || 'buyer'),
+      avatarUri: resolveUserAvatarUri({
+        avatarUri: req.body?.avatarUri,
+        gender: req.body?.gender,
+        uid: resolvedUid,
+        email,
+        displayName: req.body?.displayName,
+        fullName: req.body?.fullName,
+      }),
+      userType: requestedUserType,
       status: String(req.body?.status || 'active'),
       createdAt: now,
       updatedAt: now,
@@ -1486,6 +1728,14 @@ app.put('/admin/users/:id', requireAdminAuth, async (req, res) => {
       userType: nextUserType,
       updatedAt: nowIso(),
     };
+    nextData.avatarUri = resolveUserAvatarUri({
+      avatarUri: nextData.avatarUri,
+      gender: nextData.gender,
+      uid: existing.uid,
+      email: nextEmail,
+      displayName: nextData.displayName,
+      fullName: nextData.fullName,
+    });
 
     await pool.query(
       `UPDATE users
@@ -1592,14 +1842,25 @@ app.post('/admin/sellers', requireAdminAuth, async (req, res) => {
     const userType = req.body?.userType ? String(req.body.userType) : 'seller';
     if (!isSellerType(userType)) return send(res, 400, null, 'seller userType must be seller or both');
 
+    const baseSellerId = buildUserIdBase('s', req.body?.fullName || '', req.body?.displayName || '', now);
+    const resolvedUid = req.body?.uid || await nextUniqueUserId(baseSellerId);
+
     const seller = {
-      uid: req.body?.uid || makeId('user'),
+      uid: resolvedUid,
       email,
       password,
       fullName: String(req.body?.fullName || req.body?.displayName || ''),
       displayName: String(req.body?.displayName || ''),
       birthDate: String(req.body?.birthDate || ''),
       gender: String(req.body?.gender || ''),
+      avatarUri: resolveUserAvatarUri({
+        avatarUri: req.body?.avatarUri,
+        gender: req.body?.gender,
+        uid: resolvedUid,
+        email,
+        displayName: req.body?.displayName,
+        fullName: req.body?.fullName,
+      }),
       userType,
       status: String(req.body?.status || 'active'),
       createdAt: now,
@@ -1646,6 +1907,14 @@ app.put('/admin/sellers/:id', requireAdminAuth, async (req, res) => {
       userType: nextUserType,
       updatedAt: nowIso(),
     };
+    nextData.avatarUri = resolveUserAvatarUri({
+      avatarUri: nextData.avatarUri,
+      gender: nextData.gender,
+      uid: row.uid,
+      email: nextEmail,
+      displayName: nextData.displayName,
+      fullName: nextData.fullName,
+    });
 
     await pool.query(
       `UPDATE users
@@ -1895,6 +2164,16 @@ app.get('/admin/foods', requireAdminAuth, async (req, res) => {
   }
 });
 
+app.get('/admin/categories', requireAdminAuth, async (req, res) => {
+  try {
+    const activeOnly = String(req.query?.activeOnly ?? 'true').toLowerCase() !== 'false';
+    const categories = await getCategories(activeOnly);
+    return send(res, 200, categories);
+  } catch (error) {
+    return send(res, 500, null, error.message);
+  }
+});
+
 app.get('/admin/foods/:id', requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query('SELECT data FROM foods WHERE id = $1 LIMIT 1', [req.params.id]);
@@ -1908,11 +2187,14 @@ app.get('/admin/foods/:id', requireAdminAuth, async (req, res) => {
 app.post('/admin/foods', requireAdminAuth, async (req, res) => {
   try {
     const now = nowIso();
+    const fallbackFoodBaseId = buildFoodIdBase(req.body?.cookId || '', now);
+    const resolvedFoodId = req.body?.id || await nextUniqueFoodId(fallbackFoodBaseId);
+    const resolvedCategory = await resolveCategoryForFood(req.body?.category, 'Ana Yemek');
     const payload = {
       ...req.body,
-      id: req.body?.id || makeId('food'),
+      id: resolvedFoodId,
       cookId: req.body?.cookId || 'unknown',
-      category: req.body?.category || 'other',
+      category: resolvedCategory,
       isAvailable: req.body?.isAvailable ?? true,
       rating: req.body?.rating ?? 0,
       reviewCount: req.body?.reviewCount ?? 0,
@@ -1956,12 +2238,13 @@ app.put('/admin/foods/:id', requireAdminAuth, async (req, res) => {
     const previous = await pool.query('SELECT data FROM foods WHERE id = $1 LIMIT 1', [req.params.id]);
     if (!previous.rowCount) return send(res, 404, null, 'Food not found');
     const prevData = previous.rows[0].data || {};
+    const resolvedCategory = await resolveCategoryForFood(req.body?.category || prevData.category, 'Ana Yemek');
     const nextData = {
       ...prevData,
       ...req.body,
       id: req.params.id,
       cookId: req.body?.cookId || prevData.cookId || 'unknown',
-      category: req.body?.category || prevData.category || 'other',
+      category: resolvedCategory,
       isAvailable: req.body?.isAvailable ?? prevData.isAvailable ?? true,
       rating: req.body?.rating ?? prevData.rating ?? 0,
       reviewCount: req.body?.reviewCount ?? prevData.reviewCount ?? 0,

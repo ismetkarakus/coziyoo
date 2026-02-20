@@ -16,6 +16,7 @@ interface FilterModalProps {
   onClose: () => void;
   onApply: (filters: SearchFilters) => void;
   initialFilters?: SearchFilters;
+  categories?: Array<{ id: string; label: string }>;
 }
 
 export const FilterModal: React.FC<FilterModalProps> = ({
@@ -23,6 +24,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   onClose,
   onApply,
   initialFilters = {},
+  categories: categoryOptions,
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -31,10 +33,13 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   
   const [filters, setFilters] = useState<SearchFilters>(initialFilters);
 
-  const categories = currentLanguage === 'en'
+  const fallbackCategories = currentLanguage === 'en'
     ? ['All', 'Main Dish', 'Soup', 'Breakfast', 'Salad', 'Dessert', 'Drinks', 'Snack', 'Vegan', 'Diet']
     : ['Tümü', 'Ana Yemek', 'Çorba', 'Kahvaltı', 'Salata', 'Tatlı', 'İçecek', 'Atıştırmalık', 'Vegan', 'Diyet'];
-  const defaultCategory = currentLanguage === 'en' ? 'All' : 'Tümü';
+  const defaultCategory = categoryOptions?.length ? 'all' : (currentLanguage === 'en' ? 'All' : 'Tümü');
+  const categories = categoryOptions?.length
+    ? [{ id: 'all', label: currentLanguage === 'en' ? 'All' : 'Tümü' }, ...categoryOptions]
+    : fallbackCategories.map((item) => ({ id: item, label: item }));
 
   const priceRanges = [
     { label: `0-25 ${currentCountry.currencySymbol}`, min: 0, max: 25 },
@@ -166,27 +171,27 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             <View style={styles.chipContainer}>
               {categories.map((category) => (
                 <TouchableOpacity
-                  key={category}
+                  key={category.id}
                   style={[
                     styles.chip,
                     {
-                      backgroundColor: filters.category === category || (category === defaultCategory && !filters.category)
+                      backgroundColor: filters.category === category.id || (category.id === defaultCategory && !filters.category)
                         ? colors.primary
                         : colors.surface,
                       borderColor: colors.border,
                     }
                   ]}
-                  onPress={() => handleCategorySelect(category)}
+                  onPress={() => handleCategorySelect(category.id)}
                 >
                   <Text
                     variant="body"
                     style={{
-                      color: filters.category === category || (category === defaultCategory && !filters.category)
+                      color: filters.category === category.id || (category.id === defaultCategory && !filters.category)
                         ? colors.background
                         : colors.text
                     }}
                   >
-                    {category}
+                    {category.label}
                   </Text>
                 </TouchableOpacity>
               ))}

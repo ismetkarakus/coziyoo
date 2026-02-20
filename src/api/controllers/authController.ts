@@ -49,6 +49,29 @@ const ALLOWED_PROFILE_FIELDS = new Set([
   'complianceData',
 ]);
 
+const toTimestampPart = (date: Date): string => {
+  return String(date.getTime());
+};
+
+const sanitizeIdPart = (value: string, fallback: string): string => {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_');
+  return normalized || fallback;
+};
+
+const buildUserUidBase = (prefix: 's' | 'b', fullName: string, displayName: string, createdAt: Date): string => {
+  const source = `${fullName || ''}`.trim() || `${displayName || ''}`.trim();
+  const parts = source.split(/\s+/).filter(Boolean);
+  const firstName = sanitizeIdPart(parts[0] || 'user', 'user');
+  const surname = sanitizeIdPart(parts[parts.length - 1] || 'user', 'user');
+  return `${prefix}_${firstName}_${surname}_${toTimestampPart(createdAt)}`;
+};
+
 const normalizeProfileValue = (key: string, value: unknown): string | number => {
   if (JSON_FIELDS.has(key)) {
     if (value === null || value === undefined || value === '') return '';
@@ -71,17 +94,32 @@ export const authController = {
         return { status: 400, error: 'Email already in use' };
       }
 
+      const createdAt = new Date();
+      const normalizedUserType = userType || 'buyer';
+      const shouldGenerateSellerId = normalizedUserType === 'seller' || normalizedUserType === 'both';
+      let nextUid = uid || `user_${Date.now()}`;
+
+      const base = shouldGenerateSellerId
+        ? buildUserUidBase('s', fullName || '', displayName || '', createdAt)
+        : buildUserUidBase('b', fullName || '', displayName || '', createdAt);
+      nextUid = base;
+      let counter = 2;
+      while (await userModel.findById(nextUid)) {
+        nextUid = `${base}_${counter}`;
+        counter += 1;
+      }
+
       const newUser = {
-        uid,
+        uid: nextUid,
         email,
         fullName: fullName || displayName,
         displayName: displayName || fullName,
-        sellerNickname: userType === 'seller' || userType === 'both' ? displayName : '',
+        sellerNickname: shouldGenerateSellerId ? displayName : '',
         identityStatus: 'pending',
-        userType,
+        userType: normalizedUserType,
         password, // In a real app, hash this!
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: createdAt.toISOString(),
+        updatedAt: createdAt.toISOString()
       };
 
       await userModel.create(newUser);

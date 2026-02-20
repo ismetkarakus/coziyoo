@@ -85,6 +85,16 @@ const createSchema = (db: SQLiteDatabase): void => {
       updatedAt TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY NOT NULL,
+      nameTr TEXT NOT NULL,
+      nameEn TEXT NOT NULL,
+      sortOrder INTEGER NOT NULL DEFAULT 0,
+      isActive INTEGER NOT NULL DEFAULT 1,
+      createdAt TEXT,
+      updatedAt TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY NOT NULL,
       foodId TEXT NOT NULL,
@@ -290,9 +300,20 @@ const migrateFoodSchema = (db: SQLiteDatabase): void => {
 };
 
 const seedIfEmpty = (db: SQLiteDatabase): void => {
-  // DB-only mode: do not auto-seed from local mock data.
-  // Initial records must come from API writes.
-  void db;
+  // DB-only mode: do not auto-seed domain entities from local mock data.
+  // Keep only reference/master records seeded.
+  db.execSync(`
+    INSERT OR IGNORE INTO categories (id, nameTr, nameEn, sortOrder, isActive, createdAt, updatedAt) VALUES
+      ('ana_yemek', 'Ana Yemek', 'Main Course', 1, 1, datetime('now'), datetime('now')),
+      ('kahvalti', 'Kahvaltı', 'Breakfast', 2, 1, datetime('now'), datetime('now')),
+      ('salata', 'Salata', 'Salad', 3, 1, datetime('now'), datetime('now')),
+      ('meze', 'Meze', 'Mezes', 4, 1, datetime('now'), datetime('now')),
+      ('corba', 'Corba', 'Soups', 5, 1, datetime('now'), datetime('now')),
+      ('tatli', 'Tatli', 'Desserts', 6, 1, datetime('now'), datetime('now')),
+      ('glutensiz', 'Glutensiz', 'Gluten Free', 7, 1, datetime('now'), datetime('now')),
+      ('vejetaryen', 'Vejetaryen', 'Vegetarian', 8, 1, datetime('now'), datetime('now')),
+      ('icecekler', 'Icecekler', 'Drinks', 9, 1, datetime('now'), datetime('now'));
+  `);
 };
 
 const mapRunResult = (result: {

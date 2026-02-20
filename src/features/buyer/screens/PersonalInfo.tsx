@@ -112,11 +112,12 @@ export const PersonalInfo: React.FC = () => {
   const loadPersonalInfo = () => {
     const defaults = getDefaultPersonalInfo(currentLanguage);
     const cardsFromApi = normalizeCards(userData?.paymentCards);
+    const legacyPhone = (userData as any)?.phoneNumber;
     setFormData({
       name: userData?.fullName || userData?.displayName || defaults.name,
       displayName: userData?.displayName || defaults.displayName,
       email: userData?.email || defaults.email,
-      phone: userData?.phone || defaults.phone,
+      phone: userData?.phone || legacyPhone || defaults.phone,
       birthDate: userData?.birthDate || defaults.birthDate,
       gender: userData?.gender || defaults.gender,
       avatar: userData?.avatarUri || defaults.avatar,

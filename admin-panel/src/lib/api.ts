@@ -45,6 +45,14 @@ export interface AuditLogRecord {
   createdAt: string
 }
 
+export interface CategoryRecord {
+  id: string
+  nameTr: string
+  nameEn: string
+  sortOrder: number
+  isActive: boolean
+}
+
 type ApiEnvelope<T> = {
   status: number
   data?: T
@@ -164,6 +172,12 @@ export const api = {
 
   getFoods: (params?: { page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; q?: string; limit?: number }) =>
     request<Record<string, unknown>[] | PaginatedResult<Record<string, unknown>>>(`/admin/foods${buildQuery(params || { limit: 300 })}`).then(asItems),
+  getCategories: (params?: { activeOnly?: boolean }) =>
+    request<CategoryRecord[]>(
+      `/admin/categories${buildQuery({
+        activeOnly: params?.activeOnly === false ? 'false' : 'true',
+      })}`
+    ),
   getFood: (id: string) => request<Record<string, unknown>>(`/admin/foods/${encodeURIComponent(id)}`),
   createFood: (payload: Record<string, unknown>) =>
     request<Record<string, unknown>>('/admin/foods', {

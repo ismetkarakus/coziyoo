@@ -65,7 +65,7 @@ const SellerProfile = () => {
       birthDate: String(seller.birthDate || ''),
       gender: String(seller.gender || ''),
       email: String(seller.email || ''),
-      phone: String(seller.phone || ''),
+      phone: String(seller.phone || (seller as any).phoneNumber || ''),
       status: String(seller.status || 'pending'),
       userType: String(seller.userType || 'seller'),
     })
@@ -235,7 +235,7 @@ const SellerProfile = () => {
               <Typography>Date of Birth: {formatValue(seller.birthDate)}</Typography>
               <Typography>Gender: {formatValue(seller.gender)}</Typography>
               <Typography>Email: {formatValue(seller.email)}</Typography>
-              <Typography>Phone: {formatValue(seller.phone)}</Typography>
+              <Typography>Phone: {formatValue(seller.phone || (seller as any).phoneNumber)}</Typography>
               <Typography>Status: {formatValue(seller.status)}</Typography>
             </Stack>
           </Paper>

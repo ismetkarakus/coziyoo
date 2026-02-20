@@ -10,6 +10,11 @@ const Foods = () => {
     queryFn: () => api.getFoods({ limit: 500 }),
     staleTime: 15000,
   })
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => api.getCategories({ activeOnly: true }),
+    staleTime: 60000,
+  })
   const createMutation = useMutation({
     mutationFn: (payload: Record<string, unknown>) => api.createFood(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['foods'] }),
@@ -24,18 +29,37 @@ const Foods = () => {
   })
 
   const handleCreate = async () => {
-    const raw = window.prompt('New food JSON', JSON.stringify({ name: '', cookId: '', price: 0, category: 'other' }))
+    const defaultCategory = categories[0]?.nameTr || 'Ana Yemek'
+    const allowedCategories = categories.map((item) => item.nameTr)
+    const raw = window.prompt(
+      `New food JSON\nAllowed categories: ${allowedCategories.join(', ')}`,
+      JSON.stringify({ name: '', cookId: '', price: 0, category: defaultCategory })
+    )
     if (!raw) return
     const payload = JSON.parse(raw) as Record<string, unknown>
+    const category = String(payload.category || '').trim()
+    if (allowedCategories.length > 0 && !allowedCategories.includes(category)) {
+      window.alert(`Invalid category. Use one of: ${allowedCategories.join(', ')}`)
+      return
+    }
     await createMutation.mutateAsync(payload)
   }
 
   const handleEdit = async (row: Record<string, unknown>) => {
     const id = String(row.id || '')
     if (!id) return
-    const raw = window.prompt('Edit food JSON', JSON.stringify(row, null, 2))
+    const allowedCategories = categories.map((item) => item.nameTr)
+    const raw = window.prompt(
+      `Edit food JSON\nAllowed categories: ${allowedCategories.join(', ')}`,
+      JSON.stringify(row, null, 2)
+    )
     if (!raw) return
     const payload = JSON.parse(raw) as Record<string, unknown>
+    const category = String(payload.category || '').trim()
+    if (category && allowedCategories.length > 0 && !allowedCategories.includes(category)) {
+      window.alert(`Invalid category. Use one of: ${allowedCategories.join(', ')}`)
+      return
+    }
     await updateMutation.mutateAsync({ id, payload })
   }
 

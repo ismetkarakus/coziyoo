@@ -173,8 +173,8 @@ export function FoodCard({
   price,
   distance,
   imageUrl,
-  hasPickup = true,
-  hasDelivery = false,
+  hasPickup = false,
+  hasDelivery = true,
   availableDates,
   currentStock,
   dailyStock,
@@ -228,9 +228,9 @@ export function FoodCard({
     return options;
   }, [availableDeliveryOptions, hasPickup, hasDelivery]);
 
-  const initialMode: DeliveryMode = availableOptions.includes("pickup")
-    ? "pickup"
-    : "delivery";
+  const initialMode: DeliveryMode = availableOptions.includes("delivery")
+    ? "delivery"
+    : "pickup";
 
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>(initialMode);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -260,7 +260,31 @@ export function FoodCard({
     const parts = value.split("-").map((part) => part.trim()).filter(Boolean);
     if (parts.length >= 2) {
       const endDate = parts.slice(1).join("-").trim();
-      return t("foodCard.endDateInline", { date: endDate });
+      const dmyMatch = endDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (!dmyMatch) {
+        return t("foodCard.endDateInline", { date: endDate });
+      }
+
+      const day = Number(dmyMatch[1]);
+      const month = Number(dmyMatch[2]);
+      const year = Number(dmyMatch[3]);
+      const parsed = new Date(year, month - 1, day);
+      if (Number.isNaN(parsed.getTime())) {
+        return t("foodCard.endDateInline", { date: endDate });
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      parsed.setHours(0, 0, 0, 0);
+
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const daysLeft = Math.ceil((parsed.getTime() - today.getTime()) / msPerDay);
+      const daysLeftText =
+        daysLeft <= 0
+          ? (currentLanguage === "en" ? "Sold out" : "Tükendi")
+          : (currentLanguage === "en" ? `${daysLeft} days left` : `${daysLeft} gün kaldı`);
+
+      return t("foodCard.endDateInline", { date: daysLeftText });
     }
     return value;
   };

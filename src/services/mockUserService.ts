@@ -5,6 +5,8 @@ export interface MockUserRecord {
   email?: string;
   displayName?: string;
   username?: string;
+  gender?: string;
+  avatarUri?: string;
   userType?: 'buyer' | 'seller' | 'both';
   allergicTo?: string[];
 }

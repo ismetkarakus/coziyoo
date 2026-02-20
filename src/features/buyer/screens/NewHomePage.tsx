@@ -14,6 +14,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { mockUserService } from '../../../services/mockUserService';
 import { getFavoriteMeta, toggleFavorite } from '../../../services/favoriteService';
 import { SearchFilters } from '../../../services/searchService';
+import { categoryService, Category } from '../../../services/categoryService';
 
 const PREVIEW_COLORS = {
   primary: '#8FA08E',
@@ -27,7 +28,17 @@ const PREVIEW_COLORS = {
   textMuted: '#6B7280',
 } as const;
 
-export const HomePreview: React.FC = () => {
+const CATEGORY_IMAGE_MAP: Record<string, string> = {
+  'Ana Yemek': 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&h=600&fit=crop',
+  'Çorba': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&h=600&fit=crop',
+  'Meze': 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&h=600&fit=crop',
+  'Tatlı': 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800&h=600&fit=crop',
+  'Kahvaltı': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&h=600&fit=crop',
+  'İçecek': 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=800&h=600&fit=crop',
+  'Salata': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&h=600&fit=crop',
+};
+
+export const NewHomePage: React.FC = () => {
   const { currentLanguage, t } = useTranslation();
   const { formatCurrency } = useCountry();
   const { addToCart, getRemainingStock, getTotalItems } = useCart();
@@ -47,6 +58,7 @@ export const HomePreview: React.FC = () => {
   const [pendingAllergenItem, setPendingAllergenItem] = useState<any | null>(null);
   const [publishedMeals, setPublishedMeals] = useState<any[]>([]);
   const [apiFoods, setApiFoods] = useState<MockFood[]>([]);
+  const [categoryDefs, setCategoryDefs] = useState<Category[]>([]);
 
   const loadPublishedMeals = React.useCallback(async () => {
     try {
@@ -60,7 +72,7 @@ export const HomePreview: React.FC = () => {
       setPublishedMeals(visible);
       setApiFoods(normalized);
     } catch (error) {
-      console.error('Error loading foods in HomePreview:', error);
+      console.error('Error loading foods in NewHomePage:', error);
       setPublishedMeals([]);
       setApiFoods([]);
     }
@@ -71,6 +83,14 @@ export const HomePreview: React.FC = () => {
       loadPublishedMeals();
     }, [loadPublishedMeals])
   );
+
+  React.useEffect(() => {
+    const loadCategories = async () => {
+      const records = await categoryService.getCategories(true);
+      setCategoryDefs(records);
+    };
+    loadCategories();
+  }, []);
 
   const getFoodIdentity = (food: any) =>
     `${String(food?.name ?? '').toLowerCase()}__${String(food?.cookName ?? '').toLowerCase()}`;
@@ -141,6 +161,66 @@ export const HomePreview: React.FC = () => {
     return currentLanguage === 'en' ? 'Cuisine Not Specified' : 'Mutfak Belirtilmedi';
   };
 
+  const getFoodImageByCategory = (category?: string): string => {
+    const normalized = String(category || '').trim();
+    if (normalized in CATEGORY_IMAGE_MAP) return CATEGORY_IMAGE_MAP[normalized];
+    return 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800&h=600&fit=crop';
+  };
+
+  const resolveFoodImage = (rawUrl: unknown, category?: string): string => {
+    const url = typeof rawUrl === 'string' ? rawUrl.trim() : '';
+    if (!url) return getFoodImageByCategory(category);
+    if (url.includes('picsum.photos') || url.includes('placehold.co')) {
+      return getFoodImageByCategory(category);
+    }
+    return url;
+  };
+
+  const getDaysLeftFromEndDate = (value?: string): number | null => {
+    if (!value) return null;
+    const trimmed = String(value).trim();
+    let parsed: Date | null = null;
+    const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+    if (dmyMatch) {
+      const day = Number(dmyMatch[1]);
+      const month = Number(dmyMatch[2]);
+      const year = Number(dmyMatch[3]);
+      parsed = new Date(year, month - 1, day);
+    } else {
+      const numeric = Number(trimmed);
+      if (Number.isFinite(numeric) && /^\d+$/.test(trimmed)) {
+        const timestamp = trimmed.length <= 10 ? numeric * 1000 : numeric;
+        parsed = new Date(timestamp);
+      } else {
+        parsed = new Date(trimmed);
+      }
+    }
+
+    if (!parsed || Number.isNaN(parsed.getTime())) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    parsed.setHours(0, 0, 0, 0);
+
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.ceil((parsed.getTime() - today.getTime()) / msPerDay);
+  };
+
+  const formatEndDate = (value?: string): string => {
+    if (!value) return currentLanguage === 'en' ? 'Not specified' : 'Belirtilmedi';
+    const daysLeft = getDaysLeftFromEndDate(value);
+    if (daysLeft === null) return String(value).trim();
+
+    if (daysLeft <= 0) {
+      return currentLanguage === 'en' ? 'Sold out' : 'Tükendi';
+    }
+    if (daysLeft === 1) {
+      return currentLanguage === 'en' ? 'LAST DAY' : 'SON GUN';
+    }
+
+    return currentLanguage === 'en' ? `${daysLeft} days left` : `${daysLeft} gün kaldı`;
+  };
+
   const sourceFoods = useMemo(() => {
     const normalizedPublishedMeals = publishedMeals
       .map((meal) => ({
@@ -179,7 +259,7 @@ export const HomePreview: React.FC = () => {
 
   const homeItems = useMemo(
     () =>
-      sourceFoods.map((food: any, index) => ({
+      sourceFoods.map((food: any) => ({
         id: food.id,
         cookId: String(food.cookId || food.sellerId || ''),
         title: food.name,
@@ -195,12 +275,15 @@ export const HomePreview: React.FC = () => {
             : 'Ev yapımı, taze ve özenli hazırlanır.'),
         category: localizeCategory(food.category || (currentLanguage === 'en' ? 'Main Course' : 'Ana Yemek')),
         cuisine: localizeCategory(getCuisineLabel(food)),
+        kitchenName: localizeCategory(getCuisineLabel(food)),
         preparationTime: typeof food.preparationTime === 'number' ? food.preparationTime : 30,
+        distance: typeof food.distance === 'string' ? food.distance : undefined,
         currentStock: getRemainingStock(
           String(food.id),
           typeof food.currentStock === 'number' ? food.currentStock : 0
         ),
         dailyStock: typeof food.dailyStock === 'number' ? food.dailyStock : 0,
+        endDate: typeof food.endDate === 'string' ? food.endDate : undefined,
         hasPickup: food.hasPickup === true,
         hasDelivery: food.hasDelivery !== false,
         deliveryFee: typeof food.deliveryFee === 'number' ? food.deliveryFee : 0,
@@ -212,26 +295,61 @@ export const HomePreview: React.FC = () => {
                 ...(food.hasPickup === true ? (['pickup'] as const) : []),
               ],
         allergens: food.allergens || [],
-        img:
-          food.imageUrl ||
-          `https://placehold.co/320x320/E8E6E1/4B5563?text=${encodeURIComponent(food.name || (currentLanguage === 'en' ? `Meal ${index + 1}` : `Yemek ${index + 1}`))}`,
+        img: resolveFoodImage(food.imageUrl, food.category),
         initialFavoriteCount: Number(food.favoriteCount ?? 0),
       })),
     [currentLanguage, formatCurrency, getRemainingStock, sourceFoods]
   );
 
-  const categories = useMemo(
-    () => {
-      const uniqueCategories = Array.from(
-        new Set(homeItems.map((item) => item.category).filter(Boolean))
-      );
+  const normalizeCategoryText = React.useCallback(
+    (value: string): string =>
+      String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim(),
+    []
+  );
+
+  const resolveCategoryIdFromValue = React.useCallback(
+    (value: string): string => {
+      const normalized = normalizeCategoryText(value);
+      if (!normalized) return '';
+      const matched = categoryDefs.find((category) => {
+        return (
+          normalizeCategoryText(category.id) === normalized ||
+          normalizeCategoryText(category.nameTr) === normalized ||
+          normalizeCategoryText(category.nameEn) === normalized
+        );
+      });
+      return matched?.id || normalized;
+    },
+    [categoryDefs, normalizeCategoryText]
+  );
+
+  const categories = useMemo(() => {
+    if (categoryDefs.length > 0) {
       return [
         { id: 'all', label: currentLanguage === 'en' ? 'All' : 'Tümü' },
-        ...uniqueCategories.map((category) => ({ id: category, label: category })),
+        ...categoryDefs.map((category) => ({
+          id: category.id,
+          label: currentLanguage === 'en' ? category.nameEn : category.nameTr,
+        })),
       ];
-    },
-    [homeItems, currentLanguage]
-  );
+    }
+
+    const uniqueCategories = Array.from(
+      new Set(homeItems.map((item) => item.category).filter(Boolean))
+    );
+    const orderedCategories = uniqueCategories.sort((a, b) =>
+      a.localeCompare(b, currentLanguage === 'en' ? 'en' : 'tr')
+    );
+
+    return [
+      { id: 'all', label: currentLanguage === 'en' ? 'All' : 'Tümü' },
+      ...orderedCategories.map((category) => ({ id: category, label: category })),
+    ];
+  }, [categoryDefs, currentLanguage, homeItems]);
 
   const getNumericDistance = (distanceValue?: string): number => {
     const numericDistance = Number(String(distanceValue || '').replace(',', '.').replace(/[^\d.]/g, ''));
@@ -239,16 +357,24 @@ export const HomePreview: React.FC = () => {
   };
 
   const filteredItems = useMemo(() => {
+    const availableItems = homeItems.filter((item) => {
+      if ((item.currentStock ?? 0) <= 0) return false;
+      const daysLeft = getDaysLeftFromEndDate(item.endDate);
+      if (daysLeft !== null && daysLeft <= 0) return false;
+      return true;
+    });
+
     let result =
       selectedCategoryId === 'all'
-        ? homeItems
-        : homeItems.filter((item) => item.category === selectedCategoryId);
+        ? availableItems
+        : availableItems.filter((item) => resolveCategoryIdFromValue(item.category) === selectedCategoryId);
 
     const normalizedQuery = searchQuery.trim().toLowerCase();
     if (normalizedQuery) {
       result = result.filter((item) =>
         item.title.toLowerCase().includes(normalizedQuery) ||
         item.cook.toLowerCase().includes(normalizedQuery) ||
+        item.kitchenName.toLowerCase().includes(normalizedQuery) ||
         item.description.toLowerCase().includes(normalizedQuery) ||
         item.category.toLowerCase().includes(normalizedQuery) ||
         item.cuisine.toLowerCase().includes(normalizedQuery)
@@ -256,9 +382,13 @@ export const HomePreview: React.FC = () => {
     }
 
     if (searchFilters.category) {
-      const isAllCategory = searchFilters.category === 'All' || searchFilters.category === 'Tümü';
-      if (!isAllCategory) {
-        result = result.filter((item) => item.category === searchFilters.category);
+      const normalizedFilter = String(searchFilters.category);
+      const filterCategoryId =
+        normalizedFilter === 'all' || normalizedFilter === 'All' || normalizedFilter === 'Tümü'
+          ? 'all'
+          : resolveCategoryIdFromValue(normalizedFilter);
+      if (filterCategoryId !== 'all') {
+        result = result.filter((item) => resolveCategoryIdFromValue(item.category) === filterCategoryId);
       }
     }
 
@@ -315,7 +445,7 @@ export const HomePreview: React.FC = () => {
     }
 
     return result;
-  }, [homeItems, selectedCategoryId, showNearbyOnly, userLocation, searchFilters, favoriteCounts, searchQuery]);
+  }, [homeItems, selectedCategoryId, showNearbyOnly, userLocation, searchFilters, favoriteCounts, searchQuery, resolveCategoryIdFromValue]);
 
   const handleNearbyPress = async (): Promise<void> => {
     if (showNearbyOnly) {
@@ -347,7 +477,7 @@ export const HomePreview: React.FC = () => {
       });
       setShowNearbyOnly(true);
     } catch (error) {
-      console.error('Error getting location in HomePreview:', error);
+      console.error('Error getting location in NewHomePage:', error);
       Alert.alert(
         currentLanguage === 'en' ? 'Location Error' : 'Konum Hatası',
         currentLanguage === 'en'
@@ -365,45 +495,17 @@ export const HomePreview: React.FC = () => {
 
   const handleApplyFilters = (filters: SearchFilters): void => {
     setSearchFilters(filters);
-    if (!filters.category || filters.category === 'All' || filters.category === 'Tümü') {
+    if (!filters.category || filters.category === 'all' || filters.category === 'All' || filters.category === 'Tümü') {
       setSelectedCategoryId('all');
       return;
     }
-    setSelectedCategoryId(filters.category);
+    setSelectedCategoryId(resolveCategoryIdFromValue(filters.category));
   };
 
   const openFoodDetail = (item: (typeof homeItems)[number]): void => {
     router.push(
       `/food-detail-order?id=${encodeURIComponent(item.id)}&name=${encodeURIComponent(item.title)}&cookName=${encodeURIComponent(item.cook)}&cookId=${encodeURIComponent(String(item.cookId || ''))}&imageUrl=${encodeURIComponent(item.img)}&price=${item.numericPrice}` as any
     );
-  };
-
-  const openBulkDemo = (item: (typeof homeItems)[number]): void => {
-    const cookMeals = homeItems.filter((meal) => meal.cook === item.cook);
-    const orderedMeals = [
-      item,
-      ...cookMeals.filter((meal) => String(meal.id) !== String(item.id)),
-    ];
-
-    router.push({
-      pathname: '/bulk-food-detail',
-      params: {
-        id: String(item.id),
-        name: item.title,
-        cookName: item.cook,
-        imageUrl: item.img,
-        price: String(item.numericPrice),
-        source: 'bulk-demo',
-        meals: JSON.stringify(
-          orderedMeals.map((meal) => ({
-            id: String(meal.id),
-            title: meal.title,
-            imageUrl: meal.img,
-            price: Number(meal.numericPrice || 0),
-          }))
-        ),
-      },
-    } as any);
   };
 
   React.useEffect(() => {
@@ -481,9 +583,9 @@ export const HomePreview: React.FC = () => {
       (await mockUserService.getUserByUid(user?.uid || userData?.uid)) ||
       (await mockUserService.getUserByEmail(userData?.email || user?.email));
     const userAllergies = (userRecord?.allergicTo || []).map((allergen: string) => allergen.toLowerCase());
-    const foodAllergens = (item.allergens || []).map((allergen) => allergen.toLowerCase());
+    const foodAllergens = (item.allergens || []).map((allergen: string) => allergen.toLowerCase());
     const matches = userAllergies.length > 0
-      ? (item.allergens || []).filter((allergen) =>
+      ? (item.allergens || []).filter((allergen: string) =>
           userAllergies.includes(allergen.toLowerCase())
         )
       : foodAllergens.length > 0
@@ -519,6 +621,40 @@ export const HomePreview: React.FC = () => {
 
   const handleOpenCart = () => {
     router.push('/(buyer)/cart' as any);
+  };
+
+  const getRecentComments = (item: (typeof homeItems)[number]): Array<{ id: string; author: string; text: string; rating: number }> => {
+    if (currentLanguage === 'en') {
+      return [
+        {
+          id: `${item.id}-c1`,
+          author: 'Aylin',
+          text: `Very tasty ${item.title}. ${item.cook} cooks with real home quality.`,
+          rating: Math.max(1, Math.min(5, Number(item.rating || 5))),
+        },
+        {
+          id: `${item.id}-c2`,
+          author: 'Murat',
+          text: `${item.kitchenName} style is excellent. I will order again.`,
+          rating: Math.max(1, Math.min(5, Number(item.rating || 5) - 0.3)),
+        },
+      ];
+    }
+
+    return [
+      {
+        id: `${item.id}-c1`,
+        author: 'Aylin',
+        text: `${item.title} cok lezzetliydi. ${item.cook} gercekten ev tadi veriyor.`,
+        rating: Math.max(1, Math.min(5, Number(item.rating || 5))),
+      },
+      {
+        id: `${item.id}-c2`,
+        author: 'Murat',
+        text: `${item.kitchenName} mutfagi tadi harika. Tekrar siparis veririm.`,
+        rating: Math.max(1, Math.min(5, Number(item.rating || 5) - 0.3)),
+      },
+    ];
   };
 
   return (
@@ -612,10 +748,38 @@ export const HomePreview: React.FC = () => {
         {filteredItems.map((item) => (
           <View key={item.id} style={styles.card}>
             <View style={styles.cardHeader}>
-              <View style={styles.headerLeft}>
-                <View style={styles.titleRowInline}>
+              <View style={styles.titleRowInline}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => openFoodDetail(item)} style={styles.contentPressable}>
                   <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
                     {item.title}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.headerActions}>
+                <Text style={styles.priceText}>{item.price}</Text>
+              </View>
+            </View>
+
+            <View style={styles.cardContentRow}>
+              <View style={styles.imageColumn}>
+                <View style={styles.imageWrap}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => openFoodDetail(item)}>
+                    <Image source={{ uri: item.img }} style={styles.cardImage} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.cardBody}>
+                <TouchableOpacity
+                  style={[styles.cardBodyTop, styles.contentPressable]}
+                  activeOpacity={0.85}
+                  onPress={() => openFoodDetail(item)}
+                >
+                  <Text style={styles.metaLabel}>
+                    <Text style={[styles.metaValue, styles.foodNameValue]}>{item.cook}</Text>
+                  </Text>
+                  <Text style={styles.metaLabel}>
+                    {currentLanguage === 'en' ? 'Kitchen Name' : 'Mutfak'}: <Text style={styles.metaValue}>{item.kitchenName}</Text>
                   </Text>
                   <View
                     style={[
@@ -629,94 +793,107 @@ export const HomePreview: React.FC = () => {
                         (item.currentStock ?? 0) <= 2 ? styles.stockInlineTextLow : null,
                       ]}
                     >
-                      {currentLanguage === 'en' ? `${item.currentStock ?? 0} left` : `${item.currentStock ?? 0} kaldı`}
+                      {currentLanguage === 'en' ? `${item.currentStock ?? 0} piece left` : `${item.currentStock ?? 0} adet kaldi`}
                     </Text>
                   </View>
-                </View>
-              </View>
-              <View style={styles.headerActions}>
-                <TouchableOpacity style={styles.favButton} activeOpacity={0.8} onPress={() => void handleFavoritePress(item)}>
-                  <MaterialIcons
-                    name={favoriteIds.has(String(item.id)) ? 'favorite' : 'favorite-border'}
-                    size={18}
-                    color={favoriteIds.has(String(item.id)) ? '#E53935' : '#9CA3AF'}
-                  />
-                  {(favoriteCounts[String(item.id)] ?? item.initialFavoriteCount) > 0 ? (
-                    <Text style={styles.favoriteCount}>{favoriteCounts[String(item.id)] ?? item.initialFavoriteCount}</Text>
-                  ) : null}
                 </TouchableOpacity>
-                <Text style={styles.priceText}>{item.price}</Text>
+                <View style={styles.endDateRow}>
+                  {(() => {
+                    const daysLeft = getDaysLeftFromEndDate(item.endDate);
+                    const isLastDay = daysLeft === 1;
+                    return (
+                      <Text style={styles.metaLabel}>
+                        {currentLanguage === 'en' ? 'End Date' : 'Bitiş Tarihi'}:{' '}
+                        {isLastDay ? (
+                          <Text style={[styles.metaValue, styles.metaValueUrgentBadge]}>
+                            {formatEndDate(item.endDate)}
+                          </Text>
+                        ) : (
+                          <Text style={styles.metaValue}>{formatEndDate(item.endDate)}</Text>
+                        )}
+                      </Text>
+                    );
+                  })()}
+                  <TouchableOpacity
+                    style={[styles.favButton, styles.favButtonLarge]}
+                    activeOpacity={0.85}
+                    onPress={() => void handleFavoritePress(item)}
+                  >
+                    <MaterialIcons
+                      name={favoriteIds.has(String(item.id)) ? 'favorite' : 'favorite-border'}
+                      size={22}
+                      color={favoriteIds.has(String(item.id)) ? '#E53935' : '#9CA3AF'}
+                    />
+                    {(favoriteCounts[String(item.id)] ?? item.initialFavoriteCount) > 0 ? (
+                      <Text style={[styles.favoriteCount, styles.favoriteCountLarge]}>
+                        {favoriteCounts[String(item.id)] ?? item.initialFavoriteCount}
+                      </Text>
+                    ) : null}
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-
-            <View style={styles.cardContentRow}>
-              <View style={styles.imageColumn}>
-                <View style={styles.imageWrap}>
-                  <TouchableOpacity activeOpacity={0.85} onPress={() => openFoodDetail(item)}>
-                    <Image source={{ uri: item.img }} style={styles.cardImage} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => void handleAddToCart(item)}>
-                    <MaterialIcons name="add" size={24} color={PREVIEW_COLORS.accent} />
-                  </TouchableOpacity>
-                </View>
+            <View style={styles.cardActions}>
+              <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.buyButton} activeOpacity={0.85} onPress={() => void handleAddToCart(item)}>
+                  <Text style={styles.buyButtonText}>
+                    {currentLanguage === 'en' ? 'BUY' : 'Sepete At'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.detailButton} activeOpacity={0.85} onPress={() => openFoodDetail(item)}>
+                  <Text style={styles.detailButtonText}>
+                    {currentLanguage === 'en' ? 'Details' : 'Incele'}
+                  </Text>
+                </TouchableOpacity>
               </View>
-
-              <View style={styles.cardBody}>
-                <View style={styles.cardBodyTop}>
-                  <Text style={styles.metaTitle}>{item.cuisine}</Text>
-                  <Text style={styles.metaDescription} numberOfLines={3} ellipsizeMode="tail">
-                    {item.description}
+            </View>
+            <View style={styles.commentsSection}>
+              {getRecentComments(item).slice(0, 1).map((comment) => (
+                <View key={comment.id} style={styles.commentInline}>
+                  <View style={styles.commentHeader}>
+                    <Text style={styles.commentAuthor}>{comment.author}</Text>
+                    <View style={styles.commentStars}>
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <MaterialIcons
+                          key={`${comment.id}-star-${index}`}
+                          name={index < Math.round(comment.rating) ? 'star' : 'star-border'}
+                          size={11}
+                          color="#F59E0B"
+                        />
+                      ))}
+                      <Text style={styles.commentRating}>{comment.rating.toFixed(1)}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.commentText} numberOfLines={1}>
+                    {comment.text}
                   </Text>
                 </View>
-                <View style={styles.metaDeliveryRow}>
-                  <View style={styles.deliveryInline}>
-                    {item.hasPickup ? (
-                      <View style={styles.deliveryItem}>
-                        <Text style={styles.deliveryEmoji}>🚶</Text>
-                        <Text style={styles.deliveryLabel}>{currentLanguage === 'en' ? 'Pickup' : 'Al'}</Text>
-                      </View>
-                    ) : null}
-                    {item.hasDelivery ? (
-                      <View style={styles.deliveryItem}>
-                        <Text style={styles.deliveryEmoji}>🚚</Text>
-                        <Text style={styles.deliveryLabel}>{currentLanguage === 'en' ? 'Delivery' : 'Getir'}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <TouchableOpacity style={styles.bulkDemoButton} activeOpacity={0.85} onPress={() => openBulkDemo(item)}>
-                    <MaterialIcons name="groups" size={12} color={PREVIEW_COLORS.accent} />
-                    <Text style={styles.bulkDemoButtonText}>
-                      {currentLanguage === 'en' ? 'Bulk Demo' : 'Toplu Demo'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-            <View style={styles.cardFooterRow}>
-              <TouchableOpacity
-                style={styles.cookLink}
-                activeOpacity={0.8}
-                onPress={() =>
-                  router.push(`/seller-public-profile?cookName=${encodeURIComponent(item.cook)}&cookId=${encodeURIComponent(String(item.cookId || ''))}` as any)
-                }
-              >
-                <Text style={styles.cook}>{item.cook}</Text>
-                <MaterialIcons name="arrow-forward" size={14} color="#6B7280" />
-              </TouchableOpacity>
-              <View style={styles.footerRight}>
-                <View style={styles.cookRating}>
-                  <View style={styles.cookStars}>
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <MaterialIcons
-                        key={`${item.id}-star-${index}`}
-                        name={index < Math.round(item.rating) ? 'star' : 'star-border'}
-                        size={11}
-                        color="#F59E0B"
-                      />
-                    ))}
-                  </View>
-                  <Text style={styles.cookRatingText}>{item.rating.toFixed(1)}</Text>
-                </View>
+              ))}
+              <View style={styles.profileLinkRow}>
+                <TouchableOpacity
+                  style={styles.allCommentsButton}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    router.push(
+                      `/seller-public-profile?cookName=${encodeURIComponent(item.cook)}&cookId=${encodeURIComponent(String(item.cookId || ''))}&section=comments` as any
+                    )
+                  }
+                >
+                  <Text style={styles.allCommentsButtonText}>
+                    {currentLanguage === 'en' ? 'Show all comments' : 'Tüm yorumları gör'}
+                  </Text>
+                  <MaterialIcons name="arrow-forward" size={14} color="#5F7F5E" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cookLinkInline}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    router.push(`/seller-public-profile?cookName=${encodeURIComponent(item.cook)}&cookId=${encodeURIComponent(String(item.cookId || ''))}` as any)
+                  }
+                >
+                  <Text style={styles.cookInline} numberOfLines={1}>{item.cook}</Text>
+                  <MaterialIcons name="arrow-forward" size={14} color="#6B7280" />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -728,6 +905,7 @@ export const HomePreview: React.FC = () => {
         onClose={() => setShowFilterModal(false)}
         onApply={handleApplyFilters}
         initialFilters={searchFilters}
+        categories={categories.filter((category) => category.id !== 'all')}
       />
       <Modal visible={allergenModalVisible} transparent animationType="fade" onRequestClose={closeAllergenModal}>
         <View style={styles.modalBackdrop}>
@@ -920,7 +1098,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 6,
     paddingVertical: Spacing.sm,
-    gap: 3,
+    gap: 10,
   },
   card: {
     backgroundColor: PREVIEW_COLORS.surface,
@@ -929,7 +1107,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 8,
     borderWidth: 1,
-    borderColor: PREVIEW_COLORS.border,
+    borderColor: '#D1D5DB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
   },
   cardContentRow: {
     flexDirection: 'row',
@@ -971,6 +1154,16 @@ const styles = StyleSheet.create({
   cardBodyTop: {
     flexShrink: 1,
   },
+  endDateRow: {
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  contentPressable: {
+    alignSelf: 'flex-start',
+  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -999,10 +1192,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 2,
   },
+  favButtonLarge: {
+    alignSelf: 'flex-end',
+    minHeight: 30,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginVertical: 0,
+  },
   favoriteCount: {
     fontSize: 11,
     color: '#6B7280',
     fontWeight: '700',
+  },
+  favoriteCountLarge: {
+    fontSize: 15,
+    color: '#4B5563',
+    fontWeight: '800',
   },
   cardTitle: {
     fontSize: 15.5,
@@ -1045,103 +1253,136 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 14,
   },
-  metaTitle: {
-    color: PREVIEW_COLORS.textMuted,
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 19,
-    letterSpacing: 0.2,
-  },
-  metaDescription: {
+  metaLabel: {
     color: PREVIEW_COLORS.textMuted,
     fontSize: 13,
     fontWeight: '500',
-    lineHeight: 18,
-    marginTop: 1,
+    lineHeight: 19,
   },
-  metaDeliveryRow: {
-    marginTop: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  metaValue: {
+    color: PREVIEW_COLORS.text,
+    fontWeight: '700',
   },
-  deliveryInline: {
+  foodNameValue: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  metaValueUrgentBadge: {
+    color: '#B42318',
+    fontWeight: '900',
+    backgroundColor: '#FEE4E2',
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    justifyContent: 'flex-start',
   },
-  deliveryItem: {
-    flexDirection: 'row',
+  cardActions: {
+    marginTop: 8,
+  },
+  buyButton: {
+    flex: 1,
+    backgroundColor: PREVIEW_COLORS.accent,
+    borderRadius: 8,
+    paddingVertical: 8,
     alignItems: 'center',
-    gap: 3,
+    justifyContent: 'center',
   },
-  deliveryEmoji: {
-    fontSize: 14,
-    lineHeight: 16,
-  },
-  deliveryLabel: {
+  buyButtonText: {
+    color: '#FFFFFF',
     fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: PREVIEW_COLORS.textMuted,
+    fontWeight: '800',
   },
-  cook: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: PREVIEW_COLORS.text,
-    flexShrink: 1,
-    paddingTop: 6,
-    paddingBottom: 2,
-  },
-  cookLink: {
-    marginLeft: 2,
-    flexDirection: 'row',
+  detailButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: PREVIEW_COLORS.accent,
+    borderRadius: 8,
+    paddingVertical: 8,
     alignItems: 'center',
-    gap: 2,
-    flexShrink: 1,
+    justifyContent: 'center',
   },
-  cardFooterRow: {
-    marginTop: 4,
+  detailButtonText: {
+    color: PREVIEW_COLORS.accent,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  commentsSection: {
+    marginTop: 7,
+    borderTopWidth: 1,
+    borderTopColor: PREVIEW_COLORS.border,
+    paddingTop: 6,
+    gap: 4,
+  },
+  commentInline: {
+    paddingHorizontal: 2,
+    gap: 2,
+  },
+  commentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  footerRight: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    gap: 1,
-  },
-  bulkDemoButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'transparent',
-    borderRadius: 8,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-  },
-  bulkDemoButtonText: {
-    color: PREVIEW_COLORS.accent,
-    fontSize: 11,
+  commentAuthor: {
+    fontSize: 12,
     fontWeight: '700',
+    color: PREVIEW_COLORS.text,
   },
-  cookRating: {
+  commentStars: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    justifyContent: 'flex-end',
   },
-  cookStars: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 0,
-  },
-  cookRatingText: {
-    fontSize: 12,
+  commentRating: {
+    marginLeft: 2,
+    fontSize: 11,
     fontWeight: '700',
     color: '#374151',
+  },
+  commentText: {
+    color: PREVIEW_COLORS.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  profileLinkRow: {
+    marginTop: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  allCommentsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#CFE3D0',
+    backgroundColor: '#EDF6EE',
+  },
+  allCommentsButtonText: {
+    color: '#3B5F3F',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cookInline: {
+    color: PREVIEW_COLORS.text,
+    fontSize: 13,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  cookLinkInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    flexShrink: 1,
+    marginLeft: 6,
   },
   modalBackdrop: {
     flex: 1,

@@ -27,15 +27,15 @@ export const Text: React.FC<TextProps> = ({
   const getVariantStyles = () => {
     switch (variant) {
       case 'title':
-        return { fontSize: Typography.fontSize['3xl'], fontWeight: Typography.fontWeight.bold };
-      case 'heading':
         return { fontSize: Typography.fontSize['2xl'], fontWeight: Typography.fontWeight.semibold };
+      case 'heading':
+        return { fontSize: Typography.fontSize.xl, fontWeight: Typography.fontWeight.semibold };
       case 'subheading':
-        return { fontSize: Typography.fontSize.lg, fontWeight: Typography.fontWeight.medium };
+        return { fontSize: Typography.fontSize.base, fontWeight: Typography.fontWeight.medium };
       case 'caption':
-        return { fontSize: Typography.fontSize.sm, color: colors.textSecondary };
+        return { fontSize: Typography.fontSize.xs, color: colors.textSecondary, fontWeight: Typography.fontWeight.normal };
       default:
-        return { fontSize: Typography.fontSize.base };
+        return { fontSize: Typography.fontSize.sm, fontWeight: Typography.fontWeight.normal };
     }
   };
 

@@ -4,7 +4,6 @@ import { Tabs, router } from 'expo-router';
 import { Colors } from '@/src/theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-import { useCart } from '@/src/context/CartContext';
 import { WebSafeIcon } from '@/src/components/ui/WebSafeIcon';
 import { useAuth } from '@/src/context/AuthContext';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -29,8 +28,6 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useTranslation();
-  const { getTotalItems } = useCart();
-  const cartItemCount = getTotalItems();
   const { userData } = useAuth();
   // Giris tipi buyer ise buyer akisi, seller ise seller akisi.
   const isSeller = userData?.userType === 'seller';
@@ -157,13 +154,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="cart"
+        name="new-home"
         options={{
-          title: t('tabs.cart'),
-          tabBarBadge: cartItemCount > 0 ? cartItemCount : undefined,
+          title: 'New',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon 
-              name={focused ? "shopping-cart" : "shopping-cart"} 
+            <TabBarIcon
+              name={focused ? "home" : "home"}
               color={color}
               style={{ fontSize: focused ? 22 : 20 }}
             />
@@ -171,6 +167,12 @@ export default function TabLayout() {
           tabBarButton: (props) => (
             renderCompactTabButton(props)
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="cart"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen
