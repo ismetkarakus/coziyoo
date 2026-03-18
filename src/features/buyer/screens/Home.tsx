@@ -239,6 +239,7 @@ export const Home: React.FC = () => {
   const { addToCart } = useCart();
   const { sendLowStockNotification } = useNotifications();
   const [allergenModalVisible, setAllergenModalVisible] = useState(false);
+  const [expandedFoodId, setExpandedFoodId] = useState<string | null>(null);
   const [allergenModalMatches, setAllergenModalMatches] = useState<string[]>([]);
   const [allergenConfirmChecked, setAllergenConfirmChecked] = useState(false);
   const [latestOrderStatus, setLatestOrderStatus] = useState<{ orderId: string; statusLabel: string } | null>(null);
@@ -1302,6 +1303,10 @@ export const Home: React.FC = () => {
                 availableDeliveryOptions={food.availableDeliveryOptions}
                 isGridMode={false}
                 showAvailableDates={true}
+                isExpanded={expandedFoodId === food.id}
+                onExpand={() => setExpandedFoodId(food.id)}
+                onCollapse={() => setExpandedFoodId(null)}
+                hasAnyExpanded={expandedFoodId !== null}
               />
             ))
           ) : (

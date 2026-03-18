@@ -79,6 +79,10 @@ type FoodCardProps = {
   favoriteCount?: number;
   style?: ViewStyle;
   isTitleClickable?: boolean;
+  isExpanded?: boolean;
+  onExpand?: () => void;
+  onCollapse?: () => void;
+  hasAnyExpanded?: boolean;
 };
 
 function Stars({ value }: { value: number }) {
@@ -188,6 +192,10 @@ export function FoodCard({
   favoriteCount = 0,
   style,
   isTitleClickable = true,
+  isExpanded = false,
+  onExpand,
+  onCollapse,
+  hasAnyExpanded = false,
 }: FoodCardProps) {
   const { t, currentLanguage } = useTranslation();
   const { formatCurrency } = useCountry();
@@ -308,6 +316,8 @@ export function FoodCard({
           ? addResult
           : 1;
 
+      onCollapse?.();
+
       Toast.show({
         type: "success",
         text1: t("foodCard.alerts.addToCartTitle"),
@@ -349,8 +359,18 @@ export function FoodCard({
     }
   };
 
+  const isBlurred = hasAnyExpanded && !isExpanded;
+
   return (
-    <View style={[styles.card, style]}>
+    <View
+      style={[
+        styles.card,
+        style,
+        isExpanded && styles.cardExpanded,
+        isBlurred && styles.cardBlurred,
+      ]}
+      pointerEvents={isBlurred ? "none" : "auto"}
+    >
       {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
@@ -389,8 +409,17 @@ export function FoodCard({
           <Pressable onPress={handleView}>
             <Image source={imgSource} style={[styles.image, { width: imageSize, height: imageSize }]} />
           </Pressable>
-          <Pressable onPress={handleAddToCart} style={styles.floatingAddBtn}>
-            <MaterialIcons name="add" size={26} color={COLORS.accent} />
+          <Pressable
+            onPress={() => {
+              if (isExpanded) {
+                onCollapse?.();
+              } else {
+                onExpand?.();
+              }
+            }}
+            style={[styles.floatingAddBtn, isExpanded && styles.floatingAddBtnExpanded]}
+          >
+            <MaterialIcons name={isExpanded ? "remove" : "add"} size={26} color={COLORS.accent} />
           </Pressable>
         </View>
 
@@ -412,6 +441,23 @@ export function FoodCard({
           </View>
         </View>
       </View>
+
+      {/* EXPANDED LOT SECTION */}
+      {isExpanded && (
+        <View style={styles.expandedSection}>
+          <Text style={styles.expandedLabel}>{t("foodCard.deliveryLabel")}</Text>
+          <Segmented
+            value={deliveryMode}
+            onChange={setDeliveryMode}
+            allowPickup={availableOptions.includes("pickup")}
+            allowDelivery={availableOptions.includes("delivery")}
+          />
+          <Pressable onPress={handleAddToCart} style={styles.addToCartBtn}>
+            <MaterialIcons name="shopping-cart" size={18} color="#FFFFFF" />
+            <Text style={styles.addToCartText}>{t("foodCard.alerts.addToCartTitle")}</Text>
+          </Pressable>
+        </View>
+      )}
 
       <View style={styles.footerMeta}>
         <Pressable onPress={handleCookPress}>
@@ -453,6 +499,20 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
+    zIndex: 1,
+  },
+  cardExpanded: {
+    borderColor: COLORS.accent,
+    borderWidth: 2,
+    shadowOpacity: 0.22,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 16,
+    zIndex: 100,
+    transform: [{ scale: 1.02 }],
+  },
+  cardBlurred: {
+    opacity: 0.38,
   },
 
   header: {
@@ -516,6 +576,36 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 10,
+  },
+  floatingAddBtnExpanded: {
+    backgroundColor: COLORS.accentSoft,
+    borderWidth: 2,
+    borderColor: COLORS.accent,
+  },
+  expandedSection: {
+    marginTop: 16,
+    gap: 10,
+  },
+  expandedLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textMuted,
+    marginBottom: 2,
+  },
+  addToCartBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: COLORS.accent,
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  addToCartText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
   },
   bodyRight: { flex: 1 },
 

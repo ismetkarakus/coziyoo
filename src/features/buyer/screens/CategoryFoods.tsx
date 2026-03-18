@@ -213,6 +213,7 @@ export const CategoryFoods: React.FC = () => {
   const params = useLocalSearchParams();
   const categoryName = (params.category as string) || DEFAULT_CATEGORY_BY_LANG[currentLanguage];
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedFoodId, setExpandedFoodId] = useState<string | null>(null);
 
   // Get foods for the selected category
   const categoryFoodsMap = getCategoryFoods(currentLanguage);
@@ -330,6 +331,10 @@ export const CategoryFoods: React.FC = () => {
                 key={food.id}
                 {...food}
                 onAddToCart={handleAddToCart}
+                isExpanded={expandedFoodId === String(food.id)}
+                onExpand={() => setExpandedFoodId(String(food.id))}
+                onCollapse={() => setExpandedFoodId(null)}
+                hasAnyExpanded={expandedFoodId !== null}
               />
             ))
           ) : (
